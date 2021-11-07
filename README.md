@@ -66,6 +66,9 @@ There are HTML templates for the application pages. They have fields, modal form
     iv. Cars
    - The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
    - Any errors related to the operations is displayed.
+   - 
+**Example of Home page**
+![](./front-end-example.png)
 
 ### Testing
 Selenium tests are defined to verify user-facing functionality and to check feature-completeness.
@@ -74,6 +77,10 @@ Selenium tests are defined to verify user-facing functionality and to check feat
 2. Tests for note creation, viewing, editing, and deletion.
 3. Tests for credential creation, viewing, password encryption, editing, and deletion.
 4. Test for checking empty file upload.
+
+## Dependencies
+
+The project requires the use of Java 11 and Maven.
 
 ## Installing instructions
 
@@ -124,7 +131,4 @@ java -jar target/cloudinterface-0.0.1-SNAPSHOT.jar
 ```
 •	The service is available by default on port 8081. Check interface: http://localhost:8761/
 
-## Dependencies
-
-The project requires the use of Java 11 and Maven.
 
