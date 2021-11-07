@@ -6,7 +6,7 @@ Repository for the different projects from my Nanodegree in [Java Web Developmen
 ## Roadmap
 Development roadmap with requirements and milestones.
 
-Three base layers of storage application:
+Three base layers of storage application for Files, Notes and Credentials:
 
 - [x] The cloud service back-end with Spring Boot
 - [x] The cloud service front-end with Thymeleaf
@@ -14,9 +14,11 @@ Three base layers of storage application:
 
 Extra layers of cloud interface application:
 
-- [x] Connection interface for a Car Website's REST API. For project details see [Vehicles API](vehicles-api/README.md).
+- [x] Cars interface for the Car service's REST API. For project details see [Vehicles API](vehicles-api/README.md).
 - [ ] Scheduling interface for a Pet Store's Saas Application
 
+**Example of user interface**
+![](./front-end-example.png)
 
 ### The Back-End
 Features:
@@ -66,9 +68,6 @@ There are HTML templates for the application pages. They have fields, modal form
     iv. Cars
    - The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
    - Any errors related to the operations is displayed.
-
-**Example of Home page**
-![](./front-end-example.png)
 
 ### Testing
 Selenium tests are defined to verify user-facing functionality and to check feature-completeness.
