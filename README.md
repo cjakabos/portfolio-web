@@ -66,7 +66,7 @@ There are HTML templates for the application pages. They have fields, modal form
     iv. Cars
    - The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
    - Any errors related to the operations is displayed.
-   - 
+
 **Example of Home page**
 ![](./front-end-example.png)
 
@@ -129,6 +129,6 @@ java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
 ```
 java -jar target/cloudinterface-0.0.1-SNAPSHOT.jar
 ```
-•	The service is available by default on port 8081. Check interface: http://localhost:8761/
+•	The service is available by default on port 8081. Check interface: http://localhost:8081/
 
 
