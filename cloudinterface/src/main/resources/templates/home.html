@@ -22,6 +22,7 @@
                         <a class="nav-item nav-link" id="nav-notes-tab" data-toggle="tab" href="#nav-notes" role="tab" aria-controls="nav-notes" aria-selected="false">Notes</a>
                         <a class="nav-item nav-link" id="nav-credentials-tab" data-toggle="tab" href="#nav-credentials" role="tab" aria-controls="nav-credentials" aria-selected="false">Credentials</a>
                         <a class="nav-item nav-link" id="nav-cars-tab" data-toggle="tab" href="#nav-cars" role="tab" aria-controls="nav-cars" aria-selected="false">Cars</a>
+                        <a class="nav-item nav-link" id="nav-pets-tab" data-toggle="tab" href="#nav-pets" role="tab" aria-controls="nav-pets" aria-selected="false">Pets</a>
 						</div>
                 </nav>
                 <div class="tab-content" id="nav-tabContent">
@@ -247,12 +248,12 @@
                                         <form th:object="${newCar}" th:action="@{/car/addCar}" action="#" method="POST">
                                             <input type="hidden" name="carListId" id="car-id">
                                             <div class="form-group">
-                                                <label for="car-title" class="col-form-label">Title</label>
-                                                <input type="text" name="carModel" class="form-control" id="car-title" maxlength="20" required>
+                                                <label for="car-model" class="col-form-label">Model</label>
+                                                <input type="text" name="carModel" class="form-control" id="car-model" maxlength="20" required>
                                             </div>
                                             <div class="form-group">
-                                                <label for="car-description" class="col-form-label">Description</label>
-                                                <textarea name="carCondition" id="car-description" rows="5" maxlength="1000" required></textarea>
+                                                <label for="car-condition" class="col-form-label">Condition</label>
+                                                <textarea name="carCondition" id="car-condition" rows="5" maxlength="1000" required></textarea>
                                             </div>
                                             <button id="carSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -265,7 +266,70 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                   <div class="tab-pane fade" id="nav-pets" role="tabpanel" aria-labelledby="nav-pets-tab">
+						<div id="showPetsDiv">
+							<form action="#" th:action="@{/pet/getPets}" method="POST">
+								<button id="showPetList" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
+									+ List PetZ
+								</button>
+							</form>
+						</div>
+
+
+                        <button id="showPetForm" style="margin: 0.25em;" type="button" class="btn btn-info float-right" onclick="showPetModal()">
+                            + Add a New Pet
+                        </button>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="userTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%" scope="col"></th>
+                                        <th style="width: 20%" scope="col">Type</th>
+                                        <th style="width: 80%" scope="col">Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody th:each="pet: ${pets}">
+                                    <tr>									
+                                        <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
+                                        <td th:text="${pet.get('petName')}">Example Pet Name </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="modal fade" id="petModal" tabindex="-1" role="dialog" aria-labelledby="petModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="petModalLabel">Pet</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form th:object="${newPet}" th:action="@{/pet/addPet}" action="#" method="POST">
+                                            <input type="hidden" name="petListId" id="pet-id">
+                                            <div class="form-group">
+                                                <label for="pet-type" class="col-form-label">Type</label>
+                                                <input type="text" name="petType" class="form-control" id="pet-title" maxlength="20" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="pet-name" class="col-form-label">Name</label>
+                                                <textarea name="petName" id="pet-name" rows="5" maxlength="1000" required></textarea>
+                                            </div>
+                                            <button id="petSubmit" type="submit" class="d-none"></button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="$('#petSubmit').click();">Save changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+				</div>
             </div>
         </div>
 
@@ -297,6 +361,13 @@
                 $('#car-model').val(carModel ? carModel : '');
                 $('#car-condition').val(carCondition ? carCondition : '');
                 $('#carModal').modal('show');
+            }
+            // For opening the pet modal
+            function showPetModal(petListId, petType, petName) {
+                $('#pet-id').val(petListId ? petListId : '');
+                $('#pet-type').val(petType ? petType : '');
+                $('#pet-name').val(petName ? petName : '');
+                $('#petModal').modal('show');
             }
 			</script>
     </body>
