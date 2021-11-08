@@ -346,6 +346,44 @@
 			"response": []
 		},
 		{
+			"name": "Get All Pets",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/pet",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"pet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Get All Employee",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true

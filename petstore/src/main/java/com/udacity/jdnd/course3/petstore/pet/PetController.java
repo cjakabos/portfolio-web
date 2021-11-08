@@ -51,8 +51,15 @@ public class PetController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping
+    public List<PetDTO> getPets(){
+        return petService.getPets()
+                .stream()
+                .map(this::petToPetDTO)
+                .collect(Collectors.toList());
+    }
 
-    private PetDTO petToPetDTO(Pet pet){
+    public PetDTO petToPetDTO(Pet pet){
         PetDTO petDTO = new PetDTO();
         petDTO.setId(pet.getId());
         petDTO.setType(pet.getPetType());

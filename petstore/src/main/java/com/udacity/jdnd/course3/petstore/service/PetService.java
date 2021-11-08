@@ -44,5 +44,7 @@ public class PetService {
         return schedule.getPetList();
     }
 
-
+    public List<Pet> getPets(){
+        return petRepository.findAll();
+    }
 }
