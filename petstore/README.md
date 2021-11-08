@@ -52,7 +52,14 @@ In addition to the included unit tests, a Postman collection has been provided.
 3. Import the file found in this repository under `src/main/resource/Petstore.postman_collection.json`
 4. Expand the Petstore folder in postman.
 
-Each entry in this collection contains information in its `Body` tab for test purposes.  
+Each entry in this collection contains information in its `Body` tab for test purposes. Example use-case, follow order:  
+1. Create a new customer.  
+2. Create a pet for that customer.  
+3. Create an employee.  
+4. Update the employee’s schedule.  
+5. Find out which employees with the right skills are available on a given date.
+6. Schedule one or more employees to do a set of activities with one or more pets.
+7. Look up currently scheduled events for an employee, a pet, or a customer.
 
 **The postman interface**
 ![](./petstore_postman.png)
