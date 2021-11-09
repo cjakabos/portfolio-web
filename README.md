@@ -6,7 +6,7 @@ Repository for the different projects from my Nanodegree in [Java Web Developmen
 ## Roadmap
 Development roadmap with requirements and milestones.
 
-Three base layers of storage application for Files, Notes and Credentials:
+Three base layers of storage application for Files, Notes and Credentials. They are the first project of the nanodegree program and can run standalone without the extra layers below (these will report service is unavailable at the respective tab).
 
 - [x] The cloud service back-end with Spring Boot
 - [x] The cloud service front-end with Thymeleaf
@@ -54,20 +54,24 @@ There are HTML templates for the application pages. They have fields, modal form
 **3. Home page**
    The home page is the center of the application and hosts the three parts of base functionality plus the additional extra layers:  
 
-    i. Files
+    i. Files (base functionality)
    - The user can upload files and see/download/delete any files they previously uploaded.
    - Any errors related to file actions is displayed (no duplicates or empty/large files).
    
-    ii. Notes
+    ii. Notes (base functionality)
    - The user can create notes and see/edit/delete notes they have previously created. Size limit is 1000 character.
 
-    iii. Credentials
+    iii. Credentials (base functionality)
    - The user can store credentials for specific websites and see/edit/delete the credentials they've previously stored.
    - Passwords are displayed in encrypted form in the list, but upon editing they are able to see the unencrypted values.
 
-    iv. Cars
+    iv. Cars (extra layer, optional)
    - The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
    - Any errors related to the operations is displayed.
+
+    v. Pets (extra layer, optional)
+  - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore service API interface.
+  - Any errors related to the operations is displayed.
 
 ### Testing
 Selenium tests are defined to verify user-facing functionality and to check feature-completeness.
@@ -84,13 +88,18 @@ The project requires the use of Java 11 and Maven.
 ## Installing instructions
 
 Check each component to see its details and instructions. Note that all applications
-should be running (start them in reading order) at once for full operation. Further instructions are available in the classroom.
+should be running (start them in reading order) at once for full operation. Either follow base of full functionality procedure.
 
+1. Base functionality:
+- [CloudInterface](cloudinterface/README.md): first main project of nanodegree program, when run alone, no Cars or Pets interface available.
+
+2. Full functionality with base and extra layers:
 - [Eureka](eureka): microservice registration and discovery.
 - [Boogle Maps](boogle-maps/README.md): a mock service to simulate a backend for vehicle location.
 - [Pricing Service](pricing-service/README.md): a mock service to simulate a backend for vehicle pricing.
 - [Vehicles API](vehicles-api/README.md): second main project of nanodegree program. A REST API to maintain vehicle data and to provide a complete
   view of vehicle details including price and address.
+- [Petstore](petstore/README.md): third main project of nanodegree program. A REST API to maintain petstore data with pets, owners, employees and schedules.
 - [CloudInterface](cloudinterface/README.md): first main project of nanodegree program, extended to communicate with the Vehicles API and send/receive data with it.
 
 1. Compile and package application in each subfolder:
