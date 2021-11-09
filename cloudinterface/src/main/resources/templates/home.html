@@ -291,6 +291,8 @@
                                 </thead>
                                 <tbody th:each="pet: ${pets}">
                                     <tr>									
+                                        <td>
+										</td>
                                         <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
                                         <td th:text="${pet.get('petName')}">Example Pet Name </td>
                                     </tr>

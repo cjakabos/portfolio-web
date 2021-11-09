@@ -2,17 +2,17 @@ package com.udacity.jwdnd.course1.cloudinterface.entity;
 
 public class Pet {
     private Integer petId;
-    private String petModel;
-    private String petCondition;
+    private String petType;
+    private String petName;
     private Integer userId;
 
     public Pet() {
     }
 
-    public Pet(Integer petId, String petModel, String petCondition, Integer userId) {
+    public Pet(Integer petId, String petType, String petName, Integer userId) {
         this.petId = petId;
-        this.petModel = petModel;
-        this.petCondition = petCondition;
+        this.petType = petType;
+        this.petName = petName;
         this.userId = userId;
     }
 
@@ -25,20 +25,20 @@ public class Pet {
         this.petId = petId;
     }
 
-    public String getPetModel() {
-        return petModel;
+    public String getPetType() {
+        return petType;
     }
 
-    public void setPetModel(String petModel) {
-        this.petModel = petModel;
+    public void setPetType(String petType) {
+        this.petType = petType;
     }
 
-    public String getPetCondition() {
-        return petCondition;
+    public String getPetName() {
+        return petName;
     }
 
-    public void setPetCondition(String petCondition) {
-        this.petCondition = petCondition;
+    public void setPetName(String petName) {
+        this.petName = petName;
     }
 
     public Integer getUserId() {

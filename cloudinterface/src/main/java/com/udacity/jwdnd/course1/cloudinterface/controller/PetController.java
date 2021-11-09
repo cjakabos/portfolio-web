@@ -68,39 +68,35 @@ public class PetController {
 		List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
 		Map<String, String> newPet = new HashMap();//new HashMap<String, String>();
 		
-        String url = "http://localhost:8083/pets";
-
+        String url = "http://localhost:8083/pet";
+        System.out.println("test1");
         try {
 			HttpClient httpClient = HttpClientBuilder.create().build();
 			HttpGet request = new HttpGet(url);
 			HttpResponse response = httpClient.execute(request);
-
+            System.out.println("test2");
 
 			HttpEntity entity = response.getEntity();
 			String responseString = EntityUtils.toString(entity, "UTF-8");
 
-			JsonObject jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
-
-            //JsonObject jsnobject = new JsonObject(responseString);
-
-            JsonArray tokenList = jsonObject.getAsJsonObject("_embedded").getAsJsonArray("petList");
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
 
             for (int i = 0; i < tokenList.size(); i++) {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
 
                 JsonElement test = tokenList.get(i).getAsJsonObject().get("type");
-                String petCondition = test.toString();
+                String petName = test.toString();
                 test = tokenList.get(i).getAsJsonObject().get("name");
-                String petModel = test.toString();
+                String petType = test.toString();
 
                 test = tokenList.get(i).getAsJsonObject().get("id");
                 String petId = test.toString();
                 newPet = new HashMap<String, String>() {
                     {
-                        put("petCondition", petCondition);
+                        put("petName", petName);
                         put("petId", petId);
-                        put("petModel", petModel);
+                        put("petType", petType);
                     }
                 };
                 pets.add(newPet);
@@ -110,9 +106,9 @@ public class PetController {
 				String userFeedback = "Pet API is down or empty data";
                 newPet = new HashMap<String, String>() {
                     {
-                        put("petCondition", userFeedback);
+                        put("petName", userFeedback);
                         put("petId", userFeedback);
-                        put("petModel", userFeedback);
+                        put("petType", userFeedback);
                     }
                 };
                 pets.add(newPet);
@@ -128,7 +124,7 @@ public class PetController {
                                  Model model) throws Exception {
         String userFeedback = "Success";
         model.addAttribute("updateSuccess", userFeedback);
-        String url = "http://localhost:8083/pets";
+        String url = "http://localhost:8083/pet";
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpGet request = new HttpGet(url);
@@ -138,10 +134,8 @@ public class PetController {
         HttpEntity entity = response.getEntity();
         String responseString = EntityUtils.toString(entity, "UTF-8");
         System.out.println("ALL JSON OBJECTS" + responseString);
-        JsonObject jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
-        //JsonObject jsnobject = new JsonObject(responseString);
+        JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
 
-        JsonArray tokenList = jsonObject.getAsJsonObject("_embedded").getAsJsonArray("petList");
         JsonObject oj = tokenList.get(0).getAsJsonObject();
         //String token = oj.get;
         System.out.println("---------------------------------------");
@@ -170,16 +164,9 @@ public class PetController {
                                     Model model) throws Exception {
         List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
         pets = getListPets();
-
-
-
         String userFeedback = "Success";
-        System.out.println("This adds pet");
-        System.out.println(printString());
 
-        System.out.println("getPetCondition is: " + pet.getPetCondition());
-
-        String url = "http://localhost:8083/pets";
+        String url = "http://localhost:8083/pet/1";
 
 		//json.put("reference", url);
         //Gson gson = new Gson();
@@ -194,13 +181,16 @@ public class PetController {
 
             //params.setContentType("application/json");
             JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
+            System.out.println("jsonObject is: " + jsonObject.toString());
             //jsonObject.put("name", pet.getPetModel());
             //jsonObject.remove("type");
-            jsonObject.addProperty("type", pet.getPetCondition());
-            jsonObject.addProperty("name", pet.getPetModel());
+
+            jsonObject.addProperty("type", pet.getPetName());
+            jsonObject.addProperty("name", pet.getPetType());
             jsonObject.addProperty("owner", "1");
-			
-            if (pet.getPetCondition().equals("NEW") || pet.getPetCondition().equals("USED")) {
+
+            System.out.println(jsonObject.toString());
+            if (pet.getPetName().equals("CAT") || pet.getPetName().equals("DOG")) {
                 userFeedback = "Success";
                 model.addAttribute("updateSuccess", userFeedback);
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -208,17 +198,21 @@ public class PetController {
                 //request.addHeader("content-type", "application/x-www-form-urlencoded");
                 request.addHeader("content-type", "application/json");
                 request.setEntity(params);
+                System.out.println("TEST1");
                 HttpResponse response = httpClient.execute(request);
-
+                System.out.println("TEST2");
 
                 HttpEntity entity = response.getEntity();
+                System.out.println("TEST3");
                 String responseString = EntityUtils.toString(entity, "UTF-8");
-                jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
 
+                System.out.println("TEST4\n" + responseString);
+                jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+                System.out.println("TEST5");
 
                 String petIdAPI = jsonObject.getAsJsonObject().get("id").toString();
 
-                pet.setPetModel(petIdAPI);
+                pet.setPetType(petIdAPI);
                 model.addAttribute("pet", pet);
                 System.out.println("Pet is successsfully added");
             } else {
@@ -265,10 +259,10 @@ public class PetController {
             JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
             //jsonObject.put("name", pet.getPetModel());
             //jsonObject.remove("type");
-            jsonObject.addProperty("type", pet.getPetCondition());
-            jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetModel());
+            jsonObject.addProperty("type", pet.getPetName());
+            jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetType());
 
-            if (pet.getPetCondition().equals("NEW") || pet.getPetCondition().equals("USED")) {
+            if (pet.getPetName().equals("CAT") || pet.getPetName().equals("DOG")) {
                 userFeedback = "Success";
                 model.addAttribute("updateSuccess", userFeedback);
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -286,11 +280,11 @@ public class PetController {
 
                 String petIdAPI = jsonObject.getAsJsonObject().get("id").toString();
 
-                pet.setPetModel(petIdAPI);
+                pet.setPetType(petIdAPI);
                 model.addAttribute("pet", pet);
                 System.out.println("Pet is successsfully added");
             } else {
-                userFeedback = "Model should be either USED or NEW";
+                userFeedback = "Model should be either CAT or DOG";
                 model.addAttribute("updateError", userFeedback);
             }
 			
@@ -300,53 +294,12 @@ public class PetController {
 
     public String printString() {
         String jsonString = "{\n" +
-                "  \"condition\": \"USED\",\n" +
-                "  \"details\" : {\n" +
-                "    \"body\": \"sedan\",\n" +
-                "    \"model\": \"Impala\",\n" +
-                "    \"manufacturer\" : {\n" +
-                "      \"code\": 101,\n" +
-                "      \"name\": \"Chevrolet\"\n" +
-                "    },\n" +
-                "    \"numberOfDoors\": 4,\n" +
-                "    \"fuelType\": \"Gasoline\",\n" +
-                "    \"engine\": \"3.6L V6\",\n" +
-                "    \"mileage\": 32280,\n" +
-                "    \"modelYear\": 2018,\n" +
-                "    \"productionYear\": 2018,\n" +
-                "    \"externalColor\": \"white\"\n" +
-                "  },\n" +
-                "  \"location\" : {\n" +
-                "    \"lat\": 40.73061,\n" +
-                "    \"lon\": -73.935242\n" +
-                "  }\n" +
+                "  \"type\": \"CAT\",\n" +
+                "  \"name\": \"Kilo\",\n" +
+                "  \"ownerId\": \"1\",\n" +
+                "  \"birthDate\": \"2019-12-16T04:43:57.995Z\",\n" +
+                "  \"notes\": \"OWN NOTES\"\n" +
                 "}";
         return jsonString;
     }
-
-
-//{
-//   "type":"USED",
-//   "details":{
-//      "body":"sedan",
-//      "name":"Impala",
-//      "manufacturer":{
-//         "code":101,
-//         "name":"Chevrolet"
-//      },
-//      "numberOfDoors":4,
-//      "fuelType":"Gasoline",
-//      "engine":"3.6L V6",
-//      "mileage":32280,
-//      "modelYear":2018,
-//      "productionYear":2018,
-//      "externalColor":"white"
-//   },
-//   "location":{
-//      "lat":40.73061,
-//      "lon":-73.935242
-//   }
-//}
-
-
 }
