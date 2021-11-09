@@ -32,52 +32,26 @@ import com.google.gson.*;
 
 import java.util.*;
 
-import com.udacity.jwdnd.course1.cloudinterface.entity.Pet;
+import com.udacity.jwdnd.course1.cloudinterface.entity.*;
 
 @Controller
 @RequestMapping("/pet")
 public class PetController {
 
-
-//    public static List<Map<String, String>> getListPets() throws Exception {
-//		//String[] pets = {"Volvo", "BMW", "Ford", "Mazda"};
-//		List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
-//		Map<String, String> newPet = new HashMap<String, String>()
-//		{
-//			{
-//				put("petCondition", "Old");
-//				put("petId", "1");
-//				put("petModel", "Honda");
-//			}
-//		};
-//		pets.add(newPet);
-//		Map<String, String> newPet2 = new HashMap<String, String>()
-//		{
-//			{
-//				put("petCondition", "New");
-//				put("petId", "2");
-//				put("petModel", "Porsche");
-//			}
-//		};
-//		pets.add(newPet2);
-//		return pets;
-//        //return "result";
-//	}
-
     public static List<Map<String, String>> getListPets() throws Exception {
-		List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
-		Map<String, String> newPet = new HashMap();//new HashMap<String, String>();
-		
+        List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
+        Map<String, String> newPet = new HashMap();//new HashMap<String, String>();
+
         String url = "http://localhost:8083/pet";
         System.out.println("test1");
         try {
-			HttpClient httpClient = HttpClientBuilder.create().build();
-			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpClient.execute(request);
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
             System.out.println("test2");
 
-			HttpEntity entity = response.getEntity();
-			String responseString = EntityUtils.toString(entity, "UTF-8");
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
 
             JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
 
@@ -103,75 +77,75 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-				String userFeedback = "Pet API is down or empty data";
-                newPet = new HashMap<String, String>() {
-                    {
-                        put("petName", userFeedback);
-                        put("petId", userFeedback);
-                        put("petType", userFeedback);
-                    }
-                };
-                pets.add(newPet);
-		}
+            String userFeedback = "Pet API is down or empty data";
+            newPet = new HashMap<String, String>() {
+                {
+                    put("petName", userFeedback);
+                    put("petId", userFeedback);
+                    put("petType", userFeedback);
+                }
+            };
+            pets.add(newPet);
+        }
 
 
         return pets;
         //return "result";
     }
 
-    @PostMapping("/getPets")
-    public String getAPIListPets(Authentication authentication,
-                                 Model model) throws Exception {
-        String userFeedback = "Success";
-        model.addAttribute("updateSuccess", userFeedback);
-        String url = "http://localhost:8083/pet";
-
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpGet request = new HttpGet(url);
-        HttpResponse response = httpClient.execute(request);
-
-
-        HttpEntity entity = response.getEntity();
-        String responseString = EntityUtils.toString(entity, "UTF-8");
-        System.out.println("ALL JSON OBJECTS" + responseString);
-        JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
-
-        JsonObject oj = tokenList.get(0).getAsJsonObject();
-        //String token = oj.get;
-        System.out.println("---------------------------------------");
-        System.out.println("jsonObject of 1" + oj.toString());
-
-        oj = tokenList.get(1).getAsJsonObject();
-        //String token = oj.get;
-        System.out.println("---------------------------------------");
-        System.out.println("jsonObject of 2" + oj.toString());
-
-        JsonElement test = tokenList.get(1).getAsJsonObject().get("type");
-        //String token = oj.get;
-        System.out.println("---------------------------------------");
-        System.out.println("jsonObject of 2 condition" + test.toString());
-
-        test = tokenList.get(1).getAsJsonObject().get("name");
-        //String token = oj.get;
-        System.out.println("---------------------------------------");
-        System.out.println("jsonObject of 2 details/model" + test.toString());
-        return "result";
-    }
+//    @PostMapping("/getPets")
+//    public String getAPIListPets(Authentication authentication,
+//                                 Model model) throws Exception {
+//        String userFeedback = "Success";
+//        model.addAttribute("updateSuccess", userFeedback);
+//        String url = "http://localhost:8083/pet";
+//
+//        HttpClient httpClient = HttpClientBuilder.create().build();
+//        HttpGet request = new HttpGet(url);
+//        HttpResponse response = httpClient.execute(request);
+//
+//
+//        HttpEntity entity = response.getEntity();
+//        String responseString = EntityUtils.toString(entity, "UTF-8");
+//        System.out.println("ALL JSON OBJECTS" + responseString);
+//        JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
+//
+//        JsonObject oj = tokenList.get(0).getAsJsonObject();
+//        //String token = oj.get;
+//        System.out.println("---------------------------------------");
+//        System.out.println("jsonObject of 1" + oj.toString());
+//
+//        oj = tokenList.get(1).getAsJsonObject();
+//        //String token = oj.get;
+//        System.out.println("---------------------------------------");
+//        System.out.println("jsonObject of 2" + oj.toString());
+//
+//        JsonElement test = tokenList.get(1).getAsJsonObject().get("type");
+//        //String token = oj.get;
+//        System.out.println("---------------------------------------");
+//        System.out.println("jsonObject of 2 condition" + test.toString());
+//
+//        test = tokenList.get(1).getAsJsonObject().get("name");
+//        //String token = oj.get;
+//        System.out.println("---------------------------------------");
+//        System.out.println("jsonObject of 2 details/model" + test.toString());
+//        return "result";
+//    }
 
     @PostMapping("/addPet")
     public String insertOrUpdatePet(Authentication authentication,
                                     @ModelAttribute("newPetModel") Pet pet,
                                     Model model) throws Exception {
-        List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
-        pets = getListPets();
+        //List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
+        //pets = getListPets();
         String userFeedback = "Success";
 
         String url = "http://localhost:8083/pet/1";
 
-		//json.put("reference", url);
+        //json.put("reference", url);
         //Gson gson = new Gson();
         //JSONObject json = new JSONObject();
-        //json.put(printString(), url);
+        //json.put(printPetString(), url);
 
 
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
@@ -180,7 +154,7 @@ public class PetController {
             HttpPost request = new HttpPost(url);
 
             //params.setContentType("application/json");
-            JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
+            JsonObject jsonObject = JsonParser.parseString(printPetString()).getAsJsonObject();
             System.out.println("jsonObject is: " + jsonObject.toString());
             //jsonObject.put("name", pet.getPetModel());
             //jsonObject.remove("type");
@@ -247,58 +221,173 @@ public class PetController {
 
     @GetMapping(value = "/pets/{petId}")
     public String editPet(@ModelAttribute("newPetModel") Pet pet,
-                            Model model) throws IOException {
+                          Model model) throws IOException {
         String url = "http://localhost:8083/pets/" + pet.getPetId();
         System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
-		String userFeedback = "Success";
+        String userFeedback = "Success";
 
-            HttpPost request = new HttpPost(url);
+        HttpPost request = new HttpPost(url);
 
-            //params.setContentType("application/json");
-            JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
-            //jsonObject.put("name", pet.getPetModel());
-            //jsonObject.remove("type");
-            jsonObject.addProperty("type", pet.getPetName());
-            jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetType());
+        //params.setContentType("application/json");
+        JsonObject jsonObject = JsonParser.parseString(printPetString()).getAsJsonObject();
+        //jsonObject.put("name", pet.getPetModel());
+        //jsonObject.remove("type");
+        jsonObject.addProperty("type", pet.getPetName());
+        jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetType());
 
-            if (pet.getPetName().equals("CAT") || pet.getPetName().equals("DOG")) {
-                userFeedback = "Success";
-                model.addAttribute("updateSuccess", userFeedback);
-                StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+        if (pet.getPetName().equals("CAT") || pet.getPetName().equals("DOG")) {
+            userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
-                //request.addHeader("content-type", "application/x-www-form-urlencoded");
-                request.addHeader("content-type", "application/json");
-                request.setEntity(params);
-                HttpResponse response = httpClient.execute(request);
-
-
-                HttpEntity entity = response.getEntity();
-                String responseString = EntityUtils.toString(entity, "UTF-8");
-                jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+            //request.addHeader("content-type", "application/x-www-form-urlencoded");
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            HttpResponse response = httpClient.execute(request);
 
 
-                String petIdAPI = jsonObject.getAsJsonObject().get("id").toString();
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+            jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
 
-                pet.setPetType(petIdAPI);
-                model.addAttribute("pet", pet);
-                System.out.println("Pet is successsfully added");
-            } else {
-                userFeedback = "Model should be either CAT or DOG";
-                model.addAttribute("updateError", userFeedback);
-            }
-			
-			
+
+            String petIdAPI = jsonObject.getAsJsonObject().get("id").toString();
+
+            pet.setPetType(petIdAPI);
+            model.addAttribute("pet", pet);
+            System.out.println("Pet is successsfully added");
+        } else {
+            userFeedback = "Model should be either CAT or DOG";
+            model.addAttribute("updateError", userFeedback);
+        }
+
+
         return "result";
     }
 
-    public String printString() {
+    @PostMapping("/addOwner")
+    public String insertOrUpdateOwner(Authentication authentication,
+                                      @ModelAttribute("newOwnerModel") Owner owner,
+                                      Model model) throws Exception {
+        List<Map<String, String>> owners = new ArrayList<Map<String, String>>();
+        //owners = getListOwners();
+        String userFeedback = "Success";
+
+        String url = "http://localhost:8083/user/customer";
+
+
+        // @Deprecated HttpClient httpClient = new DefaultHttpClient();
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+            JsonObject jsonObject = JsonParser.parseString(printOwnerString()).getAsJsonObject();
+
+            jsonObject.addProperty("name", owner.getOwnerName());
+            jsonObject.addProperty("phoneNumber", owner.getOwnerPhoneNumber());
+
+            userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+
+            HttpResponse response = httpClient.execute(request);
+
+
+            HttpEntity entity = response.getEntity();
+
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+
+            String ownerIdAPI = jsonObject.getAsJsonObject().get("id").toString();
+
+            owner.setOwnerType(ownerIdAPI);
+            model.addAttribute("owner", owner);
+            System.out.println("Owner is successsfully added");
+
+        } catch (Exception ex) {
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+
+
+        return "result";
+    }
+
+    @PostMapping("/addEmployee")
+    public String insertOrUpdateEmployee(Authentication authentication,
+                                         @ModelAttribute("newEmployeeModel") Employee employee,
+                                         Model model) throws Exception {
+        List<Map<String, String>> employees = new ArrayList<Map<String, String>>();
+        //employees = getListEmployees();
+        String userFeedback = "Success";
+
+        String url = "http://localhost:8083/user/customer";
+
+
+        // @Deprecated HttpClient httpClient = new DefaultHttpClient();
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+            JsonObject jsonObject = JsonParser.parseString(printEmployeeString()).getAsJsonObject();
+
+            jsonObject.addProperty("name", employee.getEmployeeName());
+            jsonObject.addProperty("skills", employee.getEmployeeSkills().toString());
+
+            userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+
+            HttpResponse response = httpClient.execute(request);
+
+
+            HttpEntity entity = response.getEntity();
+
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+
+            String employeeIdAPI = jsonObject.getAsJsonObject().get("id").toString();
+
+            //employee.setEmployeeId(employeeIdAPI);
+            model.addAttribute("employee", employee);
+            System.out.println("Employee is successsfully added");
+
+        } catch (Exception ex) {
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+
+
+        return "result";
+    }
+    public String printPetString() {
         String jsonString = "{\n" +
                 "  \"type\": \"CAT\",\n" +
                 "  \"name\": \"Kilo\",\n" +
                 "  \"ownerId\": \"1\",\n" +
                 "  \"birthDate\": \"2019-12-16T04:43:57.995Z\",\n" +
                 "  \"notes\": \"OWN NOTES\"\n" +
+                "}";
+        return jsonString;
+    }
+    public String printOwnerString() {
+        String jsonString = "{\n" +
+                "  \"name\": \"Alex\",\n" +
+                "  \"phoneNumber\": \"+461\"\n" +
+                "}";
+        return jsonString;
+    }
+    public String printEmployeeString() {
+        String jsonString = "{\n" +
+                "  \"name\": \"Alex\",\n" +
+                "  \"skills\": \"[\"PETTING\", \"FEEDING\"]\"\n" +
                 "}";
         return jsonString;
     }
