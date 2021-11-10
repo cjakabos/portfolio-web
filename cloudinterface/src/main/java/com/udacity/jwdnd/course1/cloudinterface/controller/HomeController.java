@@ -43,6 +43,8 @@ public class HomeController {
         model.addAttribute("credentials", cService.getCredentialsByUserId(userId));
 		model.addAttribute("cars", CarController.getListCars());
 		model.addAttribute("pets", PetController.getListPets());
+        model.addAttribute("owners", PetController.getListOwners());
+        model.addAttribute("employees", PetController.getListEmployees());
         model.addAttribute("encryptService", eService);
 
         return "home";

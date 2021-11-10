@@ -4,14 +4,14 @@ import java.util.List;
 
 public class Employee {
     private Integer employeeId;
-    private List<String> employeeSkills;
+    private String employeeSkills; //List<String> employeeSkills;
     private String employeeName;
     private Integer userId;
 
     public Employee() {
     }
 
-    public Employee(Integer employeeId, List<String> employeeSkills, String employeeName, Integer userId) {
+    public Employee(Integer employeeId, String employeeSkills, String employeeName, Integer userId) {
         this.employeeId = employeeId;
         this.employeeSkills = employeeSkills;
         this.employeeName = employeeName;
@@ -27,11 +27,11 @@ public class Employee {
         this.employeeId = employeeId;
     }
 
-    public List<String> getEmployeeSkills() {
+    public String getEmployeeSkills() {
         return employeeSkills;
     }
 
-    public void setEmployeeType(List<String> employeeSkills) {
+    public void setEmployeeType(String employeeSkills) {
         this.employeeSkills = employeeSkills;
     }
 

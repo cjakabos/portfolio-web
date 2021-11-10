@@ -59,18 +59,23 @@ public class PetController {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("type");
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
                 String petName = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("name");
+                test = tokenList.get(i).getAsJsonObject().get("type");
                 String petType = test.toString();
 
                 test = tokenList.get(i).getAsJsonObject().get("id");
                 String petId = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("ownerId");
+                String petOwnerId = test.toString();
+
                 newPet = new HashMap<String, String>() {
                     {
                         put("petName", petName);
                         put("petId", petId);
                         put("petType", petType);
+                        put("petOwnerId", petOwnerId);
                     }
                 };
                 pets.add(newPet);
@@ -83,6 +88,7 @@ public class PetController {
                     put("petName", userFeedback);
                     put("petId", userFeedback);
                     put("petType", userFeedback);
+                    put("petOwnerId", userFeedback);
                 }
             };
             pets.add(newPet);
@@ -92,7 +98,115 @@ public class PetController {
         return pets;
         //return "result";
     }
+    public static List<Map<String, String>> getListOwners() throws Exception {
+        List<Map<String, String>> owners = new ArrayList<Map<String, String>>();
+        Map<String, String> newOwner = new HashMap();//new HashMap<String, String>();
 
+        String url = "http://localhost:8083/user/customer";
+        System.out.println("test1");
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
+            System.out.println("test2");
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
+            System.out.println("test3: " + tokenList);
+            for (int i = 0; i < tokenList.size(); i++) {
+                JsonObject oj = tokenList.get(i).getAsJsonObject();
+                oj = tokenList.get(i).getAsJsonObject();
+
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
+                String ownerName = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("phoneNumber");
+                String ownerPhoneNumber = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("id");
+                String ownerId = test.toString();
+                newOwner = new HashMap<String, String>() {
+                    {
+                        put("ownerName", ownerName);
+                        put("ownerId", ownerId);
+                        put("ownerPhoneNumber", ownerPhoneNumber);
+                    }
+                };
+                owners.add(newOwner);
+            }
+        } catch (Exception e) {
+            //  Block of code to handle errors
+            String userFeedback = "Owner API is down or empty data";
+            newOwner = new HashMap<String, String>() {
+                {
+                    put("ownerName", userFeedback);
+                    put("ownerId", userFeedback);
+                    put("ownerPhoneNumber", userFeedback);
+                }
+            };
+            owners.add(newOwner);
+        }
+
+
+        return owners;
+        //return "result";
+    }
+
+    public static List<Map<String, String>> getListEmployees() throws Exception {
+        List<Map<String, String>> employees = new ArrayList<Map<String, String>>();
+        Map<String, String> newEmployee = new HashMap();//new HashMap<String, String>();
+
+        String url = "http://localhost:8083/user/employee";
+        System.out.println("test1");
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
+            System.out.println("test2");
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
+
+            for (int i = 0; i < tokenList.size(); i++) {
+                JsonObject oj = tokenList.get(i).getAsJsonObject();
+                oj = tokenList.get(i).getAsJsonObject();
+
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
+                String employeeName = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("skills");
+                String employeeSkills = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("id");
+                String employeeId = test.toString();
+                newEmployee = new HashMap<String, String>() {
+                    {
+                        put("employeeName", employeeName);
+                        put("employeeId", employeeId);
+                        put("employeeSkills", employeeSkills);
+                    }
+                };
+                employees.add(newEmployee);
+            }
+        } catch (Exception e) {
+            //  Block of code to handle errors
+            String userFeedback = "Employee API is down or empty data";
+            newEmployee = new HashMap<String, String>() {
+                {
+                    put("employeeName", userFeedback);
+                    put("employeeId", userFeedback);
+                    put("employeeSkills", userFeedback);
+                }
+            };
+            employees.add(newEmployee);
+        }
+
+
+        return employees;
+        //return "result";
+    }
 //    @PostMapping("/getPets")
 //    public String getAPIListPets(Authentication authentication,
 //                                 Model model) throws Exception {
@@ -184,13 +298,18 @@ public class PetController {
                 jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
                 System.out.println("TEST5");
 
-                String petIdAPI = jsonObject.getAsJsonObject().get("id").toString();
+                Integer petIdAPI = jsonObject.getAsJsonObject().get("id").getAsInt();
 
-                pet.setPetType(petIdAPI);
+                pet.setPetId(petIdAPI);
+                Integer petOwnerIdAPI = jsonObject.getAsJsonObject().get("ownerId").getAsInt();
+
+                pet.setPetId(petIdAPI);
+                pet.setPetId(petOwnerIdAPI);
+
                 model.addAttribute("pet", pet);
                 System.out.println("Pet is successsfully added");
             } else {
-                userFeedback = "Model should be either USED or NEW";
+                userFeedback = "Model should be either CAT or DOG";
                 model.addAttribute("updateError", userFeedback);
             }
 
@@ -282,10 +401,10 @@ public class PetController {
         try {
             HttpPost request = new HttpPost(url);
             JsonObject jsonObject = JsonParser.parseString(printOwnerString()).getAsJsonObject();
-
+            System.out.println(jsonObject.toString());
             jsonObject.addProperty("name", owner.getOwnerName());
             jsonObject.addProperty("phoneNumber", owner.getOwnerPhoneNumber());
-
+            System.out.println(jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -325,18 +444,18 @@ public class PetController {
         //employees = getListEmployees();
         String userFeedback = "Success";
 
-        String url = "http://localhost:8083/user/customer";
+        String url = "http://localhost:8083/pet/1";
 
-
+        System.out.println(url);
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(url);
             JsonObject jsonObject = JsonParser.parseString(printEmployeeString()).getAsJsonObject();
-
+            System.out.println(jsonObject.toString());
             jsonObject.addProperty("name", employee.getEmployeeName());
-            jsonObject.addProperty("skills", employee.getEmployeeSkills().toString());
-
+            jsonObject.addProperty("skills", employee.getEmployeeSkills());
+            System.out.println(jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -387,7 +506,7 @@ public class PetController {
     public String printEmployeeString() {
         String jsonString = "{\n" +
                 "  \"name\": \"Alex\",\n" +
-                "  \"skills\": \"[\"PETTING\", \"FEEDING\"]\"\n" +
+                "  \"skills\": \"PETTING\"\n" +
                 "}";
         return jsonString;
     }

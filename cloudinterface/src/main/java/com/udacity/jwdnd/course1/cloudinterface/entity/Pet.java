@@ -2,6 +2,7 @@ package com.udacity.jwdnd.course1.cloudinterface.entity;
 
 public class Pet {
     private Integer petId;
+    private Integer petOwnerId;
     private String petType;
     private String petName;
     private Integer userId;
@@ -9,7 +10,7 @@ public class Pet {
     public Pet() {
     }
 
-    public Pet(Integer petId, String petType, String petName, Integer userId) {
+    public Pet(Integer petId, Integer petOwnerId, String petType, String petName, Integer userId) {
         this.petId = petId;
         this.petType = petType;
         this.petName = petName;
@@ -23,6 +24,14 @@ public class Pet {
 
     public void setPetId(Integer petId) {
         this.petId = petId;
+    }
+
+    public Integer getPetOwnerId() {
+        return petOwnerId;
+    }
+
+    public void setPetOwnerId(Integer petOwnerId) {
+        this.petOwnerId = petOwnerId;
     }
 
     public String getPetType() {
