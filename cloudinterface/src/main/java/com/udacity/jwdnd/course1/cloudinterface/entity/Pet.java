@@ -10,8 +10,9 @@ public class Pet {
     public Pet() {
     }
 
-    public Pet(Integer petId, Integer petOwnerId, String petType, String petName, Integer userId) {
+    public Pet(Integer petId, String petType, String petName, Integer userId, Integer petOwnerId) {
         this.petId = petId;
+        this.petOwnerId = petOwnerId;
         this.petType = petType;
         this.petName = petName;
         this.userId = userId;

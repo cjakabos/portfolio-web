@@ -248,7 +248,7 @@ public class PetController {
 
     @PostMapping("/addPet")
     public String insertOrUpdatePet(Authentication authentication,
-                                    @ModelAttribute("newPetModel") Pet pet,
+                                    @ModelAttribute("newPet") Pet pet,
                                     Model model) throws Exception {
         //List<Map<String, String>> pets = new ArrayList<Map<String, String>>();
         //pets = getListPets();
@@ -278,7 +278,7 @@ public class PetController {
             jsonObject.addProperty("owner", "1");
 
             System.out.println(jsonObject.toString());
-            if (pet.getPetName().equals("CAT") || pet.getPetName().equals("DOG")) {
+            if (pet.getPetType().equals("CAT") || pet.getPetType().equals("DOG")) {
                 userFeedback = "Success";
                 model.addAttribute("updateSuccess", userFeedback);
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -339,7 +339,7 @@ public class PetController {
     }
 
     @GetMapping(value = "/pets/{petId}")
-    public String editPet(@ModelAttribute("newPetModel") Pet pet,
+    public String editPet(@ModelAttribute("newPet") Pet pet,
                           Model model) throws IOException {
         String url = "http://localhost:8083/pets/" + pet.getPetId();
         System.out.println("url: " + url);
@@ -352,10 +352,10 @@ public class PetController {
         JsonObject jsonObject = JsonParser.parseString(printPetString()).getAsJsonObject();
         //jsonObject.put("name", pet.getPetModel());
         //jsonObject.remove("type");
-        jsonObject.addProperty("type", pet.getPetName());
-        jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetType());
+        jsonObject.addProperty("type", pet.getPetType());
+        jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetName());
 
-        if (pet.getPetName().equals("CAT") || pet.getPetName().equals("DOG")) {
+        if (pet.getPetType().equals("CAT") || pet.getPetType().equals("DOG")) {
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -387,7 +387,7 @@ public class PetController {
 
     @PostMapping("/addOwner")
     public String insertOrUpdateOwner(Authentication authentication,
-                                      @ModelAttribute("newOwnerModel") Owner owner,
+                                      @ModelAttribute("newOwner") Owner owner,
                                       Model model) throws Exception {
         List<Map<String, String>> owners = new ArrayList<Map<String, String>>();
         //owners = getListOwners();
@@ -401,7 +401,10 @@ public class PetController {
         try {
             HttpPost request = new HttpPost(url);
             JsonObject jsonObject = JsonParser.parseString(printOwnerString()).getAsJsonObject();
-            System.out.println(jsonObject.toString());
+            System.out.println(owner.getOwnerId());
+            System.out.println(owner.getOwnerName());
+            System.out.println(owner.getOwnerPhoneNumber());
+            System.out.println(owner.getUserId());
             jsonObject.addProperty("name", owner.getOwnerName());
             jsonObject.addProperty("phoneNumber", owner.getOwnerPhoneNumber());
             System.out.println(jsonObject.toString());
@@ -438,7 +441,7 @@ public class PetController {
 
     @PostMapping("/addEmployee")
     public String insertOrUpdateEmployee(Authentication authentication,
-                                         @ModelAttribute("newEmployeeModel") Employee employee,
+                                         @ModelAttribute("newEmployee") Employee employee,
                                          Model model) throws Exception {
         List<Map<String, String>> employees = new ArrayList<Map<String, String>>();
         //employees = getListEmployees();
@@ -499,7 +502,7 @@ public class PetController {
     public String printOwnerString() {
         String jsonString = "{\n" +
                 "  \"name\": \"Alex\",\n" +
-                "  \"phoneNumber\": \"+461\"\n" +
+                "  \"phoneNumber\": \"461\"\n" +
                 "}";
         return jsonString;
     }

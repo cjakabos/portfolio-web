@@ -1,7 +1,6 @@
 package com.udacity.jwdnd.course1.cloudinterface.controller;
 
-import com.udacity.jwdnd.course1.cloudinterface.entity.Credential;
-import com.udacity.jwdnd.course1.cloudinterface.entity.Note;
+import com.udacity.jwdnd.course1.cloudinterface.entity.*;
 import com.udacity.jwdnd.course1.cloudinterface.services.*;
 import com.udacity.jwdnd.course1.cloudinterface.controller.CarController;
 import org.springframework.security.core.Authentication;
@@ -35,6 +34,10 @@ public class HomeController {
     public String getHome(Authentication authentication,
                           @ModelAttribute("newNote") Note note,
                           @ModelAttribute("newCredential") Credential credential,
+                          @ModelAttribute("newCar") Car car,
+                          @ModelAttribute("newPet") Pet pet,
+                          @ModelAttribute("newOwner") Owner owner,
+                          @ModelAttribute("newEmployee") Employee employee,
                           Model model) throws Exception {
         Integer userId = uService.getUserId(authentication);
 

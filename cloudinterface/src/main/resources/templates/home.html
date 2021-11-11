@@ -220,8 +220,8 @@
                                 <tbody th:each="car: ${cars}">
                                     <tr>
                                         <td>
-                                            <button type="button" class="btn btn-success" th:data-id="${car.carId}" th:data-title="${car.carModel}"
-													th:data-description="${car.carCondition}" th:onclick="showCarModal(this.getAttribute('data-id'),
+                                            <button type="button" class="btn btn-success" th:data-id="${car.carId}" th:data-model="${car.carModel}"
+													th:data-condition="${car.carCondition}" th:onclick="showCarModal(this.getAttribute('data-id'),
 														this.getAttribute('data-model'), this.getAttribute('data-condition'))">
 														Edit
 														</button>
@@ -246,14 +246,14 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newCar}" th:action="@{/car/addCar}" action="#" method="POST">
-                                            <input type="hidden" name="carListId" id="car-id">
+                                            <input th:field="*{carId}"  type="hidden" name="carId" id="car-id">
                                             <div class="form-group">
                                                 <label for="car-model" class="col-form-label">Model</label>
-                                                <input type="text" name="carModel" class="form-control" id="car-model" maxlength="20" required>
+                                                <textarea th:field="*{carModel}" name="carModel" class="form-control" id="car-model" maxlength="200" required>
                                             </div>
                                             <div class="form-group">
                                                 <label for="car-condition" class="col-form-label">Condition</label>
-                                                <textarea name="carCondition" id="car-condition" rows="5" maxlength="1000" required></textarea>
+                                                <textarea th:field="*{carCondition}" name="carCondition" id="car-condition" rows="5" maxlength="1000" required></textarea>
                                             </div>
                                             <button id="carSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -267,7 +267,7 @@
                         </div>
                     </div>
                    <div class="tab-pane fade" id="nav-pets" role="tabpanel" aria-labelledby="nav-pets-tab">
-						<div id="showPetsDiv">
+						<div id="showAllDiv">
 							<button id="showOwnerForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showOwnerModal()">
 								+ Add a New Owner
 							</button>
@@ -296,7 +296,12 @@
                                 </thead>
                                 <tbody th:each="pet: ${pets}">
                                     <tr>									
-                                        <td>
+                                        <td>									
+                                            <button type="button" class="btn btn-success" th:data-id="${owners[0].ownerId}" th:data-name="${owners[0].ownerName}"
+													th:data-phonenumber="${owners[0].ownerPhoneNumber}" th:onclick="showOwnerModal(this.getAttribute('data-id'),
+														this.getAttribute('data-phonenumber'), this.getAttribute('data-name'))">
+														Edit
+											</button>
 										</td>
                                         <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
                                         <td th:text="${pet.get('petName')}">Example Pet Name </td>
@@ -317,14 +322,14 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newPet}" th:action="@{/pet/addPet}" action="#" method="POST">
-                                            <input type="hidden" name="petListId" id="pet-id">
+                                            <input type="hidden" name="petId" id="pet-id">
                                             <div class="form-group">
                                                 <label for="pet-type" class="col-form-label">Type</label>
-                                                <input type="text" name="petType" class="form-control" id="pet-title" maxlength="20" required>
+                                               <input th:field="*{petType}" type="text" name="petType" class="form-control" id="pet-type" maxlength="20" required>
                                             </div>
                                             <div class="form-group">
                                                 <label for="pet-name" class="col-form-label">Name</label>
-                                                <textarea name="petName" id="pet-name" rows="5" maxlength="1000" required></textarea>
+                                                <textarea th:field="*{petName}" name="petName" id="pet-name" rows="5" maxlength="1000" required></textarea>
                                             </div>
                                             <button id="petSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -347,14 +352,14 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newOwner}" th:action="@{/pet/addOwner}" action="#" method="POST">
-                                            <input type="hidden" name="ownerListId" id="owner-id">
+                                            <input type="hidden" name="ownerId" id="owner-id">
                                             <div class="form-group">
-                                                <label for="owner-phoneNumber" class="col-form-label">PhoneNumber</label>
-                                                <input type="text" name="ownerPhoneNumber" class="form-control" id="owner-phoneNumber" maxlength="20" required>
+                                                <label for="owner-phonenumber" class="col-form-label">PhoneNumber</label>
+                                               <input th:field="*{ownerPhoneNumber}" type="text" name="ownerPhoneNumber" class="form-control" id="owner-phonenumber" maxlength="200" required>
                                             </div>
                                             <div class="form-group">
                                                 <label for="owner-name" class="col-form-label">Name</label>
-                                                <textarea name="ownerName" id="owner-name" rows="5" maxlength="1000" required></textarea>
+                                                <textarea th:field="*{ownerName}" name="ownerName" id="owner-name" rows="5" maxlength="1000" required></textarea>
                                             </div>
                                             <button id="ownerSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -377,14 +382,14 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newEmployee}" th:action="@{/pet/addEmployee}" action="#" method="POST">
-                                            <input type="hidden" name="employeeListId" id="employee-id">
+                                            <input type="hidden" name="employeeId" id="employee-id">
                                             <div class="form-group">
                                                 <label for="employee-skills" class="col-form-label">Skills</label>
-                                                <input type="text" name="employeeSkills" class="form-control" id="employee-skills" maxlength="20" required>
+                                               <input th:field="*{employeeSkills}" type="text" name="employeeSkills" class="form-control" id="employee-skills" maxlength="200" required>
                                             </div>
                                             <div class="form-group">
                                                 <label for="employee-name" class="col-form-label">Name</label>
-                                                <textarea name="employeeName" id="employee-name" rows="5" maxlength="1000" required></textarea>
+                                                <textarea th:field="*{employeeName}" name="employeeName" id="employee-name" rows="5" maxlength="1000" required></textarea>
                                             </div>
                                             <button id="employeeSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -424,29 +429,29 @@
                 $('#credentialModal').modal('show');
             }
             // For opening the car modal
-            function showCarModal(carListId, carModel, carCondition) {
-                $('#car-id').val(carListId ? carListId : '');
+            function showCarModal(carId, carModel, carCondition) {
+                $('#car-id').val(carId ? carId : '');
                 $('#car-model').val(carModel ? carModel : '');
                 $('#car-condition').val(carCondition ? carCondition : '');
                 $('#carModal').modal('show');
             }
             // For opening the pet modal
-            function showPetModal(petListId, petType, petName) {
-                $('#pet-id').val(petListId ? petListId : '');
+            function showPetModal(petId, petType, petName) {
+                $('#pet-id').val(petId ? petId : '');
                 $('#pet-type').val(petType ? petType : '');
                 $('#pet-name').val(petName ? petName : '');
                 $('#petModal').modal('show');
             }
             // For opening the owner modal
-            function showOwnerModal(ownerListId, ownerPhoneNumber, ownerName) {
-                $('#owner-id').val(ownerListId ? ownerListId : '');
-                $('#owner-phoneNumber').val(ownerPhoneNumber ? ownerPhoneNumber : '');
+            function showOwnerModal(ownerId, ownerPhoneNumber, ownerName) {
+                $('#owner-id').val(ownerId ? ownerId : '');
+                $('#owner-phonenumber').val(ownerPhoneNumber ? ownerPhoneNumber : '');
                 $('#owner-name').val(ownerName ? ownerName : '');
                 $('#ownerModal').modal('show');
             }
             // For opening the employee modal
-            function showEmployeeModal(employeeListId, employeeSkills, employeeName) {
-                $('#employee-id').val(employeeListId ? employeeListId : '');
+            function showEmployeeModal(employeeId, employeeSkills, employeeName) {
+                $('#employee-id').val(employeeId ? employeeId : '');
                 $('#employee-skills').val(employeeSkills ? employeeSkills : '');
                 $('#employee-name').val(employeeName ? employeeName : '');
                 $('#employeeModal').modal('show');
