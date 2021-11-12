@@ -6,7 +6,7 @@ Repository for the different projects from my Nanodegree in [Java Web Developmen
 ## Roadmap
 Development roadmap with requirements and milestones.
 
-Three base layers of storage application for Files, Notes and Credentials. They are the first project of the nanodegree program and can run standalone without the extra layers below (these will report service is unavailable at the respective tab).
+Three base layers of storage application for Files, Notes and Credentials. They are the [first project](cloudinterface/README.md) of the nanodegree program and can run standalone without the extra layers below (these will report service is unavailable at the respective tab).
 
 - [x] The cloud service back-end with Spring Boot
 - [x] The cloud service front-end with Thymeleaf
@@ -14,8 +14,8 @@ Three base layers of storage application for Files, Notes and Credentials. They 
 
 Extra layers of cloud interface application:
 
-- [x] Cars interface for the Car service's REST API. For project details see [Vehicles API](vehicles-api/README.md).
-- [ ] Scheduling interface for a Pet Store's Saas Application
+- [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
+- [x] Scheduling interface for a Pet Store's Saas Application. The [third project](petstore/README.md) of the nanodegree.
 
 **Example of user interface**
 ![](./front-end-example.png)
@@ -94,7 +94,7 @@ should be running (start them in reading order) at once for full operation. Eith
 - [CloudInterface](cloudinterface/README.md): first main project of nanodegree program, when run alone, no Cars or Pets interface available.
 
 2. Full functionality with base and extra layers:
-- [Eureka](eureka): microservice registration and discovery.
+- [Eureka](eureka/README.md): microservice registration and discovery.
 - [Boogle Maps](boogle-maps/README.md): a mock service to simulate a backend for vehicle location.
 - [Pricing Service](pricing-service/README.md): a mock service to simulate a backend for vehicle pricing.
 - [Vehicles API](vehicles-api/README.md): second main project of nanodegree program. A REST API to maintain vehicle data and to provide a complete
