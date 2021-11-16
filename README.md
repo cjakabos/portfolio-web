@@ -2,6 +2,7 @@
 
 Repository for the different projects from my Nanodegree in [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a cloud interface.
 
+[Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
 
 ## Roadmap
 Development roadmap with requirements and milestones.
@@ -16,6 +17,7 @@ Extra layers of cloud interface application:
 
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
 - [x] Scheduling interface for a Pet Store's Saas Application. The [third project](petstore/README.md) of the nanodegree.
+- [ ] Interface for a eCommerce web store application. The [fourth project](ecommerce/README.md) of the nanodegree.
 
 **Example of user interface**
 ![](./front-end-example.png)
@@ -73,6 +75,12 @@ There are HTML templates for the application pages. They have fields, modal form
   - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore service API interface.
   - Any errors related to the operations is displayed.
 
+
+    vi. eCommerce (extra layer, optional)
+- The user can create users, items, carts and orders for the eCommerce service through its API.
+- Any errors related to the operations is displayed.
+
+  
 ### Testing
 Selenium tests are defined to verify user-facing functionality and to check feature-completeness.
 
@@ -100,6 +108,7 @@ should be running (start them in reading order) at once for full operation. Eith
 - [Vehicles API](vehicles-api/README.md): second main project of nanodegree program. A REST API to maintain vehicle data and to provide a complete
   view of vehicle details including price and address.
 - [Petstore](petstore/README.md): third main project of nanodegree program. A REST API to maintain petstore data with pets, owners, employees and schedules.
+- [eCommerce](ecommerce/README.md): fourth main project of nanodegree program. A REST API to maintain ecommerce data with users, items, carts and orders.
 - [CloudInterface](cloudinterface/README.md): first main project of nanodegree program, extended to communicate with the Vehicles API and send/receive data with it.
 
 1. Compile and package application in each subfolder:
@@ -133,7 +142,19 @@ java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
 ```
 •	Swagger API documentation is available at: http://localhost:8080/swagger-ui.html
 
-6. Cloud interface:
+6. Petstore:
+```
+java -jar target/petstore-0.0.1-SNAPSHOT.jar
+```
+•	The service is available by default on port 8083. Check README for Postman usage.
+
+7. Ecommerce:
+```
+java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
+```
+•	The service is available by default on port 8099. Check README for Postman usage.
+
+8. Cloud interface:
 ```
 java -jar target/cloudinterface-0.0.1-SNAPSHOT.jar
 ```
