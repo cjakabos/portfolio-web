@@ -23,7 +23,8 @@
                         <a class="nav-item nav-link" id="nav-credentials-tab" data-toggle="tab" href="#nav-credentials" role="tab" aria-controls="nav-credentials" aria-selected="false">Credentials</a>
                         <a class="nav-item nav-link" id="nav-cars-tab" data-toggle="tab" href="#nav-cars" role="tab" aria-controls="nav-cars" aria-selected="false">Cars</a>
                         <a class="nav-item nav-link" id="nav-pets-tab" data-toggle="tab" href="#nav-pets" role="tab" aria-controls="nav-pets" aria-selected="false">Pets</a>
-						</div>
+                        <a class="nav-item nav-link" id="nav-ecommerce-tab" data-toggle="tab" href="#nav-ecommerce" role="tab" aria-controls="nav-ecommerce" aria-selected="false">Ecommerce</a>
+					</div>
                 </nav>
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane fade show active" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
@@ -402,6 +403,83 @@
                             </div>
                         </div>
 					</div>
+                   <div class="tab-pane fade" id="nav-ecommerce" role="tabpanel" aria-labelledby="nav-ecommerce-tab">
+						<div id="showEcommercesDiv">
+							<button id="showEcommerceUserForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceUserModal()">
+								+ Add a user
+							</button>
+							<button id="showEcommerceLoginForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceLoginModal()">
+								+ Login a user
+							</button>
+							<button id="showEcommerceItemForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceItemModal()">
+								+ Create an item
+							</button>
+							<button id="showEcommerceCartForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceCartModal()">
+								+ Add to cart
+							</button>
+							<button id="showEcommerceOrderForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceOrderModal()">
+								+ Submit order
+							</button>
+						</div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="userTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%" scope="col"></th>
+                                        <th style="width: 20%" scope="col">Model</th>
+                                        <th style="width: 80%" scope="col">Condition</th>
+                                    </tr>
+                                </thead>
+                                <tbody th:each="item: ${items}">
+                                    <tr>
+                                        <td>
+                                            <button type="button" class="btn btn-success" th:data-id="${item.ecommerceId}" th:data-name="${item.name}"
+													th:data-price="${item.price}" th:data-description="${item.description}" th:onclick="showEcommerceItemModal(this.getAttribute('data-id'),
+														this.getAttribute('data-model'), this.getAttribute('data-condition'))">
+														Edit
+														</button>
+                                        <a class="btn btn-danger" th:href="@{/ecommerce/item/delete/{ecommerceId}(ecommerceId = ${item.get('ecommerceId')})}">Delete</a>
+										</td>
+										
+                                        <th th:text="${item.get('name')}" scope="row">Example Item Name</th>
+                                        <td th:text="${item.get('price')}">Example Item Price</td>
+                                        <td th:text="${item.get('description')}">Example Item Description</td>
+									</tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="ecommerceUserModalLabel">Item</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form th:object="${newEcommerceUser}" th:action="@{/ecommerce/addUser}" action="#" method="POST">
+                                            <div class="form-group">
+                                                <label for="ecommerce-username" class="col-form-label">User</label>
+                                                <textarea th:field="*{ecommerceUsername}" name="ecommerceUsername" class="form-control" id="ecommerce-username" maxlength="200" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="ecommerce-password" class="col-form-label">Password</label>
+                                                <textarea th:field="*{ecommercePassword}" name="ecommercePassword" id="ecommerce-password" rows="5" maxlength="1000" required></textarea>
+                                            </div>
+											<button id="ecommerceSubmit" type="submit" class="d-none"></button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="$('#ecommerceSubmit').click();">Save changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 				</div>
             </div>
         </div>
@@ -455,6 +533,12 @@
                 $('#employee-skills').val(employeeSkills ? employeeSkills : '');
                 $('#employee-name').val(employeeName ? employeeName : '');
                 $('#employeeModal').modal('show');
+            }
+            // For opening the ecommerce user modal
+            function showEcommerceUserModal(ecommerceUsername, ecommercePassword) {
+                $('#ecommerce-username').val(ecommerceUsername ? ecommerceUsername : '');
+                $('#ecommerce-password').val(ecommercePassword ? ecommercePassword : '');
+                $('#ecommerceUserModal').modal('show');
             }
 			</script>
     </body>

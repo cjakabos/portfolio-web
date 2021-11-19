@@ -38,6 +38,7 @@ public class HomeController {
                           @ModelAttribute("newPet") Pet pet,
                           @ModelAttribute("newOwner") Owner owner,
                           @ModelAttribute("newEmployee") Employee employee,
+                          @ModelAttribute("newEcommerceUser") UserEcommerce newEcommerceUser,
                           Model model) throws Exception {
         Integer userId = uService.getUserId(authentication);
 
