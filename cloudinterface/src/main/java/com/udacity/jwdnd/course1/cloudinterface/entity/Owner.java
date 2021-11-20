@@ -29,7 +29,7 @@ public class Owner {
         return ownerPhoneNumber;
     }
 
-    public void setOwnerType(String ownerPhoneNumber) {
+    public void setOwnerPhoneNumber(String ownerPhoneNumber) {
         this.ownerPhoneNumber = ownerPhoneNumber;
     }
 

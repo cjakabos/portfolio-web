@@ -2,6 +2,7 @@ package com.udacity.jwdnd.course1.cloudinterface.controller;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -273,8 +274,8 @@ public class PetController {
             //jsonObject.put("name", pet.getPetModel());
             //jsonObject.remove("type");
 
-            jsonObject.addProperty("type", pet.getPetName());
-            jsonObject.addProperty("name", pet.getPetType());
+            jsonObject.addProperty("type", pet.getPetType());
+            jsonObject.addProperty("name", pet.getPetName());
             jsonObject.addProperty("owner", "1");
 
             System.out.println(jsonObject.toString());
@@ -424,9 +425,7 @@ public class PetController {
 
             jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
 
-            String ownerIdAPI = jsonObject.getAsJsonObject().get("id").toString();
 
-            owner.setOwnerType(ownerIdAPI);
             model.addAttribute("owner", owner);
             System.out.println("Owner is successsfully added");
 
@@ -447,7 +446,7 @@ public class PetController {
         //employees = getListEmployees();
         String userFeedback = "Success";
 
-        String url = "http://localhost:8083/pet/1";
+        String url = "http://localhost:8083/user/employee";
 
         System.out.println(url);
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
@@ -457,7 +456,11 @@ public class PetController {
             JsonObject jsonObject = JsonParser.parseString(printEmployeeString()).getAsJsonObject();
             System.out.println(jsonObject.toString());
             jsonObject.addProperty("name", employee.getEmployeeName());
-            jsonObject.addProperty("skills", employee.getEmployeeSkills());
+            
+            Gson gson = new Gson();
+            JsonElement element = gson.toJsonTree(employee.getEmployeeSkills(), new TypeToken<List<String>>() {}.getType());
+            jsonObject.add("skills", element.getAsJsonArray());
+
             System.out.println(jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
@@ -467,7 +470,7 @@ public class PetController {
             request.setEntity(params);
 
             HttpResponse response = httpClient.execute(request);
-
+            System.out.println(response.toString());
 
             HttpEntity entity = response.getEntity();
 
