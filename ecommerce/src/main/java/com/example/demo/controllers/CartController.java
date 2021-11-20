@@ -65,5 +65,11 @@ public class CartController {
 		cartRepository.save(cart);
 		return ResponseEntity.ok(cart);
 	}
-		
+
+	@PostMapping("/getCart")
+	public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request) {
+		User user = userRepository.findByUsername(request.getUsername());
+		Cart cart = cartRepository.findByUser(user);
+		return ResponseEntity.ok(cart);
+	}
 }
