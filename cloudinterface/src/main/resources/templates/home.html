@@ -417,12 +417,12 @@
 							<button id="showEcommerceOrderForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceOrderModal()">
 								+ Add order to cart
 							</button>
-							<button id="showEcommerceSubmitForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceSubmitModal()">
-								+ Submit order
-							</button>
+							<form action="#" th:action="@{/ecommerce/submitOrder}" method="POST">
+								<button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
+									+ Submit order
+								</button>
+							</form>
 						</div>
-
-
                         <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">

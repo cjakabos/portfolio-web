@@ -32,6 +32,8 @@ public class UserEcommerceController {
 
     private String bearerToken;
 
+    private String currentUser;
+
     public UserEcommerceController(NoteService nService) {
         this.nService = nService;
     }
@@ -40,6 +42,8 @@ public class UserEcommerceController {
     public String addEcommerceUser(Authentication authentication,
                                    @ModelAttribute("newEcommerceUser") UserEcommerce userEcommerce,
                                    Model model) {
+        this.currentUser = userEcommerce.getEcommerceUsername();
+
         String userFeedback = "Success";
         System.out.println("This adds user");
         System.out.println(printString());
@@ -134,6 +138,40 @@ public class UserEcommerceController {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
         }
+        return "result";
+    }
+
+    @PostMapping("/submitOrder")
+    public String submitOrder(Authentication authentication,
+                              Model model) {
+        String userFeedback = "Success";
+        System.out.println("This submits order");
+
+        String url = "http://localhost:8099/api/order/submit/" + this.currentUser;
+
+        System.out.println("url : " + url);
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+
+            request.setHeader("content-type", "application/json");
+            request.setHeader("Authorization", this.bearerToken);
+
+            HttpResponse response = httpClient.execute(request);
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+            JsonObject jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+
+            System.out.println("Order: " + jsonObject.toString());
+            userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            
+        } catch (Exception ex) {
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+
         return "result";
     }
 
