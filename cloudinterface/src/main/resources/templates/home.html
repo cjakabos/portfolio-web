@@ -422,33 +422,6 @@
 							</button>
 						</div>
 
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 20%" scope="col"></th>
-                                        <th style="width: 20%" scope="col">Model</th>
-                                        <th style="width: 80%" scope="col">Condition</th>
-                                    </tr>
-                                </thead>
-                                <tbody th:each="item: ${items}">
-                                    <tr>
-                                        <td>
-                                            <button type="button" class="btn btn-success" th:data-id="${item.ecommerceId}" th:data-name="${item.name}"
-													th:data-price="${item.price}" th:data-description="${item.description}" th:onclick="showEcommerceItemModal(this.getAttribute('data-id'),
-														this.getAttribute('data-model'), this.getAttribute('data-condition'))">
-														Edit
-														</button>
-                                        <a class="btn btn-danger" th:href="@{/ecommerce/item/delete/{ecommerceId}(ecommerceId = ${item.get('ecommerceId')})}">Delete</a>
-										</td>
-										
-                                        <th th:text="${item.get('name')}" scope="row">Example Item Name</th>
-                                        <td th:text="${item.get('price')}">Example Item Price</td>
-                                        <td th:text="${item.get('description')}">Example Item Description</td>
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
 
                         <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
                             <div class="modal-dialog" role="document">
@@ -461,13 +434,14 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newEcommerceUser}" th:action="@{/ecommerce/addUser}" action="#" method="POST">
+                                            <input type="hidden" name="employeeId" id="employee-id">
                                             <div class="form-group">
                                                 <label for="ecommerce-username" class="col-form-label">User</label>
-                                                <textarea th:field="*{ecommerceUsername}" name="ecommerceUsername" class="form-control" id="ecommerce-username" maxlength="200" required>
+                                            	<input th:field="*{ecommerceUsername}" type="text" name= "ecommerceUsername" class="form-control" id="ecommerce-username" maxlength="20" required>
                                             </div>
                                             <div class="form-group">
                                                 <label for="ecommerce-password" class="col-form-label">Password</label>
-                                                <textarea th:field="*{ecommercePassword}" name="ecommercePassword" id="ecommerce-password" rows="5" maxlength="1000" required></textarea>
+                                                <input th:field="*{ecommercePassword}" type="text" name= "ecommercePassword" class="form-control" id="ecommerce-password" maxlength="20" required>
                                             </div>
 											<button id="ecommerceSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -535,7 +509,8 @@
                 $('#employeeModal').modal('show');
             }
             // For opening the ecommerce user modal
-            function showEcommerceUserModal(ecommerceUsername, ecommercePassword) {
+            function showEcommerceUserModal(ecommerceId, ecommerceUsername, ecommercePassword) {
+                $('#ecommerce-id').val(ecommerceId ? ecommerceId : '');
                 $('#ecommerce-username').val(ecommerceUsername ? ecommerceUsername : '');
                 $('#ecommerce-password').val(ecommercePassword ? ecommercePassword : '');
                 $('#ecommerceUserModal').modal('show');

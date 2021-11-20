@@ -18,6 +18,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -68,14 +69,14 @@ public class UserEcommerceController {
                 System.out.println("User is successsfully added");
 
             url = "http://localhost:8099/login";
+            request = new HttpPost(url);
             jsonObject = JsonParser.parseString(printStringLogin()).getAsJsonObject();
             jsonObject.addProperty("username", userEcommerce.getEcommerceUsername());
-            jsonObject.addProperty("password", userEcommerce.getEcommerceUsername());
+            jsonObject.addProperty("password", userEcommerce.getEcommercePassword());
             System.out.println(jsonObject.toString());
             params = new StringEntity(jsonObject.toString(), "UTF-8");
             request.setEntity(params);
             response = httpClient.execute(request);
-            System.out.println("test");
 
         } catch (Exception ex) {
         } finally {
