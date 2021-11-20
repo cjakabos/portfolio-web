@@ -3,6 +3,7 @@ package com.udacity.jwdnd.course1.cloudinterface.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.udacity.jwdnd.course1.cloudinterface.entity.Note;
+import com.udacity.jwdnd.course1.cloudinterface.entity.OrderEcommerce;
 import com.udacity.jwdnd.course1.cloudinterface.entity.UserEcommerce;
 import com.udacity.jwdnd.course1.cloudinterface.services.NoteService;
 import org.apache.http.Header;
@@ -92,6 +93,49 @@ public class UserEcommerceController {
         return "result";
     }
 
+    @PostMapping("/addToOrder")
+    public String addToEcommerceCart(Authentication authentication,
+                                     @ModelAttribute("newEcommerceOrder") OrderEcommerce order,
+                                     Model model) {
+        String userFeedback = "Success";
+        System.out.println("This adds order");
+
+
+        String url = "http://localhost:8099/api/cart/addToCart";
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+            System.out.println("parse try" + order.getEcommerceOrderUsername() + order.getEcommerceItemId() + order.getEcommerceQuantity());
+            JsonObject jsonObject = JsonParser.parseString(printStringOrder()).getAsJsonObject();
+            System.out.println("parse ok");
+            jsonObject.addProperty("username", order.getEcommerceOrderUsername());
+            jsonObject.addProperty("itemId", order.getEcommerceItemId());
+            jsonObject.addProperty("quantity", order.getEcommerceQuantity());
+            System.out.println(jsonObject.toString());
+
+            userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+
+            request.setHeader("content-type", "application/json");
+            request.setHeader("Authorization", this.bearerToken);
+            request.setEntity(params);
+
+            HttpResponse response = httpClient.execute(request);
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+            jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+
+            System.out.println("Order: " + jsonObject.toString());
+
+        } catch (Exception ex) {
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+        return "result";
+    }
 
     public String printString() {
         String jsonString = "{\n" +
@@ -106,6 +150,15 @@ public class UserEcommerceController {
         String jsonString = "{\n" +
                 "  \"username\": \"USED\",\n" +
                 "  \"password\": \"USED\"\n" +
+                "}";
+        return jsonString;
+    }
+
+    public String printStringOrder() {
+        String jsonString = "{\n" +
+                "  \"username\": \"USED\",\n" +
+                "  \"itemId\": \"1\",\n" +
+                "  \"quantity\": \"1\"\n" +
                 "}";
         return jsonString;
     }

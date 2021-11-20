@@ -414,10 +414,10 @@
 							<button id="showEcommerceItemForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceItemModal()">
 								+ Create an item
 							</button>
-							<button id="showEcommerceCartForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceCartModal()">
-								+ Add to cart
-							</button>
 							<button id="showEcommerceOrderForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceOrderModal()">
+								+ Add order to cart
+							</button>
+							<button id="showEcommerceSubmitForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceSubmitModal()">
 								+ Submit order
 							</button>
 						</div>
@@ -427,14 +427,13 @@
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="ecommerceUserModalLabel">Item</h5>
+                                        <h5 class="modal-title" id="ecommerceUserModalLabel">Add new user and log it in</h5>
                                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newEcommerceUser}" th:action="@{/ecommerce/addUser}" action="#" method="POST">
-                                            <input type="hidden" name="employeeId" id="employee-id">
                                             <div class="form-group">
                                                 <label for="ecommerce-username" class="col-form-label">User</label>
                                             	<input th:field="*{ecommerceUsername}" type="text" name= "ecommerceUsername" class="form-control" id="ecommerce-username" maxlength="20" required>
@@ -453,7 +452,42 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <div class="modal fade" id="ecommerceOrderModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceOrderModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="ecommerceOrderModalLabel">Define order</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form th:object="${newEcommerceOrder}" th:action="@{/ecommerce/addToOrder}" action="#" method="POST">
+                                            <div class="form-group">
+                                                <label for="ecommerce-orderUsername" class="col-form-label">Username</label>
+                                            	<input th:field="*{ecommerceOrderUsername}" type="text" name= "ecommerceOrderUsername" class="form-control" id="ecommerce-orderUsername" maxlength="20" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="ecommerce-orderItemId" class="col-form-label">Itemid</label>
+                                                <input th:field="*{ecommerceItemId}" type="text" name= "ecommerceItemId" class="form-control" id="ecommerce-orderItemId" maxlength="20" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="ecommerce-orderQuantity" class="col-form-label">Quantity</label>
+                                                <input th:field="*{ecommerceQuantity}" type="text" name= "ecommerceQuantity" class="form-control" id="ecommerce-orderQuantity" maxlength="20" required>
+                                            </div>
+											<button id="ecommerceOrderSubmit" type="submit" class="d-none"></button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="$('#ecommerceOrderSubmit').click();">Save changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+					</div>
 				</div>
             </div>
         </div>
@@ -514,6 +548,14 @@
                 $('#ecommerce-username').val(ecommerceUsername ? ecommerceUsername : '');
                 $('#ecommerce-password').val(ecommercePassword ? ecommercePassword : '');
                 $('#ecommerceUserModal').modal('show');
+            }
+            // For opening the ecommerce order modal
+            function showEcommerceOrderModal(ecommerceOrderId, ecommerceOrderUsername, ecommerceItemId, ecommerceQuantity) {
+                $('#ecommerce-orderid').val(ecommerceOrderId ? ecommerceOrderId : '');
+                $('#ecommerce-orderUsername').val(ecommerceOrderUsername ? ecommerceOrderUsername : '');
+                $('#ecommerce-orderItemId').val(ecommerceItemId ? ecommerceItemId : '');
+                $('#ecommerce-orderQuantity').val(ecommerceQuantity ? ecommerceQuantity : '');
+                $('#ecommerceOrderModal').modal('show');
             }
 			</script>
     </body>

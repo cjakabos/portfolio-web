@@ -3,6 +3,7 @@ package com.udacity.jwdnd.course1.cloudinterface.controller;
 import com.udacity.jwdnd.course1.cloudinterface.entity.*;
 import com.udacity.jwdnd.course1.cloudinterface.services.*;
 import com.udacity.jwdnd.course1.cloudinterface.controller.CarController;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,6 +40,7 @@ public class HomeController {
                           @ModelAttribute("newOwner") Owner owner,
                           @ModelAttribute("newEmployee") Employee employee,
                           @ModelAttribute("newEcommerceUser") UserEcommerce newEcommerceUser,
+                          @ModelAttribute("newEcommerceOrder") OrderEcommerce newEcommerceOrder,
                           Model model) throws Exception {
         Integer userId = uService.getUserId(authentication);
 
