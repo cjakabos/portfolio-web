@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import com.udacity.jwdnd.course1.cloudinterface.entity.Note;
 import com.udacity.jwdnd.course1.cloudinterface.entity.UserEcommerce;
 import com.udacity.jwdnd.course1.cloudinterface.services.NoteService;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -12,6 +13,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.json.HTTP;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,14 +29,16 @@ import java.util.Map;
 public class UserEcommerceController {
     private NoteService nService;
 
+    private String bearerToken;
+
     public UserEcommerceController(NoteService nService) {
         this.nService = nService;
     }
 
     @PostMapping("/addUser")
-    public String insertOrUpdateNote(Authentication authentication,
-                                     @ModelAttribute("newEcommerceUser") UserEcommerce userEcommerce,
-                                     Model model) {
+    public String addEcommerceUser(Authentication authentication,
+                                   @ModelAttribute("newEcommerceUser") UserEcommerce userEcommerce,
+                                   Model model) {
         String userFeedback = "Success";
         System.out.println("This adds user");
         System.out.println(printString());
@@ -53,20 +57,20 @@ public class UserEcommerceController {
             jsonObject.addProperty("confirmPassword", userEcommerce.getEcommercePassword());
             System.out.println(jsonObject.toString());
 
-                userFeedback = "Success";
-                model.addAttribute("updateSuccess", userFeedback);
-                StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+            userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
-                request.addHeader("content-type", "application/json");
-                request.setEntity(params);
-                HttpResponse response = httpClient.execute(request);
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            HttpResponse response = httpClient.execute(request);
 
-                HttpEntity entity = response.getEntity();
-                String responseString = EntityUtils.toString(entity, "UTF-8");
-                jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+            jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
 
 
-                System.out.println("User is successsfully added");
+            System.out.println("User is successsfully added");
 
             url = "http://localhost:8099/login";
             request = new HttpPost(url);
@@ -78,23 +82,16 @@ public class UserEcommerceController {
             request.setEntity(params);
             response = httpClient.execute(request);
 
+            Header[] headers = response.getAllHeaders();
+            this.bearerToken = headers[0].toString().substring(15);
         } catch (Exception ex) {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
         }
 
-
         return "result";
     }
 
-    @GetMapping(value = "/delete/{noteId}")
-    public String deleteNote(@PathVariable Integer noteId,
-                             Model model) {
-        String userFeedback = "Success";
-        nService.deleteNote(noteId);
-        model.addAttribute("updateSuccess", userFeedback);
-        return "result";
-    }
 
     public String printString() {
         String jsonString = "{\n" +
