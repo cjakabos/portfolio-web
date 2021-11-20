@@ -8,8 +8,6 @@ public class UserEcommerce {
 
 	private String ecommercePassword;
 
-    private Cart cart;
-
 	public UserEcommerce(){
 	}
 
@@ -19,14 +17,6 @@ public class UserEcommerce {
 		this.ecommercePassword = password;
 	}
 	
-	public Cart getCart() {
-		return cart;
-	}
-
-	public void setCart(Cart cart) {
-		this.cart = cart;
-	}
-
 	public long getId() {
 		return id;
 	}
