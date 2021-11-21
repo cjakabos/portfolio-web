@@ -5,9 +5,9 @@ Personal information management application, and the minimum viable product incl
 2. **Note Management:** Add/update/remove text notes
 3. **Password Management:** Save, edit, and delete website credentials.
 
-Complete solution for a back-end server, front-end website, and tests. For details see main [README](..\README.md).
+Complete solution for a back-end server, front-end website, and tests. For details see main [README](../README.md).
 
-Additional features are available, when the other services are also running, check main [README](..\README.md) for details.
+Additional features are available, when the other services are also running, check main [README](../README.md) for details.
 ## Run the code
 
 To run this service you execute:

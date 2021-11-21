@@ -13,11 +13,11 @@ Three base layers of storage application for Files, Notes and Credentials. They 
 - [x] The cloud service front-end with Thymeleaf
 - [x] Cloud service application tests with Selenium
 
-Extra layers of cloud interface application:
+Extra layers of cloud interface application, which are extra curriculum work by me, to connect all standalone projects (for running them separately check the READMEs below)to one main front-end interface:
 
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
-- [x] Scheduling interface for a Pet Store's Saas Application. The [third project](petstore/README.md) of the nanodegree.
-- [ ] Interface for a eCommerce web store application. The [fourth project](ecommerce/README.md) of the nanodegree.
+- [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
+- [ ] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
 
 **Example of user interface**
 ![](./front-end-example.png)
@@ -72,9 +72,9 @@ There are HTML templates for the application pages. They have fields, modal form
    - Any errors related to the operations is displayed.
 
     v. Pets (extra layer, optional)
-  - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore service API interface.
-  - Any errors related to the operations is displayed.
 
+- The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore service API interface.
+- Any errors related to the operations is displayed.
 
     vi. eCommerce (extra layer, optional)
 - The user can create users, items, carts and orders for the eCommerce service through its API.
