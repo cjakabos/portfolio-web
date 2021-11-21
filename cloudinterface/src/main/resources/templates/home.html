@@ -421,6 +421,13 @@
 								</button>
 							</form>
 						</div>
+                        <div class="table-responsive">
+                            <div id="showEcommercesUser" th:if="${currentUser}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">You are logged in to eCommerce as: <span th:text="${currentUser}">currentuser</span></p>
+                               </h2>
+                            </div>
+                        </div>
                         <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
@@ -484,7 +491,6 @@
                                 </div>
                             </div>
                         </div>
-
 					</div>
 				</div>
             </div>

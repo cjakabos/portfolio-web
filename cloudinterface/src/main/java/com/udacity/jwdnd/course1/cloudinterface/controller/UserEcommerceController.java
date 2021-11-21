@@ -32,17 +32,20 @@ public class UserEcommerceController {
 
     private String bearerToken;
 
-    private String currentUser;
+    public static String currentUser;
 
     public UserEcommerceController(NoteService nService) {
         this.nService = nService;
     }
 
+    public static String getCurrentUser(){
+        return currentUser;
+    }
     @PostMapping("/addUser")
     public String addEcommerceUser(Authentication authentication,
                                    @ModelAttribute("newEcommerceUser") UserEcommerce userEcommerce,
                                    Model model) {
-        this.currentUser = userEcommerce.getEcommerceUsername();
+        currentUser = userEcommerce.getEcommerceUsername();
 
         String userFeedback;
         System.out.println("This adds user");

@@ -57,6 +57,7 @@ public class HomeController {
         model.addAttribute("skills", PetController.getEmployeeSkillsList());
         model.addAttribute("petTypes", PetController.getPetTypes());
         model.addAttribute("conditions", CarController.getConditions());
+        model.addAttribute("currentUser", UserEcommerceController.getCurrentUser());
         return "home";
     }
 }
