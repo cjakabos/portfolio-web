@@ -499,6 +499,41 @@ public class PetController {
 
         return "result";
     }
+    @PostMapping("/addEmployeeSchedule")
+    public String addEmployeeSchedule(Authentication authentication,
+                                      @ModelAttribute("newEmployee") Employee employee,
+                                      Model model) throws Exception {
+
+
+        String url = "http://localhost:8083/user/employee/" + employee.getEmployeeId();
+
+        System.out.println(url);
+        // @Deprecated HttpClient httpClient = new DefaultHttpClient();
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+
+            Gson gson = new Gson();
+            JsonElement element = gson.toJsonTree(employee.getEmployeeSchedule(), new TypeToken<List<String>>() {}.getType());
+
+            StringEntity params = new StringEntity(element.toString(), "UTF-8");
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+
+            HttpResponse response = httpClient.execute(request);
+
+            String userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            System.out.println("Employee schedule is successsfully added");
+
+        } catch (Exception ex) {
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+
+
+        return "result";
+    }
     public String printPetString() {
         String jsonString = "{\n" +
                 "  \"type\": \"CAT\",\n" +
@@ -530,5 +565,9 @@ public class PetController {
     public static List<String> getPetTypes() {
         List<String> types = Arrays.asList("CAT", "DOG", "LIZARD", "BIRD", "FISH", "SNAKE", "OTHER");
         return types;
+    }
+    public static List<String> getDays() {
+        List<String> days = Arrays.asList("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");
+        return days;
     }
 }

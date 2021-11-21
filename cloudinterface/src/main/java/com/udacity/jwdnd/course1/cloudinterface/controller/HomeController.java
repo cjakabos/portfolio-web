@@ -9,6 +9,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 @RequestMapping()
 public class HomeController {
@@ -58,6 +61,7 @@ public class HomeController {
         model.addAttribute("petTypes", PetController.getPetTypes());
         model.addAttribute("conditions", CarController.getConditions());
         model.addAttribute("currentUser", UserEcommerceController.getCurrentUser());
+        model.addAttribute("days", PetController.getDays());
         return "home";
     }
 }
