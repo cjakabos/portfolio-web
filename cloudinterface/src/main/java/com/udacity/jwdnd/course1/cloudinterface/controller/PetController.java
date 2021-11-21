@@ -279,7 +279,11 @@ public class PetController {
             jsonObject.addProperty("owner", "1");
 
             System.out.println(jsonObject.toString());
-            if (pet.getPetType().equals("CAT") || pet.getPetType().equals("DOG")) {
+
+            if (getPetTypes().stream()
+                    .filter(animal -> pet.getPetType().equals(animal.toString()))
+                    .findFirst()
+                    .orElse(null) != null) {
                 userFeedback = "Success";
                 model.addAttribute("updateSuccess", userFeedback);
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -310,7 +314,7 @@ public class PetController {
                 model.addAttribute("pet", pet);
                 System.out.println("Pet is successsfully added");
             } else {
-                userFeedback = "Model should be either CAT or DOG";
+                userFeedback = "Pet should be either: " + getPetTypes().toString();
                 model.addAttribute("updateError", userFeedback);
             }
 
@@ -341,7 +345,7 @@ public class PetController {
 
     @GetMapping(value = "/pets/{petId}")
     public String editPet(@ModelAttribute("newPet") Pet pet,
-                          Model model) throws IOException {
+                          Model model) throws Exception {
         String url = "http://localhost:8083/pets/" + pet.getPetId();
         System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
@@ -356,7 +360,10 @@ public class PetController {
         jsonObject.addProperty("type", pet.getPetType());
         jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetName());
 
-        if (pet.getPetType().equals("CAT") || pet.getPetType().equals("DOG")) {
+        if (getPetTypes().stream()
+                .filter(animal -> pet.getPetType().equals(animal.toString()))
+                .findFirst()
+                .orElse(null) != null) {
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -378,7 +385,7 @@ public class PetController {
             model.addAttribute("pet", pet);
             System.out.println("Pet is successsfully added");
         } else {
-            userFeedback = "Model should be either CAT or DOG";
+            userFeedback = "Pet should be either: " + getPetTypes().toString();
             model.addAttribute("updateError", userFeedback);
         }
 
@@ -456,7 +463,7 @@ public class PetController {
             JsonObject jsonObject = JsonParser.parseString(printEmployeeString()).getAsJsonObject();
             System.out.println(jsonObject.toString());
             jsonObject.addProperty("name", employee.getEmployeeName());
-            
+
             Gson gson = new Gson();
             JsonElement element = gson.toJsonTree(employee.getEmployeeSkills(), new TypeToken<List<String>>() {}.getType());
             jsonObject.add("skills", element.getAsJsonArray());
