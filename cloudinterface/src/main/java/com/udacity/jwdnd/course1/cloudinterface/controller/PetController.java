@@ -276,7 +276,7 @@ public class PetController {
 
             jsonObject.addProperty("type", pet.getPetType());
             jsonObject.addProperty("name", pet.getPetName());
-            jsonObject.addProperty("owner", "1");
+            jsonObject.addProperty("ownerId", pet.getPetOwnerId());
 
             System.out.println(jsonObject.toString());
 

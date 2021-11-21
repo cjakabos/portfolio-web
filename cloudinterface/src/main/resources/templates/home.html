@@ -389,8 +389,15 @@
 											</div>
                                             <div class="form-group">
                                                 <label for="pet-name" class="col-form-label">Name</label>
-                                                <textarea th:field="*{petName}" name="petName" id="pet-name" rows="5" maxlength="1000" required></textarea>
+                                               <input th:field="*{petName}" type="text" name="petName" class="form-control" id="pet-name" maxlength="50" required>
                                             </div>
+											<div class="form-group blu-margin">
+												<label for="pet-owner" class="col-form-label">Owner</label>
+												<select class="form-control" th:field="*{petOwnerId}"  id="pey-type">
+												<option value="0" selected>Select type</option>
+												<option th:each="owner : ${owners}" th:value="${owner.ownerId}" th:text="${owner.ownerId} + ', ' +  ${owner.ownerName}"></option>
+												</select>
+											</div>
                                             <button id="petSubmit" type="submit" class="d-none"></button>
                                         </form>
                                     </div>
@@ -588,10 +595,11 @@
                 $('#carModal').modal('show');
             }
             // For opening the pet modal
-            function showPetModal(petId, petType, petName) {
+            function showPetModal(petId, petType, petName, petOwnerId) {
                 $('#pet-id').val(petId ? petId : '');
                 $('#pet-type').val(petType ? petType : '');
                 $('#pet-name').val(petName ? petName : '');
+                $('#pet-owner').val(petOwnerId ? petOwnerId : '');
                 $('#petModal').modal('show');
             }
             // For opening the owner modal
