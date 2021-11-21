@@ -277,6 +277,13 @@
 							</button>
 						</div>
                         <div class="table-responsive">
+                            <div id="sectiondividier" th:if="${pets}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">Pet list:</span></p>
+                               </h2>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -305,7 +312,62 @@
                                 </tbody>
                             </table>
                         </div>
-
+                        <div class="table-responsive">
+                            <div id="sectiondividier" th:if="${owners}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">Owner list:</span></p>
+                               </h2>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="userTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 10%" scope="col"></th>
+                                        <th style="width: 30%" scope="col">Id</th>
+                                        <th style="width: 30%" scope="col">Name</th>
+                                        <th style="width: 30%" scope="col">Phonenumber</th>
+										</tr>
+                                </thead>
+                                <tbody th:each="owner: ${owners}">
+                                    <tr>									
+                                        <td>									
+										</td>
+                                        <th th:text="${owner.ownerId}" scope="row">Example Owner Id</th>
+                                        <td th:text="${owner.ownerName}">Example Owner Name </td>
+                                        <td th:text="${owner.ownerPhoneNumber}">Example Owner Phonenumber </td>
+									</tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-responsive">
+                            <div id="sectiondividier" th:if="${employees}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">Employee list:</span></p>
+                               </h2>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="userTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 10%" scope="col"></th>
+                                        <th style="width: 30%" scope="col">Id</th>
+                                        <th style="width: 30%" scope="col">Name</th>
+                                        <th style="width: 30%" scope="col">Skills</th>
+										</tr>
+                                </thead>
+                                <tbody th:each="employee: ${employees}">
+                                    <tr>									
+                                        <td>									
+										</td>
+                                        <th th:text="${employee.employeeId}" scope="row">Example Employee Id</th>
+                                        <td th:text="${employee.employeeName}">Example Employee Name</td>
+                                        <td th:text="${employee.employeeSkills}">Example Employee Skills</td>
+									</tr>
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="modal fade" id="petModal" tabindex="-1" role="dialog" aria-labelledby="petModalLabel" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
