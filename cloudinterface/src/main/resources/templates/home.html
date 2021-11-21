@@ -196,15 +196,6 @@
                         </div>
                     </div>
                    <div class="tab-pane fade" id="nav-cars" role="tabpanel" aria-labelledby="nav-cars-tab">
-						<div id="showCarsDiv">
-							<form action="#" th:action="@{/car/getCars}" method="POST">
-								<button id="showCarList" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
-									+ List CarZ
-								</button>
-							</form>
-						</div>
-
-
                         <button id="showCarForm" style="margin: 0.25em;" type="button" class="btn btn-info float-right" onclick="showCarModal()">
                             + Add a New Car
                         </button>
@@ -417,9 +408,6 @@
 						<div id="showEcommercesDiv">
 							<button id="showEcommerceUserForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceUserModal()">
 								+ Add a user
-							</button>
-							<button id="showEcommerceLoginForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceLoginModal()">
-								+ Login a user
 							</button>
 							<button id="showEcommerceItemForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceItemModal()">
 								+ Create an item

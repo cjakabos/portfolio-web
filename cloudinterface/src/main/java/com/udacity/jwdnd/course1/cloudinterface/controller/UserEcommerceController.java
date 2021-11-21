@@ -44,7 +44,7 @@ public class UserEcommerceController {
                                    Model model) {
         this.currentUser = userEcommerce.getEcommerceUsername();
 
-        String userFeedback = "Success";
+        String userFeedback;
         System.out.println("This adds user");
         System.out.println(printString());
 
@@ -62,8 +62,7 @@ public class UserEcommerceController {
             jsonObject.addProperty("confirmPassword", userEcommerce.getEcommercePassword());
             System.out.println(jsonObject.toString());
 
-            userFeedback = "Success";
-            model.addAttribute("updateSuccess", userFeedback);
+
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
             request.addHeader("content-type", "application/json");
@@ -85,11 +84,21 @@ public class UserEcommerceController {
             System.out.println(jsonObject.toString());
             params = new StringEntity(jsonObject.toString(), "UTF-8");
             request.setEntity(params);
-            response = httpClient.execute(request);
+            HttpResponse responseLogin = httpClient.execute(request);
 
-            Header[] headers = response.getAllHeaders();
-            this.bearerToken = headers[0].toString().substring(15);
+            if (responseLogin.getStatusLine().getStatusCode() == 200) {
+                Header[] headers = responseLogin.getAllHeaders();
+                this.bearerToken = headers[0].toString().substring(15);
+                userFeedback = "Success";
+                model.addAttribute("updateSuccess", userFeedback);
+            } else {
+                userFeedback = "Error during login";
+                model.addAttribute("updateError", userFeedback);
+            }
+
         } catch (Exception ex) {
+            userFeedback = "Ecommerce service is not available";
+            model.addAttribute("updateError", userFeedback);
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
         }
