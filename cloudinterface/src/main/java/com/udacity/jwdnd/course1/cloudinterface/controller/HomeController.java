@@ -57,6 +57,7 @@ public class HomeController {
         model.addAttribute("encryptService", eService);
         model.addAttribute("encryptService", eService);
         model.addAttribute("skills", pController.getEmployeeSkillsList());
+        model.addAttribute("petTypes", pController.getPetTypes());
         return "home";
     }
 }

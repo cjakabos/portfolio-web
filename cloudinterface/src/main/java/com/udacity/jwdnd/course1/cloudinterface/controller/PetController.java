@@ -520,5 +520,8 @@ public class PetController {
         List<String> skills = Arrays.asList("PETTING", "WALKING", "FEEDING", "MEDICATING", "SHAVING");
         return skills;
     }
-
+    public List<String> getPetTypes() {
+        List<String> skills = Arrays.asList("CAT", "DOG", "LIZARD", "BIRD", "FISH", "SNAKE", "OTHER");
+        return skills;
+    }
 }
