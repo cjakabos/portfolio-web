@@ -531,6 +531,50 @@ public class PetController {
 
         return "result";
     }
+    @PostMapping("/assignSchedule")
+    public String assignSchedule(Authentication authentication,
+                                      @ModelAttribute("newSchedule") Schedule schedule,
+                                      Model model) throws Exception {
+
+
+        String url = "http://localhost:8083/schedule";
+
+        System.out.println(url);
+        // @Deprecated HttpClient httpClient = new DefaultHttpClient();
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+
+            JsonObject jsonObject = JsonParser.parseString(printScheduleString()).getAsJsonObject();
+            System.out.println(jsonObject.toString());
+            jsonObject.addProperty("date", schedule.getDate().toString());
+
+            Gson gson = new Gson();
+            JsonElement element = gson.toJsonTree(schedule.getEmployeeIds(), new TypeToken<List<String>>() {}.getType());
+            jsonObject.add("employeeIds", element.getAsJsonArray());
+            element = gson.toJsonTree(schedule.getPetIds(), new TypeToken<List<String>>() {}.getType());
+            jsonObject.add("petIds", element.getAsJsonArray());
+            element = gson.toJsonTree(schedule.getActivities(), new TypeToken<List<String>>() {}.getType());
+            jsonObject.add("activities", element.getAsJsonArray());
+
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            
+            HttpResponse response = httpClient.execute(request);
+
+            String userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+            System.out.println("Employee schedule is successsfully added");
+
+        } catch (Exception ex) {
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+
+
+        return "result";
+    }
     public String printPetString() {
         String jsonString = "{\n" +
                 "  \"type\": \"CAT\",\n" +
@@ -552,6 +596,15 @@ public class PetController {
         String jsonString = "{\n" +
                 "  \"name\": \"Alex\",\n" +
                 "  \"skills\": \"PETTING\"\n" +
+                "}";
+        return jsonString;
+    }
+    public String printScheduleString() {
+        String jsonString = "{\n" +
+                "  \"employeeIds\": \"Alex\",\n" +
+                "  \"petIds\": \"Alex\",\n" +
+                "  \"date\": \"Alex\",\n" +
+                "  \"activities\": \"PETTING\"\n" +
                 "}";
         return jsonString;
     }

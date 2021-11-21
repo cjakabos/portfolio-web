@@ -45,6 +45,7 @@ public class HomeController {
                           @ModelAttribute("newEmployee") Employee employee,
                           @ModelAttribute("newEcommerceUser") UserEcommerce newEcommerceUser,
                           @ModelAttribute("newEcommerceOrder") OrderEcommerce newEcommerceOrder,
+                          @ModelAttribute("newSchedule") Schedule newSchedule,
                           Model model) throws Exception {
         Integer userId = uService.getUserId(authentication);
 
