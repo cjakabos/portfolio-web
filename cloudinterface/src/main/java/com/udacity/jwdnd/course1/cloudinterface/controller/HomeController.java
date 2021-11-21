@@ -23,14 +23,12 @@ public class HomeController {
                           UserService uService,
                           CredentialService cService,
                           FileService fService,
-                          EncryptionService eService,
-                          PetController pController) {
+                          EncryptionService eService) {
         this.cService = cService;
         this.uService = uService;
         this.fService = fService;
         this.nService = nService;
         this.eService = eService;
-        this.pController = pController;
     }
 
 
@@ -56,8 +54,9 @@ public class HomeController {
         model.addAttribute("employees", PetController.getListEmployees());
         model.addAttribute("encryptService", eService);
         model.addAttribute("encryptService", eService);
-        model.addAttribute("skills", pController.getEmployeeSkillsList());
-        model.addAttribute("petTypes", pController.getPetTypes());
+        model.addAttribute("skills", PetController.getEmployeeSkillsList());
+        model.addAttribute("petTypes", PetController.getPetTypes());
+        model.addAttribute("conditions", CarController.getConditions());
         return "home";
     }
 }

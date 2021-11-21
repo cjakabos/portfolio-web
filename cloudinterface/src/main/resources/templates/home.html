@@ -250,11 +250,14 @@
                                             <input th:field="*{carId}"  type="hidden" name="carId" id="car-id">
                                             <div class="form-group">
                                                 <label for="car-model" class="col-form-label">Model</label>
-                                                <textarea th:field="*{carModel}" name="carModel" class="form-control" id="car-model" maxlength="200" required>
+                                                <textarea th:field="*{carModel}" name="carModel" class="form-control" id="car-model" maxlength="200" required></textarea>
                                             </div>
-                                            <div class="form-group">
-                                                <label for="car-condition" class="col-form-label">Condition</label>
-                                                <textarea th:field="*{carCondition}" name="carCondition" id="car-condition" rows="5" maxlength="1000" required></textarea>
+                                            <div class="form-group blu-margin">
+                                                <label for="car-condition" class="col-form-label">Car Condition</label>
+                                                <select class="form-control" th:field="*{carCondition}"  id="car-condition">
+                                                    <option value="" selected disabled hidden>Select condition</option>
+                                                    <option th:each="condition : ${conditions}" th:value="${condition}" th:text="${condition}"></option>
+                                                </select>
                                             </div>
                                             <button id="carSubmit" type="submit" class="d-none"></button>
                                         </form>
@@ -397,7 +400,7 @@
 											</div>
                                             <div class="form-group">
                                                 <label for="employee-name" class="col-form-label">Name</label>
-                                                <input th:field="*{employeeName}" type="text"  name="employeeName" class="form-control" id="employee-name"  maxlength="40" required></textarea>
+                                                <input th:field="*{employeeName}" type="text"  name="employeeName" class="form-control" id="employee-name"  maxlength="40" required>
                                             </div>
                                             <button id="employeeSubmit" type="submit" class="d-none"></button>
                                         </form>

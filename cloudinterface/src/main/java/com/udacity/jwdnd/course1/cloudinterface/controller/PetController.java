@@ -516,12 +516,12 @@ public class PetController {
                 "}";
         return jsonString;
     }
-    public List<String> getEmployeeSkillsList() {
+    public static List<String> getEmployeeSkillsList() {
         List<String> skills = Arrays.asList("PETTING", "WALKING", "FEEDING", "MEDICATING", "SHAVING");
         return skills;
     }
-    public List<String> getPetTypes() {
-        List<String> skills = Arrays.asList("CAT", "DOG", "LIZARD", "BIRD", "FISH", "SNAKE", "OTHER");
-        return skills;
+    public static List<String> getPetTypes() {
+        List<String> types = Arrays.asList("CAT", "DOG", "LIZARD", "BIRD", "FISH", "SNAKE", "OTHER");
+        return types;
     }
 }

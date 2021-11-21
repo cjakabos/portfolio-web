@@ -323,29 +323,10 @@ public class CarController {
         return jsonString;
     }
 
-
-//{
-//   "condition":"USED",
-//   "details":{
-//      "body":"sedan",
-//      "model":"Impala",
-//      "manufacturer":{
-//         "code":101,
-//         "name":"Chevrolet"
-//      },
-//      "numberOfDoors":4,
-//      "fuelType":"Gasoline",
-//      "engine":"3.6L V6",
-//      "mileage":32280,
-//      "modelYear":2018,
-//      "productionYear":2018,
-//      "externalColor":"white"
-//   },
-//   "location":{
-//      "lat":40.73061,
-//      "lon":-73.935242
-//   }
-//}
+    public static List<String> getConditions() {
+        List<String> conditions = Arrays.asList("USED", "NEW");
+        return conditions;
+    }
 
 
 }
