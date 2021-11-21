@@ -56,28 +56,29 @@ There are HTML templates for the application pages. They have fields, modal form
 **3. Home page**
    The home page is the center of the application and hosts the three parts of base functionality plus the additional extra layers:  
 
-    i. Files (base functionality)
+    I. Files (base functionality)
    - The user can upload files and see/download/delete any files they previously uploaded.
    - Any errors related to file actions is displayed (no duplicates or empty/large files).
    
-    ii. Notes (base functionality)
+    II. Notes (base functionality)
    - The user can create notes and see/edit/delete notes they have previously created. Size limit is 1000 character.
 
-    iii. Credentials (base functionality)
+    III. Credentials (base functionality)
    - The user can store credentials for specific websites and see/edit/delete the credentials they've previously stored.
    - Passwords are displayed in encrypted form in the list, but upon editing they are able to see the unencrypted values.
 
-    iv. Cars (extra layer, optional)
+    IV. Cars (extra layer, optional)
    - The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
    - Any errors related to the operations is displayed.
 
-    v. Pets (extra layer, optional)
+    V. Pets (extra layer, optional)
 
 - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore service API interface.
 - Any errors related to the operations is displayed.
+ 
 
-    vi. eCommerce (extra layer, optional)
-- The user can create users, items, carts and orders for the eCommerce service through its API.
+    VI. eCommerce (extra layer, optional)
+- The user can create ecommerce users, items, carts and orders for the eCommerce service through its API.
 - Any errors related to the operations is displayed.
 
   
