@@ -385,12 +385,16 @@
                                         <form th:object="${newEmployee}" th:action="@{/pet/addEmployee}" action="#" method="POST">
                                             <input type="hidden" name="employeeId" id="employee-id">
                                             <div class="form-group">
-                                                <label for="employee-skills" class="col-form-label">Skills</label>
-                                               <input th:field="*{employeeSkills}" type="text" name="employeeSkills" class="form-control" id="employee-skills" maxlength="200" required>
-                                            </div>
+												<label for="employee-skills" class="col-form-label">Skills (multiple choice)</label>
+												<select class="form-control" th:field="*{employeeSkills}" multiple="multiple">
+													<option th:each="skill : ${skills}"
+															th:value="${skill}"
+															th:text="${skill}">Skill name</option>
+												</select>
+											</div>
                                             <div class="form-group">
                                                 <label for="employee-name" class="col-form-label">Name</label>
-                                                <textarea th:field="*{employeeName}" name="employeeName" id="employee-name" rows="5" maxlength="1000" required></textarea>
+                                                <input th:field="*{employeeName}" type="text"  name="employeeName" class="form-control" id="employee-name"  maxlength="40" required></textarea>
                                             </div>
                                             <button id="employeeSubmit" type="submit" class="d-none"></button>
                                         </form>

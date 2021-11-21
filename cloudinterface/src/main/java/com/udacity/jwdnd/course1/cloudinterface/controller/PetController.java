@@ -516,4 +516,9 @@ public class PetController {
                 "}";
         return jsonString;
     }
+    public List<String> getEmployeeSkillsList() {
+        List<String> skills = Arrays.asList("PETTING", "WALKING", "FEEDING", "MEDICATING", "SHAVING");
+        return skills;
+    }
+
 }

@@ -17,17 +17,20 @@ public class HomeController {
     private FileService fService;
 	private NoteService nService;
     private EncryptionService eService;
+    private PetController pController;
 
     public HomeController(NoteService nService,
                           UserService uService,
                           CredentialService cService,
                           FileService fService,
-                          EncryptionService eService) {
+                          EncryptionService eService,
+                          PetController pController) {
         this.cService = cService;
         this.uService = uService;
         this.fService = fService;
         this.nService = nService;
         this.eService = eService;
+        this.pController = pController;
     }
 
 
@@ -52,7 +55,8 @@ public class HomeController {
         model.addAttribute("owners", PetController.getListOwners());
         model.addAttribute("employees", PetController.getListEmployees());
         model.addAttribute("encryptService", eService);
-
+        model.addAttribute("encryptService", eService);
+        model.addAttribute("skills", pController.getEmployeeSkillsList());
         return "home";
     }
 }
