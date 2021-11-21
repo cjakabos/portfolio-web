@@ -7,9 +7,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.*;
 import org.apache.http.util.EntityUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,7 +21,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -511,7 +508,7 @@ public class PetController {
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
-            HttpPost request = new HttpPost(url);
+            HttpPut request = new HttpPut(url);
 
             Gson gson = new Gson();
             JsonElement element = gson.toJsonTree(employee.getEmployeeSchedule(), new TypeToken<List<String>>() {}.getType());
