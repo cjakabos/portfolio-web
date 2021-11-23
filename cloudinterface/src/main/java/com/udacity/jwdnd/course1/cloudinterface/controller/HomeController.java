@@ -56,6 +56,7 @@ public class HomeController {
 		model.addAttribute("pets", PetController.getListPets());
         model.addAttribute("owners", PetController.getListOwners());
         model.addAttribute("employees", PetController.getListEmployees());
+        model.addAttribute("schedules", PetController.getListSchedules());
         model.addAttribute("encryptService", eService);
         model.addAttribute("encryptService", eService);
         model.addAttribute("skills", PetController.getEmployeeSkillsList());

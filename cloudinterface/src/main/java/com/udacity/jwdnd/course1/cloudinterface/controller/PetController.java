@@ -18,6 +18,7 @@ import static java.lang.System.*;
 
 import java.lang.String;
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -204,6 +205,72 @@ public class PetController {
 
         return employees;
         //return "result";
+    }
+
+    public static List<Map<String, List<String>>> getListSchedules() throws Exception {
+        List<Map<String, List<String>>> schedules = new ArrayList<Map<String, List<String>>>();
+        Map<String, List<String>> newSchedule = new HashMap();//new HashMap<String, String>();
+
+        String url = "http://localhost:8083/schedule";
+        System.out.println("test1");
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
+            System.out.println("test2");
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
+
+            for (int i = 0; i < tokenList.size(); i++) {
+                JsonObject oj = tokenList.get(i).getAsJsonObject();
+                oj = tokenList.get(i).getAsJsonObject();
+
+                Gson gson = new Gson();
+                Type type = new TypeToken<List<String>>(){}.getType();
+
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("date");
+                JsonArray tempArray = new JsonArray();
+                tempArray.add(test);
+                List<String> scheduleDate = gson.fromJson(tempArray, type);
+
+                test = tokenList.get(i).getAsJsonObject().get("activities");
+                List<String> scheduleActivities = gson.fromJson(test, type);
+
+                test = tokenList.get(i).getAsJsonObject().get("employeeIds");
+                List<String> employeeIds = gson.fromJson(test, type);
+
+                test = tokenList.get(i).getAsJsonObject().get("petIds");
+                List<String> petIds = gson.fromJson(test, type);
+
+                newSchedule = new HashMap<String, List<String>>() {
+                    {
+                        put("date", scheduleDate);
+                        put("activities", scheduleActivities);
+                        put("employeeIds", employeeIds);
+                        put("petIds", petIds);
+                    }
+                };
+                schedules.add(newSchedule);
+            }
+        } catch (Exception e) {
+            //  Block of code to handle errors
+            List<String> userFeedback = new ArrayList<>();
+            userFeedback.add("Employee API is down or empty data");
+            newSchedule = new HashMap<String, List<String>>() {
+                {
+                    put("employeeName", userFeedback);
+                    put("employeeId", userFeedback);
+                    put("employeeSkills", userFeedback);
+                }
+            };
+            schedules.add(newSchedule);
+        }
+
+
+        return schedules;
     }
 //    @PostMapping("/getPets")
 //    public String getAPIListPets(Authentication authentication,

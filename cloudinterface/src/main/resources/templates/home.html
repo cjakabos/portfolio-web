@@ -312,6 +312,21 @@
                                         <td th:text="${pet.get('petName')}">Example Pet Name </td>
                                         <td th:text="${pet.petOwnerId}">Example Owner Name </td>
 									</tr>
+									<tbody th:each="schedule: ${schedules}">
+										<tr>
+											<td>									
+											</td>
+											<td>									
+											</td>
+											<td>									
+											</td>
+											<td>									
+											</td>
+											<th th:text="${schedule.employeeIds}" scope="row">Example Employee</th>
+											<td th:text="${schedule.date}">Example Date </td>
+											<td th:text="${schedule.activities}">Example Activity </td>
+										</tr>
+									</tbody>
                                 </tbody>
                             </table>
                         </div>
@@ -385,7 +400,7 @@
                                             <input type="hidden" name="petId" id="pet-id">
 											<div class="form-group blu-margin">
 												<label for="pet-type" class="col-form-label">Pet type</label>
-												<select class="form-control" th:field="*{petType}"  id="pey-type">
+												<select class="form-control" th:field="*{petType}"  id="pet-type">
 												<option value="0" selected>Select type</option>
 												<option th:each="petType : ${petTypes}" th:value="${petType}" th:text="${petType}"></option>
 												</select>
@@ -396,7 +411,7 @@
                                             </div>
 											<div class="form-group blu-margin">
 												<label for="pet-owner" class="col-form-label">Owner</label>
-												<select class="form-control" th:field="*{petOwnerId}"  id="pey-type">
+												<select class="form-control" th:field="*{petOwnerId}"  id="pet-ownerId">
 												<option value="0" selected>Select type</option>
 												<option th:each="owner : ${owners}" th:value="${owner.ownerId}" th:text="${owner.ownerId} + ', ' +  ${owner.ownerName}"></option>
 												</select>
