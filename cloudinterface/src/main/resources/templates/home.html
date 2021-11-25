@@ -286,18 +286,16 @@
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="userTable">
+						<div class="table-responsive">
+							<table class="table table-striped">
                                 <thead>
                                     <tr>
-                                        <th style="width: 12%" scope="col"></th>
-                                        <th style="width: 12%" scope="col">Type</th>
-                                        <th style="width: 12%" scope="col">Name</th>
-                                        <th style="width: 12%" scope="col">Owner</th>
-                                        <th style="width: 12%" scope="col">Employee</th>
-                                        <th style="width: 12%" scope="col">Date</th>
-                                        <th style="width: 12%" scope="col">Activity</th>
-										</tr>
+                                        <th style="width: 5%" scope="col"></th>
+                                        <th style="width: 15%" scope="col">Type</th>
+                                        <th style="width: 15%" scope="col">Name</th>
+                                        <th style="width: 15%" scope="col">Owner</th>
+                                        <th style="width: 50%" scope="col">Schedule</th>
+									</tr>
                                 </thead>
                                 <tbody th:each="pet: ${pets}">
                                     <tr>									
@@ -311,25 +309,28 @@
                                         <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
                                         <td th:text="${pet.get('petName')}">Example Pet Name </td>
                                         <td th:text="${pet.petOwnerId}">Example Owner Name </td>
+										<td>
+										<table class="table table-striped">
+											<thead>
+												<tr>
+													<th style="width: 10%" scope="col">Employee</th>
+													<th style="width: 30%" scope="col">Date</th>
+													<th style="width: 60%" scope="col">Activity</th>
+												</tr>
+											</thead>
+											<tbody th:each="schedule: ${schedules}">
+												<tr>
+													<th th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.employeeIds}" scope="row">Example Employee</th>
+													<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.date}">Example Date </td>
+													<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.activities}">Example Activity </td>
+												</tr>
+											</tbody>
+										</table>
+										</td>
 									</tr>
-									<tbody th:each="schedule: ${schedules}">
-										<tr>
-											<td>									
-											</td>
-											<td>									
-											</td>
-											<td>									
-											</td>
-											<td>									
-											</td>
-											<th th:text="${schedule.employeeIds}" scope="row">Example Employee</th>
-											<td th:text="${schedule.date}">Example Date </td>
-											<td th:text="${schedule.activities}">Example Activity </td>
-										</tr>
-									</tbody>
                                 </tbody>
-                            </table>
-                        </div>
+							</table>
+						</div>
                         <div class="table-responsive">
                             <div id="sectiondividier" th:if="${owners}">
                                <h2 style="background-color:green;color:white">
