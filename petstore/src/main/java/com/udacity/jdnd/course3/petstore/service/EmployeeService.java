@@ -26,6 +26,10 @@ public class EmployeeService {
         return employeeRepository.save(employee);
     }
 
+    public void deleteEmployee(Long employeeId) {
+        employeeRepository.deleteById(employeeId);
+    }
+
     public Employee getEmployeeById(long employeeId) {
         return employeeRepository.getOne(employeeId);
     }
@@ -47,5 +51,4 @@ public class EmployeeService {
         Schedule schedule = scheduleRepository.getOne(scheduleId);
         return schedule.getEmployeeList();
     }
-
 }

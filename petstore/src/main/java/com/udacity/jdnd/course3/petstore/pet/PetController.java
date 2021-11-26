@@ -6,6 +6,7 @@ import com.udacity.jdnd.course3.petstore.service.*;
 import com.udacity.jdnd.course3.petstore.user.CustomerDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -51,6 +52,11 @@ public class PetController {
         BeanUtils.copyProperties(pet, petDto);
         petDto.setOwnerId(pet.getCustomer().getId());
         return petDto;
+    }
+
+    @DeleteMapping("/{id}")
+    public void deletePet(@PathVariable Long id) {
+        petService.deletePet(id);
     }
 
     @GetMapping("/owner/{ownerId}")

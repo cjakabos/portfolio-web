@@ -36,7 +36,7 @@ public class UserController {
     private PetRepository petRepository;
 
     @PostMapping("/customer")
-    public CustomerDTO saveCustomer(@RequestBody CustomerDTO customerDTO){
+    public CustomerDTO saveCustomer(@RequestBody CustomerDTO customerDTO) {
         Customer customer = new Customer();
         customer.setName(customerDTO.getName());
         customer.setPhoneNumber(customerDTO.getPhoneNumber());
@@ -54,22 +54,28 @@ public class UserController {
     }
 
     @GetMapping("/customer")
-    public List<CustomerDTO> getAllCustomers(){
+    public List<CustomerDTO> getAllCustomers() {
         return customerService.getCustomerDTOList()
                 .stream()
                 .map(this::getCustomerDTO)
                 .collect(Collectors.toList());
     }
 
+    @DeleteMapping("/customer/{customerId}")
+    public void deleteCustomer(@PathVariable long customerId) {
+        customerService.deleteCustomer(customerId);
+    }
+
     @GetMapping("/employee")
-    public List<EmployeeDTO> getAllEmployees(){
+    public List<EmployeeDTO> getAllEmployees() {
         return employeeService.getEmployeeDTOList()
                 .stream()
                 .map(this::getEmployeeDTO)
                 .collect(Collectors.toList());
     }
+
     @GetMapping("/customer/pet/{petId}")
-    public CustomerDTO getOwnerByPet(@PathVariable long petId){
+    public CustomerDTO getOwnerByPet(@PathVariable long petId) {
         Pet pet = petService.getPet(petId);
         return getCustomerDTO(customerService.getCustomerById(pet.getCustomer().getId()));
     }
@@ -77,7 +83,7 @@ public class UserController {
     @PostMapping("/employee")
     public EmployeeDTO saveEmployee(@RequestBody EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDTO,employee);
+        BeanUtils.copyProperties(employeeDTO, employee);
         employee.setSkills(employeeDTO.getSkills());
         employee.setDaysAvailable(employeeDTO.getDaysAvailable());
 
@@ -95,16 +101,21 @@ public class UserController {
     @PutMapping("/employee/{employeeId}")
     public void setAvailability(@RequestBody Set<DayOfWeek> daysAvailable, @PathVariable long employeeId) {
         //System.out.println(daysAvailable);
-        employeeService.setEmployeeAvailability(daysAvailable,employeeId);
+        employeeService.setEmployeeAvailability(daysAvailable, employeeId);
     }
 
     @GetMapping("/employee/availability")
     public List<EmployeeDTO> findEmployeesForService(@RequestBody EmployeeRequestDTO employeeDTO) {
-        List<Employee> employeeAvailability = employeeService.findEmployeesForService(employeeDTO.getSkills(),employeeDTO.getDate().getDayOfWeek());
+        List<Employee> employeeAvailability = employeeService.findEmployeesForService(employeeDTO.getSkills(), employeeDTO.getDate().getDayOfWeek());
         return employeeAvailability.stream().map(this::getEmployeeDTO).collect(Collectors.toList());
     }
 
-    private CustomerDTO getCustomerDTO(Customer customer){
+    @DeleteMapping("/employee/{employeeId}")
+    public void deleteEmployee(@PathVariable long employeeId) {
+        employeeService.deleteEmployee(employeeId);
+    }
+
+    private CustomerDTO getCustomerDTO(Customer customer) {
         CustomerDTO customerDTO = new CustomerDTO();
         customerDTO.setId(customer.getId());
         customerDTO.setName(customer.getName());
@@ -115,8 +126,8 @@ public class UserController {
 
         return customerDTO;
     }
-    
-    private EmployeeDTO getEmployeeDTO(Employee employee){
+
+    private EmployeeDTO getEmployeeDTO(Employee employee) {
         EmployeeDTO employeeDTO = new EmployeeDTO();
         employeeDTO.setId(employee.getId());
         employeeDTO.setName(employee.getName());

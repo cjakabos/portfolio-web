@@ -19,6 +19,10 @@ public class ScheduleService {
         return scheduleRepository.save(schedule);
     }
 
+    public void deleteSchedule(Long scheduleId){
+        scheduleRepository.deleteById(scheduleId);
+    }
+
     public List<Schedule> getAllSchedules(){
         return scheduleRepository.findAll();
     }

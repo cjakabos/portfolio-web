@@ -2,6 +2,7 @@ package com.udacity.jdnd.course3.petstore.schedule;
 
 import com.udacity.jdnd.course3.petstore.entity.*;
 import com.udacity.jdnd.course3.petstore.service.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -47,6 +48,11 @@ public class ScheduleController {
 
     }
 
+    @DeleteMapping("/{scheduleId}")
+    public void deleteSchedule(@PathVariable Long scheduleId) {
+        scheduleService.deleteSchedule(scheduleId);
+    }
+
     @GetMapping
     public List<ScheduleDTO> getAllSchedules() {
         List<Schedule> schedules = scheduleService.getAllSchedules();
@@ -80,7 +86,6 @@ public class ScheduleController {
         scheduleDTOS = schedules.stream().map(this::getScheduleDTO).collect(Collectors.toList());
         return scheduleDTOS;
     }
-
     private ScheduleDTO getScheduleDTO(Schedule schedule) {
         ScheduleDTO scheduleDTO = new ScheduleDTO();
         scheduleDTO.setId(schedule.getId());

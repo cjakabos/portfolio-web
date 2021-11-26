@@ -23,4 +23,8 @@ public class CustomerService {
     public Customer getCustomerById(long customerId){
        return customerRepository.getOne(customerId);
     }
+
+    public void deleteCustomer(long customerId){
+       customerRepository.deleteById(customerId);
+    }
 }
