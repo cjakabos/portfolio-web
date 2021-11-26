@@ -6,9 +6,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.*;
 import org.apache.http.util.EntityUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -22,7 +20,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -178,8 +175,12 @@ public class CarController {
         System.out.println(printString());
 
         System.out.println("getCarCondition is: " + car.getCarCondition());
-
-        String url = "http://localhost:8080/cars";
+        String url;
+        if (car.getCarId() == null) {
+            url = "http://localhost:8080/cars";
+        } else {
+            url = "http://localhost:8080/cars/" + car.getCarId().toString();
+        }
 
 		//json.put("reference", url);
         //Gson gson = new Gson();
@@ -190,9 +191,6 @@ public class CarController {
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
-            HttpPost request = new HttpPost(url);
-
-            //params.setContentType("application/json");
             JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
             //jsonObject.put("model", car.getCarModel());
             //jsonObject.remove("condition");
@@ -204,11 +202,18 @@ public class CarController {
                 model.addAttribute("updateSuccess", userFeedback);
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
-                //request.addHeader("content-type", "application/x-www-form-urlencoded");
-                request.addHeader("content-type", "application/json");
-                request.setEntity(params);
-                HttpResponse response = httpClient.execute(request);
-
+                HttpResponse response;
+                if (car.getCarId() == null) {
+                    HttpPost request = new HttpPost(url);
+                    request.addHeader("content-type", "application/json");
+                    request.setEntity(params);
+                    response = httpClient.execute(request);
+                } else {
+                    HttpPut request = new HttpPut(url);
+                    request.addHeader("content-type", "application/json");
+                    request.setEntity(params);
+                    response = httpClient.execute(request);
+                }
 
                 HttpEntity entity = response.getEntity();
                 String responseString = EntityUtils.toString(entity, "UTF-8");
