@@ -31,7 +31,7 @@ public class Pet {
     @Nationalized
     private String notes;
 
-    @ManyToMany(mappedBy = "petList")
+    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "petList")
     private List<Schedule> schedules;
 
     public long getId() {

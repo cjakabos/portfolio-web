@@ -17,13 +17,13 @@ public class Schedule {
     @Nationalized
     private LocalDate date;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     private List<Employee> employeeList;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     private List<Customer> customerList;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     private List<Pet> petList;
 
     @ElementCollection

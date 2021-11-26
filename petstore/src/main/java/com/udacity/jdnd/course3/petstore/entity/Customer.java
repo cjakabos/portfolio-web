@@ -32,7 +32,7 @@ public class Customer {
         pets.add(pet);
     }
 
-    @ManyToMany(mappedBy = "customerList")
+    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "customerList")
     private List<Schedule> schedules;
 
     public Customer() {

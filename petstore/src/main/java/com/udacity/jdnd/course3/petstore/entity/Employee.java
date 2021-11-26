@@ -29,7 +29,7 @@ public class Employee {
     private Set<DayOfWeek> daysAvailable;
 
     @Nationalized
-    @ManyToMany(fetch = FetchType.LAZY,mappedBy = "employeeList")
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "employeeList")
     private List<Schedule> schedules;
 
     public Long getId() {
