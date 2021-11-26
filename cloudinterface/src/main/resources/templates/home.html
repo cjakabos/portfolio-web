@@ -300,9 +300,9 @@
                                 <tbody th:each="pet: ${pets}">
                                     <tr>									
                                         <td>									
-                                            <button type="button" class="btn btn-success" th:data-id="${owners[0].ownerId}" th:data-name="${owners[0].ownerName}"
-													th:data-phonenumber="${owners[0].ownerPhoneNumber}" th:onclick="showOwnerModal(this.getAttribute('data-id'),
-														this.getAttribute('data-phonenumber'), this.getAttribute('data-name'))">
+                                            <button type="button" class="btn btn-success" th:data-id="${pet.petId}" th:data-type="${pet.petType}"
+													th:data-name="${pet.petName}" th:data-owner="${pet.petOwnerId}" th:onclick="showPetModal(this.getAttribute('data-id'),
+														this.getAttribute('data-type'),  this.getAttribute('data-name'), this.getAttribute('data-owner'))">
 														Edit
 											</button>
 										</td>
@@ -398,7 +398,7 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newPet}" th:action="@{/pet/addPet}" action="#" method="POST">
-                                            <input type="hidden" name="petId" id="pet-id">
+                                            <input th:field="*{petId}"  type="hidden" name="petId" id="pet-id">
 											<div class="form-group blu-margin">
 												<label for="pet-type" class="col-form-label">Pet type</label>
 												<select class="form-control" th:field="*{petType}"  id="pet-type">

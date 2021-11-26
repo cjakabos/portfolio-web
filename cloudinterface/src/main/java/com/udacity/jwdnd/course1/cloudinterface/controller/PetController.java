@@ -319,7 +319,13 @@ public class PetController {
         //pets = getListPets();
         String userFeedback = "Success";
 
-        String url = "http://localhost:8083/pet/1";
+        String url;
+
+        if (pet.getPetId() == null) {
+            url = "http://localhost:8083/pet";
+        } else {
+            url = "http://localhost:8083/pet/" + pet.getPetId().toString();
+        }
 
         //json.put("reference", url);
         //Gson gson = new Gson();
@@ -330,9 +336,6 @@ public class PetController {
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
-            HttpPost request = new HttpPost(url);
-
-            //params.setContentType("application/json");
             JsonObject jsonObject = JsonParser.parseString(printPetString()).getAsJsonObject();
             System.out.println("jsonObject is: " + jsonObject.toString());
             //jsonObject.put("name", pet.getPetModel());
@@ -353,10 +356,19 @@ public class PetController {
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
                 //request.addHeader("content-type", "application/x-www-form-urlencoded");
-                request.addHeader("content-type", "application/json");
-                request.setEntity(params);
-                System.out.println("TEST1");
-                HttpResponse response = httpClient.execute(request);
+                HttpResponse response;
+                if (pet.getPetId() == null) {
+                    HttpPost request = new HttpPost(url);
+                    request.addHeader("content-type", "application/json");
+                    request.setEntity(params);
+                    response = httpClient.execute(request);
+                } else {
+                    HttpPut request = new HttpPut(url);
+                    request.addHeader("content-type", "application/json");
+                    request.setEntity(params);
+                    response = httpClient.execute(request);
+                }
+
                 System.out.println("TEST2");
 
                 HttpEntity entity = response.getEntity();

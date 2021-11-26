@@ -22,7 +22,7 @@ public class PetController {
     @Autowired
     private PetService petService;
 
-    @PostMapping("/{petId}")
+    @PostMapping
     public PetDTO savePet(@RequestBody PetDTO petDTO) {
         Pet pet = new Pet();
         pet.setPetType(petDTO.getType());
@@ -34,6 +34,16 @@ public class PetController {
         return petToPetDTO(pet);
     }
 
+    @PutMapping("/{petId}")
+    public PetDTO updatePet(@PathVariable Long petId, @RequestBody PetDTO petDTO) {
+        Pet pet = petService.getPet(petId);
+        pet.setPetType(petDTO.getType());
+        pet.setName(petDTO.getName());
+        pet.setBirthDate(petDTO.getBirthDate());
+        pet.setNotes(petDTO.getNotes());
+        pet = petService.savePet(pet, petDTO.getOwnerId());
+        return petToPetDTO(pet);
+    }
     @GetMapping("/{petId}")
     public PetDTO getPet(@PathVariable long petId) {
         Pet pet = petService.getPet(petId);
