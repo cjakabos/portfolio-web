@@ -81,7 +81,7 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Pet API is down or empty data";
+            String userFeedback = "Petstore API is down or empty data";
             newPet = new HashMap<String, String>() {
                 {
                     put("petName", userFeedback);
@@ -136,7 +136,7 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Owner API is down or empty data";
+            String userFeedback = "Petstore API is down or empty data";
             newOwner = new HashMap<String, String>() {
                 {
                     put("ownerName", userFeedback);
@@ -191,7 +191,7 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Employee API is down or empty data";
+            String userFeedback = "Petstore API is down or empty data";
             newEmployee = new HashMap<String, String>() {
                 {
                     put("employeeName", userFeedback);
@@ -258,12 +258,13 @@ public class PetController {
         } catch (Exception e) {
             //  Block of code to handle errors
             List<String> userFeedback = new ArrayList<>();
-            userFeedback.add("Employee API is down or empty data");
+            userFeedback.add("PetStore API is down or empty data");
             newSchedule = new HashMap<String, List<String>>() {
                 {
-                    put("employeeName", userFeedback);
-                    put("employeeId", userFeedback);
-                    put("employeeSkills", userFeedback);
+                    put("date", userFeedback);
+                    put("activities", userFeedback);
+                    put("employeeIds", userFeedback);
+                    put("petIds", userFeedback);
                 }
             };
             schedules.add(newSchedule);

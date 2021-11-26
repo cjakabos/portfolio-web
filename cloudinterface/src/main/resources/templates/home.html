@@ -286,7 +286,7 @@
                                </h2>
                             </div>
                         </div>
-						<div class="table-responsive">
+						<div class="table-responsive" th:if="${pets}">
 							<table class="table table-striped">
                                 <thead>
                                     <tr>
@@ -310,7 +310,7 @@
                                         <td th:text="${pet.get('petName')}">Example Pet Name </td>
                                         <td th:text="${pet.petOwnerId}">Example Owner Name </td>
 										<td>
-										<table class="table table-striped">
+										<table class="table table-striped" th:if="${not #lists.isEmpty(schedules)}">
 											<thead>
 												<tr>
 													<th style="width: 10%" scope="col">Employee</th>
@@ -338,7 +338,7 @@
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive">
+                        <div class="table-responsive" th:if="${owners}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -366,7 +366,7 @@
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive">
+                        <div class="table-responsive" th:if="${employees}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
