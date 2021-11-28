@@ -2,6 +2,7 @@ package com.udacity.jwdnd.course1.cloudinterface.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.udacity.jwdnd.course1.cloudinterface.entity.Item;
 import com.udacity.jwdnd.course1.cloudinterface.entity.Note;
 import com.udacity.jwdnd.course1.cloudinterface.entity.OrderEcommerce;
 import com.udacity.jwdnd.course1.cloudinterface.entity.UserEcommerce;
@@ -109,6 +110,50 @@ public class UserEcommerceController {
         return "result";
     }
 
+    @PostMapping("/addItem")
+    public String addEcommerceItem(Authentication authentication,
+                                   @ModelAttribute("newEcommerceItem") Item item,
+                                   Model model) {
+        String itemFeedback;
+        System.out.println("This adds item");
+        System.out.println(printString());
+
+        String url = "http://localhost:8099/api/item";
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        try {
+            HttpPost request = new HttpPost(url);
+            JsonObject jsonObject = JsonParser.parseString(printStringItem()).getAsJsonObject();
+            jsonObject.addProperty("name", item.getName());
+            jsonObject.addProperty("price", item.getPrice());
+            jsonObject.addProperty("description", item.getDescription());
+            System.out.println(jsonObject.toString());
+
+
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            HttpResponse response = httpClient.execute(request);
+
+            if (response.getStatusLine().getStatusCode() == 200) {
+                itemFeedback = "Success";
+                model.addAttribute("updateSuccess", itemFeedback);
+            } else {
+                itemFeedback = "Error during item creation";
+                model.addAttribute("updateError", itemFeedback);
+            }
+
+        } catch (Exception ex) {
+            itemFeedback = "Ecommerce service is not available";
+            model.addAttribute("updateError", itemFeedback);
+        } finally {
+            // @Deprecated httpClient.getConnectionManager().shutdown();
+        }
+
+        return "result";
+    }
+
     @PostMapping("/addToOrder")
     public String addToEcommerceCart(Authentication authentication,
                                      @ModelAttribute("newEcommerceOrder") OrderEcommerce order,
@@ -200,6 +245,15 @@ public class UserEcommerceController {
         String jsonString = "{\n" +
                 "  \"username\": \"USED\",\n" +
                 "  \"password\": \"USED\"\n" +
+                "}";
+        return jsonString;
+    }
+
+    public String printStringItem() {
+        String jsonString = "{\n" +
+                "  \"name\": \"USED\",\n" +
+                "  \"price\": \"1\",\n" +
+                "  \"description\": \"1\"\n" +
                 "}";
         return jsonString;
     }

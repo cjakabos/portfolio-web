@@ -44,6 +44,7 @@ public class HomeController {
                           @ModelAttribute("newOwner") Owner owner,
                           @ModelAttribute("newEmployee") Employee employee,
                           @ModelAttribute("newEcommerceUser") UserEcommerce newEcommerceUser,
+                          @ModelAttribute("newEcommerceItem") Item newEcommerceItem,
                           @ModelAttribute("newEcommerceOrder") OrderEcommerce newEcommerceOrder,
                           @ModelAttribute("newSchedule") Schedule newSchedule,
                           Model model) throws Exception {
