@@ -259,6 +259,62 @@ public class UserEcommerceController {
         return "result";
     }
 
+    public static List<Map<String, String>> getCart() throws Exception {
+        List<Map<String, String>> items = new ArrayList<Map<String, String>>();
+        Map<String, String> newItem = new HashMap();
+
+        String url = "http://localhost:8099/api/cart/getCart";
+
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpPost request = new HttpPost(url);
+
+
+            JsonObject jsonObject = JsonParser.parseString(printStringCartRequest()).getAsJsonObject();
+            jsonObject.addProperty("username", currentUser);
+
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            request.setHeader("Authorization", bearerToken);
+
+            HttpResponse response = httpClient.execute(request);
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonObject().get("items").getAsJsonArray();
+
+            for (int i = 0; i < tokenList.size(); i++) {
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
+                String itemName = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("price");
+                String itemPrice = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("id");
+                String itemId = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("description");
+                String itemDescription = test.toString();
+
+                newItem = new HashMap<String, String>() {
+                    {
+                        put("itemName", itemName);
+                        put("itemId", itemId);
+                        put("itemPrice", itemPrice);
+                        put("itemDescription", itemDescription);
+                    }
+                };
+                items.add(newItem);
+            }
+        } catch (Exception e) {
+            //  Block of code to handle errors
+        }
+
+        return items;
+    }
+
     @PostMapping("/submitOrder")
     public String submitOrder(Authentication authentication,
                               Model model) {
@@ -315,6 +371,13 @@ public class UserEcommerceController {
                 "  \"name\": \"USED\",\n" +
                 "  \"price\": \"1\",\n" +
                 "  \"description\": \"1\"\n" +
+                "}";
+        return jsonString;
+    }
+
+    public static String printStringCartRequest() {
+        String jsonString = "{\n" +
+                "  \"username\": \"USED\"\n" +
                 "}";
         return jsonString;
     }

@@ -608,6 +608,13 @@
                                </h2>
                             </div>
                         </div>
+                        <div class="table-responsive">
+                            <div id="sectiondividier" th:if="${ecommerceItems}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">Available items in store:</span></p>
+                               </h2>
+                            </div>
+                        </div>
                         <div class="table-responsive" th:if="${ecommerceItems}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
@@ -620,6 +627,36 @@
 										</tr>
                                 </thead>
                                 <tbody th:each="item: ${ecommerceItems}">
+                                    <tr>									
+                                        <td>							
+										</td>
+                                        <th th:text="${item.itemId}" scope="row">Example Item Id</th>
+                                        <td th:text="${item.itemName}">Example Item Name </td>
+                                        <td th:text="${item.itemPrice}">Example Item Price </td>
+                                        <td th:text="${item.itemDescription}">Example Item Description </td>
+									</tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-responsive">
+                            <div id="sectiondividier" th:if="${currentOrder}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">Items in current order:</span></p>
+                               </h2>
+                            </div>
+                        </div>
+                        <div class="table-responsive" th:if="${currentOrder}">
+                            <table class="table table-striped" id="userTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%" scope="col"></th>
+                                        <th style="width: 5%" scope="col">Id</th>
+                                        <th style="width: 30%" scope="col">Name</th>
+                                        <th style="width: 30%" scope="col">Price</th>
+                                        <th style="width: 30%" scope="col">Description</th>
+										</tr>
+                                </thead>
+                                <tbody th:each="item: ${currentOrder}">
                                     <tr>									
                                         <td>							
 										</td>

@@ -65,6 +65,7 @@ public class HomeController {
         model.addAttribute("conditions", CarController.getConditions());
         model.addAttribute("currentUser", UserEcommerceController.getCurrentUser());
         model.addAttribute("ecommerceItems", UserEcommerceController.getListItems());
+        model.addAttribute("currentOrder", UserEcommerceController.getCart());
         model.addAttribute("days", PetController.getDays());
         return "home";
     }
