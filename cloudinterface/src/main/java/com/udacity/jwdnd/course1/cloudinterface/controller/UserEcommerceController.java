@@ -1,5 +1,7 @@
 package com.udacity.jwdnd.course1.cloudinterface.controller;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.udacity.jwdnd.course1.cloudinterface.entity.Item;
@@ -11,6 +13,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -21,17 +24,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequestMapping("/ecommerce")
 public class UserEcommerceController {
     private NoteService nService;
 
-    private String bearerToken;
+    private static String bearerToken;
 
     public static String currentUser;
 
@@ -133,6 +133,7 @@ public class UserEcommerceController {
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
             request.addHeader("content-type", "application/json");
+            request.setHeader("Authorization", this.bearerToken);
             request.setEntity(params);
             HttpResponse response = httpClient.execute(request);
 
@@ -152,6 +153,66 @@ public class UserEcommerceController {
         }
 
         return "result";
+    }
+
+    public static List<Map<String, String>> getListItems() throws Exception {
+        List<Map<String, String>> items = new ArrayList<Map<String, String>>();
+        Map<String, String> newItem = new HashMap();//new HashMap<String, String>();
+
+        String url = "http://localhost:8099/api/item";
+        System.out.println("test1");
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            request.setHeader("Authorization", bearerToken);
+            HttpResponse response = httpClient.execute(request);
+            System.out.println("test2");
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
+
+            for (int i = 0; i < tokenList.size(); i++) {
+                JsonObject oj = tokenList.get(i).getAsJsonObject();
+                oj = tokenList.get(i).getAsJsonObject();
+
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
+                String itemName = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("price");
+                String itemPrice = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("id");
+                String itemId = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("description");
+                String itemDescription = test.toString();
+
+                newItem = new HashMap<String, String>() {
+                    {
+                        put("itemName", itemName);
+                        put("itemId", itemId);
+                        put("itemPrice", itemPrice);
+                        put("itemDescription", itemDescription);
+                    }
+                };
+                items.add(newItem);
+            }
+        } catch (Exception e) {
+            //  Block of code to handle errors
+            String userFeedback = "Ecommerce service is not available";
+            newItem = new HashMap<String, String>() {
+                {
+                    put("itemName", userFeedback);
+                    put("itemId", userFeedback);
+                    put("itemPrice", userFeedback);
+                    put("itemDescription", userFeedback);
+                }
+            };
+            items.add(newItem);
+        }
+
+        return items;
     }
 
     @PostMapping("/addToOrder")

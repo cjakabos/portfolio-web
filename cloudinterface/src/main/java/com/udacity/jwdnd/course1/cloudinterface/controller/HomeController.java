@@ -64,6 +64,7 @@ public class HomeController {
         model.addAttribute("petTypes", PetController.getPetTypes());
         model.addAttribute("conditions", CarController.getConditions());
         model.addAttribute("currentUser", UserEcommerceController.getCurrentUser());
+        model.addAttribute("ecommerceItems", UserEcommerceController.getListItems());
         model.addAttribute("days", PetController.getDays());
         return "home";
     }
