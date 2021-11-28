@@ -704,14 +704,13 @@
                                     </div>
                                     <div class="modal-body">
                                         <form th:object="${newEcommerceOrder}" th:action="@{/ecommerce/addToOrder}" action="#" method="POST">
-                                            <div class="form-group">
-                                                <label for="ecommerce-orderUsername" class="col-form-label">Username</label>
-                                            	<input th:field="*{ecommerceOrderUsername}" type="text" name= "ecommerceOrderUsername" class="form-control" id="ecommerce-orderUsername" maxlength="20" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="ecommerce-orderItemId" class="col-form-label">Itemid</label>
-                                                <input th:field="*{ecommerceItemId}" type="text" name= "ecommerceItemId" class="form-control" id="ecommerce-orderItemId" maxlength="20" required>
-                                            </div>
+											<div class="form-group blu-margin" th:if="${ecommerceItems}">
+												<label for="ecommerce-orderItemId" class="col-form-label">Itemid</label>
+												<select class="form-control" th:field="*{ecommerceItemId}"  id="ecommerce-orderItemId">
+												<option value="0" selected>Select item</option>
+												<option th:each="item: ${ecommerceItems}" th:value="${item.itemId}" th:text="${item.itemId} + ', ' +  ${item.itemName}"></option>
+												</select>
+											</div>
                                             <div class="form-group">
                                                 <label for="ecommerce-orderQuantity" class="col-form-label">Quantity</label>
                                                 <input th:field="*{ecommerceQuantity}" type="text" name= "ecommerceQuantity" class="form-control" id="ecommerce-orderQuantity" maxlength="20" required>
@@ -814,9 +813,8 @@
                 $('#ecommerceItemModal').modal('show');
             }
             // For opening the ecommerce order modal
-            function showEcommerceOrderModal(ecommerceOrderId, ecommerceOrderUsername, ecommerceItemId, ecommerceQuantity) {
+            function showEcommerceOrderModal(ecommerceOrderId, ecommerceItemId, ecommerceQuantity) {
                 $('#ecommerce-orderid').val(ecommerceOrderId ? ecommerceOrderId : '');
-                $('#ecommerce-orderUsername').val(ecommerceOrderUsername ? ecommerceOrderUsername : '');
                 $('#ecommerce-orderItemId').val(ecommerceItemId ? ecommerceItemId : '');
                 $('#ecommerce-orderQuantity').val(ecommerceQuantity ? ecommerceQuantity : '');
                 $('#ecommerceOrderModal').modal('show');

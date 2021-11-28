@@ -204,7 +204,7 @@ public class UserEcommerceController {
             newItem = new HashMap<String, String>() {
                 {
                     put("itemName", userFeedback);
-                    put("itemId", userFeedback);
+                    put("itemId", "1");
                     put("itemPrice", userFeedback);
                     put("itemDescription", userFeedback);
                 }
@@ -231,7 +231,7 @@ public class UserEcommerceController {
             System.out.println("parse try" + order.getEcommerceOrderUsername() + order.getEcommerceItemId() + order.getEcommerceQuantity());
             JsonObject jsonObject = JsonParser.parseString(printStringOrder()).getAsJsonObject();
             System.out.println("parse ok");
-            jsonObject.addProperty("username", order.getEcommerceOrderUsername());
+            jsonObject.addProperty("username", this.currentUser);
             jsonObject.addProperty("itemId", order.getEcommerceItemId());
             jsonObject.addProperty("quantity", order.getEcommerceQuantity());
             System.out.println(jsonObject.toString());
