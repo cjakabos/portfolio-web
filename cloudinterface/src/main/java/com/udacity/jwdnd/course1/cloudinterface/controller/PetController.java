@@ -231,12 +231,17 @@ public class PetController {
                 Gson gson = new Gson();
                 Type type = new TypeToken<List<String>>(){}.getType();
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("date");
+                JsonElement idElement = tokenList.get(i).getAsJsonObject().get("id");
+                JsonArray tempArrayId = new JsonArray();
+                tempArrayId.add(idElement);
+                List<String> scheduleId = gson.fromJson(tempArrayId, type);
+
+                JsonElement dateElement = tokenList.get(i).getAsJsonObject().get("date");
                 JsonArray tempArray = new JsonArray();
-                tempArray.add(test);
+                tempArray.add(dateElement);
                 List<String> scheduleDate = gson.fromJson(tempArray, type);
 
-                test = tokenList.get(i).getAsJsonObject().get("activities");
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("activities");
                 List<String> scheduleActivities = gson.fromJson(test, type);
 
                 test = tokenList.get(i).getAsJsonObject().get("employeeIds");
@@ -247,6 +252,7 @@ public class PetController {
 
                 newSchedule = new HashMap<String, List<String>>() {
                     {
+                        put("id", scheduleId);
                         put("date", scheduleDate);
                         put("activities", scheduleActivities);
                         put("employeeIds", employeeIds);
@@ -261,6 +267,7 @@ public class PetController {
             userFeedback.add("PetStore API is down or empty data");
             newSchedule = new HashMap<String, List<String>>() {
                 {
+                    put("id", userFeedback);
                     put("date", userFeedback);
                     put("activities", userFeedback);
                     put("employeeIds", userFeedback);
@@ -404,17 +411,16 @@ public class PetController {
         return "result";
     }
 
-    @GetMapping(value = "/delete/{petId}")
+    @GetMapping(value = "/deletePet/{petId}")
     public String deletePet(@PathVariable Integer petId,
                             Model model) throws IOException {
-        String url = "http://localhost:8083/pets/" + petId;
+        String url = "http://localhost:8083/pet/" + petId;
         System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
         HttpResponse response = httpClient.execute(request);
 
         String userFeedback = "Success";
-        //nService.deletePet(petId);
         model.addAttribute("updateSuccess", userFeedback);
         System.out.println("This deletes pet");
         return "result";
@@ -522,6 +528,21 @@ public class PetController {
         return "result";
     }
 
+    @GetMapping(value = "/deleteOwner/{ownerId}")
+    public String deleteOwner(@PathVariable Integer ownerId,
+                            Model model) throws IOException {
+        String url = "http://localhost:8083/user/customer/" + ownerId;
+        System.out.println("url: " + url);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpDelete request = new HttpDelete(url);
+        HttpResponse response = httpClient.execute(request);
+
+        String userFeedback = "Success";
+        model.addAttribute("updateSuccess", userFeedback);
+        System.out.println("This deletes owner");
+        return "result";
+    }
+
     @PostMapping("/addEmployee")
     public String insertOrUpdateEmployee(Authentication authentication,
                                          @ModelAttribute("newEmployee") Employee employee,
@@ -611,6 +632,22 @@ public class PetController {
 
         return "result";
     }
+
+    @GetMapping(value = "/deleteEmployee/{employeeId}")
+    public String deleteEmployee(@PathVariable Integer employeeId,
+                              Model model) throws IOException {
+        String url = "http://localhost:8083/user/employee/" + employeeId;
+        System.out.println("url: " + url);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpDelete request = new HttpDelete(url);
+        HttpResponse response = httpClient.execute(request);
+
+        String userFeedback = "Success";
+        model.addAttribute("updateSuccess", userFeedback);
+        System.out.println("This deletes employee");
+        return "result";
+    }
+
     @PostMapping("/assignSchedule")
     public String assignSchedule(Authentication authentication,
                                       @ModelAttribute("newSchedule") Schedule schedule,
@@ -655,6 +692,22 @@ public class PetController {
 
         return "result";
     }
+
+    @GetMapping(value = "/deleteSchedule/{scheduleId}")
+    public String deleteSchedule(@PathVariable Integer scheduleId,
+                              Model model) throws IOException {
+        String url = "http://localhost:8083/schedule/" + scheduleId;
+        System.out.println("url: " + url);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpDelete request = new HttpDelete(url);
+        HttpResponse response = httpClient.execute(request);
+
+        String userFeedback = "Success";
+        model.addAttribute("updateSuccess", userFeedback);
+        System.out.println("This deletes schedule");
+        return "result";
+    }
+
     public String printPetString() {
         String jsonString = "{\n" +
                 "  \"type\": \"CAT\",\n" +

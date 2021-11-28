@@ -305,27 +305,34 @@
 														this.getAttribute('data-type'),  this.getAttribute('data-name'), this.getAttribute('data-owner'))">
 														Edit
 											</button>
+											<a class="btn btn-danger" th:href="@{/pet/deletePet/{petId}(petId = ${pet.get('petId')})}">Delete</a>									
 										</td>
                                         <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
                                         <td th:text="${pet.get('petName')}">Example Pet Name </td>
                                         <td th:text="${pet.petOwnerId}">Example Owner Name </td>
 										<td>
-										<table class="table table-striped" th:if="${not #lists.isEmpty(schedules)}">
-											<thead>
-												<tr>
-													<th style="width: 10%" scope="col">Employee</th>
-													<th style="width: 30%" scope="col">Date</th>
-													<th style="width: 60%" scope="col">Activity</th>
-												</tr>
-											</thead>
-											<tbody th:each="schedule: ${schedules}">
-												<tr>
-													<th th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.employeeIds}" scope="row">Example Employee</th>
-													<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.date}">Example Date </td>
-													<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.activities}">Example Activity </td>
-												</tr>
-											</tbody>
-										</table>
+										<div id="sectiondividier" th:if="${schedules}">
+											<table class="table table-striped" th:if="${schedules}">
+												<thead>
+													<tr>
+														<th style="width: 5%" scope="col"></th>
+														<th style="width: 10%" scope="col">Employee</th>
+														<th style="width: 30%" scope="col">Date</th>
+														<th style="width: 55%" scope="col">Activity</th>
+													</tr>
+												</thead>
+												<tbody th:each="schedule: ${schedules}">
+													<tr>
+														<td>
+															<a class="btn btn-danger" th:href="@{/pet/deleteSchedule/{scheduleId}(scheduleId = ${schedule.id})}">Delete</a>										
+														</td>
+														<th th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.employeeIds}" scope="row">Example Employee</th>
+														<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.date}">Example Date </td>
+														<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.activities}">Example Activity </td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
 										</td>
 									</tr>
                                 </tbody>
@@ -350,7 +357,8 @@
                                 </thead>
                                 <tbody th:each="owner: ${owners}">
                                     <tr>									
-                                        <td>									
+                                        <td>
+											<a class="btn btn-danger" th:href="@{/pet/deleteOwner/{ownerId}(ownerId = ${owner.get('ownerId')})}">Delete</a>								
 										</td>
                                         <th th:text="${owner.ownerId}" scope="row">Example Owner Id</th>
                                         <td th:text="${owner.ownerName}">Example Owner Name </td>
@@ -374,11 +382,12 @@
                                         <th style="width: 30%" scope="col">Id</th>
                                         <th style="width: 30%" scope="col">Name</th>
                                         <th style="width: 30%" scope="col">Skills</th>
-										</tr>
+									</tr>
                                 </thead>
                                 <tbody th:each="employee: ${employees}">
                                     <tr>									
-                                        <td>									
+                                        <td>
+											<a class="btn btn-danger" th:href="@{/pet/deleteEmployee/{employeeId}(employeeId = ${employee.get('employeeId')})}">Delete</a>									
 										</td>
                                         <th th:text="${employee.employeeId}" scope="row">Example Employee Id</th>
                                         <td th:text="${employee.employeeName}">Example Employee Name</td>
@@ -538,6 +547,7 @@
                                     </div>
                                     <div class="modal-body">
                                         <form  th:object="${newSchedule}" th:action="@{/pet/assignSchedule}" action="#" method="POST">
+                                            <input th:field="*{id}"  type="hidden" name="scheduleId" id="schedule-id">
 											<div class="form-group blu-margin">
 												<label for="schedule-employee" class="col-form-label">Employess</label>
 												<select class="form-control" th:field="*{employeeIds}">
@@ -725,7 +735,8 @@
                 $('#employeeScheduleModal').modal('show');
             }
             // For opening the assign schedule modal
-            function showAssignScheduleModal(scheduleEmployee, schedulePet, scheduleDate, scheduleSkill) {
+            function showAssignScheduleModal(scheduleId, scheduleEmployee, schedulePet, scheduleDate, scheduleSkill) {
+                $('#schedule-id').val(scheduleId ? scheduleId : '');
                 $('#schedule-employee').val(scheduleEmployee ? scheduleEmployee : '');
                 $('#schedule-pet').val(schedulePet ? schedulePet : '');
                 $('#schedule-date').val(schedulePet ? schedulePet : '');
