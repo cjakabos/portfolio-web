@@ -104,4 +104,10 @@ public class Cart {
 		}
 		total = total.subtract(item.getPrice());
 	}
+
+	public void removeAllItems() {
+		items = new ArrayList<>();
+
+		total = new BigDecimal(0);
+	}
 }

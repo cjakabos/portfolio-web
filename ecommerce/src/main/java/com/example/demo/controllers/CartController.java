@@ -1,5 +1,6 @@
 package com.example.demo.controllers;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -70,6 +71,18 @@ public class CartController {
 	public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request) {
 		User user = userRepository.findByUsername(request.getUsername());
 		Cart cart = cartRepository.findByUser(user);
+		return ResponseEntity.ok(cart);
+	}
+
+	@PostMapping("/clearCart")
+	public ResponseEntity<Cart> clearCart(@RequestBody ModifyCartRequest request) {
+		User user = userRepository.findByUsername(request.getUsername());
+		if(user == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+		Cart cart = user.getCart();
+		cart.removeAllItems();
+		cartRepository.save(cart);
 		return ResponseEntity.ok(cart);
 	}
 }

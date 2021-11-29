@@ -39,9 +39,10 @@ public class UserEcommerceController {
         this.nService = nService;
     }
 
-    public static String getCurrentUser(){
+    public static String getCurrentUser() {
         return currentUser;
     }
+
     @PostMapping("/addUser")
     public String addEcommerceUser(Authentication authentication,
                                    @ModelAttribute("newEcommerceUser") UserEcommerce userEcommerce,
@@ -315,6 +316,35 @@ public class UserEcommerceController {
         return items;
     }
 
+    @PostMapping("/clearCart")
+    public static String clearCart(Model model) throws Exception {
+        String url = "http://localhost:8099/api/cart/clearCart";
+
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpPost request = new HttpPost(url);
+
+            JsonObject jsonObject = JsonParser.parseString(printStringCartRequest()).getAsJsonObject();
+            jsonObject.addProperty("username", currentUser);
+
+            StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            request.setHeader("Authorization", bearerToken);
+
+            HttpResponse response = httpClient.execute(request);
+
+            String userFeedback = "Success";
+            model.addAttribute("updateSuccess", userFeedback);
+
+        } catch (Exception e) {
+            //  Block of code to handle errors
+        }
+
+        return "result";
+    }
+
     @PostMapping("/submitOrder")
     public String submitOrder(Authentication authentication,
                               Model model) {
@@ -340,7 +370,6 @@ public class UserEcommerceController {
             System.out.println("Order: " + jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
-            
         } catch (Exception ex) {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();

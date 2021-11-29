@@ -593,8 +593,13 @@
 								+ Create an item
 							</button>
 							<button id="showEcommerceOrderForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceOrderModal()">
-								+ Add order to cart
+								+ Add items to cart
 							</button>
+							<form action="#" th:action="@{/ecommerce/clearCart}" method="POST">
+								<button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
+									+ Clear cart
+								</button>
+							</form>
 							<form action="#" th:action="@{/ecommerce/submitOrder}" method="POST">
 								<button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
 									+ Submit order
