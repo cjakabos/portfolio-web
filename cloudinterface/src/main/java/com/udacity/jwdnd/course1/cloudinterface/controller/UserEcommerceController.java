@@ -1,9 +1,7 @@
 package com.udacity.jwdnd.course1.cloudinterface.controller;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import com.udacity.jwdnd.course1.cloudinterface.entity.Item;
 import com.udacity.jwdnd.course1.cloudinterface.entity.Note;
 import com.udacity.jwdnd.course1.cloudinterface.entity.OrderEcommerce;
@@ -24,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Type;
 import java.util.*;
 
 @Controller
@@ -370,6 +369,9 @@ public class UserEcommerceController {
             System.out.println("Order: " + jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
+
+            // Empty cart when order submission is done
+            clearCart(model);
         } catch (Exception ex) {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
@@ -378,6 +380,55 @@ public class UserEcommerceController {
         return "result";
     }
 
+    public static List<Map<String, Object>> getListOrders() throws Exception {
+        List<Map<String, Object>> orders = new ArrayList<Map<String, Object>>();
+        Map<String, Object> newOrder = new HashMap();//new HashMap<String, String>();
+
+        String url = "http://localhost:8099/api/order/history/" + currentUser;
+
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            request.setHeader("Authorization", bearerToken);
+            HttpResponse response = httpClient.execute(request);
+
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity, "UTF-8");
+
+            JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
+
+            for (int i = 0; i < tokenList.size(); i++) {
+
+                JsonElement test = tokenList.get(i).getAsJsonObject().get("id");
+                String orderId = test.toString();
+
+
+                Gson gson = new Gson();
+                Type type = new TypeToken<List<Item>>(){}.getType();
+
+                JsonElement itemsElement = tokenList.get(i).getAsJsonObject().get("items");
+                List<Item> orderItems = gson.fromJson(itemsElement, type);
+
+                test = tokenList.get(i).getAsJsonObject().get("total");
+                String orderTotal = test.toString();
+
+
+                newOrder = new HashMap<String, Object>() {
+                    {
+                        put("orderId", orderId);
+                        put("orderItems", orderItems);
+                        put("orderTotal", orderTotal);
+                    }
+                };
+                orders.add(newOrder);
+            }
+        } catch (Exception e) {
+            //  Block of code to handle errors
+            String userFeedback = "Ecommerce service is not available";
+        }
+
+        return orders;
+    }
     public String printString() {
         String jsonString = "{\n" +
                 "  \"username\": \"USED\",\n" +

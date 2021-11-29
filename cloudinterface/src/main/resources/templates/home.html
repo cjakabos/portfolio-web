@@ -673,6 +673,39 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="table-responsive">
+                            <div id="sectiondividier" th:if="${ecommerceOrders}">
+                               <h2 style="background-color:green;color:white">
+                                   <p style="font-size: 60%">Previous orders:</span></p>
+                               </h2>
+                            </div>
+                        </div>
+                        <div class="table-responsive" th:if="${ecommerceOrders}">
+                            <table class="table table-striped" id="userTable">
+                                <tbody th:each="order: ${ecommerceOrders}">
+                                    <tr>									
+                                        <td>							
+										</td>
+                                        <th th:text="${order.orderId}" scope="row">Example Order Id</th>
+                                        <td th:text="${order.orderTotal}">Example Order Total </td>
+										<td>
+										<div id="sectiondividier" th:if="${ecommerceOrders}">
+											<table class="table table-striped" th:if="${ecommerceOrders}">
+												<tbody th:each="item: ${order.orderItems}">
+													<tr>
+														<th th:text="${item.id}" scope="row">Example Item Id</th>
+														<td th:text="${item.name}">Example Name </td>
+														<td th:text="${item.price}">Example Price </td>
+														<td th:text="${item.description}">Example Description </td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+										</td>
+									</tr>
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
