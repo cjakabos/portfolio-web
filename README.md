@@ -147,13 +147,13 @@ java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
 ```
 java -jar target/petstore-0.0.1-SNAPSHOT.jar
 ```
-•	The service is available by default on port 8083. Check README for Postman usage.
+•	The service is available by default on port 8083. Check [README](petstore/README.md) for Postman usage.
 
 7. Ecommerce:
 ```
 java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
 ```
-•	The service is available by default on port 8099. Check README for Postman usage.
+•	The service is available by default on port 8099. Check [README](ecommerce/README.md) for Postman usage.
 
 8. Cloud interface:
 ```
