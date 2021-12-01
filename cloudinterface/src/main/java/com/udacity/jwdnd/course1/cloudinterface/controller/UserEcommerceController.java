@@ -49,23 +49,17 @@ public class UserEcommerceController {
         currentUser = userEcommerce.getEcommerceUsername();
 
         String userFeedback;
-        System.out.println("This adds user");
-        System.out.println(printString());
-
 
         String url = "http://localhost:8099/api/user/create";
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(url);
-            System.out.println("parse try" + userEcommerce.getEcommerceUsername() + userEcommerce.getEcommercePassword());
+
             JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
-            System.out.println("parse ok");
             jsonObject.addProperty("username", userEcommerce.getEcommerceUsername());
             jsonObject.addProperty("password", userEcommerce.getEcommercePassword());
             jsonObject.addProperty("confirmPassword", userEcommerce.getEcommercePassword());
-            System.out.println(jsonObject.toString());
-
 
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
@@ -77,15 +71,12 @@ public class UserEcommerceController {
             String responseString = EntityUtils.toString(entity, "UTF-8");
             jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
 
-
-            System.out.println("User is successsfully added");
-
             url = "http://localhost:8099/login";
             request = new HttpPost(url);
             jsonObject = JsonParser.parseString(printStringLogin()).getAsJsonObject();
             jsonObject.addProperty("username", userEcommerce.getEcommerceUsername());
             jsonObject.addProperty("password", userEcommerce.getEcommercePassword());
-            System.out.println(jsonObject.toString());
+
             params = new StringEntity(jsonObject.toString(), "UTF-8");
             request.setEntity(params);
             HttpResponse responseLogin = httpClient.execute(request);
@@ -115,8 +106,6 @@ public class UserEcommerceController {
                                    @ModelAttribute("newEcommerceItem") Item item,
                                    Model model) {
         String itemFeedback;
-        System.out.println("This adds item");
-        System.out.println(printString());
 
         String url = "http://localhost:8099/api/item";
 
@@ -127,8 +116,6 @@ public class UserEcommerceController {
             jsonObject.addProperty("name", item.getName());
             jsonObject.addProperty("price", item.getPrice());
             jsonObject.addProperty("description", item.getDescription());
-            System.out.println(jsonObject.toString());
-
 
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
@@ -160,13 +147,11 @@ public class UserEcommerceController {
         Map<String, String> newItem = new HashMap();//new HashMap<String, String>();
 
         String url = "http://localhost:8099/api/item";
-        System.out.println("test1");
         try {
             HttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet request = new HttpGet(url);
             request.setHeader("Authorization", bearerToken);
             HttpResponse response = httpClient.execute(request);
-            System.out.println("test2");
 
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
@@ -200,16 +185,6 @@ public class UserEcommerceController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Ecommerce service is not available";
-            newItem = new HashMap<String, String>() {
-                {
-                    put("itemName", userFeedback);
-                    put("itemId", "1");
-                    put("itemPrice", userFeedback);
-                    put("itemDescription", userFeedback);
-                }
-            };
-            items.add(newItem);
         }
 
         return items;
@@ -220,21 +195,16 @@ public class UserEcommerceController {
                                      @ModelAttribute("newEcommerceOrder") OrderEcommerce order,
                                      Model model) {
         String userFeedback = "Success";
-        System.out.println("This adds order");
-
 
         String url = "http://localhost:8099/api/cart/addToCart";
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(url);
-            System.out.println("parse try" + order.getEcommerceOrderUsername() + order.getEcommerceItemId() + order.getEcommerceQuantity());
             JsonObject jsonObject = JsonParser.parseString(printStringOrder()).getAsJsonObject();
-            System.out.println("parse ok");
             jsonObject.addProperty("username", this.currentUser);
             jsonObject.addProperty("itemId", order.getEcommerceItemId());
             jsonObject.addProperty("quantity", order.getEcommerceQuantity());
-            System.out.println(jsonObject.toString());
 
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
@@ -249,8 +219,6 @@ public class UserEcommerceController {
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
             jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
-
-            System.out.println("Order: " + jsonObject.toString());
 
         } catch (Exception ex) {
         } finally {
@@ -348,11 +316,8 @@ public class UserEcommerceController {
     public String submitOrder(Authentication authentication,
                               Model model) {
         String userFeedback = "Success";
-        System.out.println("This submits order");
 
         String url = "http://localhost:8099/api/order/submit/" + this.currentUser;
-
-        System.out.println("url : " + url);
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
@@ -366,7 +331,6 @@ public class UserEcommerceController {
             String responseString = EntityUtils.toString(entity, "UTF-8");
             JsonObject jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
 
-            System.out.println("Order: " + jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
 

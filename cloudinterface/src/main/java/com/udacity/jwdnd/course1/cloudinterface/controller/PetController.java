@@ -42,12 +42,10 @@ public class PetController {
         Map<String, String> newPet = new HashMap();//new HashMap<String, String>();
 
         String url = "http://localhost:8083/pet";
-        System.out.println("test1");
         try {
             HttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet request = new HttpGet(url);
             HttpResponse response = httpClient.execute(request);
-            System.out.println("test2");
 
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
@@ -81,16 +79,6 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Petstore API is down or empty data";
-            newPet = new HashMap<String, String>() {
-                {
-                    put("petName", userFeedback);
-                    put("petId", userFeedback);
-                    put("petType", userFeedback);
-                    put("petOwnerId", userFeedback);
-                }
-            };
-            pets.add(newPet);
         }
 
 
@@ -99,21 +87,18 @@ public class PetController {
     }
     public static List<Map<String, String>> getListOwners() throws Exception {
         List<Map<String, String>> owners = new ArrayList<Map<String, String>>();
-        Map<String, String> newOwner = new HashMap();//new HashMap<String, String>();
+        Map<String, String> newOwner = new HashMap();
 
         String url = "http://localhost:8083/user/customer";
-        System.out.println("test1");
         try {
             HttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet request = new HttpGet(url);
             HttpResponse response = httpClient.execute(request);
-            System.out.println("test2");
 
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
 
             JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
-            System.out.println("test3: " + tokenList);
             for (int i = 0; i < tokenList.size(); i++) {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
@@ -136,15 +121,6 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Petstore API is down or empty data";
-            newOwner = new HashMap<String, String>() {
-                {
-                    put("ownerName", userFeedback);
-                    put("ownerId", userFeedback);
-                    put("ownerPhoneNumber", userFeedback);
-                }
-            };
-            owners.add(newOwner);
         }
 
 
@@ -154,15 +130,13 @@ public class PetController {
 
     public static List<Map<String, String>> getListEmployees() throws Exception {
         List<Map<String, String>> employees = new ArrayList<Map<String, String>>();
-        Map<String, String> newEmployee = new HashMap();//new HashMap<String, String>();
+        Map<String, String> newEmployee = new HashMap();
 
         String url = "http://localhost:8083/user/employee";
-        System.out.println("test1");
         try {
             HttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet request = new HttpGet(url);
             HttpResponse response = httpClient.execute(request);
-            System.out.println("test2");
 
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
@@ -191,15 +165,6 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            String userFeedback = "Petstore API is down or empty data";
-            newEmployee = new HashMap<String, String>() {
-                {
-                    put("employeeName", userFeedback);
-                    put("employeeId", userFeedback);
-                    put("employeeSkills", userFeedback);
-                }
-            };
-            employees.add(newEmployee);
         }
 
 
@@ -212,12 +177,10 @@ public class PetController {
         Map<String, List<String>> newSchedule = new HashMap();//new HashMap<String, String>();
 
         String url = "http://localhost:8083/schedule";
-        System.out.println("test1");
         try {
             HttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet request = new HttpGet(url);
             HttpResponse response = httpClient.execute(request);
-            System.out.println("test2");
 
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
@@ -263,61 +226,11 @@ public class PetController {
             }
         } catch (Exception e) {
             //  Block of code to handle errors
-            List<String> userFeedback = new ArrayList<>();
-            userFeedback.add("PetStore API is down or empty data");
-            newSchedule = new HashMap<String, List<String>>() {
-                {
-                    put("id", userFeedback);
-                    put("date", userFeedback);
-                    put("activities", userFeedback);
-                    put("employeeIds", userFeedback);
-                    put("petIds", userFeedback);
-                }
-            };
-            schedules.add(newSchedule);
         }
 
 
         return schedules;
     }
-//    @PostMapping("/getPets")
-//    public String getAPIListPets(Authentication authentication,
-//                                 Model model) throws Exception {
-//        String userFeedback = "Success";
-//        model.addAttribute("updateSuccess", userFeedback);
-//        String url = "http://localhost:8083/pet";
-//
-//        HttpClient httpClient = HttpClientBuilder.create().build();
-//        HttpGet request = new HttpGet(url);
-//        HttpResponse response = httpClient.execute(request);
-//
-//
-//        HttpEntity entity = response.getEntity();
-//        String responseString = EntityUtils.toString(entity, "UTF-8");
-//        System.out.println("ALL JSON OBJECTS" + responseString);
-//        JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonArray();
-//
-//        JsonObject oj = tokenList.get(0).getAsJsonObject();
-//        //String token = oj.get;
-//        System.out.println("---------------------------------------");
-//        System.out.println("jsonObject of 1" + oj.toString());
-//
-//        oj = tokenList.get(1).getAsJsonObject();
-//        //String token = oj.get;
-//        System.out.println("---------------------------------------");
-//        System.out.println("jsonObject of 2" + oj.toString());
-//
-//        JsonElement test = tokenList.get(1).getAsJsonObject().get("type");
-//        //String token = oj.get;
-//        System.out.println("---------------------------------------");
-//        System.out.println("jsonObject of 2 condition" + test.toString());
-//
-//        test = tokenList.get(1).getAsJsonObject().get("name");
-//        //String token = oj.get;
-//        System.out.println("---------------------------------------");
-//        System.out.println("jsonObject of 2 details/model" + test.toString());
-//        return "result";
-//    }
 
     @PostMapping("/addPet")
     public String insertOrUpdatePet(Authentication authentication,
@@ -345,15 +258,12 @@ public class PetController {
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             JsonObject jsonObject = JsonParser.parseString(printPetString()).getAsJsonObject();
-            System.out.println("jsonObject is: " + jsonObject.toString());
             //jsonObject.put("name", pet.getPetModel());
             //jsonObject.remove("type");
 
             jsonObject.addProperty("type", pet.getPetType());
             jsonObject.addProperty("name", pet.getPetName());
             jsonObject.addProperty("ownerId", pet.getPetOwnerId());
-
-            System.out.println(jsonObject.toString());
 
             if (getPetTypes().stream()
                     .filter(animal -> pet.getPetType().equals(animal.toString()))
@@ -377,15 +287,15 @@ public class PetController {
                     response = httpClient.execute(request);
                 }
 
-                System.out.println("TEST2");
+
 
                 HttpEntity entity = response.getEntity();
-                System.out.println("TEST3");
+
                 String responseString = EntityUtils.toString(entity, "UTF-8");
 
-                System.out.println("TEST4\n" + responseString);
+
                 jsonObject = JsonParser.parseString(responseString).getAsJsonObject();
-                System.out.println("TEST5");
+
 
                 Integer petIdAPI = jsonObject.getAsJsonObject().get("id").getAsInt();
 
@@ -396,7 +306,6 @@ public class PetController {
                 pet.setPetId(petOwnerIdAPI);
 
                 model.addAttribute("pet", pet);
-                System.out.println("Pet is successsfully added");
             } else {
                 userFeedback = "Pet should be either: " + getPetTypes().toString();
                 model.addAttribute("updateError", userFeedback);
@@ -415,14 +324,12 @@ public class PetController {
     public String deletePet(@PathVariable Integer petId,
                             Model model) throws IOException {
         String url = "http://localhost:8083/pet/" + petId;
-        System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
         HttpResponse response = httpClient.execute(request);
 
         String userFeedback = "Success";
         model.addAttribute("updateSuccess", userFeedback);
-        System.out.println("This deletes pet");
         return "result";
     }
 
@@ -430,16 +337,12 @@ public class PetController {
     public String editPet(@ModelAttribute("newPet") Pet pet,
                           Model model) throws Exception {
         String url = "http://localhost:8083/pets/" + pet.getPetId();
-        System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
         String userFeedback = "Success";
 
         HttpPost request = new HttpPost(url);
 
-        //params.setContentType("application/json");
         JsonObject jsonObject = JsonParser.parseString(printPetString()).getAsJsonObject();
-        //jsonObject.put("name", pet.getPetModel());
-        //jsonObject.remove("type");
         jsonObject.addProperty("type", pet.getPetType());
         jsonObject.getAsJsonObject("details").addProperty("name", pet.getPetName());
 
@@ -466,7 +369,6 @@ public class PetController {
 
             pet.setPetType(petIdAPI);
             model.addAttribute("pet", pet);
-            System.out.println("Pet is successsfully added");
         } else {
             userFeedback = "Pet should be either: " + getPetTypes().toString();
             model.addAttribute("updateError", userFeedback);
@@ -492,13 +394,8 @@ public class PetController {
         try {
             HttpPost request = new HttpPost(url);
             JsonObject jsonObject = JsonParser.parseString(printOwnerString()).getAsJsonObject();
-            System.out.println(owner.getOwnerId());
-            System.out.println(owner.getOwnerName());
-            System.out.println(owner.getOwnerPhoneNumber());
-            System.out.println(owner.getUserId());
             jsonObject.addProperty("name", owner.getOwnerName());
             jsonObject.addProperty("phoneNumber", owner.getOwnerPhoneNumber());
-            System.out.println(jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -517,8 +414,6 @@ public class PetController {
 
 
             model.addAttribute("owner", owner);
-            System.out.println("Owner is successsfully added");
-
         } catch (Exception ex) {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
@@ -532,14 +427,12 @@ public class PetController {
     public String deleteOwner(@PathVariable Integer ownerId,
                             Model model) throws IOException {
         String url = "http://localhost:8083/user/customer/" + ownerId;
-        System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
         HttpResponse response = httpClient.execute(request);
 
         String userFeedback = "Success";
         model.addAttribute("updateSuccess", userFeedback);
-        System.out.println("This deletes owner");
         return "result";
     }
 
@@ -553,20 +446,17 @@ public class PetController {
 
         String url = "http://localhost:8083/user/employee";
 
-        System.out.println(url);
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(url);
             JsonObject jsonObject = JsonParser.parseString(printEmployeeString()).getAsJsonObject();
-            System.out.println(jsonObject.toString());
             jsonObject.addProperty("name", employee.getEmployeeName());
 
             Gson gson = new Gson();
             JsonElement element = gson.toJsonTree(employee.getEmployeeSkills(), new TypeToken<List<String>>() {}.getType());
             jsonObject.add("skills", element.getAsJsonArray());
 
-            System.out.println(jsonObject.toString());
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -575,7 +465,6 @@ public class PetController {
             request.setEntity(params);
 
             HttpResponse response = httpClient.execute(request);
-            System.out.println(response.toString());
 
             HttpEntity entity = response.getEntity();
 
@@ -587,8 +476,6 @@ public class PetController {
 
             //employee.setEmployeeId(employeeIdAPI);
             model.addAttribute("employee", employee);
-            System.out.println("Employee is successsfully added");
-
         } catch (Exception ex) {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
@@ -605,8 +492,6 @@ public class PetController {
 
         String url = "http://localhost:8083/user/employee/" + employee.getEmployeeId();
 
-        System.out.println(url);
-        // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPut request = new HttpPut(url);
@@ -622,7 +507,6 @@ public class PetController {
 
             String userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
-            System.out.println("Employee schedule is successsfully added");
 
         } catch (Exception ex) {
         } finally {
@@ -637,14 +521,12 @@ public class PetController {
     public String deleteEmployee(@PathVariable Integer employeeId,
                               Model model) throws IOException {
         String url = "http://localhost:8083/user/employee/" + employeeId;
-        System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
         HttpResponse response = httpClient.execute(request);
 
         String userFeedback = "Success";
         model.addAttribute("updateSuccess", userFeedback);
-        System.out.println("This deletes employee");
         return "result";
     }
 
@@ -656,14 +538,12 @@ public class PetController {
 
         String url = "http://localhost:8083/schedule";
 
-        System.out.println(url);
         // @Deprecated HttpClient httpClient = new DefaultHttpClient();
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             HttpPost request = new HttpPost(url);
 
             JsonObject jsonObject = JsonParser.parseString(printScheduleString()).getAsJsonObject();
-            System.out.println(jsonObject.toString());
             jsonObject.addProperty("date", schedule.getDate().toString());
 
             Gson gson = new Gson();
@@ -682,8 +562,6 @@ public class PetController {
 
             String userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
-            System.out.println("Employee schedule is successsfully added");
-
         } catch (Exception ex) {
         } finally {
             // @Deprecated httpClient.getConnectionManager().shutdown();
@@ -697,14 +575,12 @@ public class PetController {
     public String deleteSchedule(@PathVariable Integer scheduleId,
                               Model model) throws IOException {
         String url = "http://localhost:8083/schedule/" + scheduleId;
-        System.out.println("url: " + url);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
         HttpResponse response = httpClient.execute(request);
 
         String userFeedback = "Success";
         model.addAttribute("updateSuccess", userFeedback);
-        System.out.println("This deletes schedule");
         return "result";
     }
 

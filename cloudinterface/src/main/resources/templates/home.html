@@ -200,7 +200,7 @@
                             + Add a New Car
                         </button>
 
-                        <div class="table-responsive">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(cars)}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -279,14 +279,14 @@
 								+ Assign Schedule
 							</button>
 						</div>
-                        <div class="table-responsive">
-                            <div id="sectiondividier" th:if="${pets}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
+                            <div id="sectiondividier" th:unless="${#lists.isEmpty(pets)}">
                                <h2 style="background-color:green;color:white">
                                    <p style="font-size: 60%">Pet list:</span></p>
                                </h2>
                             </div>
                         </div>
-						<div class="table-responsive" th:if="${pets}">
+						<div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
 							<table class="table table-striped">
                                 <thead>
                                     <tr>
@@ -338,14 +338,14 @@
                                 </tbody>
 							</table>
 						</div>
-                        <div class="table-responsive">
-                            <div id="sectiondividier" th:if="${owners}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(owners)}">
+                            <div id="sectiondividier" th:unless="${#lists.isEmpty(owners)}">
                                <h2 style="background-color:green;color:white">
                                    <p style="font-size: 60%">Owner list:</span></p>
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive" th:if="${owners}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(owners)}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -367,14 +367,14 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="table-responsive">
-                            <div id="sectiondividier" th:if="${employees}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(employees)}">
+                            <div id="sectiondividier" th:unless="${#lists.isEmpty(employees)}">
                                <h2 style="background-color:green;color:white">
                                    <p style="font-size: 60%">Employee list:</span></p>
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive" th:if="${employees}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(employees)}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -613,14 +613,14 @@
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <div id="sectiondividier" th:if="${ecommerceItems}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceItems)}">
+                            <div id="sectiondividier" th:unless="${#lists.isEmpty(ecommerceItems)}">
                                <h2 style="background-color:green;color:white">
                                    <p style="font-size: 60%">Available items in store:</span></p>
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive" th:if="${ecommerceItems}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceItems)}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -643,14 +643,14 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="table-responsive">
-                            <div id="sectiondividier" th:if="${currentOrder}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(currentOrder)}">
+                            <div id="sectiondividier" th:unless="${#lists.isEmpty(currentOrder)}">
                                <h2 style="background-color:green;color:white">
                                    <p style="font-size: 60%">Items in current order:</span></p>
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive" th:if="${currentOrder}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(currentOrder)}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
@@ -673,14 +673,14 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="table-responsive">
-                            <div id="sectiondividier" th:if="${ecommerceOrders}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
+                            <div id="sectiondividier" th:unless="${#lists.isEmpty(ecommerceOrders)}">
                                <h2 style="background-color:green;color:white">
                                    <p style="font-size: 60%">Previous orders:</span></p>
                                </h2>
                             </div>
                         </div>
-                        <div class="table-responsive" th:if="${ecommerceOrders}">
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
                             <table class="table table-striped" id="userTable">
                                 <tbody th:each="order: ${ecommerceOrders}">
                                     <tr>									

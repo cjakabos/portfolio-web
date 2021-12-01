@@ -2,16 +2,12 @@ package com.udacity.jwdnd.course1.cloudinterface.controller;
 
 import com.udacity.jwdnd.course1.cloudinterface.services.FileService;
 import com.udacity.jwdnd.course1.cloudinterface.services.UserService;
-import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-
 
 @Controller
 @RequestMapping("/file")

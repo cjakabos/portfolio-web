@@ -2,15 +2,10 @@ package com.udacity.jwdnd.course1.cloudinterface.controller;
 
 import com.udacity.jwdnd.course1.cloudinterface.entity.*;
 import com.udacity.jwdnd.course1.cloudinterface.services.*;
-import com.udacity.jwdnd.course1.cloudinterface.controller.CarController;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Controller
 @RequestMapping()
