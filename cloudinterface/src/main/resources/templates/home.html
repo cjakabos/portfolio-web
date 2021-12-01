@@ -64,7 +64,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="nav-notes" role="tabpanel" aria-labelledby="nav-notes-tab">
-                        <button id="showNoteForm" style="margin: 0.25em;" type="button" class="btn btn-info float-right" onclick="showNoteModal()">
+                        <button id="showNoteForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showNoteModal()">
                             + Add a New Note
                         </button>
 
@@ -126,7 +126,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="nav-credentials" role="tabpanel" aria-labelledby="nav-credentials-tab">
-                        <button id="showCredentialForm"  style="margin: 0.25em;" type="button" class="btn btn-info float-right" onclick="showCredentialModal()">
+                        <button id="showCredentialForm"  style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showCredentialModal()">
                             + Add a New Credential
                         </button>
 
@@ -196,10 +196,18 @@
                         </div>
                     </div>
                    <div class="tab-pane fade" id="nav-cars" role="tabpanel" aria-labelledby="nav-cars-tab">
-                        <button id="showCarForm" style="margin: 0.25em;" type="button" class="btn btn-info float-right" onclick="showCarModal()">
-                            + Add a New Car
-                        </button>
-
+                        <div id="showAllDiv" th:if="${carStatus}">
+							<button id="showCarForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showCarModal()">
+								+ Add a New Car
+							</button>
+						</div>
+                        <div class="table-responsive">
+                            <div id="showCarStatus" th:unless="${carStatus}">
+                               <h2 style="background-color:red;color:white">
+                                   <p style="font-size: 60%">Car service is down, if you want to use it, please start it up</p>
+                               </h2>
+                            </div>
+                        </div>
                         <div class="table-responsive" th:unless="${#lists.isEmpty(cars)}">
                             <table class="table table-striped" id="userTable">
                                 <thead>
@@ -262,7 +270,7 @@
                         </div>
                     </div>
                    <div class="tab-pane fade" id="nav-pets" role="tabpanel" aria-labelledby="nav-pets-tab">
-						<div id="showAllDiv">
+						<div id="showAllDiv" th:if="${petStatus}">
 							<button id="showOwnerForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showOwnerModal()">
 								+ Add a New Owner
 							</button>
@@ -279,6 +287,13 @@
 								+ Assign Schedule
 							</button>
 						</div>
+                        <div class="table-responsive">
+                            <div id="showPetStatus" th:unless="${petStatus}">
+                               <h2 style="background-color:red;color:white">
+                                   <p style="font-size: 60%">Pet service is down, if you want to use it, please start it up</p>
+                               </h2>
+                            </div>
+                        </div>
                         <div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
                             <div id="sectiondividier" th:unless="${#lists.isEmpty(pets)}">
                                <h2 style="background-color:green;color:white">
@@ -585,7 +600,7 @@
                         </div>
 						</div>
                    <div class="tab-pane fade" id="nav-ecommerce" role="tabpanel" aria-labelledby="nav-ecommerce-tab">
-						<div id="showEcommercesDiv">
+						<div id="showEcommercesDiv" th:if="${ecommerceStatus}">
 							<button id="showEcommerceUserForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceUserModal()">
 								+ Add a user
 							</button>
@@ -606,6 +621,13 @@
 								</button>
 							</form>
 						</div>
+                        <div class="table-responsive">
+                            <div id="showEcommercesStatus" th:unless="${ecommerceStatus}">
+                               <h2 style="background-color:red;color:white">
+                                   <p style="font-size: 60%">eCommerce service is down, if you want to use it, please start it up</p>
+                               </h2>
+                            </div>
+                        </div>
                         <div class="table-responsive">
                             <div id="showEcommercesUser" th:if="${currentUser}">
                                <h2 style="background-color:green;color:white">

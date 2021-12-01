@@ -393,6 +393,23 @@ public class UserEcommerceController {
 
         return orders;
     }
+
+    public static boolean getEcommerceStatus() throws Exception {
+        String url = "http://localhost:8099/api/user/create";
+        boolean serviceStatus;
+
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
+            serviceStatus = true;
+        } catch (Exception e) {
+            serviceStatus = false;
+        }
+
+        return serviceStatus;
+    }
+
     public String printString() {
         String jsonString = "{\n" +
                 "  \"username\": \"USED\",\n" +

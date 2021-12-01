@@ -207,6 +207,22 @@ public class CarController {
         return "result";
     }
 
+    public static boolean getCarStatus() throws Exception {
+        String url = "http://localhost:8080/cars";
+        boolean serviceStatus;
+
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
+            serviceStatus = true;
+        } catch (Exception e) {
+            serviceStatus = false;
+        }
+
+        return serviceStatus;
+    }
+
     public String printString() {
         String jsonString = "{\n" +
                 "  \"condition\": \"USED\",\n" +

@@ -584,6 +584,22 @@ public class PetController {
         return "result";
     }
 
+    public static boolean getPetStatus() throws Exception {
+        String url = "http://localhost:8083/pet";
+        boolean serviceStatus;
+
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = httpClient.execute(request);
+            serviceStatus = true;
+        } catch (Exception e) {
+            serviceStatus = false;
+        }
+
+        return serviceStatus;
+    }
+
     public String printPetString() {
         String jsonString = "{\n" +
                 "  \"type\": \"CAT\",\n" +

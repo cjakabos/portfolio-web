@@ -13,7 +13,7 @@ public class HomeController {
     private CredentialService cService;
     private UserService uService;
     private FileService fService;
-	private NoteService nService;
+    private NoteService nService;
     private EncryptionService eService;
     private PetController pController;
 
@@ -48,8 +48,8 @@ public class HomeController {
         model.addAttribute("filesList", fService.getFilesListByUserId(userId));
         model.addAttribute("notes", nService.getNotesByUserId(userId));
         model.addAttribute("credentials", cService.getCredentialsByUserId(userId));
-		model.addAttribute("cars", CarController.getListCars());
-		model.addAttribute("pets", PetController.getListPets());
+        model.addAttribute("cars", CarController.getListCars());
+        model.addAttribute("pets", PetController.getListPets());
         model.addAttribute("owners", PetController.getListOwners());
         model.addAttribute("employees", PetController.getListEmployees());
         model.addAttribute("schedules", PetController.getListSchedules());
@@ -63,6 +63,9 @@ public class HomeController {
         model.addAttribute("currentOrder", UserEcommerceController.getCart());
         model.addAttribute("ecommerceOrders", UserEcommerceController.getListOrders());
         model.addAttribute("days", PetController.getDays());
+        model.addAttribute("carStatus", CarController.getCarStatus());
+        model.addAttribute("petStatus", PetController.getPetStatus());
+        model.addAttribute("ecommerceStatus", UserEcommerceController.getEcommerceStatus());
         return "home";
     }
 }
