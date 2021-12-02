@@ -48,6 +48,8 @@ public class CarController {
                 String carCondition = test.toString();
                 test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("model");
                 String carModel = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("productionYear");
+                String carProductionYear = test.toString();
 
                 test = tokenList.get(i).getAsJsonObject().get("id");
                 String carId = test.toString();
@@ -56,6 +58,7 @@ public class CarController {
                         put("carCondition", carCondition);
                         put("carId", carId);
                         put("carModel", carModel);
+                        put("carProductionYear", carProductionYear);
                     }
                 };
                 cars.add(newCar);
@@ -110,6 +113,7 @@ public class CarController {
             JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
             jsonObject.addProperty("condition", car.getCarCondition());
             jsonObject.getAsJsonObject("details").addProperty("model", car.getCarModel());
+            jsonObject.getAsJsonObject("details").addProperty("productionYear", car.getCarProductionYear());
 
             if (car.getCarCondition().equals("NEW") || car.getCarCondition().equals("USED")) {
                 userFeedback = "Success";

@@ -5,15 +5,17 @@ public class Car {
     private String carModel;
     private String carCondition;
     private Integer userId;
+    private Integer carProductionYear;
 
     public Car() {
     }
 
-    public Car(Integer carId, String carModel, String carCondition, Integer userId) {
+    public Car(Integer carId, String carModel, String carCondition, Integer userId, Integer carProductionYear) {
         this.carId = carId;
         this.carModel = carModel;
         this.carCondition = carCondition;
         this.userId = userId;
+        this.carProductionYear = carProductionYear;
     }
 
 
@@ -47,5 +49,13 @@ public class Car {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public Integer getCarProductionYear() {
+        return carProductionYear;
+    }
+
+    public void setCarProductionYear(Integer carProductionYear) {
+        this.carProductionYear = carProductionYear;
     }
 }

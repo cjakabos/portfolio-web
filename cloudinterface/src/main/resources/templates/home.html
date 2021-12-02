@@ -212,17 +212,18 @@
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 20%" scope="col"></th>
-                                        <th style="width: 20%" scope="col">Model</th>
-                                        <th style="width: 80%" scope="col">Condition</th>
+                                        <th style="width: 10%" scope="col"></th>
+                                        <th style="width: 30%" scope="col">Model</th>
+                                        <th style="width: 30%" scope="col">Condition</th>
+                                        <th style="width: 30%" scope="col">Production year</th>
                                     </tr>
                                 </thead>
                                 <tbody th:each="car: ${cars}">
                                     <tr>
                                         <td>
                                             <button type="button" class="btn btn-success" th:data-id="${car.carId}" th:data-model="${car.carModel}"
-													th:data-condition="${car.carCondition}" th:onclick="showCarModal(this.getAttribute('data-id'),
-														this.getAttribute('data-model'), this.getAttribute('data-condition'))">
+													th:data-condition="${car.carCondition}" th:data-productionYear="${car.carProductionYear}" th:onclick="showCarModal(this.getAttribute('data-id'),
+														this.getAttribute('data-model'), this.getAttribute('data-condition'), this.getAttribute('data-productionYear'))">
 														Edit
 														</button>
                                         <a class="btn btn-danger" th:href="@{/car/delete/{carId}(carId = ${car.get('carId')})}">Delete</a>
@@ -230,6 +231,7 @@
 										
                                         <th th:text="${car.get('carModel')}" scope="row">Example Car Model</th>
                                         <td th:text="${car.get('carCondition')}">Example Car Condition </td>
+                                        <td th:text="${car.get('carProductionYear')}">Example Car Production Year </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -258,6 +260,8 @@
                                                     <option th:each="condition : ${conditions}" th:value="${condition}" th:text="${condition}"></option>
                                                 </select>
                                             </div>
+											<label for="car-productionYear" class="col-form-label">Production year</label>
+											<input th:field="*{carProductionYear}" type="number" min="1900" step="1" id="car-productionYear"/>
                                             <button id="carSubmit" type="submit" class="d-none"></button>
                                         </form>
                                     </div>
@@ -852,10 +856,11 @@
                 $('#credentialModal').modal('show');
             }
             // For opening the car modal
-            function showCarModal(carId, carModel, carCondition) {
+            function showCarModal(carId, carModel, carCondition, carProductionYear) {
                 $('#car-id').val(carId ? carId : '');
                 $('#car-model').val(carModel ? carModel : '');
                 $('#car-condition').val(carCondition ? carCondition : '');
+				$('#car-productionYear').val(carProductionYear ? carProductionYear : '');
                 $('#carModal').modal('show');
             }
             // For opening the pet modal
