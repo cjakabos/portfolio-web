@@ -149,8 +149,12 @@ public class PetController {
 
                 JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
                 String employeeName = test.toString();
+
                 test = tokenList.get(i).getAsJsonObject().get("skills");
                 String employeeSkills = test.toString();
+
+                test = tokenList.get(i).getAsJsonObject().get("daysAvailable");
+                String employeeSchedule = test.toString();
 
                 test = tokenList.get(i).getAsJsonObject().get("id");
                 String employeeId = test.toString();
@@ -159,6 +163,7 @@ public class PetController {
                         put("employeeName", employeeName);
                         put("employeeId", employeeId);
                         put("employeeSkills", employeeSkills);
+                        put("employeeSchedule", employeeSchedule);
                     }
                 };
                 employees.add(newEmployee);
