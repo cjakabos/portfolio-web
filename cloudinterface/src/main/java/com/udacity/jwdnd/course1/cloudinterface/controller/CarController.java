@@ -50,15 +50,48 @@ public class CarController {
                 String carModel = test.toString();
                 test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("productionYear");
                 String carProductionYear = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("body");
+                String carBody = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("code");
+                String carCode = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("name");
+                String carName = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("numberOfDoors");
+                String numberOfDoors = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("fuelType");
+                String fuelType = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("engine");
+                String engine = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("mileage");
+                String mileage = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("modelYear");
+                String modelYear = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("externalColor");
+                String externalColor = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("location").getAsJsonObject().get("lat");
+                String latLocation = test.toString();
+                test = tokenList.get(i).getAsJsonObject().get("location").getAsJsonObject().get("lon");
+                String longLocation = test.toString();
 
                 test = tokenList.get(i).getAsJsonObject().get("id");
                 String carId = test.toString();
                 newCar = new HashMap<String, String>() {
                     {
-                        put("carCondition", carCondition);
-                        put("carId", carId);
-                        put("carModel", carModel);
-                        put("carProductionYear", carProductionYear);
+                        put("condition", carCondition);
+                        put("id", carId);
+                        put("model", carModel);
+                        put("productionYear", carProductionYear);
+                        put("body", carBody);
+                        put("code", carCode);
+                        put("name", carName);
+                        put("numberOfDoors", numberOfDoors);
+                        put("fuelType", fuelType);
+                        put("engine", engine);
+                        put("mileage", mileage);
+                        put("modelYear", modelYear);
+                        put("externalColor", externalColor);
+                        put("latLocation", latLocation);
+                        put("longLocation", longLocation);
                     }
                 };
                 cars.add(newCar);
@@ -102,26 +135,37 @@ public class CarController {
         String userFeedback = "Success";
 
         String url;
-        if (car.getCarId() == null) {
+        if (car.getId() == null) {
             url = "http://localhost:8080/cars";
         } else {
-            url = "http://localhost:8080/cars/" + car.getCarId().toString();
+            url = "http://localhost:8080/cars/" + car.getId().toString();
         }
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         try {
             JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
-            jsonObject.addProperty("condition", car.getCarCondition());
-            jsonObject.getAsJsonObject("details").addProperty("model", car.getCarModel());
-            jsonObject.getAsJsonObject("details").addProperty("productionYear", car.getCarProductionYear());
+            jsonObject.addProperty("condition", car.getCondition());
+            jsonObject.getAsJsonObject("details").addProperty("model", car.getModel());
+            jsonObject.getAsJsonObject("details").addProperty("productionYear", car.getProductionYear());
+            jsonObject.getAsJsonObject("details").addProperty("body", car.getBody());
+//            jsonObject.getAsJsonObject("details").getAsJsonObject("manufacturer").addProperty("code", car.getCode());
+            jsonObject.getAsJsonObject("details").getAsJsonObject("manufacturer").addProperty("name", car.getName());
+            jsonObject.getAsJsonObject("details").addProperty("numberOfDoors", car.getNumberOfDoors());
+            jsonObject.getAsJsonObject("details").addProperty("fuelType", car.getFuelType());
+            jsonObject.getAsJsonObject("details").addProperty("engine", car.getEngine());
+            jsonObject.getAsJsonObject("details").addProperty("mileage", car.getMileage());
+            jsonObject.getAsJsonObject("details").addProperty("modelYear", car.getModelYear());
+            jsonObject.getAsJsonObject("details").addProperty("externalColor", car.getExternalColor());
+            jsonObject.getAsJsonObject("location").addProperty("lat", car.getLatLocation());
+            jsonObject.getAsJsonObject("location").addProperty("lon", car.getLongLocation());
 
-            if (car.getCarCondition().equals("NEW") || car.getCarCondition().equals("USED")) {
+            if (car.getCondition().equals("NEW") || car.getCondition().equals("USED")) {
                 userFeedback = "Success";
                 model.addAttribute("updateSuccess", userFeedback);
                 StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
 
                 HttpResponse response;
-                if (car.getCarId() == null) {
+                if (car.getId() == null) {
                     HttpPost request = new HttpPost(url);
                     request.addHeader("content-type", "application/json");
                     request.setEntity(params);
@@ -139,7 +183,7 @@ public class CarController {
 
                 String carIdAPI = jsonObject.getAsJsonObject().get("id").toString();
 
-                car.setCarModel(carIdAPI);
+                car.setModel(carIdAPI);
                 model.addAttribute("car", car);
             } else {
                 userFeedback = "Model should be either USED or NEW";
@@ -172,7 +216,7 @@ public class CarController {
     @GetMapping(value = "/cars/{carId}")
     public String editCar(@ModelAttribute("newCarModel") Car car,
                           Model model) throws IOException {
-        String url = "http://localhost:8080/cars/" + car.getCarId();
+        String url = "http://localhost:8080/cars/" + car.getId();
         HttpClient httpClient = HttpClientBuilder.create().build();
         String userFeedback = "Success";
 
@@ -180,12 +224,12 @@ public class CarController {
 
         //params.setContentType("application/json");
         JsonObject jsonObject = JsonParser.parseString(printString()).getAsJsonObject();
-        //jsonObject.put("model", car.getCarModel());
+        //jsonObject.put("model", car.getModel());
         //jsonObject.remove("condition");
-        jsonObject.addProperty("condition", car.getCarCondition());
-        jsonObject.getAsJsonObject("details").addProperty("model", car.getCarModel());
+        jsonObject.addProperty("condition", car.getCondition());
+        jsonObject.getAsJsonObject("details").addProperty("model", car.getModel());
 
-        if (car.getCarCondition().equals("NEW") || car.getCarCondition().equals("USED")) {
+        if (car.getCondition().equals("NEW") || car.getCondition().equals("USED")) {
             userFeedback = "Success";
             model.addAttribute("updateSuccess", userFeedback);
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
@@ -201,7 +245,7 @@ public class CarController {
 
             String carIdAPI = jsonObject.getAsJsonObject().get("id").toString();
 
-            car.setCarModel(carIdAPI);
+            car.setModel(carIdAPI);
             model.addAttribute("car", car);
         } else {
             userFeedback = "Model should be either USED or NEW";
