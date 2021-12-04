@@ -3,11 +3,13 @@ package com.example.demo.controllers;
 import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.Cart;
 import com.example.demo.model.persistence.Item;
+
 import static org.junit.Assert.*;
 
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.requests.ModifyCartRequest;
 import org.junit.*;
+
 import static org.mockito.Mockito.*;
 
 import org.springframework.http.HttpStatus;
@@ -38,7 +40,7 @@ public class CartControllerTest {
     @Test
     public void add_to_cart_happy_path() {
         User user = new User(1L, "testuser", "testpassword");
-        Item item = new Item(1L, "tool", BigDecimal.valueOf(500) , "garden");
+        Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
         List<Item> items = new ArrayList<>();
         items.add(item);
         items.add(item);
@@ -58,7 +60,7 @@ public class CartControllerTest {
     @Test
     public void remove_from_cart_happy_path() {
         User user = new User(1L, "testuser", "testpassword");
-        Item item = new Item(1L, "tool", BigDecimal.valueOf(500) , "garden");
+        Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
         List<Item> items = new ArrayList<>();
         items.add(item);
         items.add(item);

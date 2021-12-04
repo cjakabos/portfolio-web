@@ -4,10 +4,14 @@ import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.CreateUserRequest;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.mockito.Mockito.*;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -58,7 +62,6 @@ public class UserControllerTest {
         assertEquals("testuser", u.getUsername());
         assertEquals("thisIsHashed", u.getPassword());
     }
-
 
 
     @Test

@@ -19,7 +19,7 @@ public class PetService {
     CustomerRepository customerRepository;
 
 
-    public Pet savePet(Pet pet, long ownerId){
+    public Pet savePet(Pet pet, long ownerId) {
 
         Customer customer = customerRepository.getOne(ownerId);
         pet.setCustomer(customer);
@@ -30,25 +30,26 @@ public class PetService {
 
         return pet;
     }
-    public Pet getPet(Long petId){
+
+    public Pet getPet(Long petId) {
         return petRepository.getOne(petId);
     }
 
-    public void deletePet(Long petId){
+    public void deletePet(Long petId) {
         petRepository.deleteById(petId);
     }
 
-    public List<Pet> getPetsByOwnerId(long customerId){
+    public List<Pet> getPetsByOwnerId(long customerId) {
         return petRepository.getPetsByCustomerId(customerId);
     }
 
-    public List<Pet> getPetsBySchedule(Long scheduleId){
+    public List<Pet> getPetsBySchedule(Long scheduleId) {
         Schedule schedule = scheduleRepository.getOne(scheduleId);
 
         return schedule.getPetList();
     }
 
-    public List<Pet> getPets(){
+    public List<Pet> getPets() {
         return petRepository.findAll();
     }
 }

@@ -12,6 +12,7 @@ class MockAddressRepository {
 
     /**
      * Gets a random address from the list.
+     *
      * @return A new, random address split into street, city, state and zip
      */
     static Address getRandom() {

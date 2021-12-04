@@ -1,6 +1,7 @@
 package com.udacity.vehicles.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 
 /**

@@ -2,6 +2,7 @@ package com.udacity.vehicles.api;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.springframework.hateoas.VndErrors;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

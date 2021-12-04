@@ -2,43 +2,43 @@ package com.udacity.jwdnd.course1.cloudinterface.entity;
 
 public class UserEcommerce {
 
-	private long id;
+    private long id;
 
-	private String ecommerceUsername;
+    private String ecommerceUsername;
 
-	private String ecommercePassword;
+    private String ecommercePassword;
 
-	public UserEcommerce(){
-	}
+    public UserEcommerce() {
+    }
 
-	public UserEcommerce(long id, String username, String password){
-		this.id = id;
-		this.ecommerceUsername = username;
-		this.ecommercePassword = password;
-	}
-	
-	public long getId() {
-		return id;
-	}
+    public UserEcommerce(long id, String username, String password) {
+        this.id = id;
+        this.ecommerceUsername = username;
+        this.ecommercePassword = password;
+    }
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public String getEcommerceUsername() {
-		return ecommerceUsername;
-	}
+    public void setId(long id) {
+        this.id = id;
+    }
 
-	public void setEcommerceUsername(String ecommerceUsername) {
-		this.ecommerceUsername = ecommerceUsername;
-	}
+    public String getEcommerceUsername() {
+        return ecommerceUsername;
+    }
 
-	public String getEcommercePassword() {
-		return ecommercePassword;
-	}
+    public void setEcommerceUsername(String ecommerceUsername) {
+        this.ecommerceUsername = ecommerceUsername;
+    }
 
-	public void setEcommercePassword(String ecommerceUsername) {
-		this.ecommercePassword = ecommerceUsername;
-	}
+    public String getEcommercePassword() {
+        return ecommercePassword;
+    }
+
+    public void setEcommercePassword(String ecommerceUsername) {
+        this.ecommercePassword = ecommerceUsername;
+    }
 
 }

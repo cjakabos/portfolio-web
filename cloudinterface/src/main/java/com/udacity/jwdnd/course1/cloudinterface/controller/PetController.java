@@ -85,6 +85,7 @@ public class PetController {
         return pets;
         //return "result";
     }
+
     public static List<Map<String, String>> getListOwners() throws Exception {
         List<Map<String, String>> owners = new ArrayList<Map<String, String>>();
         Map<String, String> newOwner = new HashMap();
@@ -197,7 +198,8 @@ public class PetController {
                 oj = tokenList.get(i).getAsJsonObject();
 
                 Gson gson = new Gson();
-                Type type = new TypeToken<List<String>>(){}.getType();
+                Type type = new TypeToken<List<String>>() {
+                }.getType();
 
                 JsonElement idElement = tokenList.get(i).getAsJsonObject().get("id");
                 JsonArray tempArrayId = new JsonArray();
@@ -291,7 +293,6 @@ public class PetController {
                     request.setEntity(params);
                     response = httpClient.execute(request);
                 }
-
 
 
                 HttpEntity entity = response.getEntity();
@@ -430,7 +431,7 @@ public class PetController {
 
     @GetMapping(value = "/deleteOwner/{ownerId}")
     public String deleteOwner(@PathVariable Integer ownerId,
-                            Model model) throws IOException {
+                              Model model) throws IOException {
         String url = "http://localhost:8083/user/customer/" + ownerId;
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
@@ -459,7 +460,8 @@ public class PetController {
             jsonObject.addProperty("name", employee.getEmployeeName());
 
             Gson gson = new Gson();
-            JsonElement element = gson.toJsonTree(employee.getEmployeeSkills(), new TypeToken<List<String>>() {}.getType());
+            JsonElement element = gson.toJsonTree(employee.getEmployeeSkills(), new TypeToken<List<String>>() {
+            }.getType());
             jsonObject.add("skills", element.getAsJsonArray());
 
             userFeedback = "Success";
@@ -489,6 +491,7 @@ public class PetController {
 
         return "result";
     }
+
     @PostMapping("/addEmployeeSchedule")
     public String addEmployeeSchedule(Authentication authentication,
                                       @ModelAttribute("newEmployee") Employee employee,
@@ -502,7 +505,8 @@ public class PetController {
             HttpPut request = new HttpPut(url);
 
             Gson gson = new Gson();
-            JsonElement element = gson.toJsonTree(employee.getEmployeeSchedule(), new TypeToken<List<String>>() {}.getType());
+            JsonElement element = gson.toJsonTree(employee.getEmployeeSchedule(), new TypeToken<List<String>>() {
+            }.getType());
 
             StringEntity params = new StringEntity(element.toString(), "UTF-8");
             request.addHeader("content-type", "application/json");
@@ -524,7 +528,7 @@ public class PetController {
 
     @GetMapping(value = "/deleteEmployee/{employeeId}")
     public String deleteEmployee(@PathVariable Integer employeeId,
-                              Model model) throws IOException {
+                                 Model model) throws IOException {
         String url = "http://localhost:8083/user/employee/" + employeeId;
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
@@ -537,8 +541,8 @@ public class PetController {
 
     @PostMapping("/assignSchedule")
     public String assignSchedule(Authentication authentication,
-                                      @ModelAttribute("newSchedule") Schedule schedule,
-                                      Model model) throws Exception {
+                                 @ModelAttribute("newSchedule") Schedule schedule,
+                                 Model model) throws Exception {
 
 
         String url = "http://localhost:8083/schedule";
@@ -552,17 +556,20 @@ public class PetController {
             jsonObject.addProperty("date", schedule.getDate().toString());
 
             Gson gson = new Gson();
-            JsonElement element = gson.toJsonTree(schedule.getEmployeeIds(), new TypeToken<List<String>>() {}.getType());
+            JsonElement element = gson.toJsonTree(schedule.getEmployeeIds(), new TypeToken<List<String>>() {
+            }.getType());
             jsonObject.add("employeeIds", element.getAsJsonArray());
-            element = gson.toJsonTree(schedule.getPetIds(), new TypeToken<List<String>>() {}.getType());
+            element = gson.toJsonTree(schedule.getPetIds(), new TypeToken<List<String>>() {
+            }.getType());
             jsonObject.add("petIds", element.getAsJsonArray());
-            element = gson.toJsonTree(schedule.getActivities(), new TypeToken<List<String>>() {}.getType());
+            element = gson.toJsonTree(schedule.getActivities(), new TypeToken<List<String>>() {
+            }.getType());
             jsonObject.add("activities", element.getAsJsonArray());
 
             StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
             request.addHeader("content-type", "application/json");
             request.setEntity(params);
-            
+
             HttpResponse response = httpClient.execute(request);
 
             String userFeedback = "Success";
@@ -578,7 +585,7 @@ public class PetController {
 
     @GetMapping(value = "/deleteSchedule/{scheduleId}")
     public String deleteSchedule(@PathVariable Integer scheduleId,
-                              Model model) throws IOException {
+                                 Model model) throws IOException {
         String url = "http://localhost:8083/schedule/" + scheduleId;
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpDelete request = new HttpDelete(url);
@@ -615,6 +622,7 @@ public class PetController {
                 "}";
         return jsonString;
     }
+
     public String printOwnerString() {
         String jsonString = "{\n" +
                 "  \"name\": \"Alex\",\n" +
@@ -622,6 +630,7 @@ public class PetController {
                 "}";
         return jsonString;
     }
+
     public String printEmployeeString() {
         String jsonString = "{\n" +
                 "  \"name\": \"Alex\",\n" +
@@ -629,6 +638,7 @@ public class PetController {
                 "}";
         return jsonString;
     }
+
     public String printScheduleString() {
         String jsonString = "{\n" +
                 "  \"employeeIds\": \"Alex\",\n" +
@@ -638,14 +648,17 @@ public class PetController {
                 "}";
         return jsonString;
     }
+
     public static List<String> getEmployeeSkillsList() {
         List<String> skills = Arrays.asList("PETTING", "WALKING", "FEEDING", "MEDICATING", "SHAVING");
         return skills;
     }
+
     public static List<String> getPetTypes() {
         List<String> types = Arrays.asList("CAT", "DOG", "LIZARD", "BIRD", "FISH", "SNAKE", "OTHER");
         return types;
     }
+
     public static List<String> getDays() {
         List<String> days = Arrays.asList("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");
         return days;

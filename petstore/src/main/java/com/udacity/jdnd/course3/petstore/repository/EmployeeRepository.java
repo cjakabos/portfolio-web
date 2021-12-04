@@ -9,7 +9,7 @@ import java.time.DayOfWeek;
 import java.util.*;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee,Long> {
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> getAllBySkillsInAndDaysAvailableContains(Set<EmployeeSkill> skills, DayOfWeek daysAvailable);
 }
 

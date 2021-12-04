@@ -47,7 +47,7 @@ public class CredentialPage {
         credSubmitButton.submit();
     }
 
-    public void openCredential(int elementId, WebDriver driver)  {
+    public void openCredential(int elementId, WebDriver driver) {
         credTab.click();
         String credTableRef;
         credTableRef = "//*[@id='credentialTable']/tbody[" + elementId + "]/tr/td[1]/button";

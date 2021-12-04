@@ -6,7 +6,7 @@ import org.openqa.selenium.support.*;
 public class ResultPage {
     @FindBy(css = "#errorResult1")
     private WebElement errorResult;
-	
+
     public ResultPage(WebDriver webDriver) {
         PageFactory.initElements(webDriver, this);
     }

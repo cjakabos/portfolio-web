@@ -38,7 +38,7 @@ public class FileController {
 
         Integer userId = uService.getUserByUsername(authentication.getName()).getUserId();
         String[] filesList = fService.getFilesListByUserId(userId);
-        
+
         if (file.getSize() > 2000000) {
             isError = true;
             messageType = "File can't be greater than 2MB. Choose a smaller file.";
@@ -61,14 +61,14 @@ public class FileController {
             }
         }
         if (!isError && !file.isEmpty()) {
-                boolean success = fService.uploadFile(file, userId);
-                if (success == true) {
-                    messageType = "Uploaded!";
-                    feedbackHandler = "updateSuccess";
-                } else {
-                    messageType = "Fail while uploading";
-                    feedbackHandler = "updateError";
-                }
+            boolean success = fService.uploadFile(file, userId);
+            if (success == true) {
+                messageType = "Uploaded!";
+                feedbackHandler = "updateSuccess";
+            } else {
+                messageType = "Fail while uploading";
+                feedbackHandler = "updateError";
+            }
         }
 
         model.addAttribute(feedbackHandler, messageType);

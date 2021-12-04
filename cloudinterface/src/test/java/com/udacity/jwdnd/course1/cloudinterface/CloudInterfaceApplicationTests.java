@@ -94,24 +94,24 @@ class CloudInterfaceApplicationTests {
         driver.get(randomPort + "/signup");
         Assertions.assertEquals("Sign Up", driver.getTitle());
     }
-	
+
     //Write a test that verifies that an unauthorized user can only access
-	//the login and signup pages.
+    //the login and signup pages.
     @Test
     public void testHomeUnauthorizedPageAccess() {
-		driver.get(randomPort + "/login");
+        driver.get(randomPort + "/login");
         Assertions.assertEquals("Login", driver.getTitle());
         driver.get(randomPort + "/signup");
         Assertions.assertEquals("Sign Up", driver.getTitle());
         driver.get(randomPort + "/home");
         Assertions.assertNotEquals("Home", driver.getTitle());
-		Assertions.assertEquals("Login", driver.getTitle());
+        Assertions.assertEquals("Login", driver.getTitle());
     }
 
     //Write a test that signs up a new user, logs in, verifies that the
-	//home page is accessible, logs out, and verifies that the home page
-	//is no longer accessible.
-	@Test
+    //home page is accessible, logs out, and verifies that the home page
+    //is no longer accessible.
+    @Test
     public void testNewUser() throws InterruptedException {
         driver.get(randomPort + "/signup");
         signupPage.signup("New", "User", "newUser", "12345");
@@ -123,7 +123,7 @@ class CloudInterfaceApplicationTests {
         testHomeUnauthorizedPageAccess();
     }
 
-	//Test of trying to upload empty file
+    //Test of trying to upload empty file
     @Test
     public void testEmptyUpload() throws InterruptedException {
         adminUserLogin();
@@ -136,7 +136,7 @@ class CloudInterfaceApplicationTests {
     public void testNote() throws InterruptedException {
         adminUserLogin();
         //Write a test that creates a note, and verifies it is displayed.
-		String noteTitle = "Make a test note";
+        String noteTitle = "Make a test note";
         String noteDescription = "If text is seen, we are good";
         NotesPage notesPage = new NotesPage(driver);
         int noteId = 1;
@@ -144,8 +144,8 @@ class CloudInterfaceApplicationTests {
 
         wait.until(ExpectedConditions.elementToBeClickable(notesPage.notesTab));
         List<Note> noteList = noteService.getNotesByUserId(1);
-        Assertions.assertEquals(noteTitle, noteList.get(noteId-1).getNoteTitle());
-        Assertions.assertEquals(noteDescription, noteList.get(noteId-1).getNoteDescription());
+        Assertions.assertEquals(noteTitle, noteList.get(noteId - 1).getNoteTitle());
+        Assertions.assertEquals(noteDescription, noteList.get(noteId - 1).getNoteDescription());
 
         noteTitle = "Second note";
         noteDescription = "Looks like second";
@@ -154,11 +154,11 @@ class CloudInterfaceApplicationTests {
         notesPage.addNote(noteTitle, noteDescription, driver);
 
         //Write a test that edits an existing note and verifies that the changes
-		//are displayed.
-		wait.until(ExpectedConditions.elementToBeClickable(notesPage.notesTab));
+        //are displayed.
+        wait.until(ExpectedConditions.elementToBeClickable(notesPage.notesTab));
         noteList = noteService.getNotesByUserId(1);
-        Assertions.assertEquals(noteTitle, noteList.get(noteId-1).getNoteTitle());
-        Assertions.assertEquals(noteDescription, noteList.get(noteId-1).getNoteDescription());
+        Assertions.assertEquals(noteTitle, noteList.get(noteId - 1).getNoteTitle());
+        Assertions.assertEquals(noteDescription, noteList.get(noteId - 1).getNoteDescription());
 
         noteTitle = "Modified note";
         noteDescription = "Looks even better now";
@@ -167,10 +167,10 @@ class CloudInterfaceApplicationTests {
         notesPage.editNote(noteId, noteTitle, noteDescription, driver);
 
         //Write a test that deletes a note and verifies that the note is no longer displayed.
-		wait.until(ExpectedConditions.elementToBeClickable(notesPage.notesTab));
+        wait.until(ExpectedConditions.elementToBeClickable(notesPage.notesTab));
         noteList = noteService.getNotesByUserId(1);
-        Assertions.assertEquals(noteTitle, noteList.get(noteId-1).getNoteTitle());
-        Assertions.assertEquals(noteDescription, noteList.get(noteId-1).getNoteDescription());
+        Assertions.assertEquals(noteTitle, noteList.get(noteId - 1).getNoteTitle());
+        Assertions.assertEquals(noteDescription, noteList.get(noteId - 1).getNoteDescription());
         notesPage.deleteNote(noteId, driver);
     }
 
@@ -179,8 +179,8 @@ class CloudInterfaceApplicationTests {
         adminUserLogin();
         //credentialPage.credTab.click();
         //Write a test that creates a set of credentials, verifies that they are displayed,
-		//and verifies that the displayed password is encrypted.
-		String url = "test1url";
+        //and verifies that the displayed password is encrypted.
+        String url = "test1url";
         String user = "test1user";
         String pwd = "test1pwd";
         int userId = 1;
@@ -202,9 +202,9 @@ class CloudInterfaceApplicationTests {
         credential = credentialService.getCredentialsByUserId(1);
 
         //Write a test that views an existing set of credentials, verifies that the viewable
-		//password is unencrypted, edits the credentials, and verifies that the changes are
-		//displayed.
-		wait.until(ExpectedConditions.elementToBeClickable(credentialPage.credTab));
+        //password is unencrypted, edits the credentials, and verifies that the changes are
+        //displayed.
+        wait.until(ExpectedConditions.elementToBeClickable(credentialPage.credTab));
         credentialPage.openCredential(userId, driver);
 
         wait.until(ExpectedConditions.elementToBeClickable(credentialPage.credTab));
@@ -221,8 +221,8 @@ class CloudInterfaceApplicationTests {
         Assertions.assertEquals(pwd, this.encryptionService.decryptValue(credential.get(userId - 1).getPassword(), credential.get(userId - 1).getKey()));
 
         //Write a test that deletes an existing set of credentials and verifies that the
-		//credentials are no longer displayed.
-		userId = 1;
+        //credentials are no longer displayed.
+        userId = 1;
         credential = credentialService.getCredentialsByUserId(1);
         String userToDelete = credential.get(userId - 1).getUsername();
         Assertions.assertEquals(userToDelete, credential.get(userId - 1).getUsername());

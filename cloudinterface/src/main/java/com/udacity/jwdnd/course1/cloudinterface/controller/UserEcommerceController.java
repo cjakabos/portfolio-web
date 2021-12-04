@@ -368,7 +368,8 @@ public class UserEcommerceController {
 
 
                 Gson gson = new Gson();
-                Type type = new TypeToken<List<Item>>(){}.getType();
+                Type type = new TypeToken<List<Item>>() {
+                }.getType();
 
                 JsonElement itemsElement = tokenList.get(i).getAsJsonObject().get("items");
                 List<Item> orderItems = gson.fromJson(itemsElement, type);

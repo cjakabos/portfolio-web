@@ -10,6 +10,7 @@ import org.junit.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -34,7 +35,7 @@ public class OrderControllerTest {
     @Test
     public void submit_happy_path() {
         User user = new User(1L, "testuser", "testpassword");
-        Item item = new Item(1L, "tool", BigDecimal.valueOf(500) , "garden");
+        Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
         Cart cart = new Cart();
         cart.addItem(item);
         user.setCart(cart);
@@ -51,11 +52,11 @@ public class OrderControllerTest {
     @Test
     public void get_orders_for_users_happy_path() {
         User user = new User(1L, "testuser", "testpassword");
-        Item item = new Item(1L, "tool", BigDecimal.valueOf(500) , "garden");
+        Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
         List<Item> items = new ArrayList<>();
         items.add(item);
         UserOrder userOrder = new UserOrder(1L, items, user, BigDecimal.valueOf(50000));
-        List<UserOrder> userOrderResponse =  new ArrayList<>();
+        List<UserOrder> userOrderResponse = new ArrayList<>();
         userOrderResponse.add(userOrder);
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(user);

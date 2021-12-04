@@ -13,7 +13,8 @@ public class Manufacturer {
     private Integer code;
     private String name;
 
-    public Manufacturer() { }
+    public Manufacturer() {
+    }
 
     public Manufacturer(Integer code, String name) {
         this.code = code;

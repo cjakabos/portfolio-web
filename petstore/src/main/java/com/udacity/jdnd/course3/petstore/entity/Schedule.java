@@ -3,6 +3,7 @@ package com.udacity.jdnd.course3.petstore.entity;
 import com.udacity.jdnd.course3.petstore.user.EmployeeSkill;
 
 import org.hibernate.annotations.Nationalized;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.*;

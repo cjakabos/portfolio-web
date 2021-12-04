@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PetstoreController {
 
     @GetMapping("/test")
-    public String test(){
+    public String test() {
         return "Petstore Starter installed successfully";
     }
 }

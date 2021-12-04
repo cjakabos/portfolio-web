@@ -45,6 +45,7 @@ public class PetController {
         pet = petService.savePet(pet, petDTO.getOwnerId());
         return petToPetDTO(pet);
     }
+
     @GetMapping("/{petId}")
     public PetDTO getPet(@PathVariable long petId) {
         Pet pet = petService.getPet(petId);
@@ -68,14 +69,14 @@ public class PetController {
     }
 
     @GetMapping
-    public List<PetDTO> getPets(){
+    public List<PetDTO> getPets() {
         return petService.getPets()
                 .stream()
                 .map(this::petToPetDTO)
                 .collect(Collectors.toList());
     }
 
-    public PetDTO petToPetDTO(Pet pet){
+    public PetDTO petToPetDTO(Pet pet) {
         PetDTO petDTO = new PetDTO();
         petDTO.setId(pet.getId());
         petDTO.setType(pet.getPetType());

@@ -12,13 +12,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EntityScan("com.example.demo.model.persistence")
 @SpringBootApplication
 public class EcommerceApplication {
-	@Bean
-	public BCryptPasswordEncoder bCryptPasswordEncoder(){
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-	public static void main(String[] args) {
-		SpringApplication.run(EcommerceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(EcommerceApplication.class, args);
+    }
 
 }

@@ -3,49 +3,48 @@ package com.example.demo.model.requests;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ModifyCartRequest {
-	
-	@JsonProperty
-	private String username;
-	
-	@JsonProperty
-	private long itemId;
-	
-	@JsonProperty
-	private int quantity;
 
-	public ModifyCartRequest() {
-	}
+    @JsonProperty
+    private String username;
 
-	public ModifyCartRequest(String username, long itemId, int quantity) {
-		this.username = username;
-		this.itemId = itemId;
-		this.quantity = quantity;
-	}
+    @JsonProperty
+    private long itemId;
 
-	public String getUsername() {
-		return username;
-	}
+    @JsonProperty
+    private int quantity;
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public ModifyCartRequest() {
+    }
 
-	public long getItemId() {
-		return itemId;
-	}
+    public ModifyCartRequest(String username, long itemId, int quantity) {
+        this.username = username;
+        this.itemId = itemId;
+        this.quantity = quantity;
+    }
 
-	public void setItemId(long itemId) {
-		this.itemId = itemId;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public int getQuantity() {
-		return quantity;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setQuantity(int quantity) {
-		this.quantity = quantity;
-	}
-	
-	
+    public long getItemId() {
+        return itemId;
+    }
+
+    public void setItemId(long itemId) {
+        this.itemId = itemId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
 
 }

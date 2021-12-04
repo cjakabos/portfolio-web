@@ -12,19 +12,19 @@ public class CustomerService {
     @Autowired
     CustomerRepository customerRepository;
 
-    public Customer saveCustomer(Customer customer){
+    public Customer saveCustomer(Customer customer) {
         return customerRepository.save(customer);
     }
 
-    public List<Customer> getCustomerDTOList(){
+    public List<Customer> getCustomerDTOList() {
         return customerRepository.findAll();
     }
 
-    public Customer getCustomerById(long customerId){
-       return customerRepository.getOne(customerId);
+    public Customer getCustomerById(long customerId) {
+        return customerRepository.getOne(customerId);
     }
 
-    public void deleteCustomer(long customerId){
-       customerRepository.deleteById(customerId);
+    public void deleteCustomer(long customerId) {
+        customerRepository.deleteById(customerId);
     }
 }

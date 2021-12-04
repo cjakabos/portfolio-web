@@ -1,281 +1,281 @@
 {
-	"info": {
-		"_postman_id": "80478a47-379f-413a-ae8c-6f2ccdf6f92c",
-		"name": "ecommerce",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Create User",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"testUser\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8099/api/user/create",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"user",
-						"create"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Login",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"testUser\",\n    \"password\": \"password123\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8099/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get User",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8099/api/user/testUser",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"user",
-						"testUser"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Add a new item",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"name\": \"testItem\",\n    \"price\": 1,\n    \"description\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8099/api/item",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"item"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Add to cart",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"testUser\",\n    \"itemId\": 1,\n    \"quantity\": 1\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8099/api/cart/addToCart",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"cart",
-						"addToCart"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get cart",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"testUser\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8099/api/cart/getCart",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"cart",
-						"getCart"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Submit order",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "javascript"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8099/api/order/submit/testUser",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"order",
-						"submit",
-						"testUser"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get order history",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8099/api/order/history/testUser",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"order",
-						"history",
-						"testUser"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get items",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8099/api/item/1",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8099",
-					"path": [
-						"api",
-						"item",
-						"1"
-					]
-				}
-			},
-			"response": []
-		}
-	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNTk3MTYxNzA1fQ.CMwkBB-w2IShZDYJircHq5qSW9mzAEeyLthteh0axAQnk0pe7V0WEdSEtNzKW1bobWPa1BN6KR8_Ii6IrMWDcA",
-				"type": "string"
-			}
-		]
-	},
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	]
+  "info": {
+    "_postman_id": "80478a47-379f-413a-ae8c-6f2ccdf6f92c",
+    "name": "ecommerce",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"testUser\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8099/api/user/create",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "user",
+            "create"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"testUser\",\n    \"password\": \"password123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8099/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get User",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8099/api/user/testUser",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "user",
+            "testUser"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add a new item",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"testItem\",\n    \"price\": 1,\n    \"description\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8099/api/item",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "item"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add to cart",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"testUser\",\n    \"itemId\": 1,\n    \"quantity\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8099/api/cart/addToCart",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "cart",
+            "addToCart"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get cart",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"testUser\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8099/api/cart/getCart",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "cart",
+            "getCart"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Submit order",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "javascript"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8099/api/order/submit/testUser",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "order",
+            "submit",
+            "testUser"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get order history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8099/api/order/history/testUser",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "order",
+            "history",
+            "testUser"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get items",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8099/api/item/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8099",
+          "path": [
+            "api",
+            "item",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNTk3MTYxNzA1fQ.CMwkBB-w2IShZDYJircHq5qSW9mzAEeyLthteh0axAQnk0pe7V0WEdSEtNzKW1bobWPa1BN6KR8_Ii6IrMWDcA",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
 }

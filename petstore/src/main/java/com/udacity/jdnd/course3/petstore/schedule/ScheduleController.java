@@ -86,6 +86,7 @@ public class ScheduleController {
         scheduleDTOS = schedules.stream().map(this::getScheduleDTO).collect(Collectors.toList());
         return scheduleDTOS;
     }
+
     private ScheduleDTO getScheduleDTO(Schedule schedule) {
         ScheduleDTO scheduleDTO = new ScheduleDTO();
         scheduleDTO.setId(schedule.getId());

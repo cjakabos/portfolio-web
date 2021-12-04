@@ -23,66 +23,66 @@ import com.example.demo.model.requests.ModifyCartRequest;
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
-	
-	@Autowired
-	public UserRepository userRepository;
-	
-	@Autowired
-	public CartRepository cartRepository;
-	
-	@Autowired
-	public ItemRepository itemRepository;
-	
-	@PostMapping("/addToCart")
-	public ResponseEntity<Cart> addToCart(@RequestBody ModifyCartRequest request) {
-		User user = userRepository.findByUsername(request.getUsername());
-		if(user == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
-		Optional<Item> item = itemRepository.findById(request.getItemId());
-		if(!item.isPresent()) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
-		Cart cart = user.getCart();
-		IntStream.range(0, request.getQuantity())
-			.forEach(i -> cart.addItem(item.get()));
-		cartRepository.save(cart);
-		return ResponseEntity.ok(cart);
-	}
-	
-	@PostMapping("/removeFromCart")
-	public ResponseEntity<Cart> removeFromCart(@RequestBody ModifyCartRequest request) {
-		User user = userRepository.findByUsername(request.getUsername());
-		if(user == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
-		Optional<Item> item = itemRepository.findById(request.getItemId());
-		if(!item.isPresent()) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
-		Cart cart = user.getCart();
-		IntStream.range(0, request.getQuantity())
-			.forEach(i -> cart.removeItem(item.get()));
-		cartRepository.save(cart);
-		return ResponseEntity.ok(cart);
-	}
 
-	@PostMapping("/getCart")
-	public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request) {
-		User user = userRepository.findByUsername(request.getUsername());
-		Cart cart = cartRepository.findByUser(user);
-		return ResponseEntity.ok(cart);
-	}
+    @Autowired
+    public UserRepository userRepository;
 
-	@PostMapping("/clearCart")
-	public ResponseEntity<Cart> clearCart(@RequestBody ModifyCartRequest request) {
-		User user = userRepository.findByUsername(request.getUsername());
-		if(user == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
-		Cart cart = user.getCart();
-		cart.removeAllItems();
-		cartRepository.save(cart);
-		return ResponseEntity.ok(cart);
-	}
+    @Autowired
+    public CartRepository cartRepository;
+
+    @Autowired
+    public ItemRepository itemRepository;
+
+    @PostMapping("/addToCart")
+    public ResponseEntity<Cart> addToCart(@RequestBody ModifyCartRequest request) {
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Optional<Item> item = itemRepository.findById(request.getItemId());
+        if (!item.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Cart cart = user.getCart();
+        IntStream.range(0, request.getQuantity())
+                .forEach(i -> cart.addItem(item.get()));
+        cartRepository.save(cart);
+        return ResponseEntity.ok(cart);
+    }
+
+    @PostMapping("/removeFromCart")
+    public ResponseEntity<Cart> removeFromCart(@RequestBody ModifyCartRequest request) {
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Optional<Item> item = itemRepository.findById(request.getItemId());
+        if (!item.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Cart cart = user.getCart();
+        IntStream.range(0, request.getQuantity())
+                .forEach(i -> cart.removeItem(item.get()));
+        cartRepository.save(cart);
+        return ResponseEntity.ok(cart);
+    }
+
+    @PostMapping("/getCart")
+    public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request) {
+        User user = userRepository.findByUsername(request.getUsername());
+        Cart cart = cartRepository.findByUser(user);
+        return ResponseEntity.ok(cart);
+    }
+
+    @PostMapping("/clearCart")
+    public ResponseEntity<Cart> clearCart(@RequestBody ModifyCartRequest request) {
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Cart cart = user.getCart();
+        cart.removeAllItems();
+        cartRepository.save(cart);
+        return ResponseEntity.ok(cart);
+    }
 }

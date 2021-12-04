@@ -18,7 +18,7 @@ public class EmployeeService {
     @Autowired
     ScheduleRepository scheduleRepository;
 
-    public List<Employee> getEmployeeDTOList(){
+    public List<Employee> getEmployeeDTOList() {
         return employeeRepository.findAll();
     }
 
@@ -47,7 +47,7 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    public List<Employee> getEmployeesBySchedule(Long scheduleId){
+    public List<Employee> getEmployeesBySchedule(Long scheduleId) {
         Schedule schedule = scheduleRepository.getOne(scheduleId);
         return schedule.getEmployeeList();
     }

@@ -18,63 +18,63 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Table(name = "user")
 public class User {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@JsonProperty
-	private long id;
-	
-	@Column(nullable = false, unique = true)
-	@JsonProperty
-	private String username;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty
+    private long id;
 
-	@Column(nullable = false, unique = true)
-	@JsonProperty
-	private String password;
+    @Column(nullable = false, unique = true)
+    @JsonProperty
+    private String username;
 
-	@OneToOne(cascade = CascadeType.ALL)
+    @Column(nullable = false, unique = true)
+    @JsonProperty
+    private String password;
+
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "cart_id", referencedColumnName = "id")
-	@JsonIgnore
+    @JsonIgnore
     private Cart cart;
 
-	public User(){
-	}
+    public User() {
+    }
 
-	public User(long id, String username, String password){
-		this.id = id;
-		this.username = username;
-		this.password = password;
-	}
-	
-	public Cart getCart() {
-		return cart;
-	}
+    public User(long id, String username, String password) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+    }
 
-	public void setCart(Cart cart) {
-		this.cart = cart;
-	}
+    public Cart getCart() {
+        return cart;
+    }
 
-	public long getId() {
-		return id;
-	}
+    public void setCart(Cart cart) {
+        this.cart = cart;
+    }
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public void setId(long id) {
+        this.id = id;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
 }

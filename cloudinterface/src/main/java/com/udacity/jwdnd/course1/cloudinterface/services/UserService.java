@@ -31,7 +31,7 @@ public class UserService {
         String passwordHash = hashService.getHashedValue(user.getPassword(), saltEncoded);
         return userMapper.insert(
                 new User(
-                null, user.getUsername(), saltEncoded, passwordHash, user.getFirstname(), user.getLastname()));
+                        null, user.getUsername(), saltEncoded, passwordHash, user.getFirstname(), user.getLastname()));
     }
 
     public User getUserById(int id) {

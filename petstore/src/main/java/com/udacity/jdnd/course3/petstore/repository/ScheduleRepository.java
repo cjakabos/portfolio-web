@@ -7,7 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ScheduleRepository extends JpaRepository<Schedule,Long> {
+public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> getSchedulesByEmployeeListContains(Employee employee);
+
     List<Schedule> getSchedulesByPetListId(Long petId);
 }

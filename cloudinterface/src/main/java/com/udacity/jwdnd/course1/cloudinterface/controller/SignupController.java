@@ -37,12 +37,12 @@ public class SignupController {
         }
 
         if (feedbackType == null) {
-			feedbackType = "Successful signup";
+            feedbackType = "Successful signup";
             model.addAttribute("updateSuccess", feedbackType);
-			return "signup";
+            return "signup";
         } else {
             model.addAttribute("updateError", feedbackType);
-			return "signup";
+            return "signup";
         }
     }
 }

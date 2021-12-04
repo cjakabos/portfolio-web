@@ -1,246 +1,278 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/bootstrap.min.css}">
 
-        <title>Home</title>
-    </head>
-    <body class="p-3 mb-2 bg-light text-black">
-        <div class="container">
-            <div id="logoutDiv">
-        		<form action="#" th:action="@{/logout}" method="POST">
-            		<button type="submit" id="loggingOut" class="btn btn-secondary float-right">Logout</button>
-                </form>
+    <title>Home</title>
+</head>
+<body class="p-3 mb-2 bg-light text-black">
+<div class="container">
+    <div id="logoutDiv">
+        <form action="#" th:action="@{/logout}" method="POST">
+            <button type="submit" id="loggingOut" class="btn btn-secondary float-right">Logout</button>
+        </form>
+    </div>
+    <div id="contentDiv" style="clear: right;">
+        <nav style="clear: right;">
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-item nav-link active" id="nav-files-tab" data-toggle="tab" href="#nav-files" role="tab"
+                   aria-controls="nav-files" aria-selected="true">Files</a>
+                <a class="nav-item nav-link" id="nav-notes-tab" data-toggle="tab" href="#nav-notes" role="tab"
+                   aria-controls="nav-notes" aria-selected="false">Notes</a>
+                <a class="nav-item nav-link" id="nav-credentials-tab" data-toggle="tab" href="#nav-credentials"
+                   role="tab" aria-controls="nav-credentials" aria-selected="false">Credentials</a>
+                <a class="nav-item nav-link" id="nav-cars-tab" data-toggle="tab" href="#nav-cars" role="tab"
+                   aria-controls="nav-cars" aria-selected="false">Cars</a>
+                <a class="nav-item nav-link" id="nav-pets-tab" data-toggle="tab" href="#nav-pets" role="tab"
+                   aria-controls="nav-pets" aria-selected="false">Pets</a>
+                <a class="nav-item nav-link" id="nav-ecommerce-tab" data-toggle="tab" href="#nav-ecommerce" role="tab"
+                   aria-controls="nav-ecommerce" aria-selected="false">Ecommerce</a>
             </div>
-            <div id="contentDiv" style="clear: right;">
-                <nav style="clear: right;">
-                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <a class="nav-item nav-link active" id="nav-files-tab" data-toggle="tab" href="#nav-files" role="tab" aria-controls="nav-files" aria-selected="true">Files</a>
-                        <a class="nav-item nav-link" id="nav-notes-tab" data-toggle="tab" href="#nav-notes" role="tab" aria-controls="nav-notes" aria-selected="false">Notes</a>
-                        <a class="nav-item nav-link" id="nav-credentials-tab" data-toggle="tab" href="#nav-credentials" role="tab" aria-controls="nav-credentials" aria-selected="false">Credentials</a>
-                        <a class="nav-item nav-link" id="nav-cars-tab" data-toggle="tab" href="#nav-cars" role="tab" aria-controls="nav-cars" aria-selected="false">Cars</a>
-                        <a class="nav-item nav-link" id="nav-pets-tab" data-toggle="tab" href="#nav-pets" role="tab" aria-controls="nav-pets" aria-selected="false">Pets</a>
-                        <a class="nav-item nav-link" id="nav-ecommerce-tab" data-toggle="tab" href="#nav-ecommerce" role="tab" aria-controls="nav-ecommerce" aria-selected="false">Ecommerce</a>
-					</div>
-                </nav>
-                <div class="tab-content" id="nav-tabContent">
-                    <div class="tab-pane fade show active" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
-                		<form th:action="@{/file/upload}" action="#" enctype="multipart/form-data" method="POST">
-                            <div class="container">
-                                <div class="row" style="margin: 1em;">
-                                    <div class="col-sm-2">
-                                        <label for="fileUpload">Upload a New File:</label>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <input type="file" class="form-control-file" id="fileUpload" name="fileUpload">
-                                    </div>
-                                    <div class="col-sm-4">
-                                        <button id="fileSubmit"  type="submit" class="btn btn-dark">Upload</button>
-                                    </div>
-                                </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
+                <form th:action="@{/file/upload}" action="#" enctype="multipart/form-data" method="POST">
+                    <div class="container">
+                        <div class="row" style="margin: 1em;">
+                            <div class="col-sm-2">
+                                <label for="fileUpload">Upload a New File:</label>
                             </div>
-                        </form>
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="fileTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 20%" scope="col"></th>
-                                        <th style="width: 80%" scope="col">File Name</th>
-                                    </tr>
-                                </thead>
-								<tbody th:each="fileName: ${filesList}">
-                                <tr>
-                                    <td>
-                                		<a target="_blank" class="btn btn-success" th:href="@{/file/get-file/{fileName}(fileName=${fileName})}">View</a>
-                                		<a class="btn btn-danger" th:href="@{/file/delete-file/{fileName}(fileName=${fileName})}">Delete</a>
-                                    </td>
-                                    <th th:text="${fileName}" scope="row">ExampleFile.txt</th>
-                                </tr>
-                                </tbody>
-                            </table>
+                            <div class="col-sm-6">
+                                <input type="file" class="form-control-file" id="fileUpload" name="fileUpload">
+                            </div>
+                            <div class="col-sm-4">
+                                <button id="fileSubmit" type="submit" class="btn btn-dark">Upload</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="nav-notes" role="tabpanel" aria-labelledby="nav-notes-tab">
-                        <button id="showNoteForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showNoteModal()">
-                            + Add a New Note
-                        </button>
+                </form>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="fileTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 20%" scope="col"></th>
+                            <th style="width: 80%" scope="col">File Name</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="fileName: ${filesList}">
+                        <tr>
+                            <td>
+                                <a target="_blank" class="btn btn-success"
+                                   th:href="@{/file/get-file/{fileName}(fileName=${fileName})}">View</a>
+                                <a class="btn btn-danger"
+                                   th:href="@{/file/delete-file/{fileName}(fileName=${fileName})}">Delete</a>
+                            </td>
+                            <th th:text="${fileName}" scope="row">ExampleFile.txt</th>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-notes" role="tabpanel" aria-labelledby="nav-notes-tab">
+                <button id="showNoteForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left"
+                        onclick="showNoteModal()">
+                    + Add a New Note
+                </button>
 
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 20%" scope="col"></th>
-                                        <th style="width: 20%" scope="col">Title</th>
-                                        <th style="width: 80%" scope="col">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody th:each="note: ${notes}">
-                                    <tr>
-                                        <td>
-                                            <button type="button" class="btn btn-success" th:data-id="${note.noteId}" th:data-title="${note.noteTitle}"
-													th:data-description="${note.noteDescription}" th:onclick="showNoteModal(this.getAttribute('data-id'),
+                <div class="table-responsive">
+                    <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 20%" scope="col"></th>
+                            <th style="width: 20%" scope="col">Title</th>
+                            <th style="width: 80%" scope="col">Description</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="note: ${notes}">
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-success" th:data-id="${note.noteId}"
+                                        th:data-title="${note.noteTitle}"
+                                        th:data-description="${note.noteDescription}" th:onclick="showNoteModal(this.getAttribute('data-id'),
 														this.getAttribute('data-title'), this.getAttribute('data-description'))">
-														Edit
-														</button>
-                                            <a class="btn btn-danger" th:href="@{/note/delete/{noteId}(noteId = ${note.noteId})}">Delete</a>
-                                        </td>
-                                        <th th:text="${note.noteTitle}" scope="row">Example Note Title</th>
-                                        <td th:text="${note.noteDescription}">Example Note Description </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                    Edit
+                                </button>
+                                <a class="btn btn-danger" th:href="@{/note/delete/{noteId}(noteId = ${note.noteId})}">Delete</a>
+                            </td>
+                            <th th:text="${note.noteTitle}" scope="row">Example Note Title</th>
+                            <td th:text="${note.noteDescription}">Example Note Description</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                        <div class="modal fade" id="noteModal" tabindex="-1" role="dialog" aria-labelledby="noteModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="noteModalLabel">Note</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                <div class="modal fade" id="noteModal" tabindex="-1" role="dialog" aria-labelledby="noteModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="noteModalLabel">Note</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newNote}" th:action="@{/note/addNote}" action="#" method="POST">
+                                    <input th:field="*{noteId}" type="hidden" name="noteId" id="note-id">
+                                    <div class="form-group">
+                                        <label for="note-title" class="col-form-label">Title</label>
+                                        <input th:field="*{noteTitle}" type="text" name="noteTitle" class="form-control"
+                                               id="note-title" maxlength="20" required>
                                     </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newNote}" th:action="@{/note/addNote}" action="#" method="POST">
-                                            <input th:field="*{noteId}" type="hidden" name="noteId" id="note-id">
-                                            <div class="form-group">
-                                                <label for="note-title" class="col-form-label">Title</label>
-                                                <input th:field="*{noteTitle}" type="text" name="noteTitle" class="form-control" id="note-title" maxlength="20" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="note-description" class="col-form-label">Description</label>
-                                                <textarea th:field="*{noteDescription}" name="noteDescription" id="note-description" rows="5" maxlength="1000" required></textarea>
-                                            </div>
-                                            <button id="noteSubmit" type="submit" class="d-none"></button>
-                                        </form>
+                                    <div class="form-group">
+                                        <label for="note-description" class="col-form-label">Description</label>
+                                        <textarea th:field="*{noteDescription}" name="noteDescription"
+                                                  id="note-description" rows="5" maxlength="1000" required></textarea>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#noteSubmit').click();">Save changes</button>
-                                    </div>
-                                </div>
+                                    <button id="noteSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#noteSubmit').click();">Save
+                                    changes
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="nav-credentials" role="tabpanel" aria-labelledby="nav-credentials-tab">
-                        <button id="showCredentialForm"  style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showCredentialModal()">
-                            + Add a New Credential
-                        </button>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-credentials" role="tabpanel" aria-labelledby="nav-credentials-tab">
+                <button id="showCredentialForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left"
+                        onclick="showCredentialModal()">
+                    + Add a New Credential
+                </button>
 
-                        <div class="table-responsive">
-                            <table class="table table-striped" id="credentialTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 20%" scope="col"></th>
-                                        <th style="width: 35%" scope="col">URL</th>
-                                        <th style="width: 20%" scope="col">Username</th>
-                                        <th style="width: 25%" scope="col">Password</th>
-                                    </tr>
-                                </thead>
-                                <tbody th:each="credential : ${credentials}">
-                                <tr>
-                                    <td>
-										<button type="button" class="btn btn-success" th:data-id="${credential.credentialId}"
+                <div class="table-responsive">
+                    <table class="table table-striped" id="credentialTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 20%" scope="col"></th>
+                            <th style="width: 35%" scope="col">URL</th>
+                            <th style="width: 20%" scope="col">Username</th>
+                            <th style="width: 25%" scope="col">Password</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="credential : ${credentials}">
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-success" th:data-id="${credential.credentialId}"
                                         th:data-url="${credential.url}" th:data-username="${credential.username}"
                                         th:data-password="${encryptService.decryptValue(credential.password,credential.key)}"
                                         th:onclick="showCredentialModal(this.getAttribute('data-id'), 
                                         			this.getAttribute('data-url'),
                                                     this.getAttribute('data-username'),
-                                                    this.getAttribute('data-password'))">Edit</button>
-                                        <a class="btn btn-danger" th:href="@{/credential/delete/{credentialId}(credentialId=${credential.credentialId})}">Delete</a>
-                                    </td>
-                            			<th th:text="${credential.url}" scope="row">Example Credential URL</th>
-                            			<td th:text="${credential.username}">Example Credential Username</td>
-                            			<td th:text="${credential.password}">Example Credential Password</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                                    this.getAttribute('data-password'))">Edit
+                                </button>
+                                <a class="btn btn-danger"
+                                   th:href="@{/credential/delete/{credentialId}(credentialId=${credential.credentialId})}">Delete</a>
+                            </td>
+                            <th th:text="${credential.url}" scope="row">Example Credential URL</th>
+                            <td th:text="${credential.username}">Example Credential Username</td>
+                            <td th:text="${credential.password}">Example Credential Password</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                        <div class="modal fade" id="credentialModal" tabindex="-1" role="dialog" aria-labelledby="credentialModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="credentialModalLabel">Credential</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                <div class="modal fade" id="credentialModal" tabindex="-1" role="dialog"
+                     aria-labelledby="credentialModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="credentialModalLabel">Credential</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:action="@{/credential/addCredential}" th:object="${newCredential}" action="#"
+                                      method="POST">
+                                    <input th:field="*{credentialId}" type="hidden" name="credentialId"
+                                           id="credential-id">
+                                    <div class="form-group">
+                                        <label for="note-title" class="col-form-label">URL</label>
+                                        <input th:field="*{url}" type="text" name="url" class="form-control"
+                                               id="credential-url" maxlength="100" required>
                                     </div>
-                                    <div class="modal-body">
-                                        <form th:action="@{/credential/addCredential}" th:object="${newCredential}"  action="#" method="POST">
-                                            <input th:field="*{credentialId}" type="hidden" name="credentialId" id="credential-id">
-                                            <div class="form-group">
-                                                <label for="note-title" class="col-form-label">URL</label>
-                                            	<input th:field="*{url}" type="text" name= "url" class="form-control" id="credential-url" maxlength="100" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="note-title" class="col-form-label">Username</label>
-                                                <input th:field="*{username}" type="text" name= "username" class="form-control" id="credential-username" maxlength="30" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="note-title" class="col-form-label">Password</label>
-                                                <input th:field="*{password}" type="text" name= "password" class="form-control" id="credential-password" maxlength="30" required>
-                                            </div>
-                                            <button id="credentialSubmit" type="submit" class="d-none"></button>
-                                        </form>
+                                    <div class="form-group">
+                                        <label for="note-title" class="col-form-label">Username</label>
+                                        <input th:field="*{username}" type="text" name="username" class="form-control"
+                                               id="credential-username" maxlength="30" required>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button id = "closeButton" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button id="credentialSave" type="button" class="btn btn-primary" onclick="$('#credentialSubmit').click();">Save changes</button>
+                                    <div class="form-group">
+                                        <label for="note-title" class="col-form-label">Password</label>
+                                        <input th:field="*{password}" type="text" name="password" class="form-control"
+                                               id="credential-password" maxlength="30" required>
                                     </div>
-                                </div>
+                                    <button id="credentialSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button id="closeButton" type="button" class="btn btn-secondary" data-dismiss="modal">
+                                    Close
+                                </button>
+                                <button id="credentialSave" type="button" class="btn btn-primary"
+                                        onclick="$('#credentialSubmit').click();">Save changes
+                                </button>
                             </div>
                         </div>
                     </div>
-                   <div class="tab-pane fade" id="nav-cars" role="tabpanel" aria-labelledby="nav-cars-tab">
-                        <div id="showAllDiv" th:if="${carStatus}">
-							<button id="showCarForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showCarModal()">
-								+ Add a New Car
-							</button>
-						</div>
-                        <div class="table-responsive">
-                            <div id="showCarStatus" th:unless="${carStatus}">
-                               <h2 style="background-color:red;color:white">
-                                   <p style="font-size: 60%">Car service is down, if you want to use it, please start it up</p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(cars)}">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 5%" scope="col"></th>
-                                        <th style="width: 5%" scope="col">Model</th>
-                                        <th style="width: 5%" scope="col">Condition</th>
-                                        <th style="width: 5%" scope="col">Production year</th>
-                                        <th style="width: 5%" scope="col">Body</th>
-                                        <th style="width: 5%" scope="col">Code</th>
-                                        <th style="width: 5%" scope="col">Name</th>
-                                        <th style="width: 5%" scope="col">Doors</th>
-                                        <th style="width: 5%" scope="col">FuelType</th>
-                                        <th style="width: 5%" scope="col">Engine</th>
-                                        <th style="width: 5%" scope="col">Mileage</th>
-                                        <th style="width: 5%" scope="col">ModelYear</th>
-                                        <th style="width: 5%" scope="col">Color</th>
-                                        <th style="width: 5%" scope="col">LatLocation</th>
-                                        <th style="width: 5%" scope="col">LongLocation</th>
-									</tr>
-                                </thead>
-                                <tbody th:each="car: ${cars}">
-                                    <tr>
-                                        <td>
-                                            <button type="button" class="btn btn-success" th:data-id="${car.id}" th:data-model="${car.model}"
-													th:data-condition="${car.condition}" th:data-productionYear="${car.productionYear}" 
-													th:data-body="${car.body}" th:data-code="${car.code}" 
-													th:data-name="${car.name}" th:data-numberOfDoors="${car.numberOfDoors}" 
-													th:data-fuelType="${car.fuelType}" th:data-engine="${car.engine}" 
-													th:data-mileage="${car.mileage}" th:data-modelYear="${car.modelYear}" 
-													th:data-externalColor="${car.externalColor}" th:data-latLocation="${car.latLocation}" 
-													th:data-longLocation="${car.longLocation}" 
-													th:onclick="showCarModal(this.getAttribute('data-id'), this.getAttribute('data-model'),
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-cars" role="tabpanel" aria-labelledby="nav-cars-tab">
+                <div id="showAllDiv" th:if="${carStatus}">
+                    <button id="showCarForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left"
+                            onclick="showCarModal()">
+                        + Add a New Car
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <div id="showCarStatus" th:unless="${carStatus}">
+                        <h2 style="background-color:red;color:white">
+                            <p style="font-size: 60%">Car service is down, if you want to use it, please start it up</p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(cars)}">
+                    <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 5%" scope="col"></th>
+                            <th style="width: 5%" scope="col">Model</th>
+                            <th style="width: 5%" scope="col">Condition</th>
+                            <th style="width: 5%" scope="col">Production year</th>
+                            <th style="width: 5%" scope="col">Body</th>
+                            <th style="width: 5%" scope="col">Code</th>
+                            <th style="width: 5%" scope="col">Name</th>
+                            <th style="width: 5%" scope="col">Doors</th>
+                            <th style="width: 5%" scope="col">FuelType</th>
+                            <th style="width: 5%" scope="col">Engine</th>
+                            <th style="width: 5%" scope="col">Mileage</th>
+                            <th style="width: 5%" scope="col">ModelYear</th>
+                            <th style="width: 5%" scope="col">Color</th>
+                            <th style="width: 5%" scope="col">LatLocation</th>
+                            <th style="width: 5%" scope="col">LongLocation</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="car: ${cars}">
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-success" th:data-id="${car.id}"
+                                        th:data-model="${car.model}"
+                                        th:data-condition="${car.condition}"
+                                        th:data-productionYear="${car.productionYear}"
+                                        th:data-body="${car.body}" th:data-code="${car.code}"
+                                        th:data-name="${car.name}" th:data-numberOfDoors="${car.numberOfDoors}"
+                                        th:data-fuelType="${car.fuelType}" th:data-engine="${car.engine}"
+                                        th:data-mileage="${car.mileage}" th:data-modelYear="${car.modelYear}"
+                                        th:data-externalColor="${car.externalColor}"
+                                        th:data-latLocation="${car.latLocation}"
+                                        th:data-longLocation="${car.longLocation}"
+                                        th:onclick="showCarModal(this.getAttribute('data-id'), this.getAttribute('data-model'),
 														this.getAttribute('data-condition'), this.getAttribute('data-productionYear'),
 														this.getAttribute('data-body'), this.getAttribute('data-code'), 
 														this.getAttribute('data-name'), this.getAttribute('data-numberOfDoors'), 
@@ -248,662 +280,756 @@
 														this.getAttribute('data-mileage'), this.getAttribute('data-modelYear'), 
 														this.getAttribute('data-externalColor'), this.getAttribute('data-latLocation'), 
 														this.getAttribute('data-longLocation'))">
-														Edit
-														</button>
-                                        <a class="btn btn-danger" th:href="@{/car/delete/{carId}(carId = ${car.get('id')})}">Delete</a>
-										</td>	
-			                            <th th:text="${car.get('model')}" scope="row">Example Car Model</th>
-                                        <td th:text="${car.get('condition')}">Example Car Condition</td>
-                                        <td th:text="${car.get('productionYear')}">Example Car Production Year</td>
-                                        <th th:text="${car.get('body')}" scope="row">Example Car Body</th>
-                                        <th th:text="${car.get('code')}" scope="row">Example Car Code</th>
-                                        <td th:text="${car.get('name')}">Example Car Name</td>
-                                        <td th:text="${car.get('numberOfDoors')}">Example Car Doors</td>
-                                        <th th:text="${car.get('fuelType')}" scope="row">Example Car Fuel type</th>
-                                        <td th:text="${car.get('engine')}">Example Car Engine</td>
-                                        <td th:text="${car.get('mileage')}">Example Car Milage</td>
-                                        <th th:text="${car.get('modelYear')}" scope="row">Example Car Model Year</th>
-                                        <td th:text="${car.get('externalColor')}">Example Car Color</td>
-                                        <td th:text="${car.get('latLocation')}">Example Car Latitude Location</td>
-                                        <td th:text="${car.get('longLocation')}">Example Car Longitude Location</td>											
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                    Edit
+                                </button>
+                                <a class="btn btn-danger" th:href="@{/car/delete/{carId}(carId = ${car.get('id')})}">Delete</a>
+                            </td>
+                            <th th:text="${car.get('model')}" scope="row">Example Car Model</th>
+                            <td th:text="${car.get('condition')}">Example Car Condition</td>
+                            <td th:text="${car.get('productionYear')}">Example Car Production Year</td>
+                            <th th:text="${car.get('body')}" scope="row">Example Car Body</th>
+                            <th th:text="${car.get('code')}" scope="row">Example Car Code</th>
+                            <td th:text="${car.get('name')}">Example Car Name</td>
+                            <td th:text="${car.get('numberOfDoors')}">Example Car Doors</td>
+                            <th th:text="${car.get('fuelType')}" scope="row">Example Car Fuel type</th>
+                            <td th:text="${car.get('engine')}">Example Car Engine</td>
+                            <td th:text="${car.get('mileage')}">Example Car Milage</td>
+                            <th th:text="${car.get('modelYear')}" scope="row">Example Car Model Year</th>
+                            <td th:text="${car.get('externalColor')}">Example Car Color</td>
+                            <td th:text="${car.get('latLocation')}">Example Car Latitude Location</td>
+                            <td th:text="${car.get('longLocation')}">Example Car Longitude Location</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                        <div class="modal fade" id="carModal" tabindex="-1" role="dialog" aria-labelledby="carModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="carModalLabel">Car</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                <div class="modal fade" id="carModal" tabindex="-1" role="dialog" aria-labelledby="carModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="carModalLabel">Car</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newCar}" th:action="@{/car/addCar}" action="#" method="POST">
+                                    <input th:field="*{id}" type="hidden" name="carId" id="car-id">
+                                    <div class="form-group">
+                                        <label for="car-model" class="col-form-label">Model</label>
+                                        <textarea th:field="*{model}" name="carModel" class="form-control"
+                                                  id="car-model" maxlength="200" required></textarea>
                                     </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newCar}" th:action="@{/car/addCar}" action="#" method="POST">
-                                            <input th:field="*{id}"  type="hidden" name="carId" id="car-id">
-                                            <div class="form-group">
-                                                <label for="car-model" class="col-form-label">Model</label>
-                                                <textarea th:field="*{model}" name="carModel" class="form-control" id="car-model" maxlength="200" required></textarea>
-                                            </div>
-                                            <div class="form-group blu-margin">
-                                                <label for="car-condition" class="col-form-label">Car Condition</label>
-                                                <select class="form-control" th:field="*{condition}"  id="car-condition">
-                                                    <option value="" selected disabled hidden>Select condition</option>
-                                                    <option th:each="condition : ${conditions}" th:value="${condition}" th:text="${condition}"></option>
-                                                </select>
-                                            </div>
-											<label for="car-productionYear" class="col-form-label">Production year</label>
-											<input th:field="*{productionYear}" type="number" min="1900" max="2100" step="1" id="car-productionYear"/>
+                                    <div class="form-group blu-margin">
+                                        <label for="car-condition" class="col-form-label">Car Condition</label>
+                                        <select class="form-control" th:field="*{condition}" id="car-condition">
+                                            <option value="" selected disabled hidden>Select condition</option>
+                                            <option th:each="condition : ${conditions}" th:value="${condition}"
+                                                    th:text="${condition}"></option>
+                                        </select>
+                                    </div>
+                                    <label for="car-productionYear" class="col-form-label">Production year</label>
+                                    <input th:field="*{productionYear}" type="number" min="1900" max="2100" step="1"
+                                           id="car-productionYear"/>
 
-                                            <div class="form-group">
-                                                <label for="car-body" class="col-form-label">Body</label>
-                                                <textarea th:field="*{body}" name="carBody" class="form-control" id="car-body" maxlength="200" required></textarea>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="car-name" class="col-form-label">Name</label>
-                                                <textarea th:field="*{name}" name="carName" class="form-control" id="car-name" maxlength="200" required></textarea>
-                                            </div>
-											<label for="car-numberOfDoors" class="col-form-label">Number of doors</label>
-											<input th:field="*{numberOfDoors}" type="number" min="2" max="8" step="1" id="car-numberOfDoors"/>
-                                            <div class="form-group">
-                                                <label for="car-fuelType" class="col-form-label">Fuel type</label>
-                                                <textarea th:field="*{fuelType}" name="carFuelType" class="form-control" id="car-fuelType" maxlength="200" required></textarea>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="car-engine" class="col-form-label">Engine</label>
-                                                <textarea th:field="*{engine}" name="carEngine" class="form-control" id="car-engine" maxlength="200" required></textarea>
-                                            </div>
-											<label for="car-mileage" class="col-form-label">Mileage</label>
-											<input th:field="*{mileage}" type="number" min="0" max="1000000" step="1" id="car-mileage"/>
-											<label for="car-modelYear" class="col-form-label">Model Year</label>
-											<input th:field="*{modelYear}" type="number" min="1900" max="2100" step="1" id="car-modelYear"/>
-                                            <div class="form-group">
-                                                <label for="car-externalColor" class="col-form-label">Color</label>
-                                                <textarea th:field="*{externalColor}" name="carExternalColor" class="form-control" id="car-externalColor" maxlength="200" required></textarea>
-                                            </div>
-											<label for="car-latLocation" class="col-form-label">Latitude Location</label>
-											<input th:field="*{latLocation}" type="number" min="-90" max="90" step="0.01" id="car-latLocation"/>
-											<label for="car-numberOfDoors" class="col-form-label">Longitude Location</label>
-											<input th:field="*{longLocation}" type="number" min="-180" max="180" step="0.01" id="car-longLocation"/>
-											<button id="carSubmit" type="submit" class="d-none"></button>
-                                        </form>
+                                    <div class="form-group">
+                                        <label for="car-body" class="col-form-label">Body</label>
+                                        <textarea th:field="*{body}" name="carBody" class="form-control" id="car-body"
+                                                  maxlength="200" required></textarea>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#carSubmit').click();">Save changes</button>
+                                    <div class="form-group">
+                                        <label for="car-name" class="col-form-label">Name</label>
+                                        <textarea th:field="*{name}" name="carName" class="form-control" id="car-name"
+                                                  maxlength="200" required></textarea>
                                     </div>
-                                </div>
+                                    <label for="car-numberOfDoors" class="col-form-label">Number of doors</label>
+                                    <input th:field="*{numberOfDoors}" type="number" min="2" max="8" step="1"
+                                           id="car-numberOfDoors"/>
+                                    <div class="form-group">
+                                        <label for="car-fuelType" class="col-form-label">Fuel type</label>
+                                        <textarea th:field="*{fuelType}" name="carFuelType" class="form-control"
+                                                  id="car-fuelType" maxlength="200" required></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="car-engine" class="col-form-label">Engine</label>
+                                        <textarea th:field="*{engine}" name="carEngine" class="form-control"
+                                                  id="car-engine" maxlength="200" required></textarea>
+                                    </div>
+                                    <label for="car-mileage" class="col-form-label">Mileage</label>
+                                    <input th:field="*{mileage}" type="number" min="0" max="1000000" step="1"
+                                           id="car-mileage"/>
+                                    <label for="car-modelYear" class="col-form-label">Model Year</label>
+                                    <input th:field="*{modelYear}" type="number" min="1900" max="2100" step="1"
+                                           id="car-modelYear"/>
+                                    <div class="form-group">
+                                        <label for="car-externalColor" class="col-form-label">Color</label>
+                                        <textarea th:field="*{externalColor}" name="carExternalColor"
+                                                  class="form-control" id="car-externalColor" maxlength="200"
+                                                  required></textarea>
+                                    </div>
+                                    <label for="car-latLocation" class="col-form-label">Latitude Location</label>
+                                    <input th:field="*{latLocation}" type="number" min="-90" max="90" step="0.01"
+                                           id="car-latLocation"/>
+                                    <label for="car-numberOfDoors" class="col-form-label">Longitude Location</label>
+                                    <input th:field="*{longLocation}" type="number" min="-180" max="180" step="0.01"
+                                           id="car-longLocation"/>
+                                    <button id="carSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#carSubmit').click();">Save
+                                    changes
+                                </button>
                             </div>
                         </div>
                     </div>
-                   <div class="tab-pane fade" id="nav-pets" role="tabpanel" aria-labelledby="nav-pets-tab">
-						<div id="showAllDiv" th:if="${petStatus}">
-							<button id="showOwnerForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showOwnerModal()">
-								+ Add a New Owner
-							</button>
-							<button id="showPetForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showPetModal()">
-								+ Add a New Pet
-							</button>
-							<button id="showEmployeeForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEmployeeModal()">
-								+ Add a New Employee
-							</button>
-							<button id="showEmployeeScheduleForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEmployeeScheduleModal()">
-								+ Add Employee schedule
-							</button>
-							<button id="showAssignScheduleForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showAssignScheduleModal()">
-								+ Assign Schedule
-							</button>
-						</div>
-                        <div class="table-responsive">
-                            <div id="showPetStatus" th:unless="${petStatus}">
-                               <h2 style="background-color:red;color:white">
-                                   <p style="font-size: 60%">Pet service is down, if you want to use it, please start it up</p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
-                            <div id="sectiondividier" th:unless="${#lists.isEmpty(pets)}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">Pet list:</span></p>
-                               </h2>
-                            </div>
-                        </div>
-						<div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
-							<table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 5%" scope="col"></th>
-                                        <th style="width: 15%" scope="col">Type</th>
-                                        <th style="width: 15%" scope="col">Name</th>
-                                        <th style="width: 15%" scope="col">Owner</th>
-                                        <th style="width: 50%" scope="col">Schedule</th>
-									</tr>
-                                </thead>
-                                <tbody th:each="pet: ${pets}">
-                                    <tr>									
-                                        <td>									
-                                            <button type="button" class="btn btn-success" th:data-id="${pet.petId}" th:data-type="${pet.petType}"
-													th:data-name="${pet.petName}" th:data-owner="${pet.petOwnerId}" th:onclick="showPetModal(this.getAttribute('data-id'),
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-pets" role="tabpanel" aria-labelledby="nav-pets-tab">
+                <div id="showAllDiv" th:if="${petStatus}">
+                    <button id="showOwnerForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left"
+                            onclick="showOwnerModal()">
+                        + Add a New Owner
+                    </button>
+                    <button id="showPetForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left"
+                            onclick="showPetModal()">
+                        + Add a New Pet
+                    </button>
+                    <button id="showEmployeeForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left"
+                            onclick="showEmployeeModal()">
+                        + Add a New Employee
+                    </button>
+                    <button id="showEmployeeScheduleForm" style="margin: 0.25em;" type="button"
+                            class="btn btn-info float-left" onclick="showEmployeeScheduleModal()">
+                        + Add Employee schedule
+                    </button>
+                    <button id="showAssignScheduleForm" style="margin: 0.25em;" type="button"
+                            class="btn btn-info float-left" onclick="showAssignScheduleModal()">
+                        + Assign Schedule
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <div id="showPetStatus" th:unless="${petStatus}">
+                        <h2 style="background-color:red;color:white">
+                            <p style="font-size: 60%">Pet service is down, if you want to use it, please start it up</p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
+                    <div id="sectiondividier" th:unless="${#lists.isEmpty(pets)}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">Pet list:</span></p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(pets)}">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th style="width: 5%" scope="col"></th>
+                            <th style="width: 15%" scope="col">Type</th>
+                            <th style="width: 15%" scope="col">Name</th>
+                            <th style="width: 15%" scope="col">Owner</th>
+                            <th style="width: 50%" scope="col">Schedule</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="pet: ${pets}">
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-success" th:data-id="${pet.petId}"
+                                        th:data-type="${pet.petType}"
+                                        th:data-name="${pet.petName}" th:data-owner="${pet.petOwnerId}" th:onclick="showPetModal(this.getAttribute('data-id'),
 														this.getAttribute('data-type'),  this.getAttribute('data-name'), this.getAttribute('data-owner'))">
-														Edit
-											</button>
-											<a class="btn btn-danger" th:href="@{/pet/deletePet/{petId}(petId = ${pet.get('petId')})}">Delete</a>									
-										</td>
-                                        <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
-                                        <td th:text="${pet.get('petName')}">Example Pet Name </td>
-                                        <td th:text="${pet.petOwnerId}">Example Owner Name </td>
-										<td>
-										<div id="sectiondividier" th:if="${schedules}">
-											<table class="table table-striped" th:if="${schedules}">
-												<thead>
-													<tr>
-														<th style="width: 5%" scope="col"></th>
-														<th style="width: 10%" scope="col">Employee</th>
-														<th style="width: 30%" scope="col">Date</th>
-														<th style="width: 55%" scope="col">Activity</th>
-													</tr>
-												</thead>
-												<tbody th:each="schedule: ${schedules}">
-													<tr>
-														<td>
-															<a class="btn btn-danger" th:href="@{/pet/deleteSchedule/{scheduleId}(scheduleId = ${schedule.id})}">Delete</a>										
-														</td>
-														<th th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.employeeIds}" scope="row">Example Employee</th>
-														<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.date}">Example Date </td>
-														<td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}" th:text="${schedule.activities}">Example Activity </td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-										</td>
-									</tr>
-                                </tbody>
-							</table>
-						</div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(owners)}">
-                            <div id="sectiondividier" th:unless="${#lists.isEmpty(owners)}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">Owner list:</span></p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(owners)}">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 10%" scope="col"></th>
-                                        <th style="width: 30%" scope="col">Id</th>
-                                        <th style="width: 30%" scope="col">Name</th>
-                                        <th style="width: 30%" scope="col">Phonenumber</th>
-										</tr>
-                                </thead>
-                                <tbody th:each="owner: ${owners}">
-                                    <tr>									
-                                        <td>
-											<a class="btn btn-danger" th:href="@{/pet/deleteOwner/{ownerId}(ownerId = ${owner.get('ownerId')})}">Delete</a>								
-										</td>
-                                        <th th:text="${owner.ownerId}" scope="row">Example Owner Id</th>
-                                        <td th:text="${owner.ownerName}">Example Owner Name </td>
-                                        <td th:text="${owner.ownerPhoneNumber}">Example Owner Phonenumber </td>
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(employees)}">
-                            <div id="sectiondividier" th:unless="${#lists.isEmpty(employees)}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">Employee list:</span></p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(employees)}">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 10%" scope="col"></th>
-                                        <th style="width: 10%" scope="col">Id</th>
-                                        <th style="width: 10%" scope="col">Name</th>
-                                        <th style="width: 35%" scope="col">Skills</th>
-                                        <th style="width: 35%" scope="col">Schedule</th>
-									</tr>
-                                </thead>
-                                <tbody th:each="employee: ${employees}">
-                                    <tr>									
-                                        <td>
-											<a class="btn btn-danger" th:href="@{/pet/deleteEmployee/{employeeId}(employeeId = ${employee.get('employeeId')})}">Delete</a>									
-										</td>
-                                        <th th:text="${employee.employeeId}" scope="row">Example Employee Id</th>
-                                        <td th:text="${employee.employeeName}">Example Employee Name</td>
-                                        <td th:text="${employee.employeeSkills}">Example Employee Skills</td>
-                                        <td th:text="${employee.employeeSchedule}">Example Employee Skills</td>
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="modal fade" id="petModal" tabindex="-1" role="dialog" aria-labelledby="petModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="petModalLabel">Pet</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newPet}" th:action="@{/pet/addPet}" action="#" method="POST">
-                                            <input th:field="*{petId}"  type="hidden" name="petId" id="pet-id">
-											<div class="form-group blu-margin">
-												<label for="pet-type" class="col-form-label">Pet type</label>
-												<select class="form-control" th:field="*{petType}"  id="pet-type">
-												<option value="0" selected>Select type</option>
-												<option th:each="petType : ${petTypes}" th:value="${petType}" th:text="${petType}"></option>
-												</select>
-											</div>
-                                            <div class="form-group">
-                                                <label for="pet-name" class="col-form-label">Name</label>
-                                               <input th:field="*{petName}" type="text" name="petName" class="form-control" id="pet-name" maxlength="50" required>
-                                            </div>
-											<div class="form-group blu-margin">
-												<label for="pet-owner" class="col-form-label">Owner</label>
-												<select class="form-control" th:field="*{petOwnerId}"  id="pet-ownerId">
-												<option value="0" selected>Select type</option>
-												<option th:each="owner : ${owners}" th:value="${owner.ownerId}" th:text="${owner.ownerId} + ', ' +  ${owner.ownerName}"></option>
-												</select>
-											</div>
-                                            <button id="petSubmit" type="submit" class="d-none"></button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#petSubmit').click();">Save changes</button>
-                                    </div>
+                                    Edit
+                                </button>
+                                <a class="btn btn-danger"
+                                   th:href="@{/pet/deletePet/{petId}(petId = ${pet.get('petId')})}">Delete</a>
+                            </td>
+                            <th th:text="${pet.get('petType')}" scope="row">Example Pet Type</th>
+                            <td th:text="${pet.get('petName')}">Example Pet Name</td>
+                            <td th:text="${pet.petOwnerId}">Example Owner Name</td>
+                            <td>
+                                <div id="sectiondividier" th:if="${schedules}">
+                                    <table class="table table-striped" th:if="${schedules}">
+                                        <thead>
+                                        <tr>
+                                            <th style="width: 5%" scope="col"></th>
+                                            <th style="width: 10%" scope="col">Employee</th>
+                                            <th style="width: 30%" scope="col">Date</th>
+                                            <th style="width: 55%" scope="col">Activity</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody th:each="schedule: ${schedules}">
+                                        <tr>
+                                            <td>
+                                                <a class="btn btn-danger"
+                                                   th:href="@{/pet/deleteSchedule/{scheduleId}(scheduleId = ${schedule.id})}">Delete</a>
+                                            </td>
+                                            <th th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}"
+                                                th:text="${schedule.employeeIds}" scope="row">Example Employee
+                                            </th>
+                                            <td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}"
+                                                th:text="${schedule.date}">Example Date
+                                            </td>
+                                            <td th:if="${#strings.equals(#strings.toString(pet.petId), #strings.toString(schedule.petIds[0]))}"
+                                                th:text="${schedule.activities}">Example Activity
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(owners)}">
+                    <div id="sectiondividier" th:unless="${#lists.isEmpty(owners)}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">Owner list:</span></p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(owners)}">
+                    <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 10%" scope="col"></th>
+                            <th style="width: 30%" scope="col">Id</th>
+                            <th style="width: 30%" scope="col">Name</th>
+                            <th style="width: 30%" scope="col">Phonenumber</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="owner: ${owners}">
+                        <tr>
+                            <td>
+                                <a class="btn btn-danger"
+                                   th:href="@{/pet/deleteOwner/{ownerId}(ownerId = ${owner.get('ownerId')})}">Delete</a>
+                            </td>
+                            <th th:text="${owner.ownerId}" scope="row">Example Owner Id</th>
+                            <td th:text="${owner.ownerName}">Example Owner Name</td>
+                            <td th:text="${owner.ownerPhoneNumber}">Example Owner Phonenumber</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(employees)}">
+                    <div id="sectiondividier" th:unless="${#lists.isEmpty(employees)}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">Employee list:</span></p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(employees)}">
+                    <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 10%" scope="col"></th>
+                            <th style="width: 10%" scope="col">Id</th>
+                            <th style="width: 10%" scope="col">Name</th>
+                            <th style="width: 35%" scope="col">Skills</th>
+                            <th style="width: 35%" scope="col">Schedule</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="employee: ${employees}">
+                        <tr>
+                            <td>
+                                <a class="btn btn-danger"
+                                   th:href="@{/pet/deleteEmployee/{employeeId}(employeeId = ${employee.get('employeeId')})}">Delete</a>
+                            </td>
+                            <th th:text="${employee.employeeId}" scope="row">Example Employee Id</th>
+                            <td th:text="${employee.employeeName}">Example Employee Name</td>
+                            <td th:text="${employee.employeeSkills}">Example Employee Skills</td>
+                            <td th:text="${employee.employeeSchedule}">Example Employee Skills</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal fade" id="petModal" tabindex="-1" role="dialog" aria-labelledby="petModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="petModalLabel">Pet</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newPet}" th:action="@{/pet/addPet}" action="#" method="POST">
+                                    <input th:field="*{petId}" type="hidden" name="petId" id="pet-id">
+                                    <div class="form-group blu-margin">
+                                        <label for="pet-type" class="col-form-label">Pet type</label>
+                                        <select class="form-control" th:field="*{petType}" id="pet-type">
+                                            <option value="0" selected>Select type</option>
+                                            <option th:each="petType : ${petTypes}" th:value="${petType}"
+                                                    th:text="${petType}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pet-name" class="col-form-label">Name</label>
+                                        <input th:field="*{petName}" type="text" name="petName" class="form-control"
+                                               id="pet-name" maxlength="50" required>
+                                    </div>
+                                    <div class="form-group blu-margin">
+                                        <label for="pet-owner" class="col-form-label">Owner</label>
+                                        <select class="form-control" th:field="*{petOwnerId}" id="pet-ownerId">
+                                            <option value="0" selected>Select type</option>
+                                            <option th:each="owner : ${owners}" th:value="${owner.ownerId}"
+                                                    th:text="${owner.ownerId} + ', ' +  ${owner.ownerName}"></option>
+                                        </select>
+                                    </div>
+                                    <button id="petSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#petSubmit').click();">Save
+                                    changes
+                                </button>
                             </div>
                         </div>
-                        <div class="modal fade" id="ownerModal" tabindex="-1" role="dialog" aria-labelledby="ownerModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="ownerModalLabel">Owner</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                    </div>
+                </div>
+                <div class="modal fade" id="ownerModal" tabindex="-1" role="dialog" aria-labelledby="ownerModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="ownerModalLabel">Owner</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newOwner}" th:action="@{/pet/addOwner}" action="#" method="POST">
+                                    <input type="hidden" name="ownerId" id="owner-id">
+                                    <div class="form-group">
+                                        <label for="owner-phonenumber" class="col-form-label">PhoneNumber</label>
+                                        <input th:field="*{ownerPhoneNumber}" type="text" name="ownerPhoneNumber"
+                                               class="form-control" id="owner-phonenumber" maxlength="200" required>
                                     </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newOwner}" th:action="@{/pet/addOwner}" action="#" method="POST">
-                                            <input type="hidden" name="ownerId" id="owner-id">
-                                            <div class="form-group">
-                                                <label for="owner-phonenumber" class="col-form-label">PhoneNumber</label>
-                                               <input th:field="*{ownerPhoneNumber}" type="text" name="ownerPhoneNumber" class="form-control" id="owner-phonenumber" maxlength="200" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="owner-name" class="col-form-label">Name</label>
-                                                <textarea th:field="*{ownerName}" name="ownerName" id="owner-name" rows="5" maxlength="1000" required></textarea>
-                                            </div>
-                                            <button id="ownerSubmit" type="submit" class="d-none"></button>
-                                        </form>
+                                    <div class="form-group">
+                                        <label for="owner-name" class="col-form-label">Name</label>
+                                        <textarea th:field="*{ownerName}" name="ownerName" id="owner-name" rows="5"
+                                                  maxlength="1000" required></textarea>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#ownerSubmit').click();">Save changes</button>
+                                    <button id="ownerSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#ownerSubmit').click();">Save
+                                    changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="employeeModal" tabindex="-1" role="dialog"
+                     aria-labelledby="employeeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="employeeModalLabel">Employee</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newEmployee}" th:action="@{/pet/addEmployee}" action="#"
+                                      method="POST">
+                                    <input type="hidden" name="employeeId" id="employee-id">
+                                    <div class="form-group">
+                                        <label for="employee-skills" class="col-form-label">Skills (multiple
+                                            choice)</label>
+                                        <select class="form-control" th:field="*{employeeSkills}" multiple="multiple">
+                                            <option th:each="skill : ${skills}"
+                                                    th:value="${skill}"
+                                                    th:text="${skill}">Skill name
+                                            </option>
+                                        </select>
                                     </div>
+                                    <div class="form-group">
+                                        <label for="employee-name" class="col-form-label">Name</label>
+                                        <input th:field="*{employeeName}" type="text" name="employeeName"
+                                               class="form-control" id="employee-name" maxlength="40" required>
+                                    </div>
+                                    <button id="employeeSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#employeeSubmit').click();">
+                                    Save changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="employeeScheduleModal" tabindex="-1" role="dialog"
+                     aria-labelledby="employeeScheduleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="employeeSheduleModalLabel">Employee schedule</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newEmployee}" th:action="@{/pet/addEmployeeSchedule}" action="#"
+                                      method="POST">
+                                    <div class="form-group">
+                                        <label for="employee-scheule" class="col-form-label">Days (multiple
+                                            choice)</label>
+                                        <select class="form-control" th:field="*{employeeSchedule}" multiple="multiple">
+                                            <option th:each="day : ${days}"
+                                                    th:value="${day}"
+                                                    th:text="${day}">Day name
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group blu-margin">
+                                        <label for="employee-name" class="col-form-label">Employee</label>
+                                        <select class="form-control" th:field="*{employeeId}">
+                                            <option value="0" selected>Select employee</option>
+                                            <option th:each="employee : ${employees}" th:value="${employee.employeeId}"
+                                                    th:text="${employee.employeeId} + ', ' +  ${employee.employeeName}"></option>
+                                        </select>
+                                    </div>
+                                    <button id="scheduleSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#scheduleSubmit').click();">
+                                    Save changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="assignScheduleModal" tabindex="-1" role="dialog"
+                     aria-labelledby="assignScheduleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="assignSheduleModalLabel">Assign schedule</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newSchedule}" th:action="@{/pet/assignSchedule}" action="#"
+                                      method="POST">
+                                    <input th:field="*{id}" type="hidden" name="scheduleId" id="schedule-id">
+                                    <div class="form-group blu-margin">
+                                        <label for="schedule-employee" class="col-form-label">Employess</label>
+                                        <select class="form-control" th:field="*{employeeIds}">
+                                            <option value="0" selected>Select employee</option>
+                                            <option th:each="employee : ${employees}" th:value="${employee.employeeId}"
+                                                    th:text="${employee.employeeId} + ', ' +  ${employee.employeeName}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group blu-margin">
+                                        <label for="schedule-pet" class="col-form-label">Pets</label>
+                                        <select class="form-control" th:field="*{petIds}">
+                                            <option value="0" selected>Select pet</option>
+                                            <option th:each="pet : ${pets}" th:value="${pet.petId}"
+                                                    th:text="${pet.petId} + ', ' +  ${pet.petName}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="schedule-date" class="col-form-label">Date</label>
+                                        <input th:field="*{date}" type="date" name="scheduleDate" id="schedule-date"
+                                               value="2021-12-02" min="2021-12-02" max="2099-12-31">
+                                    </div>
+                                    <div class="form-group blu-margin">
+                                        <label for="schedule-skill" class="col-form-label">Skills</label>
+                                        <select class="form-control" th:field="*{activities}">
+                                            <option value="0" selected>Select skill</option>
+                                            <option th:each="skill : ${skills}" th:value="${skill}"
+                                                    th:text="${skill}"></option>
+                                        </select>
+                                    </div>
+                                    <button id="assignScheduleSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary"
+                                        onclick="$('#assignScheduleSubmit').click();">Save changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-ecommerce" role="tabpanel" aria-labelledby="nav-ecommerce-tab">
+                <div id="showEcommercesDiv" th:if="${ecommerceStatus}">
+                    <button id="showEcommerceUserForm" style="margin: 0.25em;" type="button"
+                            class="btn btn-info float-left" onclick="showEcommerceUserModal()">
+                        + Add a user
+                    </button>
+                    <button id="showEcommerceItemForm" style="margin: 0.25em;" type="button"
+                            class="btn btn-info float-left" onclick="showEcommerceItemModal()">
+                        + Create an item
+                    </button>
+                    <button id="showEcommerceOrderForm" style="margin: 0.25em;" type="button"
+                            class="btn btn-info float-left" onclick="showEcommerceOrderModal()">
+                        + Add items to cart
+                    </button>
+                    <form action="#" th:action="@{/ecommerce/clearCart}" method="POST">
+                        <button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
+                            + Clear cart
+                        </button>
+                    </form>
+                    <form action="#" th:action="@{/ecommerce/submitOrder}" method="POST">
+                        <button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
+                            + Submit order
+                        </button>
+                    </form>
+                </div>
+                <div class="table-responsive">
+                    <div id="showEcommercesStatus" th:unless="${ecommerceStatus}">
+                        <h2 style="background-color:red;color:white">
+                            <p style="font-size: 60%">eCommerce service is down, if you want to use it, please start it
+                                up</p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <div id="showEcommercesUser" th:if="${currentUser}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">You are logged in to eCommerce as: <span th:text="${currentUser}">currentuser</span>
+                            </p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceItems)}">
+                    <div id="sectiondividier" th:unless="${#lists.isEmpty(ecommerceItems)}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">Available items in store:</span></p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceItems)}">
+                    <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 5%" scope="col"></th>
+                            <th style="width: 5%" scope="col">Id</th>
+                            <th style="width: 30%" scope="col">Name</th>
+                            <th style="width: 30%" scope="col">Price</th>
+                            <th style="width: 30%" scope="col">Description</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="item: ${ecommerceItems}">
+                        <tr>
+                            <td>
+                            </td>
+                            <th th:text="${item.itemId}" scope="row">Example Item Id</th>
+                            <td th:text="${item.itemName}">Example Item Name</td>
+                            <td th:text="${item.itemPrice}">Example Item Price</td>
+                            <td th:text="${item.itemDescription}">Example Item Description</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(currentOrder)}">
+                    <div id="sectiondividier" th:unless="${#lists.isEmpty(currentOrder)}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">Items in current order:</span></p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(currentOrder)}">
+                    <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 5%" scope="col"></th>
+                            <th style="width: 5%" scope="col">Id</th>
+                            <th style="width: 30%" scope="col">Name</th>
+                            <th style="width: 30%" scope="col">Price</th>
+                            <th style="width: 30%" scope="col">Description</th>
+                        </tr>
+                        </thead>
+                        <tbody th:each="item: ${currentOrder}">
+                        <tr>
+                            <td>
+                            </td>
+                            <th th:text="${item.itemId}" scope="row">Example Item Id</th>
+                            <td th:text="${item.itemName}">Example Item Name</td>
+                            <td th:text="${item.itemPrice}">Example Item Price</td>
+                            <td th:text="${item.itemDescription}">Example Item Description</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
+                    <div id="sectiondividier" th:unless="${#lists.isEmpty(ecommerceOrders)}">
+                        <h2 style="background-color:green;color:white">
+                            <p style="font-size: 60%">Previous orders:</span></p>
+                        </h2>
+                    </div>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
+                    <table class="table table-striped" id="userTable">
+                        <tbody th:each="order: ${ecommerceOrders}">
+                        <tr>
+                            <td>
+                            </td>
+                            <th th:text="${order.orderId}" scope="row">Example Order Id</th>
+                            <td th:text="${order.orderTotal}">Example Order Total</td>
+                            <td>
+                                <div id="sectiondividier" th:if="${ecommerceOrders}">
+                                    <table class="table table-striped" th:if="${ecommerceOrders}">
+                                        <tbody th:each="item: ${order.orderItems}">
+                                        <tr>
+                                            <th th:text="${item.id}" scope="row">Example Item Id</th>
+                                            <td th:text="${item.name}">Example Name</td>
+                                            <td th:text="${item.price}">Example Price</td>
+                                            <td th:text="${item.description}">Example Description</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog"
+                     aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="ecommerceUserModalLabel">Add new user and log it in</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newEcommerceUser}" th:action="@{/ecommerce/addUser}" action="#"
+                                      method="POST">
+                                    <div class="form-group">
+                                        <label for="ecommerce-username" class="col-form-label">User</label>
+                                        <input th:field="*{ecommerceUsername}" type="text" name="ecommerceUsername"
+                                               class="form-control" id="ecommerce-username" maxlength="20" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ecommerce-password" class="col-form-label">Password</label>
+                                        <input th:field="*{ecommercePassword}" type="text" name="ecommercePassword"
+                                               class="form-control" id="ecommerce-password" maxlength="20" required>
+                                    </div>
+                                    <button id="ecommerceSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="$('#ecommerceSubmit').click();">
+                                    Save changes
+                                </button>
                             </div>
                         </div>
-                        <div class="modal fade" id="employeeModal" tabindex="-1" role="dialog" aria-labelledby="employeeModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="employeeModalLabel">Employee</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                    </div>
+                </div>
+                <div class="modal fade" id="ecommerceItemModal" tabindex="-1" role="dialog"
+                     aria-labelledby="ecommerceItemModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="ecommerceItemModalLabel">Define item</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newEcommerceItem}" th:action="@{/ecommerce/addItem}" action="#"
+                                      method="POST">
+                                    <div class="form-group">
+                                        <label for="ecommerce-itemName" class="col-form-label">Name</label>
+                                        <input th:field="*{name}" type="text" name="ecommerceItemName"
+                                               class="form-control" id="ecommerce-itemName" maxlength="20" required>
                                     </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newEmployee}" th:action="@{/pet/addEmployee}" action="#" method="POST">
-                                            <input type="hidden" name="employeeId" id="employee-id">
-                                            <div class="form-group">
-												<label for="employee-skills" class="col-form-label">Skills (multiple choice)</label>
-												<select class="form-control" th:field="*{employeeSkills}" multiple="multiple">
-													<option th:each="skill : ${skills}"
-															th:value="${skill}"
-															th:text="${skill}">Skill name</option>
-												</select>
-											</div>
-                                            <div class="form-group">
-                                                <label for="employee-name" class="col-form-label">Name</label>
-                                                <input th:field="*{employeeName}" type="text"  name="employeeName" class="form-control" id="employee-name"  maxlength="40" required>
-                                            </div>
-                                            <button id="employeeSubmit" type="submit" class="d-none"></button>
-                                        </form>
+                                    <div class="form-group">
+                                        <label for="ecommerce-itemPrice" class="col-form-label">Price</label>
+                                        <input th:field="*{price}" type="text" name="ecommerceItemPrice"
+                                               class="form-control" id="ecommerce-itemPrice" maxlength="20" required>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#employeeSubmit').click();">Save changes</button>
+                                    <div class="form-group">
+                                        <label for="ecommerce-itemDescription"
+                                               class="col-form-label">Description</label>
+                                        <input th:field="*{description}" type="text" name="ecommerceItemDescription"
+                                               class="form-control" id="ecommerce-itemDescription" maxlength="20"
+                                               required>
                                     </div>
-                                </div>
+                                    <button id="ecommerceItemSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary"
+                                        onclick="$('#ecommerceItemSubmit').click();">Save changes
+                                </button>
                             </div>
                         </div>
-                        <div class="modal fade" id="employeeScheduleModal" tabindex="-1" role="dialog" aria-labelledby="employeeScheduleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="employeeSheduleModalLabel">Employee schedule</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
+                    </div>
+                </div>
+                <div class="modal fade" id="ecommerceOrderModal" tabindex="-1" role="dialog"
+                     aria-labelledby="ecommerceOrderModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="ecommerceOrderModalLabel">Define order</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form th:object="${newEcommerceOrder}" th:action="@{/ecommerce/addToOrder}" action="#"
+                                      method="POST">
+                                    <div class="form-group blu-margin" th:if="${ecommerceItems}">
+                                        <label for="ecommerce-orderItemId" class="col-form-label">Itemid</label>
+                                        <select class="form-control" th:field="*{ecommerceItemId}"
+                                                id="ecommerce-orderItemId">
+                                            <option value="0" selected>Select item</option>
+                                            <option th:each="item: ${ecommerceItems}" th:value="${item.itemId}"
+                                                    th:text="${item.itemId} + ', ' +  ${item.itemName}"></option>
+                                        </select>
                                     </div>
-                                    <div class="modal-body">
-                                        <form  th:object="${newEmployee}" th:action="@{/pet/addEmployeeSchedule}" action="#" method="POST">
-                                            <div class="form-group">
-												<label  for="employee-scheule" class="col-form-label">Days (multiple choice)</label>
-												<select class="form-control" th:field="*{employeeSchedule}" multiple="multiple">
-													<option th:each="day : ${days}"
-															th:value="${day}"
-															th:text="${day}">Day name</option>
-												</select>
-											</div>
-											<div class="form-group blu-margin">
-												<label for="employee-name"class="col-form-label">Employee</label>
-												<select class="form-control" th:field="*{employeeId}">
-												<option value="0" selected>Select employee</option>
-												<option th:each="employee : ${employees}" th:value="${employee.employeeId}" th:text="${employee.employeeId} + ', ' +  ${employee.employeeName}"></option>
-												</select>
-											</div>
-                                            <button id="scheduleSubmit" type="submit" class="d-none"></button>
-                                        </form>
+                                    <div class="form-group">
+                                        <label for="ecommerce-orderQuantity" class="col-form-label">Quantity</label>
+                                        <input th:field="*{ecommerceQuantity}" type="text" name="ecommerceQuantity"
+                                               class="form-control" id="ecommerce-orderQuantity" maxlength="20"
+                                               required>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#scheduleSubmit').click();">Save changes</button>
-                                    </div>
-                                </div>
+                                    <button id="ecommerceOrderSubmit" type="submit" class="d-none"></button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary"
+                                        onclick="$('#ecommerceOrderSubmit').click();">Save changes
+                                </button>
                             </div>
                         </div>
-                        <div class="modal fade" id="assignScheduleModal" tabindex="-1" role="dialog" aria-labelledby="assignScheduleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="assignSheduleModalLabel">Assign schedule</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form  th:object="${newSchedule}" th:action="@{/pet/assignSchedule}" action="#" method="POST">
-                                            <input th:field="*{id}"  type="hidden" name="scheduleId" id="schedule-id">
-											<div class="form-group blu-margin">
-												<label for="schedule-employee" class="col-form-label">Employess</label>
-												<select class="form-control" th:field="*{employeeIds}">
-												<option value="0" selected>Select employee</option>
-												<option th:each="employee : ${employees}" th:value="${employee.employeeId}" th:text="${employee.employeeId} + ', ' +  ${employee.employeeName}"></option>
-												</select>
-											</div>
-											<div class="form-group blu-margin">
-												<label for="schedule-pet" class="col-form-label">Pets</label>
-												<select class="form-control" th:field="*{petIds}">
-												<option value="0" selected>Select pet</option>
-												<option th:each="pet : ${pets}" th:value="${pet.petId}" th:text="${pet.petId} + ', ' +  ${pet.petName}"></option>
-												</select>
-											</div>
-                                            <div class="form-group">
-                                                <label for="schedule-date" class="col-form-label">Date</label>
-                                                <input th:field="*{date}" type="date" name="scheduleDate" id="schedule-date" value="2021-12-02" min="2021-12-02" max="2099-12-31">
-                                            </div>
-											<div class="form-group blu-margin">
-												<label for="schedule-skill" class="col-form-label">Skills</label>
-												<select class="form-control" th:field="*{activities}">
-												<option value="0" selected>Select skill</option>
-												<option th:each="skill : ${skills}" th:value="${skill}" th:text="${skill}"></option>
-												</select>
-											</div>
-                                            <button id="assignScheduleSubmit" type="submit" class="d-none"></button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#assignScheduleSubmit').click();">Save changes</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-						</div>
-                   <div class="tab-pane fade" id="nav-ecommerce" role="tabpanel" aria-labelledby="nav-ecommerce-tab">
-						<div id="showEcommercesDiv" th:if="${ecommerceStatus}">
-							<button id="showEcommerceUserForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceUserModal()">
-								+ Add a user
-							</button>
-							<button id="showEcommerceItemForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceItemModal()">
-								+ Create an item
-							</button>
-							<button id="showEcommerceOrderForm" style="margin: 0.25em;" type="button" class="btn btn-info float-left" onclick="showEcommerceOrderModal()">
-								+ Add items to cart
-							</button>
-							<form action="#" th:action="@{/ecommerce/clearCart}" method="POST">
-								<button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
-									+ Clear cart
-								</button>
-							</form>
-							<form action="#" th:action="@{/ecommerce/submitOrder}" method="POST">
-								<button id="submitOrder" style="margin: 0.25em;" type="submit" class="btn btn-info float-left">
-									+ Submit order
-								</button>
-							</form>
-						</div>
-                        <div class="table-responsive">
-                            <div id="showEcommercesStatus" th:unless="${ecommerceStatus}">
-                               <h2 style="background-color:red;color:white">
-                                   <p style="font-size: 60%">eCommerce service is down, if you want to use it, please start it up</p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <div id="showEcommercesUser" th:if="${currentUser}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">You are logged in to eCommerce as: <span th:text="${currentUser}">currentuser</span></p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceItems)}">
-                            <div id="sectiondividier" th:unless="${#lists.isEmpty(ecommerceItems)}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">Available items in store:</span></p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceItems)}">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 5%" scope="col"></th>
-                                        <th style="width: 5%" scope="col">Id</th>
-                                        <th style="width: 30%" scope="col">Name</th>
-                                        <th style="width: 30%" scope="col">Price</th>
-                                        <th style="width: 30%" scope="col">Description</th>
-										</tr>
-                                </thead>
-                                <tbody th:each="item: ${ecommerceItems}">
-                                    <tr>									
-                                        <td>							
-										</td>
-                                        <th th:text="${item.itemId}" scope="row">Example Item Id</th>
-                                        <td th:text="${item.itemName}">Example Item Name </td>
-                                        <td th:text="${item.itemPrice}">Example Item Price </td>
-                                        <td th:text="${item.itemDescription}">Example Item Description </td>
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(currentOrder)}">
-                            <div id="sectiondividier" th:unless="${#lists.isEmpty(currentOrder)}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">Items in current order:</span></p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(currentOrder)}">
-                            <table class="table table-striped" id="userTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 5%" scope="col"></th>
-                                        <th style="width: 5%" scope="col">Id</th>
-                                        <th style="width: 30%" scope="col">Name</th>
-                                        <th style="width: 30%" scope="col">Price</th>
-                                        <th style="width: 30%" scope="col">Description</th>
-										</tr>
-                                </thead>
-                                <tbody th:each="item: ${currentOrder}">
-                                    <tr>									
-                                        <td>							
-										</td>
-                                        <th th:text="${item.itemId}" scope="row">Example Item Id</th>
-                                        <td th:text="${item.itemName}">Example Item Name </td>
-                                        <td th:text="${item.itemPrice}">Example Item Price </td>
-                                        <td th:text="${item.itemDescription}">Example Item Description </td>
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
-                            <div id="sectiondividier" th:unless="${#lists.isEmpty(ecommerceOrders)}">
-                               <h2 style="background-color:green;color:white">
-                                   <p style="font-size: 60%">Previous orders:</span></p>
-                               </h2>
-                            </div>
-                        </div>
-                        <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
-                            <table class="table table-striped" id="userTable">
-                                <tbody th:each="order: ${ecommerceOrders}">
-                                    <tr>									
-                                        <td>							
-										</td>
-                                        <th th:text="${order.orderId}" scope="row">Example Order Id</th>
-                                        <td th:text="${order.orderTotal}">Example Order Total </td>
-										<td>
-										<div id="sectiondividier" th:if="${ecommerceOrders}">
-											<table class="table table-striped" th:if="${ecommerceOrders}">
-												<tbody th:each="item: ${order.orderItems}">
-													<tr>
-														<th th:text="${item.id}" scope="row">Example Item Id</th>
-														<td th:text="${item.name}">Example Name </td>
-														<td th:text="${item.price}">Example Price </td>
-														<td th:text="${item.description}">Example Description </td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
-										</td>
-									</tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="modal fade" id="ecommerceUserModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceUserModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="ecommerceUserModalLabel">Add new user and log it in</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newEcommerceUser}" th:action="@{/ecommerce/addUser}" action="#" method="POST">
-                                            <div class="form-group">
-                                                <label for="ecommerce-username" class="col-form-label">User</label>
-                                            	<input th:field="*{ecommerceUsername}" type="text" name= "ecommerceUsername" class="form-control" id="ecommerce-username" maxlength="20" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="ecommerce-password" class="col-form-label">Password</label>
-                                                <input th:field="*{ecommercePassword}" type="text" name= "ecommercePassword" class="form-control" id="ecommerce-password" maxlength="20" required>
-                                            </div>
-											<button id="ecommerceSubmit" type="submit" class="d-none"></button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#ecommerceSubmit').click();">Save changes</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal fade" id="ecommerceItemModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceItemModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="ecommerceItemModalLabel">Define item</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newEcommerceItem}" th:action="@{/ecommerce/addItem}" action="#" method="POST">
-                                            <div class="form-group">
-                                                <label for="ecommerce-itemName" class="col-form-label">Name</label>
-                                            	<input th:field="*{name}" type="text" name= "ecommerceItemName" class="form-control" id="ecommerce-itemName" maxlength="20" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="ecommerce-itemPrice" class="col-form-label">Price</label>
-                                                <input th:field="*{price}" type="text" name= "ecommerceItemPrice" class="form-control" id="ecommerce-itemPrice" maxlength="20" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="ecommerce-itemDescription" class="col-form-label">Description</label>
-                                                <input th:field="*{description}" type="text" name= "ecommerceItemDescription" class="form-control" id="ecommerce-itemDescription" maxlength="20" required>
-                                            </div>
-											<button id="ecommerceItemSubmit" type="submit" class="d-none"></button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#ecommerceItemSubmit').click();">Save changes</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal fade" id="ecommerceOrderModal" tabindex="-1" role="dialog" aria-labelledby="ecommerceOrderModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="ecommerceOrderModalLabel">Define order</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form th:object="${newEcommerceOrder}" th:action="@{/ecommerce/addToOrder}" action="#" method="POST">
-											<div class="form-group blu-margin" th:if="${ecommerceItems}">
-												<label for="ecommerce-orderItemId" class="col-form-label">Itemid</label>
-												<select class="form-control" th:field="*{ecommerceItemId}"  id="ecommerce-orderItemId">
-												<option value="0" selected>Select item</option>
-												<option th:each="item: ${ecommerceItems}" th:value="${item.itemId}" th:text="${item.itemId} + ', ' +  ${item.itemName}"></option>
-												</select>
-											</div>
-                                            <div class="form-group">
-                                                <label for="ecommerce-orderQuantity" class="col-form-label">Quantity</label>
-                                                <input th:field="*{ecommerceQuantity}" type="text" name= "ecommerceQuantity" class="form-control" id="ecommerce-orderQuantity" maxlength="20" required>
-                                            </div>
-											<button id="ecommerceOrderSubmit" type="submit" class="d-none"></button>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="$('#ecommerceOrderSubmit').click();">Save changes</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-					</div>
-				</div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <script th:src="@{/js/jquery-slim.min.js}"></script>
-        <script th:src="@{/js/popper.min.js}"></script>
-        <script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/jquery-slim.min.js}"></script>
+<script th:src="@{/js/popper.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
 
-        <!--For opening the note modal-->
-        <script type="text/javascript">
+<!--For opening the note modal-->
+<script type="text/javascript">
             // For opening the note modal
             function showNoteModal(noteId, noteTitle, noteDescription) {
                 $('#note-id').val(noteId ? noteId : '');
@@ -999,6 +1125,8 @@
                 $('#ecommerce-orderQuantity').val(ecommerceQuantity ? ecommerceQuantity : '');
                 $('#ecommerceOrderModal').modal('show');
             }
-			</script>
-    </body>
+
+
+</script>
+</body>
 </html>

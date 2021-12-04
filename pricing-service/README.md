@@ -1,9 +1,7 @@
 # Pricing Service
 
-The Pricing Service is a REST WebService that simulates a backend that
-would store and retrieve the price of a vehicle given a vehicle id as
-input.
-
+The Pricing Service is a REST WebService that simulates a backend that would store and retrieve the price of a vehicle
+given a vehicle id as input.
 
 ## Features
 

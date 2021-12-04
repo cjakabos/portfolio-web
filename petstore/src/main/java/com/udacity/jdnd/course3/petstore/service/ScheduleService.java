@@ -15,24 +15,24 @@ public class ScheduleService {
     @Autowired
     EmployeeRepository employeeRepository;
 
-    public Schedule createSchedule(Schedule schedule){
+    public Schedule createSchedule(Schedule schedule) {
         return scheduleRepository.save(schedule);
     }
 
-    public void deleteSchedule(Long scheduleId){
+    public void deleteSchedule(Long scheduleId) {
         scheduleRepository.deleteById(scheduleId);
     }
 
-    public List<Schedule> getAllSchedules(){
+    public List<Schedule> getAllSchedules() {
         return scheduleRepository.findAll();
     }
 
-    public List<Schedule> getScheduleForPet(long petId){
+    public List<Schedule> getScheduleForPet(long petId) {
         return scheduleRepository.getSchedulesByPetListId(petId);
     }
 
-    public List<Schedule> getScheduleForEmployee(long employeeId){
-        Employee employee= employeeRepository.getOne(employeeId);
+    public List<Schedule> getScheduleForEmployee(long employeeId) {
+        Employee employee = employeeRepository.getOne(employeeId);
         return scheduleRepository.getSchedulesByEmployeeListContains(employee);
     }
 }

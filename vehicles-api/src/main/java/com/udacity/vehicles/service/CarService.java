@@ -29,30 +29,32 @@ public class CarService {
          *   in `VehiclesApiApplication` as arguments and set them here.
          */
         this.repository = repository;
-		
-		//Add the Maps and Pricing Web Clients you create and set them here
+
+        //Add the Maps and Pricing Web Clients you create and set them here
         this.mapsWebClient = mapsWebClient;
         this.pricingWebClient = pricingWebClient;
     }
 
     /**
      * Gathers a list of all vehicles
+     *
      * @return a list of all vehicles in the CarRepository
      */
     public List<Car> list() {
-		
-		 List<Car> returnList = repository.findAll();
-		 
+
+        List<Car> returnList = repository.findAll();
+
         for (Car car : returnList) {
             car.setLocation(mapsWebClient.getAddress(car.getLocation()));
-			car.setPrice(pricingWebClient.getPrice(car.getId()));
+            car.setPrice(pricingWebClient.getPrice(car.getId()));
         }
- 
-		return repository.findAll();
+
+        return repository.findAll();
     }
 
     /**
      * Gets car information by ID (or throws exception if non-existent)
+     *
      * @param id the ID number of the car to gather information on
      * @return the requested car's information, including location and price
      */
@@ -62,11 +64,11 @@ public class CarService {
          *   If it does not exist, throw a CarNotFoundException
          *   Remove the below code as part of your implementation.
          */
-		 
-		//Find the car by ID from the `repository` if it exists.
+
+        //Find the car by ID from the `repository` if it exists.
         Optional<Car> optionalCar = repository.findById(id);
-		
-		//If it does not exist, throw a CarNotFoundException
+
+        //If it does not exist, throw a CarNotFoundException
         Car car = optionalCar.orElseThrow(CarNotFoundException::new);
 
         /**
@@ -76,8 +78,8 @@ public class CarService {
          * Note: The car class file uses @transient, meaning you will need to call
          *   the pricing service each time to get the price.
          */
-		 
-		// get the price based on the `id` input' and Set the price of the car
+
+        // get the price based on the `id` input' and Set the price of the car
         car.setPrice(pricingWebClient.getPrice(id));
 
         /**
@@ -88,14 +90,14 @@ public class CarService {
          * Note: The Location class file also uses @transient for the address,
          * meaning the Maps service needs to be called each time for the address.
          */
-		 
-         // Use the Maps Web client you create in `VehiclesApiApplication`
-         // to get the address for the vehicle. You should access the location
-         // from the car object and feed it to the Maps service.		 
-		Location location = car.getLocation();
-		Location address = mapsWebClient.getAddress(location);
-		
-		//Set the location of the vehicle, including the address information
+
+        // Use the Maps Web client you create in `VehiclesApiApplication`
+        // to get the address for the vehicle. You should access the location
+        // from the car object and feed it to the Maps service.
+        Location location = car.getLocation();
+        Location address = mapsWebClient.getAddress(location);
+
+        //Set the location of the vehicle, including the address information
         //car.setLocation(address);
         car.setLocation(mapsWebClient.getAddress(car.getLocation()));
         return car;
@@ -113,7 +115,7 @@ public class CarService {
                     .map(carToBeUpdated -> {
                         carToBeUpdated.setDetails(car.getDetails());
                         carToBeUpdated.setLocation(car.getLocation());
-						carToBeUpdated.setCondition(car.getCondition());
+                        carToBeUpdated.setCondition(car.getCondition());
                         return repository.save(carToBeUpdated);
                     }).orElseThrow(CarNotFoundException::new);
         }
@@ -129,19 +131,19 @@ public class CarService {
     public void delete(Long id) {
         /**
          * TODO: Find the car by ID from the `repository` if it exists.
-         *   
+         *
          */
 
         Optional<Car> optionalCar = repository.findById(id);
-		
+
         /**
          * TODO: Delete the car from the repository.
-		 * If it does not exist, throw a CarNotFoundException
+         * If it does not exist, throw a CarNotFoundException
          */
         if (optionalCar.isPresent()) {
             repository.deleteById(id);
         } else {
-			throw new CarNotFoundException("Car Not Found: " + id);
-		}
+            throw new CarNotFoundException("Car Not Found: " + id);
+        }
     }
 }

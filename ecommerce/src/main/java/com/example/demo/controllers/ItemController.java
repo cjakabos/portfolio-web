@@ -17,32 +17,32 @@ import com.example.demo.model.persistence.repositories.ItemRepository;
 @RequestMapping("/api/item")
 public class ItemController {
 
-	@Autowired
-	public ItemRepository itemRepository;
-	
-	@GetMapping
-	public ResponseEntity<List<Item>> getItems() {
-		return ResponseEntity.ok(itemRepository.findAll());
-	}
-	
-	@GetMapping("/{id}")
-	public ResponseEntity<Item> getItemById(@PathVariable Long id) {
-		return ResponseEntity.of(itemRepository.findById(id));
-	}
+    @Autowired
+    public ItemRepository itemRepository;
 
-	@PostMapping
-	public ResponseEntity<Item> addItem(@RequestBody CreateItemRequest createItemRequest) {
-		Item newItem = new Item(createItemRequest.getId(), createItemRequest.getName(), createItemRequest.getPrice(), createItemRequest.getDescription());
-		Item itemResponse = itemRepository.save(newItem);
-		return ResponseEntity.of(itemRepository.findById(itemResponse.getId()));
-	}
+    @GetMapping
+    public ResponseEntity<List<Item>> getItems() {
+        return ResponseEntity.ok(itemRepository.findAll());
+    }
 
-	@GetMapping("/name/{name}")
-	public ResponseEntity<List<Item>> getItemsByName(@PathVariable String name) {
-		List<Item> items = itemRepository.findByName(name);
-		return items == null || items.isEmpty() ? ResponseEntity.notFound().build()
-				: ResponseEntity.ok(items);
-			
-	}
-	
+    @GetMapping("/{id}")
+    public ResponseEntity<Item> getItemById(@PathVariable Long id) {
+        return ResponseEntity.of(itemRepository.findById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<Item> addItem(@RequestBody CreateItemRequest createItemRequest) {
+        Item newItem = new Item(createItemRequest.getId(), createItemRequest.getName(), createItemRequest.getPrice(), createItemRequest.getDescription());
+        Item itemResponse = itemRepository.save(newItem);
+        return ResponseEntity.of(itemRepository.findById(itemResponse.getId()));
+    }
+
+    @GetMapping("/name/{name}")
+    public ResponseEntity<List<Item>> getItemsByName(@PathVariable String name) {
+        List<Item> items = itemRepository.findByName(name);
+        return items == null || items.isEmpty() ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(items);
+
+    }
+
 }

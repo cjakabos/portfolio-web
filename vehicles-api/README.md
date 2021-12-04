@@ -1,7 +1,6 @@
 # Vehicles API
 
-A REST API to maintain vehicle data and to provide a complete
-view of vehicle details including price and address.
+A REST API to maintain vehicle data and to provide a complete view of vehicle details including price and address.
 
 ## Features
 
@@ -17,9 +16,7 @@ view of vehicle details including price and address.
 
 #### Run the Code
 
-To properly run this application you need to start the Orders API and
-the Service API first.
-
+To properly run this application you need to start the Orders API and the Service API first.
 
 ```
 $ mvn clean package
@@ -38,6 +35,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 ### Create a Vehicle
 
 `POST` `/cars`
+
 ```json
 {
    "condition":"USED",
@@ -67,9 +65,8 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 
 `GET` `/cars/{id}`
 
-This feature retrieves the Vehicle data from the database
-and access the Pricing Service and Boogle Maps to enrich 
-the Vehicle information to be presented
+This feature retrieves the Vehicle data from the database and access the Pricing Service and Boogle Maps to enrich the
+Vehicle information to be presented
 
 ### Update a Vehicle
 
