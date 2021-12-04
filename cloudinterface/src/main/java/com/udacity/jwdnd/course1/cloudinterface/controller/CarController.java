@@ -44,37 +44,37 @@ public class CarController {
             JsonArray tokenList = jsonObject.getAsJsonObject("_embedded").getAsJsonArray("carList");
 
             for (int i = 0; i < tokenList.size(); i++) {
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("condition");
-                String carCondition = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("model");
-                String carModel = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("productionYear");
-                String carProductionYear = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("body");
-                String carBody = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("code");
-                String carCode = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("name");
-                String carName = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("numberOfDoors");
-                String numberOfDoors = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("fuelType");
-                String fuelType = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("engine");
-                String engine = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("mileage");
-                String mileage = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("modelYear");
-                String modelYear = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("externalColor");
-                String externalColor = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("location").getAsJsonObject().get("lat");
-                String latLocation = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("location").getAsJsonObject().get("lon");
-                String longLocation = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("condition");
+                String carCondition = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("model");
+                String carModel = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("productionYear");
+                String carProductionYear = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("body");
+                String carBody = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("code");
+                String carCode = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("name");
+                String carName = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("numberOfDoors");
+                String numberOfDoors = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("fuelType");
+                String fuelType = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("engine");
+                String engine = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("mileage");
+                String mileage = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("modelYear");
+                String modelYear = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("externalColor");
+                String externalColor = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("location").getAsJsonObject().get("lat");
+                String latLocation = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("location").getAsJsonObject().get("lon");
+                String longLocation = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("id");
-                String carId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String carId = jsonElement.getAsString();
                 newCar = new HashMap<String, String>() {
                     {
                         put("condition", carCondition);
@@ -121,9 +121,9 @@ public class CarController {
         JsonObject oj = tokenList.get(0).getAsJsonObject();
 
 
-        JsonElement test = tokenList.get(1).getAsJsonObject().get("condition");
+        JsonElement jsonElement = tokenList.get(1).getAsJsonObject().get("condition");
 
-        test = tokenList.get(1).getAsJsonObject().get("details").getAsJsonObject().get("model");
+        jsonElement = tokenList.get(1).getAsJsonObject().get("details").getAsJsonObject().get("model");
 
         return "result";
     }

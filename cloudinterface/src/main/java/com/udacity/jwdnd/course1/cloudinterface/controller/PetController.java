@@ -56,16 +56,16 @@ public class PetController {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
-                String petName = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("type");
-                String petType = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("name");
+                String petName = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("type");
+                String petType = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("id");
-                String petId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String petId = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("ownerId");
-                String petOwnerId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("ownerId");
+                String petOwnerId = jsonElement.getAsString();
 
                 newPet = new HashMap<String, String>() {
                     {
@@ -103,13 +103,13 @@ public class PetController {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
-                String ownerName = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("phoneNumber");
-                String ownerPhoneNumber = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("name");
+                String ownerName = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("phoneNumber");
+                String ownerPhoneNumber = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("id");
-                String ownerId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String ownerId = jsonElement.getAsString();
                 newOwner = new HashMap<String, String>() {
                     {
                         put("ownerName", ownerName);
@@ -147,17 +147,17 @@ public class PetController {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
-                String employeeName = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("name");
+                String employeeName = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("skills");
-                String employeeSkills = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("skills");
+                String employeeSkills = jsonElement.toString();
 
-                test = tokenList.get(i).getAsJsonObject().get("daysAvailable");
-                String employeeSchedule = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("daysAvailable");
+                String employeeSchedule = jsonElement.toString();
 
-                test = tokenList.get(i).getAsJsonObject().get("id");
-                String employeeId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String employeeId = jsonElement.getAsString();
                 newEmployee = new HashMap<String, String>() {
                     {
                         put("employeeName", employeeName);
@@ -209,14 +209,14 @@ public class PetController {
                 tempArray.add(dateElement);
                 List<String> scheduleDate = gson.fromJson(tempArray, type);
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("activities");
-                List<String> scheduleActivities = gson.fromJson(test, type);
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("activities");
+                List<String> scheduleActivities = gson.fromJson(jsonElement, type);
 
-                test = tokenList.get(i).getAsJsonObject().get("employeeIds");
-                List<String> employeeIds = gson.fromJson(test, type);
+                jsonElement = tokenList.get(i).getAsJsonObject().get("employeeIds");
+                List<String> employeeIds = gson.fromJson(jsonElement, type);
 
-                test = tokenList.get(i).getAsJsonObject().get("petIds");
-                List<String> petIds = gson.fromJson(test, type);
+                jsonElement = tokenList.get(i).getAsJsonObject().get("petIds");
+                List<String> petIds = gson.fromJson(jsonElement, type);
 
                 newSchedule = new HashMap<String, List<String>>() {
                     {

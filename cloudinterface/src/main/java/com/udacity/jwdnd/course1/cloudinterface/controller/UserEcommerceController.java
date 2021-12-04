@@ -162,16 +162,16 @@ public class UserEcommerceController {
                 JsonObject oj = tokenList.get(i).getAsJsonObject();
                 oj = tokenList.get(i).getAsJsonObject();
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
-                String itemName = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("price");
-                String itemPrice = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("name");
+                String itemName = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("price");
+                String itemPrice = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("id");
-                String itemId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String itemId = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("description");
-                String itemDescription = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("description");
+                String itemDescription = jsonElement.getAsString();
 
                 newItem = new HashMap<String, String>() {
                     {
@@ -255,16 +255,16 @@ public class UserEcommerceController {
             JsonArray tokenList = JsonParser.parseString(responseString).getAsJsonObject().get("items").getAsJsonArray();
 
             for (int i = 0; i < tokenList.size(); i++) {
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("name");
-                String itemName = test.toString();
-                test = tokenList.get(i).getAsJsonObject().get("price");
-                String itemPrice = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("name");
+                String itemName = jsonElement.getAsString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("price");
+                String itemPrice = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("id");
-                String itemId = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String itemId = jsonElement.getAsString();
 
-                test = tokenList.get(i).getAsJsonObject().get("description");
-                String itemDescription = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("description");
+                String itemDescription = jsonElement.getAsString();
 
                 newItem = new HashMap<String, String>() {
                     {
@@ -363,8 +363,8 @@ public class UserEcommerceController {
 
             for (int i = 0; i < tokenList.size(); i++) {
 
-                JsonElement test = tokenList.get(i).getAsJsonObject().get("id");
-                String orderId = test.toString();
+                JsonElement jsonElement = tokenList.get(i).getAsJsonObject().get("id");
+                String orderId = jsonElement.getAsString();
 
 
                 Gson gson = new Gson();
@@ -373,8 +373,8 @@ public class UserEcommerceController {
                 JsonElement itemsElement = tokenList.get(i).getAsJsonObject().get("items");
                 List<Item> orderItems = gson.fromJson(itemsElement, type);
 
-                test = tokenList.get(i).getAsJsonObject().get("total");
-                String orderTotal = test.toString();
+                jsonElement = tokenList.get(i).getAsJsonObject().get("total");
+                String orderTotal = jsonElement.getAsString();
 
 
                 newOrder = new HashMap<String, Object>() {
