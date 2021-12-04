@@ -242,41 +242,36 @@
                         <thead>
                         <tr>
                             <th style="width: 5%" scope="col"></th>
-                            <th style="width: 5%" scope="col">Model</th>
-                            <th style="width: 5%" scope="col">Condition</th>
-                            <th style="width: 5%" scope="col">Production year</th>
-                            <th style="width: 5%" scope="col">Body</th>
-                            <th style="width: 5%" scope="col">Code</th>
-                            <th style="width: 5%" scope="col">Name</th>
+                            <th style="width: 10%" scope="col">Model</th>
+                            <th style="width: 10%" scope="col">Condition</th>
+                            <th style="width: 10%" scope="col">Production year</th>
                             <th style="width: 5%" scope="col">Doors</th>
-                            <th style="width: 5%" scope="col">FuelType</th>
-                            <th style="width: 5%" scope="col">Engine</th>
-                            <th style="width: 5%" scope="col">Mileage</th>
-                            <th style="width: 5%" scope="col">ModelYear</th>
-                            <th style="width: 5%" scope="col">Color</th>
-                            <th style="width: 5%" scope="col">LatLocation</th>
-                            <th style="width: 5%" scope="col">LongLocation</th>
+                            <th style="width: 10%" scope="col">FuelType</th>
+                            <th style="width: 10%" scope="col">Mileage</th>
+                            <th style="width: 10%" scope="col">ModelYear</th>
+                            <th style="width: 10%" scope="col">Color</th>
+                            <th style="width: 10%" scope="col">LatLocation</th>
+                            <th style="width: 10%" scope="col">LongLocation</th>
                         </tr>
                         </thead>
                         <tbody th:each="car: ${cars}">
                         <tr>
                             <td>
-                                <button type="button" class="btn btn-success" th:data-id="${car.id}"
+                                <button type="button" class="btn btn-success" 
+										th:data-id="${car.id}"
                                         th:data-model="${car.model}"
                                         th:data-condition="${car.condition}"
                                         th:data-productionYear="${car.productionYear}"
-                                        th:data-body="${car.body}" th:data-code="${car.code}"
-                                        th:data-name="${car.name}" th:data-numberOfDoors="${car.numberOfDoors}"
-                                        th:data-fuelType="${car.fuelType}" th:data-engine="${car.engine}"
-                                        th:data-mileage="${car.mileage}" th:data-modelYear="${car.modelYear}"
+										th:data-numberOfDoors="${car.numberOfDoors}"
+                                        th:data-fuelType="${car.fuelType}"
+                                        th:data-mileage="${car.mileage}" 
+										th:data-modelYear="${car.modelYear}"
                                         th:data-externalColor="${car.externalColor}"
                                         th:data-latLocation="${car.latLocation}"
                                         th:data-longLocation="${car.longLocation}"
                                         th:onclick="showCarModal(this.getAttribute('data-id'), this.getAttribute('data-model'),
 														this.getAttribute('data-condition'), this.getAttribute('data-productionYear'),
-														this.getAttribute('data-body'), this.getAttribute('data-code'), 
-														this.getAttribute('data-name'), this.getAttribute('data-numberOfDoors'), 
-														this.getAttribute('data-fuelType'), this.getAttribute('data-engine'), 
+														this.getAttribute('data-numberOfDoors'), this.getAttribute('data-fuelType'),
 														this.getAttribute('data-mileage'), this.getAttribute('data-modelYear'), 
 														this.getAttribute('data-externalColor'), this.getAttribute('data-latLocation'), 
 														this.getAttribute('data-longLocation'))">
@@ -287,12 +282,8 @@
                             <th th:text="${car.get('model')}" scope="row">Example Car Model</th>
                             <td th:text="${car.get('condition')}">Example Car Condition</td>
                             <td th:text="${car.get('productionYear')}">Example Car Production Year</td>
-                            <th th:text="${car.get('body')}" scope="row">Example Car Body</th>
-                            <th th:text="${car.get('code')}" scope="row">Example Car Code</th>
-                            <td th:text="${car.get('name')}">Example Car Name</td>
                             <td th:text="${car.get('numberOfDoors')}">Example Car Doors</td>
                             <th th:text="${car.get('fuelType')}" scope="row">Example Car Fuel type</th>
-                            <td th:text="${car.get('engine')}">Example Car Engine</td>
                             <td th:text="${car.get('mileage')}">Example Car Milage</td>
                             <th th:text="${car.get('modelYear')}" scope="row">Example Car Model Year</th>
                             <td th:text="${car.get('externalColor')}">Example Car Color</td>
@@ -332,17 +323,6 @@
                                     <label for="car-productionYear" class="col-form-label">Production year</label>
                                     <input th:field="*{productionYear}" type="number" min="1900" max="2100" step="1"
                                            id="car-productionYear"/>
-
-                                    <div class="form-group">
-                                        <label for="car-body" class="col-form-label">Body</label>
-                                        <textarea th:field="*{body}" name="carBody" class="form-control" id="car-body"
-                                                  maxlength="200" required></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="car-name" class="col-form-label">Name</label>
-                                        <textarea th:field="*{name}" name="carName" class="form-control" id="car-name"
-                                                  maxlength="200" required></textarea>
-                                    </div>
                                     <label for="car-numberOfDoors" class="col-form-label">Number of doors</label>
                                     <input th:field="*{numberOfDoors}" type="number" min="2" max="8" step="1"
                                            id="car-numberOfDoors"/>
@@ -350,11 +330,6 @@
                                         <label for="car-fuelType" class="col-form-label">Fuel type</label>
                                         <textarea th:field="*{fuelType}" name="carFuelType" class="form-control"
                                                   id="car-fuelType" maxlength="200" required></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="car-engine" class="col-form-label">Engine</label>
-                                        <textarea th:field="*{engine}" name="carEngine" class="form-control"
-                                                  id="car-engine" maxlength="200" required></textarea>
                                     </div>
                                     <label for="car-mileage" class="col-form-label">Mileage</label>
                                     <input th:field="*{mileage}" type="number" min="0" max="1000000" step="1"
@@ -878,16 +853,27 @@
                 </div>
                 <div class="table-responsive" th:unless="${#lists.isEmpty(ecommerceOrders)}">
                     <table class="table table-striped" id="userTable">
+                        <thead>
+                        <tr>
+                            <th style="width: 5%" scope="col">Id</th>
+                            <th style="width: 5%" scope="col">Total price</th>
+                            <th style="width: 90%" scope="col">Details</th>
+                        </tr>
+                        </thead>
                         <tbody th:each="order: ${ecommerceOrders}">
                         <tr>
-                            <td>
-                            </td>
                             <th th:text="${order.orderId}" scope="row">Example Order Id</th>
                             <td th:text="${order.orderTotal}">Example Order Total</td>
                             <td>
                                 <div id="sectiondividier" th:if="${ecommerceOrders}">
                                     <table class="table table-striped" th:if="${ecommerceOrders}">
-                                        <tbody th:each="item: ${order.orderItems}">
+										<tr>
+											<th style="width: 5%" scope="col">Id</th>
+											<th style="width: 10%" scope="col">Name</th>
+											<th style="width: 5%" scope="col">Price</th>
+											<th style="width: 80%" scope="col">Description</th>
+										</tr>
+										<tbody th:each="item: ${order.orderItems}">
                                         <tr>
                                             <th th:text="${item.id}" scope="row">Example Item Id</th>
                                             <td th:text="${item.name}">Example Name</td>
@@ -964,7 +950,7 @@
                                         <label for="ecommerce-itemDescription"
                                                class="col-form-label">Description</label>
                                         <input th:field="*{description}" type="text" name="ecommerceItemDescription"
-                                               class="form-control" id="ecommerce-itemDescription" maxlength="20"
+                                               class="form-control" id="ecommerce-itemDescription" maxlength="250"
                                                required>
                                     </div>
                                     <button id="ecommerceItemSubmit" type="submit" class="d-none"></button>
@@ -1047,17 +1033,13 @@
                 $('#credentialModal').modal('show');
             }
             // For opening the car modal
-            function showCarModal(id, model, condition, productionYear, body, code, name, numberOfDoors, fuelType, engine, mileage, modelYear, externalColor, latLocation, longLocation) {
+            function showCarModal(id, model, condition, productionYear, numberOfDoors, fuelType, mileage, modelYear, externalColor, latLocation, longLocation) {
                 $('#car-id').val(id ? id : '');
                 $('#car-model').val(model ? model : '');
                 $('#car-condition').val(condition ? condition : '');
                 $('#car-productionYear').val(productionYear ? productionYear : '');
-                $('#car-body').val(body ? body : '');
-                $('#car-code').val(code ? code : '');
-                $('#car-name').val(name ? name : '');
                 $('#car-numberOfDoors').val(numberOfDoors ? numberOfDoors : '');
                 $('#car-fuelType').val(fuelType ? fuelType : '');
-                $('#car-engine').val(engine ? engine : '');
                 $('#car-mileage').val(mileage ? mileage : '');
                 $('#car-modelYear').val(modelYear ? modelYear : '');
                 $('#car-externalColor').val(externalColor ? externalColor : '');

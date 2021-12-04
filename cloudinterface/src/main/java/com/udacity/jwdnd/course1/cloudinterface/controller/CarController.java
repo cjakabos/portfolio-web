@@ -54,8 +54,6 @@ public class CarController {
                 String carModel = jsonElement.getAsString();
                 jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("productionYear");
                 String carProductionYear = jsonElement.getAsString();
-                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("body");
-                String carBody = jsonElement.getAsString();
                 jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("code");
                 String carCode = jsonElement.getAsString();
                 jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("manufacturer").getAsJsonObject().get("name");
@@ -64,8 +62,6 @@ public class CarController {
                 String numberOfDoors = jsonElement.getAsString();
                 jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("fuelType");
                 String fuelType = jsonElement.getAsString();
-                jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("engine");
-                String engine = jsonElement.getAsString();
                 jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("mileage");
                 String mileage = jsonElement.getAsString();
                 jsonElement = tokenList.get(i).getAsJsonObject().get("details").getAsJsonObject().get("modelYear");
@@ -85,12 +81,10 @@ public class CarController {
                         put("id", carId);
                         put("model", carModel);
                         put("productionYear", carProductionYear);
-                        put("body", carBody);
                         put("code", carCode);
                         put("name", carName);
                         put("numberOfDoors", numberOfDoors);
                         put("fuelType", fuelType);
-                        put("engine", engine);
                         put("mileage", mileage);
                         put("modelYear", modelYear);
                         put("externalColor", externalColor);
@@ -151,7 +145,7 @@ public class CarController {
             jsonObject.addProperty("condition", car.getCondition());
             jsonObject.getAsJsonObject("details").addProperty("model", car.getModel());
             jsonObject.getAsJsonObject("details").addProperty("productionYear", car.getProductionYear());
-            jsonObject.getAsJsonObject("details").addProperty("body", car.getBody());
+//            jsonObject.getAsJsonObject("details").addProperty("body", car.getBody());
 //            jsonObject.getAsJsonObject("details").getAsJsonObject("manufacturer").addProperty("code", car.getCode());
             jsonObject.getAsJsonObject("details").getAsJsonObject("manufacturer").addProperty("name", car.getName());
             jsonObject.getAsJsonObject("details").addProperty("numberOfDoors", car.getNumberOfDoors());

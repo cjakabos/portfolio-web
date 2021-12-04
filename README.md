@@ -25,8 +25,33 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
 
-**Example of user interface**
-![](./front-end-example.png)
+**Example of user interface**  
+
+Files: upload, view, delete.
+![](./examples/files.png)  
+
+Notes: add, edit, delete.
+![](./examples/notes.png)  
+
+Credentials: add, edit, delete.
+![](./examples/credentials.png)  
+
+Cars: add, edit, delete.
+![](./examples/cars.png)  
+
+Pets  
+Order of usage:  
+add a new owner, assign a new pet to it  
+add a new employee, assign a schedule to it  
+add a schedule based on date, pet and employee and it's skill
+![](./examples/petstore.png)  
+
+Ecommerce  
+Order of usage: add a new user, which then it is logged in to the eCommerce system with a Bearer token.  
+Add optional items to the database, if needed.  
+Add items to the cart, clear or submit order, when it is done.  
+Check previous orders, if any in the table.
+![](./examples/ecommerce.png)
 
 ### The Back-End
 
@@ -81,25 +106,30 @@ layers:
 - The user can upload files and see/download/delete any files they previously uploaded.
 - Any errors related to file actions is displayed (no duplicates or empty/large files).
 
+
     II. Notes (base functionality)
 
 - The user can create notes and see/edit/delete notes they have previously created. Size limit is 1000 character.
+
 
     III. Credentials (base functionality)
 
 - The user can store credentials for specific websites and see/edit/delete the credentials they've previously stored.
 - Passwords are displayed in encrypted form in the list, but upon editing they are able to see the unencrypted values.
 
+
     IV. Cars (extra layer, optional)
 
 - The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
 - Any errors related to the operations is displayed.
+
 
     V. Pets (extra layer, optional)
 
 - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore
   service API interface.
 - Any errors related to the operations is displayed.
+
 
     VI. eCommerce (extra layer, optional)
 
