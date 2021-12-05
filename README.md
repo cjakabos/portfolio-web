@@ -25,34 +25,6 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
 
-**Example of user interface**  
-
-Files: upload, view, delete.
-![](./examples/files.png)  
-
-Notes: add, edit, delete.
-![](./examples/notes.png)  
-
-Credentials: add, edit, delete.
-![](./examples/credentials.png)  
-
-Cars: add, edit, delete.
-![](./examples/cars.png)  
-
-Pets  
-Order of usage:  
-add a new owner, assign a new pet to it  
-add a new employee, assign a schedule to it  
-add a schedule based on date, pet and employee and it's skill
-![](./examples/petstore.png)  
-
-Ecommerce  
-Order of usage: add a new user, which then it is logged in to the eCommerce system with a Bearer token.  
-Add optional items to the database, if needed.  
-Add items to the cart, clear or submit order, when it is done.  
-Check previous orders, if any in the table.
-![](./examples/ecommerce.png)
-
 ### The Back-End
 
 Features:
@@ -80,6 +52,12 @@ Features:
   queries and statements required by the functionality of the application. They support the basic CRUD operations for
   their respective models.
 
+**4. Features of extra services**
+
+- [Vehicles Service](vehicles-api/README.md).
+- [Petstore Service](petstore/README.md).
+- [eCommerce Service](ecommerce/README.md).
+
 ### The Front-End
 
 There are HTML templates for the application pages. They have fields, modal forms, success and error message elements,
@@ -101,40 +79,59 @@ supply the back-end data and functionality described by the following individual
 The home page is the center of the application and hosts the three parts of base functionality plus the additional extra
 layers:
 
-    I. Files (base functionality)
+I. Files (base functionality)</u>
 
 - The user can upload files and see/download/delete any files they previously uploaded.
 - Any errors related to file actions is displayed (no duplicates or empty/large files).
+  Files: upload, view, delete.
 
+![](./examples/files.png)
 
-    II. Notes (base functionality)
+II. Notes (base functionality)
 
 - The user can create notes and see/edit/delete notes they have previously created. Size limit is 1000 character.
 
+![](./examples/notes.png)
 
-    III. Credentials (base functionality)
+III. Credentials (base functionality)
 
 - The user can store credentials for specific websites and see/edit/delete the credentials they've previously stored.
 - Passwords are displayed in encrypted form in the list, but upon editing they are able to see the unencrypted values.
 
+![](./examples/credentials.png)
 
-    IV. Cars (extra layer, optional)
+IV. Cars (extra layer, optional)
 
-- The user can do basic CRUD operations from the Cars tab, which uses Vehicles service API interface.
+- The user can do basic CRUD operations from the Cars tab, which uses [Vehicles service API interface](vehicles-api/README.md).
 - Any errors related to the operations is displayed.
 
+![](./examples/cars.png)
 
-    V. Pets (extra layer, optional)
+V. Pets (extra layer, optional)
 
-- The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses Petstore
-  service API interface.
+- The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses [Petstore
+  service API interface](petstore/README.md):.
 - Any errors related to the operations is displayed.
+- Order of usage:
+  * add a new owner
+  * assign a new pet to it
+  * add a new employee
+  * assign a schedule to it
+  * add a schedule based on date, pet and employee and it's skill
 
+![](./examples/petstore.png)
 
-    VI. eCommerce (extra layer, optional)
+VI. eCommerce (extra layer, optional)
 
-- The user can create ecommerce users, items, carts and orders for the eCommerce service through its API.
+- The user can create ecommerce users, items, carts and orders for the [eCommerce service](ecommerce/README.md): through its API.
 - Any errors related to the operations is displayed.
+- Order of usage:
+  * add a new user, which then it is logged in to the eCommerce system with a Bearer token.
+  * Add optional items to the database, if needed.
+  * Add items to the cart, clear or submit order, when it is done.
+  * Check previous orders, if any, in the table.
+  
+![](./examples/ecommerce.png)
 
 ### Testing
 
