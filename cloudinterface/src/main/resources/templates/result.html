@@ -15,8 +15,18 @@
         <meta http-equiv="refresh" content="0.5; URL=/home"/>
     </div>
     <div class="alert alert-success fill-parent" th:if="${openAiAnswer}">
-        <h1 class="display-5">The question was: <br>  <span th:text="${openAiLastQuestion}">test</span> <br> and the anwser is: <br>  <span th:text="${openAiLastAnswer}"> test</span></h1>
+        <h1 class="display-5">The question was: <br>  <span th:text="${openAiLastQuestion}">test</span> <br> and the answer is: <br>  <span th:text="${openAiLastAnswer}"> test</span></h1>
         <span> Click <a id="openAiResult" th:href="@{/home}">here</a> to continue.</span>
+    </div>
+    <div class="alert alert-success fill-parent" th:if="${openAiImageAnswer}">
+        <h1 class="display-5">The question was: <br>  <span th:text="${openAiLastImageQuestion}">test</span> <br> and the answer is: <br>
+        </h1>
+        <span th:each="image: ${images}">
+            <img th:src="${image.get('url')}" />
+        </span>
+        <br>
+        <br>
+        <span> Click <a id="openAiImageResult" th:href="@{/home}">here</a> to continue.</span>
     </div>
     <div class="alert alert-danger fill-parent" th:if="${updateError}">
         <h1 class="display-5">Error</h1>
