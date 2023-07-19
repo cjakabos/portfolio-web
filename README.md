@@ -1,4 +1,4 @@
-# Java portfolio project
+# Java portfolio project with OpenAI integration
 
 Repository for the different projects from my Nanodegree
 in [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a
