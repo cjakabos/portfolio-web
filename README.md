@@ -24,6 +24,7 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
+- [x] OpenAI interface for OpenAI API.
 
 ### The Back-End
 
@@ -100,14 +101,14 @@ III. Credentials (base functionality)
 
 ![](./examples/credentials.png)
 
-IV. Cars (extra layer, optional)
+IV. Cars (extra tab, optional)
 
 - The user can do basic CRUD operations from the Cars tab, which uses [Vehicles service API interface](vehicles-api/README.md).
 - Any errors related to the operations is displayed.
 
 ![](./examples/cars.png)
 
-V. Pets (extra layer, optional)
+V. Pets (extra tab, optional)
 
 - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses [Petstore
   service API interface](petstore/README.md):.
@@ -121,7 +122,7 @@ V. Pets (extra layer, optional)
 
 ![](./examples/petstore.png)
 
-VI. eCommerce (extra layer, optional)
+VI. eCommerce (extra tab, optional)
 
 - The user can create ecommerce users, items, carts and orders for the [eCommerce service](ecommerce/README.md): through its API.
 - Any errors related to the operations is displayed.
@@ -132,6 +133,18 @@ VI. eCommerce (extra layer, optional)
   * Check previous orders, if any, in the table.
   
 ![](./examples/ecommerce.png)
+
+VII. OpenAI interface (extra tab)
+
+- The user can create ecommerce users, items, carts and orders for the [eCommerce service](ecommerce/README.md): through its API.
+- Any errors related to the operations is displayed.
+- Order of usage:
+  * Make sure to use your OpenAI key in openApiKey parameter in [application.properties](cloudinterface/src/main/resources/application.properties) ![](./examples/OpenAI_0_apiKey.png)
+  * Click Add new OpenAI request. This will initiate a completition request in the background. ![](./examples/OpenAI_1_tab.png)
+  * Fill out the text you want to use for completition.![](./examples/OpenAI_2_input.png)
+  * Upon Submit, you will get a response from OpenAI.![](./examples/OpenAI_3_output.png)
+  * The latest submission is always visible at the OpenAI request tab.![](./examples/OpenAI_4_history.png)
+
 
 ### Testing
 

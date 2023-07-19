@@ -1042,7 +1042,7 @@
                                 <form th:object="${newOpenAi}" th:action="@{/openai/makeCompletition}" action="#" method="POST">
                                     <input th:field="*{openAiId}" type="hidden" name="openAiId" id="openAi-id">
                                     <div class="form-group">
-                                        <label for="openAi-title" class="col-form-label">Title</label>
+                                        <label for="openAi-title" class="col-form-label">Prompt</label>
                                         <input th:field="*{openAiQuestion}" type="text" name="openAiQuestion" class="form-control"
                                                id="openAi-title" maxlength="100" required>
                                     </div>
