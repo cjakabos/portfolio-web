@@ -42,6 +42,7 @@ public class HomeController {
                           @ModelAttribute("newEcommerceItem") Item newEcommerceItem,
                           @ModelAttribute("newEcommerceOrder") OrderEcommerce newEcommerceOrder,
                           @ModelAttribute("newSchedule") Schedule newSchedule,
+                          @ModelAttribute("newOpenAi") OpenAi newOpenAi,
                           Model model) throws Exception {
         Integer userId = uService.getUserId(authentication);
 
@@ -66,6 +67,8 @@ public class HomeController {
         model.addAttribute("carStatus", CarController.getCarStatus());
         model.addAttribute("petStatus", PetController.getPetStatus());
         model.addAttribute("ecommerceStatus", UserEcommerceController.getEcommerceStatus());
+        model.addAttribute("openAiLastQuestion", OpenAiController.getLastQuestion());
+        model.addAttribute("openAiLastAnswer", OpenAiController.getLastAnswer());
         return "home";
     }
 }
