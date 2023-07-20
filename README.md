@@ -2,7 +2,7 @@
 
 Repository for the different projects from my Nanodegree
 in [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a
-cloud interface.
+cloud interface with additional [OpenAI integration](#openai-interface-extra-tab).
 
 [Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
 
@@ -24,7 +24,7 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
-- [x] OpenAI interface for OpenAI API.
+- [x] OpenAI interface for OpenAI API. [Descripttion](#openai-interface-extra-tab)
 
 ### The Back-End
 
@@ -134,16 +134,20 @@ VI. eCommerce (extra tab, optional)
   
 ![](./examples/ecommerce.png)
 
-VII. OpenAI interface (extra tab)
+### OpenAI interface (extra tab)
 
 - The user can create ecommerce users, items, carts and orders for the [eCommerce service](ecommerce/README.md): through its API.
 - Any errors related to the operations is displayed.
 - Order of usage:
   * Make sure to use your OpenAI key in openApiKey parameter in [application.properties](cloudinterface/src/main/resources/application.properties) ![](./examples/OpenAI_0_apiKey.png)
-  * Click Add new OpenAI request. This will initiate a completition request in the background. ![](./examples/OpenAI_1_tab.png)
+  * Click Add a New OpenAI Completition request. This will initiate a completition request in the background. ![](./examples/OpenAI_1_tab.png)
   * Fill out the text you want to use for completition.![](./examples/OpenAI_2_input.png)
   * Upon Submit, you will get a response from OpenAI.![](./examples/OpenAI_3_output.png)
   * The latest submission is always visible at the OpenAI request tab.![](./examples/OpenAI_4_history.png)
+  * Click Add a New OpenAI Image request. This will initiate a Dall-E request in the background. ![](./examples/OpenAI_1_tab.png)
+  * Fill out the text you want to use for image generation.![](./examples/OpenAI_5_input.png)
+  * Upon Submit, you will get an image response from OpenAI.![](./examples/OpenAI_6_output.png)
+  * The latest submission is always visible at the OpenAI request tab.![](./examples/OpenAI_7_history.png)
 
 
 ### Testing
