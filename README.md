@@ -136,8 +136,7 @@ VI. eCommerce (extra tab, optional)
 
 ### OpenAI interface (extra tab)
 
-- The user can create ecommerce users, items, carts and orders for the [eCommerce service](ecommerce/README.md): through its API.
-- Any errors related to the operations is displayed.
+- The user can create OpenAI completition and Dall-E image generation via the OpenAI API.
 - Order of usage:
   * Make sure to use your OpenAI key in openApiKey parameter in [application.properties](cloudinterface/src/main/resources/application.properties) ![](./examples/OpenAI_0_apiKey.png)
   * Click Add a New OpenAI Completition request. This will initiate a completition request in the background. ![](./examples/OpenAI_1_tab.png)
