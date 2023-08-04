@@ -1,13 +1,12 @@
 package com.udacity.jwdnd.course1.cloudinterface.controller;
 
+import com.udacity.jwdnd.course1.cloudinterface.entity.CreateUserRequest;
 import com.udacity.jwdnd.course1.cloudinterface.entity.User;
 import com.udacity.jwdnd.course1.cloudinterface.services.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/signup")
@@ -44,5 +43,23 @@ public class SignupController {
             model.addAttribute("updateError", feedbackType);
             return "signup";
         }
+    }
+    // Allow React CORS connection from localhost:5001
+    @CrossOrigin(origins = "http://localhost:5001")
+    @PostMapping("/api")
+    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
+        User user = new User();
+
+        if (uService.isUsernameAvailable(createUserRequest.getUsername())) {
+
+            user.setUsername(createUserRequest.getUsername());
+            user.setPassword(createUserRequest.getPassword());
+            user.setFirstname(createUserRequest.getFirstName());
+            user.setLastname(createUserRequest.getLastname());
+
+            uService.createUser(user);
+        }
+
+        return ResponseEntity.ok(user);
     }
 }

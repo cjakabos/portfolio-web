@@ -8,6 +8,9 @@ public class User {
     private String firstname;
     private String lastname;
 
+    public User() {
+    }
+
     public User(Integer userId, String username, String salt, String password, String firstname, String lastname) {
         this.userId = userId;
         this.username = username;
@@ -16,6 +19,7 @@ public class User {
         this.firstname = firstname;
         this.lastname = lastname;
     }
+
 
     public Integer getUserId() {
         return userId;
