@@ -1,25 +1,30 @@
-import logo from './logo.svg';
+import logo from './pages/Stock/logo.svg';
 import './App.css';
+import Confirm from "./pages/Hello/Hello";
+import React from "react";
+import Hello from "./pages/Hello/Hello";
+import Stock from "./pages/Stock/Stock";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import "./styles.css";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Tabs from "./components/Tabs/Tabs";
+import TabPanel from "./components/TabPanel/TabPanel";
+import { tabLists } from "./data/tab-lists";
+
+export default function App() {
+    return (
+        <Tabs tabLists={tabLists}>
+            <Routes>
+                <Route path="signup" element={<Stock/>} />
+                <Route path="login" element={<Hello/>} />
+                <Route path="home" element={<Hello/>} />
+                <Route path="*" element={<Navigate to="signup" />} />
+            </Routes>
+        </Tabs>
+    );
 }
 
-export default App;
+function activeContent(route) {
+    return <Hello/>
+}
+
