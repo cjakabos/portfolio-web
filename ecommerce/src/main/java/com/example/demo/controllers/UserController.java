@@ -42,7 +42,8 @@ public class UserController {
         User user = userRepository.findByUsername(username);
         return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
     }
-
+    // Allow React CORS connection from localhost:5001
+    @CrossOrigin(origins = "http://localhost:5001")
     @PostMapping("/create")
     public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
         User user = new User();

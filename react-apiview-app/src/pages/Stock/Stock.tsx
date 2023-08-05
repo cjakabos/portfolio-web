@@ -8,6 +8,7 @@ const initialValues = {
     firstname: "",
     lastname: "",
     password: "",
+    confirmPassword: "",
     feedback: "defaultFeedback",
 };
 export default function Stock() {
@@ -43,23 +44,24 @@ export default function Stock() {
             firstname: values.firstname,
             lastname: values.lastname,
             username: values.username,
-            password: values.password
+            password: values.password,
+            confirmPassword: values.password
         };
 
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
             }
         };
 
-        axios.post('http://localhost:8081/signup/api', postData, axiosConfig)
+        axios.post('http://localhost:8099/api/user/create', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response);
+                //setName(response.data);
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", error.response);
+                //setName(error.response);
             })
 
 
@@ -149,7 +151,7 @@ export default function Stock() {
                               />
                           </label>
                           <br/>
-                          {/*<h2>Username: {values.username} and Passoword: {values.password} and feedback is: {Name}</h2>*/}
+                          <h2>Username: {values.username} and Passoword: {values.password} and feedback is: {Name}</h2>
                           {/*   onClick={() => functionName()}                        */}
                           {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
                           <input type="submit" value="Submit" />
