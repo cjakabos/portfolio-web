@@ -1,5 +1,7 @@
 import React, { FC, useRef, useId, useEffect,useState } from "react";
 import axios from "axios";
+import {Store, STORE_KEY} from "../../Store";
+
 
 const initialValues = {
     username: "",
@@ -67,14 +69,17 @@ export default function Login(this: any) {
                 const token  =  response.headers.authorization;
 
                 //set JWT token to local
-                localStorage.setItem("token", token);
+                sessionStorage.setItem("token", token);
 
+                Store.setValue(STORE_KEY.USERTOKEN, token);
+                window.location.reload()
                 //setName(response.data);
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", error.response);
                 //setName(error.response);
             })
+
 
 
     };
