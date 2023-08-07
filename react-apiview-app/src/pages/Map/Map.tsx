@@ -98,7 +98,7 @@ export default function Map() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': sessionStorage.getItem("token")
+                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -124,7 +124,7 @@ export default function Map() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': sessionStorage.getItem("token")
+                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
             }
         };
 

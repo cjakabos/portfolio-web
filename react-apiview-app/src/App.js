@@ -11,12 +11,13 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Tabs from "./components/Tabs/Tabs";
 import { tabLists } from "./data/tab-lists";
 import { tabListsDefault } from "./data/tab-lists-default";
+import Logout from "./pages/Logout/Logout";
 
 export default function App() {
 
-    const userToken = sessionStorage.getItem("token")
+    const userToken = localStorage.getItem("REACT-APP-MY-TOKEN")
 
-    if (userToken === null) {
+    if (userToken === null || userToken === '') {
         console.log(typeof(userToken?.toString()) !== 'undefined');
         console.log(typeof(userToken?.toString()) !== 'undefined');
         console.log(typeof(userToken?.toString()) !== 'undefined');
@@ -27,9 +28,7 @@ export default function App() {
                     <Route component={Login} />
                     <Route path="signup" element={<Stock/>} />
                     <Route path="login" element={<Login/>} />
-                    <Route path="item" element={<Item/>} />
-                    <Route path="map" element={<Map/>} />
-                    <Route path="*" element={<Navigate to="signup" />} />
+                    <Route path="*" element={<Navigate to="login" />} />
                 </Routes>
             </Tabs>
         );
@@ -46,7 +45,8 @@ export default function App() {
                 />
                 <Route path="item" element={<Item/>} />
                 <Route path="map" element={<Map/>} />
-                <Route path="*" element={<Navigate to="signup" />} />
+                <Route path="logout" element={<Logout/>} />
+                <Route path="*" element={<Navigate to="home" />} />
             </Routes>
         </Tabs>
     );

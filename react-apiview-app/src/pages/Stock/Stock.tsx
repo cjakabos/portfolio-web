@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import {Link} from "react-router-dom";
 
 const initialValues = {
     username: "",
@@ -39,32 +40,38 @@ export default function Stock() {
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
 
-        var postData = {
-            firstname: values.firstname,
-            lastname: values.lastname,
-            username: values.username,
-            password: values.password,
-            confirmPassword: values.password
-        };
+        if (values.password === values.confirmPassword) {
+            var postData = {
+                firstname: values.firstname,
+                lastname: values.lastname,
+                username: values.username,
+                password: values.password,
+                confirmPassword: values.confirmPassword
+            };
 
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-            }
-        };
+            let axiosConfig = {
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8',
+                }
+            };
 
-        axios.post('http://localhost:8099/api/user/create', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response);
+            axios.post('http://localhost:8099/api/user/create', postData, axiosConfig)
+                .then((response) => {
+                    console.log("RESPONSE RECEIVED: ", response);
 
-                setFeedback("OK")
-                //setName(response.data);
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", error.response);
-                //setName(error.response);
-                setFeedback("ERROR")
-            })
+                    setFeedback("OK")
+                    //setName(response.data);
+                })
+                .catch((error) => {
+                    console.log("AXIOS ERROR: ", error.response);
+                    //setName(error.response);
+                    setFeedback("ERROR")
+                })
+        } else {
+            setFeedback("PASSWORDERROR")
+        }
+
+
 
 
     };
@@ -152,16 +159,32 @@ export default function Stock() {
                                   required
                               />
                           </label>
+                          <label>
+                              Confirm Password:
+                              <input
+                                  type="password"
+                                  name="confirmPassword"
+                                  id="confirmPassword"
+                                  placeholder="Confirm Password"
+                                  onChange={handleChange}
+                                  value={values.confirmPassword}
+                                  maxLength={20}
+                                  required
+                              />
+                          </label>
                           <br/>
                           {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
                           {/*   onClick={() => functionName()}                        */}
                           {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
                           <input type="submit" value="Submit" />
                           <div className="login-top">
-                              {Feedback === 'OK' && <h1 style={{ color: 'green' }}>{("Successful registration")}</h1>}
+                              {Feedback === 'OK' && <h1 style={{ color: 'green' }}>{("Successful registration")} <Link to="/login"> Login </Link></h1>}
                           </div>
                           <div className="login-top">
                               {Feedback === 'ERROR' && <h1 style={{ color: 'red' }}>{("Something went wrong")}</h1>}
+                          </div>
+                          <div className="login-top">
+                              {Feedback === 'PASSWORDERROR' && <h1 style={{ color: 'red' }}>{("Passwords do not mach")}</h1>}
                           </div>
                       </form>
                   </div>

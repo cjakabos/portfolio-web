@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import {Store, STORE_KEY} from "../../Store";
+import {Link} from "react-router-dom";
 
 
 const initialValues = {
@@ -9,12 +10,10 @@ const initialValues = {
     feedback: "defaultFeedback",
 };
 
-export const LoginFeedback = ""
-
 export default function Login(this: any) {
 
     const [values, setValues] = useState(initialValues);
-    const [Name, setName] = useState("")
+    const [Username, setUsername] = useState("")
     const [LoginFeedback, setLoginFeedback] = useState("")
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
@@ -67,22 +66,23 @@ export default function Login(this: any) {
 
         axios.post('http://localhost:8099/login', postData, axiosConfig)
             .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response);
+                console.log("RESPONSE RECEIVED: ", response.status);
                 //get token from response
                 const token  =  response.headers.authorization;
 
                 //set JWT token to local
-                sessionStorage.setItem("token", token);
+                localStorage.setItem("REACT-APP-MY-TOKEN", token);
 
                 setLoginFeedback("OK")
+                localStorage.setItem("REACT-APP-MY-USERNAME", postData.username)
 
                 Store.setValue(STORE_KEY.USERTOKEN, token);
+
                 window.location.reload()
-                //setName(response.data);
+
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", error.response);
-                //setName(error.response);
                 setLoginFeedback("ERROR")
             })
 
@@ -125,8 +125,8 @@ export default function Login(this: any) {
                                 />
                             </label>
                             <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
-                            <div className="login-ok">
-                                {LoginFeedback === 'OK' && <h1 style={{ color: 'green' }}>{("Successful login")}</h1>}
+                            <div>
+                                <h1 style={{ color: 'red' }}>{("New user?")} <Link to="/signup"> Signup </Link></h1>
                             </div>
                             <div className="login-error">
                                 {LoginFeedback === 'ERROR' && <h1 style={{ color: 'red' }}>{("Something went wrong")}</h1>}

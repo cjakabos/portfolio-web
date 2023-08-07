@@ -9,7 +9,9 @@ const initialValues = {
 };
 
 export default function Item(this: any) {
-
+    console.log('LOGOUT');
+    localStorage.setItem("REACT-APP-MY-USERNAME", '')
+    localStorage.setItem("REACT-APP-MY-TOKEN", '')
 
     const [values, setValues] = useState(initialValues);
     const [Name, setName] = useState("")
@@ -34,7 +36,7 @@ export default function Item(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': sessionStorage.getItem("token")
+                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -65,7 +67,7 @@ export default function Item(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': sessionStorage.getItem("token")
+                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -78,6 +80,33 @@ export default function Item(this: any) {
                 console.log("AXIOS ERROR: ", axiosConfig);
                 //setName(error.response);
             })
+    };
+
+    function addToCart (arg0: { id: string; name: string; price: string; description: string; })  {
+
+        console.log("Row: " + arg0.name);
+
+        var postData = {
+            username: localStorage.getItem("REACT-APP-MY-USERNAME"),
+            itemId: arg0.id,
+            quantity: 2
+        };
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+            }
+        };
+        //setName(JSON.stringify(postData));
+        axios.post('http://localhost:8099/api/cart/addToCart', postData, axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", response.status);
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", postData);
+            })
+
     };
 
     return (
@@ -154,7 +183,7 @@ export default function Item(this: any) {
                                             <td>{item.name}</td>
                                             <td>{item.price}</td>
                                             <td>{item.description}</td>
-                                            <button className="cart-button">Add to cart</button>
+                                            <button className="cart-button" onClick={() => addToCart(item)}>Add to cart</button>
                                         </tr>
                                     ))}
                                 </table>

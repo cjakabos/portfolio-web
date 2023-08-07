@@ -4,6 +4,6 @@ export type TabListType = {
     route: string;
 };
 export const tabListsDefault = [
-    { tabKey: "signup", title: "Sign Up", route: "Hello2"},
+    { tabKey: "signup", title: "Sign up", route: "Hello2"},
     { tabKey: "login", title: "Login", route: "Hello"},
 ];

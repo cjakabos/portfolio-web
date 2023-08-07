@@ -6,7 +6,12 @@ export default function Hello() {
 
       <div>
           <img src='/logo.svg' className="App-logo" alt="logo" />
-          Hello there, welcome to the home page!
+          <div className="login-ok">
+              <h1 style={{ color: 'green' }}>Hello {localStorage.getItem("REACT-APP-MY-USERNAME")}!</h1>
+          </div>
+          <div className="login-ok">
+              <h1> Welcome to the home page</h1>
+          </div>
       </div>
   )
 }
