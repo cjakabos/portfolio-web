@@ -39,9 +39,6 @@ export default function App() {
     return (
         <Tabs tabLists={tabLists}>
             <Routes>
-                <Route component={Login} />
-                <Route path="signup" element={<Stock/>} />
-                <Route path="login" element={<Login/>} />
                 <Route
                     exact
                     path="home"

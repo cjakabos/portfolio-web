@@ -9,10 +9,13 @@ const initialValues = {
     feedback: "defaultFeedback",
 };
 
+export const LoginFeedback = ""
+
 export default function Login(this: any) {
 
     const [values, setValues] = useState(initialValues);
     const [Name, setName] = useState("")
+    const [LoginFeedback, setLoginFeedback] = useState("")
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
         const { name, value } = event.target;
@@ -71,6 +74,8 @@ export default function Login(this: any) {
                 //set JWT token to local
                 sessionStorage.setItem("token", token);
 
+                setLoginFeedback("OK")
+
                 Store.setValue(STORE_KEY.USERTOKEN, token);
                 window.location.reload()
                 //setName(response.data);
@@ -78,6 +83,7 @@ export default function Login(this: any) {
             .catch((error) => {
                 console.log("AXIOS ERROR: ", error.response);
                 //setName(error.response);
+                setLoginFeedback("ERROR")
             })
 
 
@@ -119,6 +125,12 @@ export default function Login(this: any) {
                                 />
                             </label>
                             <input id="loginButton" type="submit" value="Submit"/>
+                            <div className="login-top">
+                                {LoginFeedback === 'OK' && <h1 style={{ color: 'green' }}>{("Successful login")}</h1>}
+                            </div>
+                            <div className="login-top">
+                                {LoginFeedback === 'ERROR' && <h1 style={{ color: 'red' }}>{("Something went wrong")}</h1>}
+                            </div>
                         </form>
                   </div>
                 </article>

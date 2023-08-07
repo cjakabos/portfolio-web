@@ -1,5 +1,5 @@
-// Based on source: https://github.com/leighhalliday/google-maps-react-2020
-import React  from "react";
+import React, {useState} from "react";
+import axios from "axios";
 
 import {
     GoogleMap,
@@ -36,7 +36,7 @@ export default function Map() {
     const [markers, setMarkers] = React.useState([
         {
             lat: 34,
-            lng: -118,
+            lng: -119,
             time: new Date(),
             customField: "some text here",
         }
@@ -53,12 +53,98 @@ export default function Map() {
                 customField: "somee text here",
             },
         ]);
+        vehicleSubmit(e.latLng.lat(), e.latLng.lng())
+        getVehicles ()
     }, []);
 
     const mapRef = React.useRef();
     const onMapLoad = React.useCallback((map) => {
         mapRef.current = map;
     }, []);
+
+    const [values, setValues] = useState();
+    const [Name, setName] = useState("")
+
+
+
+    function vehicleSubmit (lat: number, lng: number) {
+
+
+        var postData = {
+            condition:"USED",
+            details:{
+                body:"sedan",
+                model:"Impala",
+                manufacturer:{
+                    code:101,
+                    name:"Chevrolet"
+                },
+                numberOfDoors:4,
+                fuelType:"Gasoline",
+                engine:"3.6L V6",
+                mileage:32280,
+                modelYear:2018,
+                productionYear:2018,
+                externalColor:"white"
+            },
+            location:{
+                lat: lat,
+                lon: lng
+            }
+        };
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': sessionStorage.getItem("token")
+            }
+        };
+        //setName(JSON.stringify(postData));
+        axios.post('http://localhost:8080/cars', postData, axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", response.status);
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", postData);
+            })
+
+
+    };
+
+    function getVehicles() {
+
+
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': sessionStorage.getItem("token")
+            }
+        };
+
+        axios.get('http://localhost:8080/cars', axiosConfig)
+            .then((response) => {
+                // for each element received, put up a marker
+                response.data._embedded.carList.map((option: { location: any; }) => (
+                    setMarkers((current) => [
+                        ...current,
+                        {
+                            lat: Number(option.location.lat),
+                            lng: Number(option.location.lon),
+                            time: new Date(),
+                            customField: "api fetch",
+                        },
+                    ])
+
+                ));
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", axiosConfig);
+                //setName(error.response);
+            })
+
+
+    };
 
 
     if (loadError) return "Error";
@@ -70,6 +156,7 @@ export default function Map() {
                 {" "}
                 This is the basic map integration
                 {" "}
+                <br/><input id="itemButton" type="submit" value="Get all vehicles" onClick = {getVehicles}/>
             </h2>
             <GoogleMap
                 id="map"

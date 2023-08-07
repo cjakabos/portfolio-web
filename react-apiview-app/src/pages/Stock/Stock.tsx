@@ -15,6 +15,7 @@ export default function Stock() {
 
     const [values, setValues] = useState(initialValues);
     const [Name, setName] = useState("")
+    const [Feedback, setFeedback] = useState("")
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
         const { name, value } = event.target;
@@ -57,11 +58,14 @@ export default function Stock() {
         axios.post('http://localhost:8099/api/user/create', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response);
+
+                setFeedback("OK")
                 //setName(response.data);
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", error.response);
                 //setName(error.response);
+                setFeedback("ERROR")
             })
 
 
@@ -151,10 +155,16 @@ export default function Stock() {
                               />
                           </label>
                           <br/>
-                          <h2>Username: {values.username} and Passoword: {values.password} and feedback is: {Name}</h2>
+                          {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
                           {/*   onClick={() => functionName()}                        */}
                           {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
                           <input type="submit" value="Submit" />
+                          <div className="login-top">
+                              {Feedback === 'OK' && <h1 style={{ color: 'green' }}>{("Successful registration")}</h1>}
+                          </div>
+                          <div className="login-top">
+                              {Feedback === 'ERROR' && <h1 style={{ color: 'red' }}>{("Something went wrong")}</h1>}
+                          </div>
                       </form>
                   </div>
               </article>

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Implements a REST-based controller for the Vehicles API.
  */
+@CrossOrigin(origins = "http://localhost:5001")
 @RestController
 @RequestMapping("/cars")
 class CarController {
