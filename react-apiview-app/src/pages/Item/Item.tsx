@@ -1,4 +1,4 @@
-import React, { FC, useRef, useId, useEffect,useState } from "react";
+import React, { FC, useRef, useEffect,useState } from "react";
 import axios from "axios";
 
 const initialValues = {
@@ -89,7 +89,7 @@ export default function Item(this: any) {
                     </div>
                     <form onSubmit={handleItemSubmit}>
                         <label>
-                            Username:
+                            Item name:
                             <input
                                 type="text"
                                 name="name"
@@ -102,7 +102,7 @@ export default function Item(this: any) {
                             />
                         </label>
                         <label>
-                            Password:
+                            Price:
                             <input
                                 type="number"
                                 name="price"
@@ -115,9 +115,9 @@ export default function Item(this: any) {
                             />
                         </label>
                         <label>
-                            Password:
+                            Description:
                             <input
-                                type="number"
+                                type="text"
                                 name="description"
                                 id="description"
                                 placeholder="Enter description"
@@ -143,7 +143,7 @@ export default function Item(this: any) {
                             <div>Loading...</div>
                         ) : (
                             <>
-                                <table border={1}>
+                                <table>
                                     <tr>
                                         <th>Name</th>
                                         <th>Price</th>

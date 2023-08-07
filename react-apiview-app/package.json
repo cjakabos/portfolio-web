@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-google-maps/api": "^2.19.2",
     "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "5.1.26",
     "@testing-library/jest-dom": "^5.17.0",
