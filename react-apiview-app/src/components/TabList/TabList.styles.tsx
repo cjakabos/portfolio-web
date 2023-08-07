@@ -19,10 +19,14 @@ export const StyledNavLink = styled(NavLink)`
   text-transform: capitalize;
   text-align: center;
   text-decoration: none;
-  padding: 5px;
+  padding: 20px;
+  height: 40px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  transition: background-color 300ms ease;
   background-color: #efefef;
   &.active {
     border-left: 3px solid black;
-    background-color: white;
+    background-color: lightblue;
   }
 `;

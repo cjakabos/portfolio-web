@@ -124,11 +124,11 @@ export default function Login(this: any) {
                                     required
                                 />
                             </label>
-                            <input id="loginButton" type="submit" value="Submit"/>
-                            <div className="login-top">
+                            <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                            <div className="login-ok">
                                 {LoginFeedback === 'OK' && <h1 style={{ color: 'green' }}>{("Successful login")}</h1>}
                             </div>
-                            <div className="login-top">
+                            <div className="login-error">
                                 {LoginFeedback === 'ERROR' && <h1 style={{ color: 'red' }}>{("Something went wrong")}</h1>}
                             </div>
                         </form>

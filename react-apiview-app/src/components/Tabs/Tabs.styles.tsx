@@ -6,7 +6,7 @@ type TabPanelProps = {
 
 export const TabContainer = styled.div`
   display: grid;
-  grid-template-columns: 120px auto;
+  grid-template-columns: 200px auto;
 `;
 export const TabPanelContainer = styled.div`
   overflow-y: scroll;

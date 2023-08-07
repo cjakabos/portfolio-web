@@ -41,6 +41,8 @@ export default function Map() {
             customField: "some text here",
         }
     ]);
+    const [MapFeedback, setMapFeedback] = useState("")
+
     const [selected, setSelected] = React.useState<any>()
 
     const onMapClick = React.useCallback((e) => {
@@ -103,9 +105,13 @@ export default function Map() {
         axios.post('http://localhost:8080/cars', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
+                setMapFeedback('OK')
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", postData);
+                if (error.code === 'ERR_NETWORK') {
+                    setMapFeedback('API ERROR')
+                }
             })
 
 
@@ -132,15 +138,20 @@ export default function Map() {
                             lat: Number(option.location.lat),
                             lng: Number(option.location.lon),
                             time: new Date(),
-                            customField: "api fetch",
+                            customField: "vehicle-api fetch",
                         },
                     ])
 
                 ));
+                setMapFeedback('OK')
+                console.log("response: ", response.status);
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", axiosConfig);
                 //setName(error.response);
+                if (error.code === 'ERR_NETWORK') {
+                    setMapFeedback('API ERROR')
+                }
             })
 
 
@@ -154,14 +165,17 @@ export default function Map() {
         <div className="tab1">
             <h2>
                 {" "}
-                This is the basic map integration
+                Map integration to vehicles-api, click the map <br/>to generate new vehicles and save them to vehicles-api database.
                 {" "}
                 <br/><input id="itemButton" type="submit" value="Get all vehicles" onClick = {getVehicles}/>
+                <div className="login-error">
+                    {MapFeedback === 'API ERROR' && <h1 style={{ color: 'red' }}>{("Please start API service")}</h1>}
+                </div>
             </h2>
             <GoogleMap
                 id="map"
                 mapContainerStyle={mapContainerStyle}
-                zoom={8}
+                zoom={9}
                 center={center}
                 options={options}
                 onClick={onMapClick}

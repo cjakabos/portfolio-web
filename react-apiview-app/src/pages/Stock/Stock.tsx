@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-// @ts-ignore
-import logo from "./logo.svg";
 import axios from "axios";
 
 const initialValues = {
@@ -91,7 +89,7 @@ export default function Stock() {
 
   return (
       <div>
-          <img src={logo} className="App-logo" alt="logo" />
+          <img src='/logo.svg' className="App-logo" alt="logo" />
           <section>
               <article>
                   <div>

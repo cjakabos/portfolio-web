@@ -42,6 +42,7 @@ export default function Item(this: any) {
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //setName(response.data);
+                getItems()
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", postData);
@@ -57,8 +58,10 @@ export default function Item(this: any) {
 
     const handleItemFetch = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
+        getItems()
 
-
+    }
+    function getItems () {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -75,10 +78,7 @@ export default function Item(this: any) {
                 console.log("AXIOS ERROR: ", axiosConfig);
                 //setName(error.response);
             })
-
-
     };
-
 
     return (
         <section>
@@ -127,7 +127,7 @@ export default function Item(this: any) {
                                 required
                             />
                         </label>
-                        <input id="itemButton" type="submit" value="Submit"/>
+                        <input className="itemButton" type="submit" value="Submit"/>
                     </form>
                 </div>
                 <div>
@@ -150,10 +150,11 @@ export default function Item(this: any) {
                                         <th>Description</th>
                                     </tr>
                                     {items.map(item => (
-                                        <tr key={item.id}>
+                                        <tr key={item.id} >
                                             <td>{item.name}</td>
                                             <td>{item.price}</td>
                                             <td>{item.description}</td>
+                                            <button className="cart-button">Add to cart</button>
                                         </tr>
                                     ))}
                                 </table>
