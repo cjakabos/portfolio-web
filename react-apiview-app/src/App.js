@@ -3,7 +3,7 @@ import React from "react";
 import Hello from "./pages/Hello/Hello";
 import Stock from "./pages/Stock/Stock";
 import Login from "./pages/Login/Login";
-import Item from "./pages/Item/Item";
+import Shop from "./pages/Shop/Shop";
 import Map from "./pages/Map/Map";
 
 import "./styles.css";
@@ -43,7 +43,7 @@ export default function App() {
                     path="home"
                     element={<Hello/>}
                 />
-                <Route path="item" element={<Item/>} />
+                <Route path="item" element={<Shop/>} />
                 <Route path="map" element={<Map/>} />
                 <Route path="logout" element={<Logout/>} />
                 <Route path="*" element={<Navigate to="home" />} />

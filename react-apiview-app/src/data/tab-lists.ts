@@ -5,7 +5,7 @@ export type TabListType = {
 };
 export const tabLists = [
     { tabKey: "home", title: "Home", route: "Hello"},
-    { tabKey: "item", title: "Item", route: "Item"},
+    { tabKey: "item", title: "Shop", route: "Shop"},
     { tabKey: "map", title: "Map", route: "Map"},
     { tabKey: "logout", title: "Logout", route: "Logout"}
 ];
