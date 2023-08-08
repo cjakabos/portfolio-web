@@ -1,8 +1,9 @@
-# Java portfolio project with OpenAI integration
+# Web development portfolio
 
-Repository for the different projects from my Nanodegree
-in [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a
-cloud interface with additional [OpenAI integration](#openai-interface-extra-tab).
+This is a collection of my hobby development projects:
+- Back-end services and basic HTML front-end developed during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a
+- Under development: New React front-end for utilizing these back-end services from above. [React Apiview App](react-apiview-app/README.md)
+- Under development: External api service integration, such as [OpenAI integration](#openai-interface-extra-tab) and Google Maps api.
 
 [Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
 
