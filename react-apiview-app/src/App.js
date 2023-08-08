@@ -12,6 +12,7 @@ import Tabs from "./components/Tabs/Tabs";
 import { tabLists } from "./data/tab-lists";
 import { tabListsDefault } from "./data/tab-lists-default";
 import Logout from "./pages/Logout/Logout";
+import PetStore from "./pages/PetStore/PetStore";
 
 export default function App() {
 
@@ -43,7 +44,8 @@ export default function App() {
                     path="home"
                     element={<Hello/>}
                 />
-                <Route path="item" element={<Shop/>} />
+                <Route path="shop" element={<Shop/>} />
+                <Route path="pet" element={<PetStore/>} />
                 <Route path="map" element={<Map/>} />
                 <Route path="logout" element={<Logout/>} />
                 <Route path="*" element={<Navigate to="home" />} />

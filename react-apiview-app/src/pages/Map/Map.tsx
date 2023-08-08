@@ -7,7 +7,6 @@ import {
     Marker,
     InfoWindow,
 } from "@react-google-maps/api";
-import * as process from "process";
 
 
 const mapContainerStyle = {
@@ -45,7 +44,7 @@ export default function Map() {
 
     const [selected, setSelected] = React.useState<any>()
 
-    const onMapClick = React.useCallback((e) => {
+    const onMapClick = React.useCallback((e: any) => {
         setMarkers((current) => [
             ...current,
             {
@@ -60,7 +59,7 @@ export default function Map() {
     }, []);
 
     const mapRef = React.useRef();
-    const onMapLoad = React.useCallback((map) => {
+    const onMapLoad = React.useCallback((map: any) => {
         mapRef.current = map;
     }, []);
 

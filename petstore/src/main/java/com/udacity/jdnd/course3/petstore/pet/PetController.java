@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 /**
  * Handles web requests related to Pets.
  */
+@CrossOrigin(origins = "http://localhost:5001")
 @RestController
 @RequestMapping("/pet")
 public class PetController {

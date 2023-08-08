@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 /**
  * Handles web requests related to Schedules.
  */
+@CrossOrigin(origins = "http://localhost:5001")
 @RestController
 @RequestMapping("/schedule")
 public class ScheduleController {
