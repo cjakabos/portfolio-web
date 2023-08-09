@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { MultiSelect } from "react-multi-select-component";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+
 
 const initialCustomer = {
     id: "",
@@ -37,15 +40,29 @@ export const options = [
     { value: "SHAVING", label: "Shaving" }
 ];
 
+export const days = [
+    { value: "MONDAY", label: "Monday" },
+    { value: "TUESDAY", label: "Tuesday" },
+    { value: "WEDNESDAY", label: "Wednesday" },
+    { value: "THURSDAY", label: "Thursday" },
+    { value: "FRIDAY", label: "Friday" },
+    { value: "SATURDAY", label: "Saturday" },
+    { value: "SUNDAY", label: "Sunday" }
+];
+
 export default function PetStore(this: any) {
 
     const [customer, setCustomer] = useState(initialCustomer);
     const [employee, setEmployee] = useState(initialEmployee);
     const [allCustomers, setAllCustomers] = useState([initialCustomer]);
     const [allEmployees, setAllEmployees] = useState([initialEmployee]);
+    const [availableEmployees, setAvailableEmployees] = useState([initialEmployee]);
     const [allPets, setAllPets] = useState([initialPet]);
     const [loading, setLoading] = useState(false)
-    const [selectedOption, setSelectedOption] = useState(initialEmployee.skills);
+    const [selectedOption, setSelectedOption] = useState(1);
+    const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
+    const [selectedDayOption, setSelectedDayOption] = useState(["MONDAY", "TUESDAY", "FRIDAY"]);
+    const [date, setDate] = useState(new Date());
 
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
@@ -64,12 +81,12 @@ export default function PetStore(this: any) {
         });
     };
 
-    const handleOptionSelect = (event: { target: { name: any; value: any; }; }) => {
-        const { name, value } = event.target;
-        setSelectedOption({
-            ...selectedOption,
-            [name]: value,
-        });
+    const handleOptionSelect = (event: { target: { options: any; }; }) => {
+        for (var i = 0, l = event.target.options.length; i < l; i++) {
+            if (event.target.options[i].selected) {
+                setSelectedOption(event.target.options[i].value)
+            }
+        }
     };
 
     const handleCustomerSubmit = (e: { preventDefault: () => void; }) => {
@@ -126,7 +143,8 @@ export default function PetStore(this: any) {
 
         const postData = {
             name: employee.name,
-            skills: selectedOption,
+            skills: selectedMultiOptions,
+            daysAvailable: selectedDayOption,
         };
 
         let axiosConfig = {
@@ -137,11 +155,11 @@ export default function PetStore(this: any) {
         //setName(JSON.stringify(postData));
         axios.post('http://localhost:8083/user/employee', postData, axiosConfig)
             .then((response) => {
-                console.log("RESPONSE RECEIVED: ", selectedOption);
+                console.log("RESPONSE RECEIVED: ", response.data);
                 getEmployees()
             })
             .catch((error) => {
-                console.log("AXIOS ERROR: ", selectedOption);
+                console.log("AXIOS ERROR: ", error.response);
             })
 
 
@@ -223,208 +241,35 @@ export default function PetStore(this: any) {
     };
 
 
+    const handleAvailabilityFetch = (e: { preventDefault: () => void; }) => {
+        e.preventDefault();
+        getAvailability()
+    }
+    function getAvailability () {
+
+        const postData = {
+            date: date.toISOString().substring(0,10),
+            skills: selectedMultiOptions
+        };
 
 
-
-
-
-
-    //
-    //
-    // const handleItemSubmit = (e: { preventDefault: () => void; }) => {
-    //     e.preventDefault();
-    //
-    //     var postData = {
-    //         name: values.name,
-    //         price: values.price,
-    //         description: values.description
-    //     };
-    //
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.post('http://localhost:8099/api/item', postData, axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.status);
-    //             //setName(response.data);
-    //             getItems()
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ", postData);
-    //             //setName(error.response);
-    //         })
-    //
-    //
-    // };
-    //
-    // const [items, setItems] = useState([initialValues])
-    // const [cart, setCart] = useState([initialValues])
-    // const [cartHistory, setCartHistory] = useState([cartInitialValues])
-    // const [total, setTotal] = useState([initialValues])
-    // const [loading, setLoading] = useState(false)
-    //
-    //
-    // const handleItemFetch = (e: { preventDefault: () => void; }) => {
-    //     e.preventDefault();
-    //     getItems()
-    //
-    // }
-    // function getItems () {
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.get('http://localhost:8099/api/item', axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.data);
-    //             setItems(response.data);
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ", axiosConfig);
-    //             //setName(error.response);
-    //         })
-    // };
-    //
-    // const handleCartFetch = (e: { preventDefault: () => void; }) => {
-    //     e.preventDefault();
-    //     getCart()
-    // }
-    // function getCart () {
-    //
-    //     var postData = {
-    //         username: localStorage.getItem("REACT-APP-MY-USERNAME"),
-    //     };
-    //
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.post('http://localhost:8099/api/cart/getCart', postData, axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.status);
-    //             setCart(response.data.items);
-    //             setTotal(response.data.total);
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ", postData);
-    //         })
-    // };
-    //
-    // const handleCartClear = (e: { preventDefault: () => void; }) => {
-    //     e.preventDefault();
-    //     clearCart()
-    // }
-    // function clearCart () {
-    //
-    //     var postData = {
-    //         username: localStorage.getItem("REACT-APP-MY-USERNAME"),
-    //     };
-    //
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.post('http://localhost:8099/api/cart/clearCart', postData, axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.status);
-    //             setCart(response.data.items);
-    //             setTotal(response.data.total);
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ", postData);
-    //         })
-    // };
-    //
-    // function addToCart (arg0: { id: string; name: string; price: string; description: string; })  {
-    //
-    //     console.log("Row: " + arg0.name);
-    //
-    //     var postData = {
-    //         username: localStorage.getItem("REACT-APP-MY-USERNAME"),
-    //         itemId: arg0.id,
-    //         quantity: 1
-    //     };
-    //
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.post('http://localhost:8099/api/cart/addToCart', postData, axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.status);
-    //             getCart()
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ", postData);
-    //         })
-    //
-    // };
-    //
-    // const handleCartSubmit = (e: { preventDefault: () => void; }) => {
-    //     e.preventDefault();
-    //
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.post('http://localhost:8099/api/order/submit/' + localStorage.getItem("REACT-APP-MY-USERNAME"), '', axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.status);
-    //             //setName(response.data);
-    //             getItems()
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ", 'http://localhost:8099/api/order/submit/' + localStorage.getItem("REACT-APP-MY-USERNAME"));
-    //             //setName(error.response);
-    //         })
-    //
-    //     clearCart()
-    //
-    // };
-    //
-    // const handleOrderHistorySubmit = (e: { preventDefault: () => void; }) => {
-    //     e.preventDefault();
-    //     getHistory()
-    // }
-    // function getHistory () {
-    //
-    //     let axiosConfig = {
-    //         headers: {
-    //             'Content-Type': 'application/json;charset=UTF-8',
-    //             'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
-    //         }
-    //     };
-    //     //setName(JSON.stringify(postData));
-    //     axios.get('http://localhost:8099/api/order/history/' + localStorage.getItem("REACT-APP-MY-USERNAME"), axiosConfig)
-    //         .then((response) => {
-    //             console.log("RESPONSE RECEIVED: ", response.data);
-    //             setCartHistory(response.data);
-    //         })
-    //         .catch((error) => {
-    //             console.log("AXIOS ERROR: ");
-    //         })
-    // };
-
-
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+            }
+        };
+        //setName(JSON.stringify(postData));
+        axios.post('http://localhost:8083/user/employee/availability', postData, axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", postData);
+                setAvailableEmployees(response.data);
+                getPets()
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", axiosConfig);
+                //setName(error.response);
+            })
+    };
 
     const handleMultiSelect = (event: { target: { options: any; }; }) => {
 
@@ -435,11 +280,51 @@ export default function PetStore(this: any) {
                 valueTemp.push(options[i].value);
             }
         }
-        setSelectedOption(valueTemp)
+        setSelectedMultiOptions(valueTemp)
+
+    };
+
+    const handleDaysMultiSelect = (event: { target: { options: any; }; }) => {
+
+        var options = event.target.options;
+        var valueTemp = [];
+        for (var i = 0, l = options.length; i < l; i++) {
+            if (options[i].selected) {
+                valueTemp.push(options[i].value);
+            }
+        }
+        setSelectedDayOption(valueTemp)
+
+    };
+
+    const scheduleSubmit = (employeeId: string, petId: any) => {
+        const postData = {
+            employeeIds: [employeeId],
+            petIds: [petId],
+            date: date.toISOString().substring(0,10),
+            activities: selectedMultiOptions
+        };
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+            }
+        };
+        //setName(JSON.stringify(postData));
+        axios.post('http://localhost:8083/schedule', postData, axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", response.data);
+                getPets()
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", postData);
+            })
+
 
     };
 
 
+    // @ts-ignore
     return (
         <section>
             <article>
@@ -521,11 +406,13 @@ export default function PetStore(this: any) {
                         <>
                             <table>
                                 <tr>
+                                    <th>Id</th>
                                     <th>Name</th>
                                     <th>OwnerId</th>
                                 </tr>
                                 {allPets.map(pet => (
                                     <tr key={pet.id} >
+                                        <td>{pet.id}</td>
                                         <td>{pet.name}</td>
                                         <td>{pet.ownerId}</td>
                                     </tr>
@@ -555,15 +442,31 @@ export default function PetStore(this: any) {
                         <label>
                             Skills
                             <select
-                                 onChange={handleMultiSelect}
+                                onChange={handleMultiSelect}
                                 id = "dropdown"
                                 multiple
+                                size={options.length}
                             >
-                                <option value="PETTING">Petting</option>
-                                <option value="WALKING">Walking</option>
-                                <option value="FEEDING">Feeding</option>
-                                <option value="MEDICATING">Medicating</option>
-                                <option value="SHAVING">Shaving</option>
+                                {options.map((option, index) => (
+                                    <option key={index} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label>
+                            Days available
+                            <select
+                                onChange={handleDaysMultiSelect}
+                                id = "dropdown2"
+                                multiple
+                                size={days.length}
+                            >
+                                {days.map((day, index) => (
+                                    <option key={index} value={day.value}>
+                                        {day.label}
+                                    </option>
+                                ))}
                             </select>
                         </label>
                         <input className="employeeButton" type="submit" value="Submit"/>
@@ -592,139 +495,75 @@ export default function PetStore(this: any) {
                                         <td>{employee.name}</td>
                                         <td>{employee.skills}</td>
                                         <td>{employee.daysAvailable}</td>
-                                        <button className="pet-button">Add a pet</button>
                                     </tr>
                                 ))}
                             </table>
                         </>
                     )}
                 </div>
+                <div className="login-top">
+                    <h1>{("Availability")}</h1>
+                </div>
+                <div>
+                    <form onSubmit={handleAvailabilityFetch}>
+                        <label>
+                            Skills
+                            <select
+                                onChange={handleMultiSelect}
+                                id = "dropdown"
+                                multiple
+                                size={options.length}
+                            >
+                                {options.map((option, index) => (
+                                    <option key={index} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <DatePicker
+                            dateFormat="yyyy-MM-dd"
+                            selected={date}
+                            onChange={date => setDate((date || new Date()))}
+                        />
+                        <input id="fetchButton" type="submit" value="Get availability"/>
+                    </form>
+                    <div className="Availability2">
+                        {loading ? (
+                            <div>Loading...</div>
+                        ) : (
+                            <>
+                                <table>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Skill</th>
+                                        <th>Days available</th>
+                                    </tr>
+                                    {availableEmployees.map(employee => (
+                                        <tr key={employee.id} >
+                                            <td>{employee.name}</td>
+                                            <td>{employee.skills}</td>
+                                            <td>{employee.daysAvailable}</td>
+                                            <select onChange={handleOptionSelect} >
+                                                <option value="string">Select...</option>
+                                                {allPets.map((pet, index) => (
+                                                    <option key={index} value={pet.id}>
+                                                        Id: {pet.id}, Name: {pet.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <button className="pet-button" onClick={() => scheduleSubmit(
+                                                employee.id,
+                                                selectedOption
+                                            ) }>Add a schedule</button>
+                                        </tr>
+                                    ))}
+                                </table>
+                            </>
+                        )}
+                    </div>
+                </div>
 
-            {/*    <div className="login-top">*/}
-            {/*        <h1>{("All items")}</h1>*/}
-            {/*    </div>*/}
-            {/*        <form onSubmit={handleItemFetch}>*/}
-
-            {/*            <input id="fetchButton" type="submit" value="Get all items"/>*/}
-            {/*        </form>*/}
-            {/*        <div className="Item">*/}
-            {/*            {loading ? (*/}
-            {/*                <div>Loading...</div>*/}
-            {/*            ) : (*/}
-            {/*                <>*/}
-            {/*                    <table>*/}
-            {/*                        <tr>*/}
-            {/*                            <th>Name</th>*/}
-            {/*                            <th>Price</th>*/}
-            {/*                            <th>Description</th>*/}
-            {/*                        </tr>*/}
-            {/*                        {items.map(item => (*/}
-            {/*                            <tr key={item.id} >*/}
-            {/*                                <td>{item.name}</td>*/}
-            {/*                                <td>{item.price}</td>*/}
-            {/*                                <td>{item.description}</td>*/}
-            {/*                                <button className="cart-button" onClick={() => addToCart(item)}>Add to cart</button>*/}
-            {/*                            </tr>*/}
-            {/*                        ))}*/}
-            {/*                    </table>*/}
-            {/*                </>*/}
-            {/*            )}*/}
-            {/*        </div>*/}
-            {/*    <div className="login-top">*/}
-            {/*            <h1>{("Cart contents")}</h1>*/}
-            {/*    </div>*/}
-            {/*        <form onSubmit={handleCartFetch}>*/}
-            {/*            <input id="fetchButton" type="submit" value="Get cart contents"/>*/}
-            {/*        </form>*/}
-            {/*        <form onSubmit={handleCartClear}>*/}
-            {/*            <input id="fetchButton" type="submit" value="Clear cart contents"/>*/}
-            {/*        </form>*/}
-            {/*        <div className="Cart">*/}
-            {/*            {loading ? (*/}
-            {/*                <div>Loading...</div>*/}
-            {/*            ) : (*/}
-            {/*                <>*/}
-            {/*                    <table>*/}
-            {/*                        <tr>*/}
-            {/*                            <th>Name</th>*/}
-            {/*                            <th>Price</th>*/}
-            {/*                            <th>Description</th>*/}
-            {/*                        </tr>*/}
-            {/*                        {cart.map(item => (*/}
-            {/*                            <tr key={item.id} >*/}
-            {/*                                <td>{item.name}</td>*/}
-            {/*                                <td>{item.price}</td>*/}
-            {/*                                <td>{item.description}</td>*/}
-            {/*                            </tr>*/}
-            {/*                        ))}*/}
-            {/*                    </table>*/}
-            {/*                </>*/}
-            {/*            )}*/}
-            {/*        </div>*/}
-
-            {/*    <div className="login-top">*/}
-            {/*            <h1>{("Submit cart")}</h1>*/}
-            {/*    </div>*/}
-            {/*        <form onSubmit={handleCartSubmit}>*/}
-
-            {/*            <input id="fetchButton" type="submit" value="Submit cart"/>*/}
-            {/*        </form>*/}
-            {/*    <div className="login-top">*/}
-            {/*            <h1>{("Order history")}</h1>*/}
-            {/*    </div>*/}
-            {/*        <form onSubmit={handleOrderHistorySubmit}>*/}
-
-            {/*            <input id="fetchButton" type="submit" value="Get order history"/>*/}
-            {/*        </form>*/}
-
-            {/*        <div className="Item">*/}
-            {/*            {loading ? (*/}
-            {/*                <div>Loading...</div>*/}
-            {/*            ) : (*/}
-            {/*                <>*/}
-            {/*                    {cartHistory.map((cart,index) => (*/}
-
-            {/*                        // cart.forEach((index) => {*/}
-            {/*                            //console.log("item: ", JSON.stringify(cart.items))*/}
-            {/*                        // })*/}
-
-            {/*                                <table>*/}
-            {/*                                    <tr>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                    </tr>*/}
-            {/*                                    <tr>*/}
-            {/*                                        <th> Order {index+1} - Total price: {cart.total} </th>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                    </tr>*/}
-            {/*                                    <tr>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                        <th> </th>*/}
-            {/*                                    </tr>*/}
-            {/*                                    <tr>*/}
-            {/*                                        <th>Name</th>*/}
-            {/*                                        <th>Price</th>*/}
-            {/*                                        <th>Description</th>*/}
-            {/*                                    </tr>*/}
-            {/*                                    {cart.items.map(item => (*/}
-            {/*                                        <tr key={item.id} >*/}
-            {/*                                            <td>{item.name}</td>*/}
-            {/*                                            <td>{item.price}</td>*/}
-            {/*                                            <td>{item.description}</td>*/}
-            {/*                                        </tr>*/}
-            {/*                                    ))*/}
-            {/*                                    }*/}
-            {/*                                </table>*/}
-
-            {/*                            )*/}
-            {/*                    )}*/}
-            {/*                </>*/}
-            {/*            )}*/}
-            {/*        </div>*/}
-            {/*</div>*/}
 
             </article>
         </section>

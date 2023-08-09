@@ -20,6 +20,16 @@ java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
 
 Pet Store api:
 ```
+Install msql, eg. on mac:
+brew install mysql
+brew services start mysql
+
+Start mysql and flush privileges, if issues arise:
+mysql -u root    
+FLUSH PRIVILEGES;
+ALTER USER 'root'@'localhost' IDENTIFIED BY ‘root’;
+
+start the service from repo root:
 cd petstore
 mvn clean package
 java -jar target/petstore-0.0.1-SNAPSHOT.jar

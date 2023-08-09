@@ -105,7 +105,7 @@ public class UserController {
         employeeService.setEmployeeAvailability(daysAvailable, employeeId);
     }
 
-    @GetMapping("/employee/availability")
+    @PostMapping("/employee/availability")
     public List<EmployeeDTO> findEmployeesForService(@RequestBody EmployeeRequestDTO employeeDTO) {
         List<Employee> employeeAvailability = employeeService.findEmployeesForService(employeeDTO.getSkills(), employeeDTO.getDate().getDayOfWeek());
         return employeeAvailability.stream().map(this::getEmployeeDTO).collect(Collectors.toList());
