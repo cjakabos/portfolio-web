@@ -1,4 +1,4 @@
-import React, { FC, useRef, useEffect,useState } from "react";
+import React, {FC, useRef, useEffect, useState} from "react";
 import axios from "axios";
 
 const initialValues = {
@@ -9,8 +9,8 @@ const initialValues = {
 };
 
 const cartInitialValues = {
-    id:"",
-    items:[
+    id: "",
+    items: [
         {
             id: "",
             name: "",
@@ -18,8 +18,8 @@ const cartInitialValues = {
             description: "",
         }
     ],
-    total:"",
-    user:""
+    total: "",
+    user: ""
 };
 
 
@@ -27,8 +27,15 @@ export default function Shop(this: any) {
     const [values, setValues] = useState(initialValues);
     const [Name, setName] = useState("")
 
+    // Load all get methods once, when page renders
+    useEffect(() => {
+        getItems()
+        getCart()
+        getHistory()
+    }, []);
+
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setValues({
             ...values,
             [name]: value,
@@ -77,7 +84,8 @@ export default function Shop(this: any) {
         getItems()
 
     }
-    function getItems () {
+
+    function getItems() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -100,7 +108,8 @@ export default function Shop(this: any) {
         e.preventDefault();
         getCart()
     }
-    function getCart () {
+
+    function getCart() {
 
         var postData = {
             username: localStorage.getItem("REACT-APP-MY-USERNAME"),
@@ -128,7 +137,8 @@ export default function Shop(this: any) {
         e.preventDefault();
         clearCart()
     }
-    function clearCart () {
+
+    function clearCart() {
 
         var postData = {
             username: localStorage.getItem("REACT-APP-MY-USERNAME"),
@@ -152,7 +162,7 @@ export default function Shop(this: any) {
             })
     };
 
-    function addToCart (arg0: { id: string; name: string; price: string; description: string; })  {
+    function addToCart(arg0: { id: string; name: string; price: string; description: string; }) {
 
         console.log("Row: " + arg0.name);
 
@@ -194,7 +204,7 @@ export default function Shop(this: any) {
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //setName(response.data);
-                getItems()
+                getHistory()
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", 'http://localhost:8099/api/order/submit/' + localStorage.getItem("REACT-APP-MY-USERNAME"));
@@ -209,7 +219,8 @@ export default function Shop(this: any) {
         e.preventDefault();
         getHistory()
     }
-    function getHistory () {
+
+    function getHistory() {
 
         let axiosConfig = {
             headers: {
@@ -229,15 +240,15 @@ export default function Shop(this: any) {
     };
 
     return (
-        <section>
-            <article>
-                <div>
+        <table>
+            <td style={{borderRight: "solid", width: 600}}>
+                <div className="topPane">
                     <div className="login-top">
                         <h1>{("Create item")}</h1>
                     </div>
                     <form onSubmit={handleItemSubmit}>
                         <label>
-                            Shop name:
+                            Item name:
                             <input
                                 type="text"
                                 name="name"
@@ -249,8 +260,9 @@ export default function Shop(this: any) {
                                 required
                             />
                         </label>
+                        <br/>
                         <label>
-                            Price:
+                            Price
                             <input
                                 type="number"
                                 name="price"
@@ -262,6 +274,7 @@ export default function Shop(this: any) {
                                 required
                             />
                         </label>
+                        <br/>
                         <label>
                             Description:
                             <input
@@ -279,13 +292,13 @@ export default function Shop(this: any) {
                     </form>
                 </div>
                 <div>
-                <div className="login-top">
-                    <h1>{("All items")}</h1>
-                </div>
-                    <form onSubmit={handleItemFetch}>
+                    <div className="login-top">
+                        <h1>{("All items")}</h1>
+                    </div>
+                    {/*<form onSubmit={handleItemFetch}>*/}
 
-                        <input id="fetchButton" type="submit" value="Get all items"/>
-                    </form>
+                    {/*    <input id="fetchButton" type="submit" value="Get all items"/>*/}
+                    {/*</form>*/}
                     <div className="Item">
                         {loading ? (
                             <div>Loading...</div>
@@ -298,23 +311,30 @@ export default function Shop(this: any) {
                                         <th>Description</th>
                                     </tr>
                                     {items.map(item => (
-                                        <tr key={item.id} >
+                                        <tr key={item.id}>
                                             <td>{item.name}</td>
                                             <td>{item.price}</td>
                                             <td>{item.description}</td>
-                                            <button className="cart-button" onClick={() => addToCart(item)}>Add to cart</button>
+                                            <button className="cart-button" onClick={() => addToCart(item)}>Add to
+                                                cart
+                                            </button>
                                         </tr>
                                     ))}
                                 </table>
                             </>
                         )}
                     </div>
-                <div className="login-top">
-                        <h1>{("Cart contents")}</h1>
                 </div>
-                    <form onSubmit={handleCartFetch}>
-                        <input id="fetchButton" type="submit" value="Get cart contents"/>
-                    </form>
+            </td>
+            <td>
+                <div className="bottomPane">
+
+                    <div className="login-top">
+                        <h1>{("Cart contents")}</h1>
+                    </div>
+                    {/*<form onSubmit={handleCartFetch}>*/}
+                    {/*    <input id="fetchButton" type="submit" value="Get cart contents"/>*/}
+                    {/*</form>*/}
                     <form onSubmit={handleCartClear}>
                         <input id="fetchButton" type="submit" value="Clear cart contents"/>
                     </form>
@@ -330,7 +350,7 @@ export default function Shop(this: any) {
                                         <th>Description</th>
                                     </tr>
                                     {cart.map(item => (
-                                        <tr key={item.id} >
+                                        <tr key={item.id}>
                                             <td>{item.name}</td>
                                             <td>{item.price}</td>
                                             <td>{item.description}</td>
@@ -341,72 +361,70 @@ export default function Shop(this: any) {
                         )}
                     </div>
 
-                <div className="login-top">
+                    <div className="login-top">
                         <h1>{("Submit cart")}</h1>
-                </div>
+                    </div>
                     <form onSubmit={handleCartSubmit}>
 
                         <input id="fetchButton" type="submit" value="Submit cart"/>
                     </form>
-                <div className="login-top">
+                    <div className="login-top">
                         <h1>{("Order history")}</h1>
-                </div>
-                    <form onSubmit={handleOrderHistorySubmit}>
+                    </div>
+                    {/*<form onSubmit={handleOrderHistorySubmit}>*/}
 
-                        <input id="fetchButton" type="submit" value="Get order history"/>
-                    </form>
+                    {/*    <input id="fetchButton" type="submit" value="Get order history"/>*/}
+                    {/*</form>*/}
 
                     <div className="Item">
                         {loading ? (
                             <div>Loading...</div>
                         ) : (
                             <>
-                                {cartHistory.map((cart,index) => (
+                                {cartHistory.map((cart, index) => (
 
-                                    // cart.forEach((index) => {
+                                        // cart.forEach((index) => {
                                         //console.log("item: ", JSON.stringify(cart.items))
-                                    // })
+                                        // })
 
-                                            <table>
-                                                <tr>
-                                                    <th> </th>
-                                                    <th> </th>
-                                                    <th> </th>
+                                        <table>
+                                            <tr>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                            </tr>
+                                            <tr>
+                                                <th> Order {index + 1} - Total price: {cart.total} </th>
+                                                <th></th>
+                                                <th></th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                            </tr>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Price</th>
+                                                <th>Description</th>
+                                            </tr>
+                                            {cart.items.map(item => (
+                                                <tr key={item.id}>
+                                                    <td>{item.name}</td>
+                                                    <td>{item.price}</td>
+                                                    <td>{item.description}</td>
                                                 </tr>
-                                                <tr>
-                                                    <th> Order {index+1} - Total price: {cart.total} </th>
-                                                    <th> </th>
-                                                    <th> </th>
-                                                </tr>
-                                                <tr>
-                                                    <th> </th>
-                                                    <th> </th>
-                                                    <th> </th>
-                                                </tr>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>Price</th>
-                                                    <th>Description</th>
-                                                </tr>
-                                                {cart.items.map(item => (
-                                                    <tr key={item.id} >
-                                                        <td>{item.name}</td>
-                                                        <td>{item.price}</td>
-                                                        <td>{item.description}</td>
-                                                    </tr>
-                                                ))
-                                                }
-                                            </table>
+                                            ))
+                                            }
+                                        </table>
 
-                                        )
+                                    )
                                 )}
                             </>
                         )}
                     </div>
-            </div>
-
-            </article>
-        </section>
-
+                </div>
+            </td>
+        </table>
     )
 }

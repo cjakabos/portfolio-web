@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, {useState, useEffect} from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
 
 
 const initialCustomer = {
@@ -15,8 +14,7 @@ const initialEmployee = {
     id: "",
     name: "",
     skills: [
-        "PETTING",
-        "FEEDING"
+        ""
     ],
     daysAvailable: [],
 };
@@ -31,23 +29,37 @@ const initialPet = {
     notes: "HI KILO"
 };
 
+const initialSchedule = {
+    id: 5,
+    employeeIds: [
+        1
+    ],
+    petIds: [
+        3
+    ],
+    date: "2023-08-08",
+    activities: [
+        "FEEDING"
+    ]
+};
+
 
 export const options = [
-    { value: "PETTING", label: "Petting" },
-    { value: "WALKING", label: "Walking" },
-    { value: "FEEDING", label: "Feeding" },
-    { value: "MEDICATING", label: "Medicating" },
-    { value: "SHAVING", label: "Shaving" }
+    {value: "PETTING", label: "Petting"},
+    {value: "WALKING", label: "Walking"},
+    {value: "FEEDING", label: "Feeding"},
+    {value: "MEDICATING", label: "Medicating"},
+    {value: "SHAVING", label: "Shaving"}
 ];
 
 export const days = [
-    { value: "MONDAY", label: "Monday" },
-    { value: "TUESDAY", label: "Tuesday" },
-    { value: "WEDNESDAY", label: "Wednesday" },
-    { value: "THURSDAY", label: "Thursday" },
-    { value: "FRIDAY", label: "Friday" },
-    { value: "SATURDAY", label: "Saturday" },
-    { value: "SUNDAY", label: "Sunday" }
+    {value: "MONDAY", label: "Monday"},
+    {value: "TUESDAY", label: "Tuesday"},
+    {value: "WEDNESDAY", label: "Wednesday"},
+    {value: "THURSDAY", label: "Thursday"},
+    {value: "FRIDAY", label: "Friday"},
+    {value: "SATURDAY", label: "Saturday"},
+    {value: "SUNDAY", label: "Sunday"}
 ];
 
 export default function PetStore(this: any) {
@@ -58,15 +70,24 @@ export default function PetStore(this: any) {
     const [allEmployees, setAllEmployees] = useState([initialEmployee]);
     const [availableEmployees, setAvailableEmployees] = useState([initialEmployee]);
     const [allPets, setAllPets] = useState([initialPet]);
+    const [schedules, setSchedules] = useState([initialSchedule]);
     const [loading, setLoading] = useState(false)
     const [selectedOption, setSelectedOption] = useState(1);
     const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
     const [selectedDayOption, setSelectedDayOption] = useState(["MONDAY", "TUESDAY", "FRIDAY"]);
     const [date, setDate] = useState(new Date());
 
+    // Load all get methods once, when page renders
+    useEffect(() => {
+        getCustomers()
+        getPets()
+        getEmployees()
+        getSchedules()
+    }, []);
+
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setCustomer({
             ...customer,
             [name]: value,
@@ -74,7 +95,7 @@ export default function PetStore(this: any) {
     };
 
     const handleEmployeeChange = (event: { target: { name: any; value: any; }; }) => {
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setEmployee({
             ...employee,
             [name]: value,
@@ -120,7 +141,8 @@ export default function PetStore(this: any) {
         e.preventDefault();
         getCustomers()
     }
-    function getCustomers () {
+
+    function getCustomers() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -170,7 +192,8 @@ export default function PetStore(this: any) {
         e.preventDefault();
         getEmployees()
     }
-    function getEmployees () {
+
+    function getEmployees() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -187,7 +210,6 @@ export default function PetStore(this: any) {
                 //setName(error.response);
             })
     };
-
 
 
     const petSubmit = (owner: string) => {
@@ -222,7 +244,8 @@ export default function PetStore(this: any) {
         e.preventDefault();
         getPets()
     }
-    function getPets () {
+
+    function getPets() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -245,10 +268,11 @@ export default function PetStore(this: any) {
         e.preventDefault();
         getAvailability()
     }
-    function getAvailability () {
+
+    function getAvailability() {
 
         const postData = {
-            date: date.toISOString().substring(0,10),
+            date: date.toISOString().substring(0, 10),
             skills: selectedMultiOptions
         };
 
@@ -301,7 +325,7 @@ export default function PetStore(this: any) {
         const postData = {
             employeeIds: [employeeId],
             petIds: [petId],
-            date: date.toISOString().substring(0,10),
+            date: date.toISOString().substring(0, 10),
             activities: selectedMultiOptions
         };
 
@@ -314,21 +338,39 @@ export default function PetStore(this: any) {
         axios.post('http://localhost:8083/schedule', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
-                getPets()
+                getSchedules()
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", postData);
             })
+    };
 
+    function getSchedules() {
 
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+            }
+        };
+        //setName(JSON.stringify(postData));
+        axios.get('http://localhost:8083/schedule', axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", response.data);
+                setSchedules(response.data);
+                getPets()
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", axiosConfig);
+                //setName(error.response);
+            })
     };
 
 
     // @ts-ignore
     return (
-        <section>
-            <article>
-                <div>
+        <table>
+            <td style={{borderRight: "solid", width: 600}}>
+                <div className="topPane">
                     <div className="login-top">
                         <h1>{("Create a new customer")}</h1>
                     </div>
@@ -346,6 +388,7 @@ export default function PetStore(this: any) {
                                 required
                             />
                         </label>
+                        <br/>
                         <label>
                             Phone number:
                             <input
@@ -361,70 +404,67 @@ export default function PetStore(this: any) {
                         </label>
                         <input className="customerButton" type="submit" value="Submit"/>
                     </form>
-                </div>
-                <div className="login-top">
+                    <div className="login-top">
                         <h1>{("All customers")}</h1>
-                </div>
-                        <form onSubmit={handleCustomerFetch}>
-
-                            <input id="fetchButton" type="submit" value="Get all customers"/>
-                        </form>
-                        <div className="Item">
-                            {loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    <table>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Phone</th>
-                                        </tr>
-                                        {allCustomers.map(customer => (
-                                            <tr key={customer.id} >
-                                                <td>{customer.name}</td>
-                                                <td>{customer.phoneNumber}</td>
-                                                <button className="pet-button" onClick={() => petSubmit(customer.id)}>Add a pet</button>
-                                            </tr>
-                                        ))}
-                                    </table>
-                                </>
-                            )}
-                        </div>
-
-
-                <div className="login-top">
-                    <h1>{("All pets")}</h1>
-                </div>
-                <form onSubmit={handlePetFetch}>
-
-                    <input id="fetchButton" type="submit" value="Get all pets"/>
-                </form>
-                <div className="Item">
-                    {loading ? (
-                        <div>Loading...</div>
-                    ) : (
-                        <>
-                            <table>
-                                <tr>
-                                    <th>Id</th>
-                                    <th>Name</th>
-                                    <th>OwnerId</th>
-                                </tr>
-                                {allPets.map(pet => (
-                                    <tr key={pet.id} >
-                                        <td>{pet.id}</td>
-                                        <td>{pet.name}</td>
-                                        <td>{pet.ownerId}</td>
+                    </div>
+                    <div className="Item">
+                        {loading ? (
+                            <div>Loading...</div>
+                        ) : (
+                            <>
+                                <table>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone</th>
                                     </tr>
-                                ))}
-                            </table>
-                        </>
-                    )}
+                                    {allCustomers.map(customer => (
+                                        <tr key={customer.id}>
+                                            <td>{customer.name}</td>
+                                            <td>{customer.phoneNumber}</td>
+                                            <button className="pet-button" onClick={() => petSubmit(customer.id)}>Add a
+                                                pet
+                                            </button>
+                                        </tr>
+                                    ))}
+                                </table>
+                            </>
+                        )}
+                    </div>
+
+
+                    <div className="login-top">
+                        <h1>{("All pets")}</h1>
+                    </div>
+                    <div className="Item">
+                        {loading ? (
+                            <div>Loading...</div>
+                        ) : (
+                            <>
+                                <table>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Name</th>
+                                        <th>OwnerId</th>
+                                    </tr>
+                                    {allPets.map(pet => (
+                                        <tr key={pet.id}>
+                                            <td>{pet.id}</td>
+                                            <td>{pet.name}</td>
+                                            <td>{pet.ownerId}</td>
+                                        </tr>
+                                    ))}
+                                </table>
+                            </>
+                        )}
+                    </div>
+
                 </div>
-                <div>
-                <div className="login-top">
+            </td>
+            <td>
+                <div className="bottomPane">
+                    <div className="login-top">
                         <h1>{("Create a new employee")}</h1>
-                </div>
+                    </div>
                     <form onSubmit={handleEmployeeSubmit}>
                         <label>
                             Employee name:
@@ -439,11 +479,12 @@ export default function PetStore(this: any) {
                                 required
                             />
                         </label>
+                        <br/>
                         <label>
-                            Skills
+                            Skills:
                             <select
                                 onChange={handleMultiSelect}
-                                id = "dropdown"
+                                id="dropdown"
                                 multiple
                                 size={options.length}
                             >
@@ -455,10 +496,10 @@ export default function PetStore(this: any) {
                             </select>
                         </label>
                         <label>
-                            Days available
+                            Days available:
                             <select
                                 onChange={handleDaysMultiSelect}
-                                id = "dropdown2"
+                                id="dropdown2"
                                 multiple
                                 size={days.length}
                             >
@@ -471,64 +512,14 @@ export default function PetStore(this: any) {
                         </label>
                         <input className="employeeButton" type="submit" value="Submit"/>
                     </form>
-                </div>
-                <div className="login-top">
-                    <h1>{("All employees")}</h1>
-                </div>
-                <form onSubmit={handleEmployeeFetch}>
+                    <div className="login-top">
+                        <h1>{("All employees")}</h1>
+                    </div>
+                    {/*<form onSubmit={handleEmployeeFetch}>*/}
 
-                    <input id="fetchButton" type="submit" value="Get all employees"/>
-                </form>
-                <div className="Item">
-                    {loading ? (
-                        <div>Loading...</div>
-                    ) : (
-                        <>
-                            <table>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Skill</th>
-                                    <th>Days available</th>
-                                </tr>
-                                {allEmployees.map(employee => (
-                                    <tr key={employee.id} >
-                                        <td>{employee.name}</td>
-                                        <td>{employee.skills}</td>
-                                        <td>{employee.daysAvailable}</td>
-                                    </tr>
-                                ))}
-                            </table>
-                        </>
-                    )}
-                </div>
-                <div className="login-top">
-                    <h1>{("Availability")}</h1>
-                </div>
-                <div>
-                    <form onSubmit={handleAvailabilityFetch}>
-                        <label>
-                            Skills
-                            <select
-                                onChange={handleMultiSelect}
-                                id = "dropdown"
-                                multiple
-                                size={options.length}
-                            >
-                                {options.map((option, index) => (
-                                    <option key={index} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <DatePicker
-                            dateFormat="yyyy-MM-dd"
-                            selected={date}
-                            onChange={date => setDate((date || new Date()))}
-                        />
-                        <input id="fetchButton" type="submit" value="Get availability"/>
-                    </form>
-                    <div className="Availability2">
+                    {/*    <input id="fetchButton" type="submit" value="Get all employees"/>*/}
+                    {/*</form>*/}
+                    <div className="Item">
                         {loading ? (
                             <div>Loading...</div>
                         ) : (
@@ -539,23 +530,105 @@ export default function PetStore(this: any) {
                                         <th>Skill</th>
                                         <th>Days available</th>
                                     </tr>
-                                    {availableEmployees.map(employee => (
-                                        <tr key={employee.id} >
+                                    {allEmployees.map(employee => (
+                                        <tr key={employee.id}>
                                             <td>{employee.name}</td>
                                             <td>{employee.skills}</td>
                                             <td>{employee.daysAvailable}</td>
-                                            <select onChange={handleOptionSelect} >
-                                                <option value="string">Select...</option>
-                                                {allPets.map((pet, index) => (
-                                                    <option key={index} value={pet.id}>
-                                                        Id: {pet.id}, Name: {pet.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <button className="pet-button" onClick={() => scheduleSubmit(
-                                                employee.id,
-                                                selectedOption
-                                            ) }>Add a schedule</button>
+                                        </tr>
+                                    ))}
+                                </table>
+                            </>
+                        )}
+                    </div>
+                    <div className="login-top">
+                        <h1>{("Availability")}</h1>
+                    </div>
+                    <div>
+                        <form onSubmit={handleAvailabilityFetch}>
+                            <label>
+                                Skills
+                                <select
+                                    onChange={handleMultiSelect}
+                                    id="dropdown"
+                                    multiple
+                                    size={options.length}
+                                >
+                                    {options.map((option, index) => (
+                                        <option key={index} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <DatePicker
+                                dateFormat="yyyy-MM-dd"
+                                selected={date}
+                                onChange={date => setDate((date || new Date()))}
+                            />
+                            <input id="fetchButton" type="submit" value="Get availability"/>
+                        </form>
+                        <div className="Availability2">
+                            {loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    <table>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Skill</th>
+                                            <th>Days available</th>
+                                        </tr>
+                                        {availableEmployees.map(employee => (
+                                            <tr key={employee.id}>
+                                                <td>{employee.name}</td>
+                                                <td>{employee.skills}</td>
+                                                <td>{employee.daysAvailable}</td>
+                                                {employee.id && <select onChange={handleOptionSelect}>
+                                                    <option value="string">Select...</option>
+                                                    {allPets.map((pet, index) => (
+                                                        <option key={index} value={pet.id}>
+                                                            Id: {pet.id}, Name: {pet.name}
+                                                        </option>
+                                                    ))}
+                                                </select>}
+                                                {employee.id &&
+                                                    <button className="pet-button" onClick={() => scheduleSubmit(
+                                                        employee.id,
+                                                        selectedOption
+                                                    )}>Add a schedule</button>}
+                                            </tr>
+                                        ))}
+                                    </table>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <div className="login-top">
+                        <h1>{("All planned schedules")}</h1>
+                    </div>
+                    {/*<form onSubmit={handleEmployeeFetch}>*/}
+
+                    {/*    <input id="fetchButton" type="submit" value="Get all employees"/>*/}
+                    {/*</form>*/}
+                    <div className="Schedule">
+                        {loading ? (
+                            <div>Loading...</div>
+                        ) : (
+                            <>
+                                <table>
+                                    <tr>
+                                        <th>EmployeeId</th>
+                                        <th>PetId</th>
+                                        <th>Date</th>
+                                        <th>Activities</th>
+                                    </tr>
+                                    {schedules.map(schedule => (
+                                        <tr key={schedule.id}>
+                                            <td>{schedule.employeeIds}</td>
+                                            <td>{schedule.petIds}</td>
+                                            <td>{schedule.date}</td>
+                                            <td>{schedule.activities}</td>
                                         </tr>
                                     ))}
                                 </table>
@@ -563,10 +636,7 @@ export default function PetStore(this: any) {
                         )}
                     </div>
                 </div>
-
-
-            </article>
-        </section>
-
+            </td>
+        </table>
     )
 }

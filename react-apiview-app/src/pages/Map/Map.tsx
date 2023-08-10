@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
 
 import {
@@ -28,6 +28,11 @@ export interface PageProps {
 }
 
 export default function Map() {
+
+    // Load all get methods once, when page renders
+    useEffect(() => {
+        getVehicles()
+    }, []);
 
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: (process.env.REACT_APP_GMAPS_API_URL || 'test'),
@@ -166,7 +171,7 @@ export default function Map() {
                 {" "}
                 Map integration to vehicles-api, click the map <br/>to generate new vehicles and save them to vehicles-api database.
                 {" "}
-                <br/><input id="itemButton" type="submit" value="Get all vehicles" onClick = {getVehicles}/>
+                {/*<br/><input id="itemButton" type="submit" value="Get all vehicles" onClick = {getVehicles}/>*/}
                 <div className="login-error">
                     {MapFeedback === 'API ERROR' && <h1 style={{ color: 'red' }}>{("Please start API service")}</h1>}
                 </div>
