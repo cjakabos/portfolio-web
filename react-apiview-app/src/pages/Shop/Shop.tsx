@@ -73,7 +73,7 @@ export default function Shop(this: any) {
     };
 
     const [items, setItems] = useState([initialValues])
-    const [cart, setCart] = useState([initialValues])
+    const [cart, setCart] = useState(cartInitialValues.items)
     const [cartHistory, setCartHistory] = useState([cartInitialValues])
     const [total, setTotal] = useState([initialValues])
     const [loading, setLoading] = useState(false)
@@ -124,9 +124,12 @@ export default function Shop(this: any) {
         //setName(JSON.stringify(postData));
         axios.post('http://localhost:8099/api/cart/getCart', postData, axiosConfig)
             .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
-                setCart(response.data.items);
-                setTotal(response.data.total);
+                console.log("RESPONSE RECEIVED: ", response.data);
+                if (response.data != ''){
+                    setCart(response.data.items);
+                    setTotal(response.data.total);
+                }
+
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", postData);
@@ -247,47 +250,50 @@ export default function Shop(this: any) {
                         <h1>{("Create item")}</h1>
                     </div>
                     <form onSubmit={handleItemSubmit}>
-                        <label>
-                            Item name:
-                            <input
-                                type="text"
-                                name="name"
-                                id="name"
-                                placeholder="Enter item name"
-                                onChange={handleChange}
-                                value={values.name}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
-                        <br/>
-                        <label>
-                            Price
-                            <input
-                                type="number"
-                                name="price"
-                                id="price"
-                                placeholder="Enter price"
-                                onChange={handleChange}
-                                value={values.price}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
-                        <br/>
-                        <label>
-                            Description:
-                            <input
+                        <table>
+                            <tr>
+                                <th>Item name</th>
+                                <th>Price</th>
+                                <th>Description</th>
+                            </tr>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    id="name"
+                                    placeholder="Enter item name"
+                                    onChange={handleChange}
+                                    value={values.name}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                            <td>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    id="price"
+                                    placeholder="Enter price"
+                                    onChange={handleChange}
+                                    value={values.price}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                            <td>
+                                <input
                                 type="text"
                                 name="description"
                                 id="description"
                                 placeholder="Enter description"
                                 onChange={handleChange}
                                 value={values.description}
-                                maxLength={20}
+                                maxLength={100}
                                 required
                             />
-                        </label>
+                            </td>
+                        </table>
+
                         <input className="itemButton" type="submit" value="Submit"/>
                     </form>
                 </div>

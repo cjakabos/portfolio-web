@@ -39,10 +39,9 @@ export default function Map() {
     });
     const [markers, setMarkers] = React.useState([
         {
-            lat: 34,
-            lng: -119,
+            lat: 999,
+            lng: 999,
             time: new Date(),
-            customField: "some text here",
         }
     ]);
     const [MapFeedback, setMapFeedback] = useState("")
@@ -56,7 +55,8 @@ export default function Map() {
                 lat: e.latLng.lat(),
                 lng: e.latLng.lng(),
                 time: new Date(),
-                customField: "somee text here",
+                customField: "some text here",
+                id: '',
             },
         ]);
         vehicleSubmit(e.latLng.lat(), e.latLng.lng())
@@ -67,11 +67,6 @@ export default function Map() {
     const onMapLoad = React.useCallback((map: any) => {
         mapRef.current = map;
     }, []);
-
-    const [values, setValues] = useState();
-    const [Name, setName] = useState("")
-
-
 
     function vehicleSubmit (lat: number, lng: number) {
 
@@ -108,7 +103,8 @@ export default function Map() {
         //setName(JSON.stringify(postData));
         axios.post('http://localhost:8080/cars', postData, axiosConfig)
             .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
+                console.log("RESPONSE RECEIVED: ", response.data);
+
                 setMapFeedback('OK')
             })
             .catch((error) => {
@@ -122,9 +118,6 @@ export default function Map() {
     };
 
     function getVehicles() {
-
-
-
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -135,7 +128,7 @@ export default function Map() {
         axios.get('http://localhost:8080/cars', axiosConfig)
             .then((response) => {
                 // for each element received, put up a marker
-                response.data._embedded.carList.map((option: { location: any; }) => (
+                response.data._embedded.carList.map((option: { location: any; id: any }) => (
                     setMarkers((current) => [
                         ...current,
                         {
@@ -143,6 +136,7 @@ export default function Map() {
                             lng: Number(option.location.lon),
                             time: new Date(),
                             customField: "vehicle-api fetch",
+                            id: option.id,
                         },
                     ])
 
@@ -157,8 +151,29 @@ export default function Map() {
                     setMapFeedback('API ERROR')
                 }
             })
+    };
 
+    function deleteVehicle(vehicleId: string) {
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+            }
+        };
 
+        axios.delete('http://localhost:8080/cars/' + vehicleId, axiosConfig)
+            .then((response) => {
+                setMapFeedback('OK')
+                console.log("response delete: ", response.status);
+                window.location.reload()
+            })
+            .catch((error) => {
+                console.log("AXIOS ERROR: ", axiosConfig);
+                //setName(error.response);
+                if (error.code === 'ERR_NETWORK') {
+                    setMapFeedback('API ERROR')
+                }
+            })
     };
 
 
@@ -216,7 +231,7 @@ export default function Map() {
                                 Alert
                             </h2>
                             <p>Spotted at lat {selected.lat} and lng {selected.lng}</p>
-                            <p>Spotted {selected.customField}</p>
+                            <button className="cart-button" style={{ background: 'red', color: 'white'}} onClick={() => deleteVehicle(selected.id)}> Delete </button>
                         </div>
                     </InfoWindow>
                 ) : null}

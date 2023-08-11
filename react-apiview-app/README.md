@@ -1,8 +1,8 @@
-# Getting Started with Create React App
+# React Apiview App for [backend integration](../README.md)
 
 ## Required api services
 
-In the repository start these 3 services in different terminals:
+In the repository start these 3 backend services in different terminals:
 
 eCommerce api:
 ```
@@ -35,6 +35,12 @@ mvn clean package
 java -jar target/petstore-0.0.1-SNAPSHOT.jar
 ```
 
+Google Maps api key:
+```
+To be stored in the .env file in the root directory in this format:
+REACT_APP_GMAPS_API_URL=xxxxxxxxxxxxxx
+```
+
 Start React front-end
 ### `npm start`
 
@@ -49,5 +55,28 @@ If everything is correctly started, you should see a login page:
 
 And you should be able to log in, and see the current front-end of the api integrations from the services above:
 ![](../examples/react2.png)
+
+Shop interface for [eCommerce web store REST API](ecommerce/README.md), the user is able to:
+- Create new items.
+- Add existing items to the cart.
+- See and clear the cart.
+- Submit cart and check order history.
+![](../examples/react3.png)
+
+Pet Store interface for the [Pet Store's REST API](petstore/README.md), the user is able to:
+- Add new customer.
+- Add a new Pet to existing customers.
+- Add new employees with skills and schedules.
+- Check availability based on skills and schedules.
+- Plan a new schedule for an employee and assign it to a pet.
+![](../examples/react4.png)
+
+Map interface for integration Google Maps API with the [Vehicle location service's REST API](vehicles-api/README.md), the user is able to:
+
+-Click on the map to add new vehicle locations.
+-Click on existing locations and check basic info and delete the location.
+![](../examples/react5.png)
+
+
 
 

@@ -22,24 +22,24 @@ const initialEmployee = {
 
 const initialPet = {
     id: "",
-    type: "CAT",
-    name: "Kilo",
-    ownerId: "1",
-    birthDate: "2019-12-16T04:43:57.995Z",
-    notes: "HI KILO"
+    type: "",
+    name: "",
+    ownerId: "",
+    birthDate: "",
+    notes: ""
 };
 
 const initialSchedule = {
-    id: 5,
+    id: 0,
     employeeIds: [
-        1
+
     ],
     petIds: [
-        3
+
     ],
-    date: "2023-08-08",
+    date: "",
     activities: [
-        "FEEDING"
+        ""
     ]
 };
 
@@ -375,33 +375,36 @@ export default function PetStore(this: any) {
                         <h1>{("Create a new customer")}</h1>
                     </div>
                     <form onSubmit={handleCustomerSubmit}>
-                        <label>
-                            Customer name:
-                            <input
-                                type="text"
-                                name="name"
-                                id="name"
-                                placeholder="Enter customer name"
-                                onChange={handleChange}
-                                value={customer.name}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
-                        <br/>
-                        <label>
-                            Phone number:
-                            <input
-                                type="phone"
-                                name="phoneNumber"
-                                id="phoneNumber "
-                                placeholder="Enter phone number"
-                                onChange={handleChange}
-                                value={customer.phoneNumber}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
+                        <table>
+                            <tr>
+                                <th>Customer name</th>
+                                <th>Phone number</th>
+                            </tr>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    id="name"
+                                    placeholder="Enter customer name"
+                                    onChange={handleChange}
+                                    value={customer.name}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                            <td>
+                                <input
+                                    type="phone"
+                                    name="phoneNumber"
+                                    id="phoneNumber "
+                                    placeholder="Enter phone number"
+                                    onChange={handleChange}
+                                    value={customer.phoneNumber}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </table>
                         <input className="customerButton" type="submit" value="Submit"/>
                     </form>
                     <div className="login-top">
@@ -421,9 +424,8 @@ export default function PetStore(this: any) {
                                         <tr key={customer.id}>
                                             <td>{customer.name}</td>
                                             <td>{customer.phoneNumber}</td>
-                                            <button className="pet-button" onClick={() => petSubmit(customer.id)}>Add a
-                                                pet
-                                            </button>
+                                            {customer.id && <button className="pet-button" onClick={() => petSubmit(customer.id)}>Add a pet
+                                            </button>}
                                         </tr>
                                     ))}
                                 </table>
@@ -466,50 +468,70 @@ export default function PetStore(this: any) {
                         <h1>{("Create a new employee")}</h1>
                     </div>
                     <form onSubmit={handleEmployeeSubmit}>
-                        <label>
-                            Employee name:
-                            <input
-                                type="text"
-                                name="name"
-                                id="name"
-                                placeholder="Enter employee name"
-                                onChange={handleEmployeeChange}
-                                value={employee.name}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
-                        <br/>
-                        <label>
-                            Skills:
-                            <select
-                                onChange={handleMultiSelect}
-                                id="dropdown"
-                                multiple
-                                size={options.length}
-                            >
-                                {options.map((option, index) => (
-                                    <option key={index} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <label>
-                            Days available:
-                            <select
-                                onChange={handleDaysMultiSelect}
-                                id="dropdown2"
-                                multiple
-                                size={days.length}
-                            >
-                                {days.map((day, index) => (
-                                    <option key={index} value={day.value}>
-                                        {day.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        {/*<table>*/}
+                        {/*    <tr>*/}
+                        {/*        <th>Item name</th>*/}
+                        {/*        <th>Price</th>*/}
+                        {/*        <th>Description</th>*/}
+                        {/*    </tr>*/}
+                        {/*    <td>*/}
+
+                        {/*    </td>*/}
+                        {/*    <td>*/}
+
+                        {/*    </td>*/}
+                        {/*    <td>*/}
+
+                        {/*    </td>*/}
+                        {/*</table>*/}
+                        <table>
+                            <tr>
+                                <th>Employee name</th>
+                                <th>Skills</th>
+                                <th>Days available</th>
+                            </tr>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    id="name"
+                                    placeholder="Enter employee name"
+                                    onChange={handleEmployeeChange}
+                                    value={employee.name}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                            <td>
+                                <select
+                                    onChange={handleMultiSelect}
+                                    id="dropdown"
+                                    multiple
+                                    size={options.length}
+                                >
+                                    {options.map((option, index) => (
+                                        <option key={index} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </td>
+                            <td>
+                                <select
+                                    onChange={handleDaysMultiSelect}
+                                    id="dropdown2"
+                                    multiple
+                                    size={days.length}
+                                >
+                                    {days.map((day, index) => (
+                                        <option key={index} value={day.value}>
+                                            {day.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </td>
+                        </table>
+
                         <input className="employeeButton" type="submit" value="Submit"/>
                     </form>
                     <div className="login-top">
@@ -548,6 +570,7 @@ export default function PetStore(this: any) {
                         <form onSubmit={handleAvailabilityFetch}>
                             <label>
                                 Skills
+                                <br/>
                                 <select
                                     onChange={handleMultiSelect}
                                     id="dropdown"
@@ -566,6 +589,7 @@ export default function PetStore(this: any) {
                                 selected={date}
                                 onChange={date => setDate((date || new Date()))}
                             />
+                            <br/>
                             <input id="fetchButton" type="submit" value="Get availability"/>
                         </form>
                         <div className="Availability2">

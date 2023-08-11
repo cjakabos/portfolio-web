@@ -1,9 +1,9 @@
 # Web development portfolio
 
 This is a collection of my hobby development projects:
-- Back-end services and basic HTML front-end developed during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a
+- Back-end services and basic HTML front-end developed during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a user interface.
 - Under development: New React front-end for utilizing these back-end services from above. [React Apiview App](react-apiview-app/README.md)
-- Under development: External api service integration, such as [OpenAI integration](#openai-interface-extra-tab) and Google Maps api.
+- Under development: External api service integration, such as [OpenAI integration](#openai-interface-extra-tab) and [Google Maps api.](react-apiview-app/READM.md)
 
 [Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
 
@@ -25,7 +25,7 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
-- [x] OpenAI interface for OpenAI API. [Descripttion](#openai-interface-extra-tab)
+- [x] OpenAI interface for OpenAI API. [Description](#openai-interface-extra-tab)
 
 ### The Back-End
 
