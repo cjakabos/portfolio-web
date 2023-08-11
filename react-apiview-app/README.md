@@ -38,7 +38,13 @@ java -jar target/petstore-0.0.1-SNAPSHOT.jar
 Google Maps api key:
 ```
 To be stored in the .env file in the root directory in this format:
-REACT_APP_GMAPS_API_URL=xxxxxxxxxxxxxx
+REACT_APP_GMAPS_API_KEY=xxxxxxxxxxxxxx
+```
+
+OpenAI api key:
+```
+To be stored in the .env file in the root directory in this format:
+REACT_APP_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 
 Start React front-end
@@ -71,11 +77,16 @@ Pet Store interface for the [Pet Store's REST API](petstore/README.md), the user
 - Plan a new schedule for an employee and assign it to a pet.
 ![](../examples/react4.png)
 
-Map interface for integration Google Maps API with the [Vehicle location service's REST API](vehicles-api/README.md), the user is able to:
-
--Click on the map to add new vehicle locations.
--Click on existing locations and check basic info and delete the location.
+Map interface for integrating Google Maps API with the [Vehicle location service's REST API](vehicles-api/README.md), the user is able to:
+- Click on the map to add new vehicle locations.
+- Click on existing locations and check basic info and delete the location.
 ![](../examples/react5.png)
+
+OpenAI interface for communicating with Google Maps API with the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is able to:
+- Send a prompt and receive a Completion.
+- Send a prompt and receive two DallE image response.
+  ![](../examples/react6.png)
+
 
 
 

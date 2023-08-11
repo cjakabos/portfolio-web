@@ -16,7 +16,7 @@ export default function Login(this: any) {
     const [Username, setUsername] = useState("")
     const [LoginFeedback, setLoginFeedback] = useState("")
 
-    const handleChange = (event: { target: { name: any; value: any; }; }) => {
+    const handleChange = (event: { target: any }) => {
         const { name, value } = event.target;
         setValues({
             ...values,

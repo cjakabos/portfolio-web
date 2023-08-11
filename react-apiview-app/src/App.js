@@ -13,6 +13,7 @@ import { tabLists } from "./data/tab-lists";
 import { tabListsDefault } from "./data/tab-lists-default";
 import Logout from "./pages/Logout/Logout";
 import PetStore from "./pages/PetStore/PetStore";
+import OpenAI from "./pages/OpenAI/OpenAI";
 
 export default function App() {
 
@@ -47,6 +48,7 @@ export default function App() {
                 <Route path="shop" element={<Shop/>} />
                 <Route path="pet" element={<PetStore/>} />
                 <Route path="map" element={<Map/>} />
+                <Route path="openai" element={<OpenAI/>} />
                 <Route path="logout" element={<Logout/>} />
                 <Route path="*" element={<Navigate to="home" />} />
             </Routes>

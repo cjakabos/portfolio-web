@@ -1,9 +1,9 @@
 # Web development portfolio
 
 This is a collection of my hobby development projects:
-- Back-end services and basic HTML front-end developed during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a user interface.
-- Under development: New React front-end for utilizing these back-end services from above. [React Apiview App](react-apiview-app/README.md)
-- Under development: External api service integration, such as [OpenAI integration](#openai-interface-extra-tab) and [Google Maps api.](react-apiview-app/READM.md)
+- Back-end API services and basic HTML front-end developed by me during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a user interface.
+- New React front-end for utilizing these back-end services from above. [React Apiview App](react-apiview-app/README.md)
+- External api service integration, such as [OpenAI integration](#openai-interface-extra-tab) and [Google Maps api.](react-apiview-app/README.md)
 
 [Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
 
