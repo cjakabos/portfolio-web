@@ -35,7 +35,7 @@ export default function Map() {
     }, []);
 
     const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: (process.env.REACT_APP_GMAPS_API_URL || 'test'),
+        googleMapsApiKey: (process.env.REACT_APP_GMAPS_API_KEY || 'test'),
     });
     const [markers, setMarkers] = React.useState([
         {
