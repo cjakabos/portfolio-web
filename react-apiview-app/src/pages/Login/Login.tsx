@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import axios from "axios";
 import {Store, STORE_KEY} from "../../Store";
 import {Link} from "react-router-dom";
@@ -17,7 +17,7 @@ export default function Login(this: any) {
     const [LoginFeedback, setLoginFeedback] = useState("")
 
     const handleChange = (event: { target: any }) => {
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setValues({
             ...values,
             [name]: value,
@@ -46,29 +46,12 @@ export default function Login(this: any) {
             }
         };
 
-        // try {
-        //     const data = {username: values.username, password: values.password};
-        //     fetch('http://localhost:8099/login', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Accept': 'application/json',
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify(data)
-        //     }).then(function(response) {
-        //         console.log(response.headers.get("Authorization"));
-        //     }).then(function(data) {
-        //         console.log(data);
-        //     })
-        // } catch (e) {
-        //     console.log(e);
-        // }
 
         axios.post('http://localhost:8099/login', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //get token from response
-                const token  =  response.headers.authorization;
+                const token = response.headers.authorization;
 
                 //set JWT token to local
                 localStorage.setItem("REACT-APP-MY-TOKEN", token);
@@ -87,53 +70,52 @@ export default function Login(this: any) {
             })
 
 
-
     };
 
     return (
-            <section>
-                <article>
-                    <div>
-                        <div className="login-top">
-                            <h1>{("Sign in")}</h1>
+        <section>
+            <article>
+                <div>
+                    <div className="login-top">
+                        <h1>{("Sign in")}</h1>
+                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <label>
+                            Username:
+                            <input
+                                type="username"
+                                name="username"
+                                id="inputUsername"
+                                placeholder="Enter Username"
+                                onChange={handleChange}
+                                value={values.username}
+                                maxLength={20}
+                                required
+                            />
+                        </label>
+                        <label>
+                            Password:
+                            <input
+                                type="password"
+                                name="password"
+                                id="inputPassword"
+                                placeholder="Enter Password"
+                                onChange={handleChange}
+                                value={values.password}
+                                maxLength={20}
+                                required
+                            />
+                        </label>
+                        <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                        <div>
+                            <h1 style={{color: 'red'}}>{("New user?")} <Link to="/signup"> Signup </Link></h1>
                         </div>
-                        <form onSubmit={handleSubmit}>
-                            <label>
-                                Username:
-                                <input
-                                    type="username"
-                                    name="username"
-                                    id="inputUsername"
-                                    placeholder="Enter Username"
-                                    onChange={handleChange}
-                                    value={values.username}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <label>
-                                Password:
-                                <input
-                                    type="password"
-                                    name="password"
-                                    id="inputPassword"
-                                    placeholder="Enter Password"
-                                    onChange={handleChange}
-                                    value={values.password}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
-                            <div>
-                                <h1 style={{ color: 'red' }}>{("New user?")} <Link to="/signup"> Signup </Link></h1>
-                            </div>
-                            <div className="login-error">
-                                {LoginFeedback === 'ERROR' && <h1 style={{ color: 'red' }}>{("Something went wrong")}</h1>}
-                            </div>
-                        </form>
-                  </div>
-                </article>
-            </section>
+                        <div className="login-error">
+                            {LoginFeedback === 'ERROR' && <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
+                        </div>
+                    </form>
+                </div>
+            </article>
+        </section>
     )
 }

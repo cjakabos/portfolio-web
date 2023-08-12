@@ -31,12 +31,8 @@ const initialPet = {
 
 const initialSchedule = {
     id: 0,
-    employeeIds: [
-
-    ],
-    petIds: [
-
-    ],
+    employeeIds: [],
+    petIds: [],
     date: "",
     activities: [
         ""
@@ -424,7 +420,8 @@ export default function PetStore(this: any) {
                                         <tr key={customer.id}>
                                             <td>{customer.name}</td>
                                             <td>{customer.phoneNumber}</td>
-                                            {customer.id && <button className="pet-button" onClick={() => petSubmit(customer.id)}>Add a pet
+                                            {customer.id && <button className="pet-button"
+                                                                    onClick={() => petSubmit(customer.id)}>Add a pet
                                             </button>}
                                         </tr>
                                     ))}

@@ -1,5 +1,5 @@
-import { TabContainer, TabPanelContainer } from "./Tabs.styles";
-import { TabListType } from "../../data/tab-lists";
+import {TabContainer, TabPanelContainer} from "./Tabs.styles";
+import {TabListType} from "../../data/tab-lists";
 import TabList from "../TabList/TabList";
 
 type TabsProps = {
@@ -7,10 +7,10 @@ type TabsProps = {
     tabLists: TabListType[];
 };
 
-const Tabs = ({ children, tabLists }: TabsProps) => {
+const Tabs = ({children, tabLists}: TabsProps) => {
     return (
         <TabContainer>
-            <TabList tabLists={tabLists} />
+            <TabList tabLists={tabLists}/>
             <TabPanelContainer>{children}</TabPanelContainer>
         </TabContainer>
     );

@@ -125,7 +125,7 @@ export default function Shop(this: any) {
         axios.post('http://localhost:8099/api/cart/getCart', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
-                if (response.data != ''){
+                if (response.data != '') {
                     setCart(response.data.items);
                     setTotal(response.data.total);
                 }
@@ -282,15 +282,15 @@ export default function Shop(this: any) {
                             </td>
                             <td>
                                 <input
-                                type="text"
-                                name="description"
-                                id="description"
-                                placeholder="Enter description"
-                                onChange={handleChange}
-                                value={values.description}
-                                maxLength={100}
-                                required
-                            />
+                                    type="text"
+                                    name="description"
+                                    id="description"
+                                    placeholder="Enter description"
+                                    onChange={handleChange}
+                                    value={values.description}
+                                    maxLength={100}
+                                    required
+                                />
                             </td>
                         </table>
 

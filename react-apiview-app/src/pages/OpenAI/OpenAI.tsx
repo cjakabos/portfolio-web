@@ -29,7 +29,7 @@ export default function OpenAI(this: any) {
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
         console.log(values);
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setValues({
             ...values,
             [name]: value,
@@ -38,7 +38,7 @@ export default function OpenAI(this: any) {
 
     const handleDalleChange = (event: { target: { name: any; value: any; }; }) => {
         console.log(dalleValues);
-        const { name, value } = event.target;
+        const {name, value} = event.target;
         setDalleValues({
             ...dalleValues,
             [name]: value,
@@ -122,12 +122,12 @@ export default function OpenAI(this: any) {
                                 // value={values.prompt}
                                 maxLength={50}
                                 required
-                                size ={100}
+                                size={100}
                             />
                         </label>
                         <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
                         <div className="login-error">
-                            {Feedback && <h1 style={{ color: 'green' }}>{(Feedback)}</h1>}
+                            {Feedback && <h1 style={{color: 'green'}}>{(Feedback)}</h1>}
                         </div>
                     </form>
                 </div>
@@ -146,7 +146,7 @@ export default function OpenAI(this: any) {
                                 // value={values.prompt}
                                 maxLength={50}
                                 required
-                                size ={100}
+                                size={100}
                             />
                         </label>
                         <input className="login-submit" id="loginButton" type="submit" value="Submit"/>

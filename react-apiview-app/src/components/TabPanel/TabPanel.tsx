@@ -1,11 +1,10 @@
-
-import { TabPanelContainer } from './TabPanel.styles';
+import {TabPanelContainer} from './TabPanel.styles';
 
 type TabPanelProps = {
     title: string;
 };
 
-const TabPanel = ({ title }: TabPanelProps) => {
+const TabPanel = ({title}: TabPanelProps) => {
     return (
         <TabPanelContainer>
             <h1>{title}</h1>

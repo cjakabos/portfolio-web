@@ -1,4 +1,4 @@
-import { atom } from "recoil";
+import {atom} from "recoil";
 import {Store, STORE_KEY} from "../Store";
 
 export const userState = atom<STORE_KEY>({

@@ -21,6 +21,7 @@ const center = {
     lat: 34,
     lng: -118,
 };
+
 export interface PageProps {
     children: React.ReactNode;
     className?: string;
@@ -34,7 +35,7 @@ export default function Map() {
         getVehicles()
     }, []);
 
-    const { isLoaded, loadError } = useLoadScript({
+    const {isLoaded, loadError} = useLoadScript({
         googleMapsApiKey: (process.env.REACT_APP_GMAPS_API_KEY || 'test'),
     });
     const [markers, setMarkers] = React.useState([
@@ -60,7 +61,7 @@ export default function Map() {
             },
         ]);
         vehicleSubmit(e.latLng.lat(), e.latLng.lng())
-        getVehicles ()
+        getVehicles()
     }, []);
 
     const mapRef = React.useRef();
@@ -68,27 +69,27 @@ export default function Map() {
         mapRef.current = map;
     }, []);
 
-    function vehicleSubmit (lat: number, lng: number) {
+    function vehicleSubmit(lat: number, lng: number) {
 
 
         var postData = {
-            condition:"USED",
-            details:{
-                body:"sedan",
-                model:"Impala",
-                manufacturer:{
-                    code:101,
-                    name:"Chevrolet"
+            condition: "USED",
+            details: {
+                body: "sedan",
+                model: "Impala",
+                manufacturer: {
+                    code: 101,
+                    name: "Chevrolet"
                 },
-                numberOfDoors:4,
-                fuelType:"Gasoline",
-                engine:"3.6L V6",
-                mileage:32280,
-                modelYear:2018,
-                productionYear:2018,
-                externalColor:"white"
+                numberOfDoors: 4,
+                fuelType: "Gasoline",
+                engine: "3.6L V6",
+                mileage: 32280,
+                modelYear: 2018,
+                productionYear: 2018,
+                externalColor: "white"
             },
-            location:{
+            location: {
                 lat: lat,
                 lon: lng
             }
@@ -184,11 +185,12 @@ export default function Map() {
         <div className="tab1">
             <h2>
                 {" "}
-                Map integration to vehicles-api, click the map <br/>to generate new vehicles and save them to vehicles-api database.
+                Map integration to vehicles-api, click the map <br/>to generate new vehicles and save them to
+                vehicles-api database.
                 {" "}
                 {/*<br/><input id="itemButton" type="submit" value="Get all vehicles" onClick = {getVehicles}/>*/}
                 <div className="login-error">
-                    {MapFeedback === 'API ERROR' && <h1 style={{ color: 'red' }}>{("Please start API service")}</h1>}
+                    {MapFeedback === 'API ERROR' && <h1 style={{color: 'red'}}>{("Please start API service")}</h1>}
                 </div>
             </h2>
             <GoogleMap
@@ -203,7 +205,7 @@ export default function Map() {
                 {markers.map((marker) => (
                     <Marker
                         key={`${marker.lat}-${marker.lng}`}
-                        position={{ lat: marker.lat, lng: marker.lng }}
+                        position={{lat: marker.lat, lng: marker.lng}}
                         onClick={() => {
                             setSelected(marker);
                         }}
@@ -218,7 +220,7 @@ export default function Map() {
 
                 {selected ? (
                     <InfoWindow
-                        position={{ lat: selected.lat, lng: selected.lng }}
+                        position={{lat: selected.lat, lng: selected.lng}}
                         onCloseClick={() => {
                             setSelected(null);
                         }}
@@ -231,7 +233,9 @@ export default function Map() {
                                 Alert
                             </h2>
                             <p>Spotted at lat {selected.lat} and lng {selected.lng}</p>
-                            <button className="cart-button" style={{ background: 'red', color: 'white'}} onClick={() => deleteVehicle(selected.id)}> Delete </button>
+                            <button className="cart-button" style={{background: 'red', color: 'white'}}
+                                    onClick={() => deleteVehicle(selected.id)}> Delete
+                            </button>
                         </div>
                     </InfoWindow>
                 ) : null}
