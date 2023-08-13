@@ -12,6 +12,7 @@
     "axios": "^1.2.6",
     "loader-utils": "3.2.1",
     "react": "^18.2.0",
+    "react-bootstrap": "^2.8.0",
     "react-datepicker": "^4.16.0",
     "react-dom": "^18.2.0",
     "react-modal": "^3.16.1",
@@ -50,6 +51,7 @@
     ]
   },
   "devDependencies": {
-    "@types/react-router-dom": "^5.3.3"
+    "@types/react-router-dom": "^5.3.3",
+    "sass": "^1.43.4"
   }
 }

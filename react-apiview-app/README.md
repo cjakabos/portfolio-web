@@ -38,21 +38,35 @@ mvn clean package
 java -jar target/petstore-0.0.1-SNAPSHOT.jar
 ```
 
-Google Maps api key:
+Google Maps API key, [how to get](https://developers.google.com/maps/documentation/embed/get-api-key):
 
 ```
 To be stored in the .env file in the root directory in this format:
 REACT_APP_GMAPS_API_KEY=xxxxxxxxxxxxxx
 ```
 
-OpenAI api key:
+OpenAI API key:
 
 ```
 To be stored in the .env file in the root directory in this format:
 REACT_APP_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
+Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Install packages and Start React front-end:
+```
+To be stored in the .env file in the root directory in this format:
+REACT_APP_JIRA_KEY=XXXXXXXXXX
+Together with your requested domain name
+REACT_APP_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
+```
+Start
+[Pet Store's REST API](../petstore/README.md)
+
+[CORS background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
+
+
+
+Install packages and start React front-end from root of react-apiview-app:
 
 ### `npm install`
 
@@ -110,7 +124,16 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 - [Create Personal Access Token](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) 
 - [Use it for requests](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/)
 
+The user is able to:
 
+- Create a new Jira ticket
+  ![](../examples/react7.png)
+- List existing tickets and delete them
+    ![](../examples/react8.png)
+- Update existing tickets
+    ![](../examples/react9.png)
+- See updated values
+    ![](../examples/react10.png)
 
 
 

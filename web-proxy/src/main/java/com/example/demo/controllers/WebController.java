@@ -2,7 +2,11 @@ package com.example.demo.controllers;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
@@ -43,4 +47,65 @@ public class WebController {
         return new ResponseEntity<>(jsonResponse.toMap(), HttpStatus.OK);
     }
 
+    @CrossOrigin(origins = "http://localhost:5001")
+    @PostMapping("/post")
+    public String createTicket(@RequestBody String json) throws IOException {
+        JSONObject jsonObject = new JSONObject(json);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+
+        HttpPost request = new HttpPost(jsonObject.get("webDomain").toString());
+        request.addHeader("Authorization", jsonObject.get("webApiKey").toString());
+        request.addHeader("Content-type", "application/json");
+        jsonObject.remove("webDomain");
+        jsonObject.remove("webApiKey");
+
+        StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+        request.setEntity(params);
+        HttpResponse response;
+        response = httpClient.execute(request);
+
+        return response.getStatusLine().toString();
+    }
+
+    @CrossOrigin(origins = "http://localhost:5001")
+    @PutMapping("/put")
+    public String updateTicket(@RequestBody String json) throws IOException {
+        JSONObject jsonObject = new JSONObject(json);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+
+        HttpPut request = new HttpPut(jsonObject.get("webDomain").toString());
+        request.addHeader("Authorization", jsonObject.get("webApiKey").toString());
+        request.addHeader("Content-type", "application/json");
+        jsonObject.remove("webDomain");
+        jsonObject.remove("webApiKey");
+
+        StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+        request.setEntity(params);
+        HttpResponse response;
+        response = httpClient.execute(request);
+
+        return response.getStatusLine().toString();
+    }
+
+    @CrossOrigin(origins = "http://localhost:5001")
+    @PostMapping("/delete")
+    public String deleteTicket(@RequestBody String json) throws IOException {
+        JSONObject jsonObject = new JSONObject(json);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+
+        HttpDelete request = new HttpDelete(jsonObject.get("webDomain").toString());
+        request.addHeader("Authorization", jsonObject.get("webApiKey").toString());
+        request.addHeader("Content-type", "application/json");
+        jsonObject.remove("webDomain");
+        jsonObject.remove("webApiKey");
+
+        StringEntity params = new StringEntity(jsonObject.toString(), "UTF-8");
+        HttpResponse response;
+        response = httpClient.execute(request);
+
+        return response.getStatusLine().toString();
+    }
 }
