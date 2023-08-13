@@ -59,12 +59,13 @@ REACT_APP_JIRA_KEY=XXXXXXXXXX
 Together with your requested domain name
 REACT_APP_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
 ```
-Start
-[Pet Store's REST API](../petstore/README.md)
-
-[CORS background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
-
-
+### Web-proxy
+Start [Web Proxy API](../web-proxy/README.md) to avoid CORS issue with Jira [background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
+```
+mvn clean package
+java -jar target/web-proxy-0.0.1-SNAPSHOT.jar
+```
+### REACT front-end
 
 Install packages and start React front-end from root of react-apiview-app:
 

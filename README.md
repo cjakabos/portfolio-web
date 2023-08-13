@@ -5,10 +5,12 @@ This is a collection of my hobby development projects:
 - New React front-end for utilizing these back-end services from above. [React Apiview App](react-apiview-app/README.md)
 - External api service integration, such as:
   - [OpenAI API](react-apiview-app/README.md#openai)
-  - [Google Maps API.](react-apiview-app/README.md#googlemaps)
-  - [Jira API.](react-apiview-app/README.md#jira)
+  - [Google Maps API](react-apiview-app/README.md#googlemaps)
+  - [Jira API](react-apiview-app/README.md#jira)
+- [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
 
-[Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
+
+  [Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
 
 ## Roadmap
 
@@ -29,6 +31,13 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
 - [x] OpenAI interface for OpenAI API. [Description](#openai-interface-extra-tab)
+
+Brand new React front-end, to integrate all previous solutions together, with several new external API integrations:
+
+- [x] [New front-end](react-apiview-app/README.md) 
+- [x] [Google maps](react-apiview-app/README.md#googlemaps)
+- [x] [OpenAI](react-apiview-app/README.md#openai)
+- [x] [Jira](react-apiview-app/README.md#jira)
 
 ### The Back-End
 
