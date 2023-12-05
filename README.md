@@ -2,15 +2,19 @@
 
 This is a collection of my hobby development projects:
 - Back-end API services and basic HTML front-end developed by me during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a user interface.
-- New React front-end for utilizing these back-end services from above. [React Apiview App](react-apiview-app/README.md)
+- New React front-end for utilizing these back-end services from above and new services below. [React Apiview App](react-apiview-app/README.md)
+- New ML pipeline for [Dynamic Risk Assessment](ml-pipeline/README.md)
 - External api service integration, such as:
   - [OpenAI API](react-apiview-app/README.md#openai)
   - [Google Maps API](react-apiview-app/README.md#googlemaps)
   - [Jira API](react-apiview-app/README.md#jira)
 - [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
 
+## Certificates
+  [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
 
-  [Nanodegree certficiate - Proof of completition](https://graduation.udacity.com/confirm/QDDKHJF9)
+  [Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)  
+
 
 ## Roadmap
 
