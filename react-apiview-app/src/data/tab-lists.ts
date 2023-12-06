@@ -10,5 +10,6 @@ export const tabLists = [
     {tabKey: "map", title: "Map", route: "Map"},
     {tabKey: "openai", title: "openai", route: "Openai"},
     {tabKey: "jira", title: "jira", route: "Jira"},
+    {tabKey: "mlops", title: "mlops", route: "Mlops"},
     {tabKey: "logout", title: "Logout", route: "Logout"}
 ];

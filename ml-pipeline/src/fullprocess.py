@@ -64,6 +64,7 @@ def main():
         deployed_score = re.findall(r'\d*\.?\d+', file.read())[0]
         deployed_score = float(deployed_score)
 
+    data_df.pop('id')
     y_df = data_df.pop('exited')
     X_df = data_df.drop(['corporation'], axis=1)
 

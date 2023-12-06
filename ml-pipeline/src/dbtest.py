@@ -14,7 +14,7 @@ with psycopg.connect("dbname=riskdb user=riskmaster") as conn:
 
         # Execute a command: this creates a new table
         cur.execute("""
-            CREATE TABLE test3 (
+            CREATE TABLE test (
                 id serial PRIMARY KEY,
                 corporation text,
                 lastmonth_activity integer,
@@ -26,11 +26,11 @@ with psycopg.connect("dbname=riskdb user=riskmaster") as conn:
         # Pass data to fill a query placeholders and let Psycopg perform
         # the correct conversion (no SQL injections!)
         cur.execute(
-            "INSERT INTO test3 (corporation, lastmonth_activity, lastyear_activity, number_of_employees, exited) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO test (corporation, lastmonth_activity, lastyear_activity, number_of_employees, exited) VALUES (%s, %s, %s, %s, %s)",
             ("Risky AB", 234, 3, 10, 1))
 
         # Query the database and obtain data as Python objects.
-        cur.execute("SELECT * FROM test3")
+        cur.execute("SELECT * FROM test")
         cur.fetchone()
         # will return (1, "Risky AB", 234, 3, 10, 1)
 

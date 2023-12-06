@@ -8,10 +8,9 @@ import re
 import subprocess
 import pandas as pd
 import psycopg as pg
-import fullprocess
-import argparse
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
 
 import diagnostics
@@ -19,17 +18,26 @@ import diagnostics
 
 # Set up variables for use in our script
 app = Flask(__name__)
-app.secret_key = '1652d576-484a-49fd-913a-6879acfa6ba4'
+CORS(app, resources={r"/*": {"origins": "http://localhost:5001"}})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/')
+@cross_origin()
 def index():
     return "Hello World"
+
+@app.route('/getCustomers', methods=['GET'])
+def getCustomers(pg=pg):
+    connection = pg.connect("dbname='riskdb' user='riskmaster' host='127.0.0.1' port='5432' password='apetite'")
+    data_df = pd.read_sql('select * from test', connection)
+    return data_df.to_json(orient='records')
 
 #inspiration: https://www.geeksforgeeks.org/how-to-insert-a-pandas-dataframe-to-an-existing-postgresql-table/
 @app.route('/ingest', methods=['POST'])
 def ingest(pg=pg):
     data = request.json
+    print(data)
 
     #connection = pg.connect("dbname='riskdb' user='riskmaster' host='127.0.0.1' port='5432' password='apetite'")
     #data_df = pd.read_sql('select * from test', connection)
@@ -60,12 +68,12 @@ def ingest(pg=pg):
     conn.close()
 
     # Initiate the full process after each ingestion to check for drift
-    #fullprocess.main('apitrigger')
     os.system("python3 fullprocess.py apitrigger")
 
     return jsonify(data['fields'])
 
 @app.route("/prediction", methods=['POST', 'OPTIONS'])
+@cross_origin()
 def predict():
     """
     Prediction endpoint that loads data given the file path
@@ -84,6 +92,7 @@ def predict():
 
 
 @app.route("/scoring", methods=['GET', 'OPTIONS'])
+@cross_origin()
 def score():
     """
     Scoring endpoint that runs the script scoring.py and
@@ -99,6 +108,7 @@ def score():
 
 
 @app.route("/summarystats", methods=['GET', 'OPTIONS'])
+@cross_origin()
 def stats():
     """
     Summary statistics endpoint that calls dataframe summary
@@ -111,6 +121,7 @@ def stats():
 
 
 @app.route("/diagnostics", methods=['GET', 'OPTIONS'])
+@cross_origin()
 def diag():
     """
     Diagnostics endpoint thats calls missing_percentage, execution_time,
@@ -133,4 +144,4 @@ def diag():
 
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8000, debug=True, threaded=True)
+    app.run(host='127.0.0.1', port=8600, debug=True, threaded=True)

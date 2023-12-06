@@ -15,6 +15,7 @@ import Logout from "./pages/Logout/Logout";
 import PetStore from "./pages/PetStore/PetStore";
 import OpenAI from "./pages/OpenAI/OpenAI";
 import Jira from "./pages/Jira/Jira";
+import MLOps from "./pages/MLOps/MLOps";
 
 export default function App() {
 
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="map" element={<Map/>}/>
                 <Route path="openai" element={<OpenAI/>}/>
                 <Route path="jira" element={<Jira/>}/>
+                <Route path="mlops" element={<MLOps/>}/>
                 <Route path="logout" element={<Logout/>}/>
                 <Route path="*" element={<Navigate to="home"/>}/>
             </Routes>
