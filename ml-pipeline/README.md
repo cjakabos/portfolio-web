@@ -223,7 +223,7 @@ brew services start postgresql@15
 echo 'export PATH=/opt/homebrew/opt/postgresql@15/bin/postgres:$PATH  ' >> ~/.zshrc
 ```
 
-Start postrgres and create riskdb
+Start postgres and create riskdb
 
 ```
 psql postgres
@@ -258,4 +258,27 @@ curl -H "Content-Type: application/json" -X POST -d \
     }
 }' \
 http://127.0.0.1:8000/ingest
+```
+
+
+Start postgres and create segmentationdb
+
+```
+psql postgres
+
+CREATE DATABASE segmentationdb;
+
+CREATE USER segmentmaster WITH PASSWORD 'segment';
+
+GRANT ALL ON DATABASE segmentationdb TO segmentmaster;
+
+ALTER DATABASE segmentationdb OWNER TO segmentmaster;
+
+GRANT ALL PRIVILEGES ON DATABASE segmentationdb TO segmentmaster;
+
+\c riskdb segmentmaster
+
+GRANT ALL ON SCHEMA public TO segmentmaster;
+
+exit
 ```

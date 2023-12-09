@@ -1,15 +1,32 @@
 import os
+import io
+import re
 import sys
 import logging
 import pandas as pd
 import numpy as np
+import sklearn
+import psycopg as pg
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from sklearn.metrics import f1_score
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
+
+from plotly.offline import iplot, init_notebook_mode
+import plotly.graph_objs as go
+import plotly.io as pio
+import heapq
 
 
+import scoring
+import training
+import ingestion
+import fullreporting
+import deployment
+import diagnostics
 from config import INPUT_FOLDER_PATH, MODEL_PATH, PROD_DEPLOYMENT_PATH, DATA_PATH
 
 
@@ -97,31 +114,42 @@ def main():
     # Check and read new data
     logging.info("Checking for new data")
 
-    # First, read customers.csv
-    customers = pd.read_csv("../customers/customers.csv")
+    # First, read customers from DB
+    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    customers = pd.read_sql('select * from test', connection)
+    mlinfo = pd.read_sql('select * from mlinfo', connection)
 
     print(customers.head())
 
-    spending = customers["Spending Score (1-100)"]
+    spending = customers["spending_score"]
     fig = graph_histo(spending)
 
 
     #plt.savefig('mytable.png')
 
-    fig.savefig(os.path.join(MODEL_PATH, 'confusionmatrix2.png'))
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png')
+    fig.savefig(os.path.join(MODEL_PATH, 'plot2.png'))
+    buf.seek(0)
+    binary2 = pg.Binary(buf.read())
 
-    pairplot = sns.pairplot(customers, x_vars = ["Age", "Annual Income (k$)", "Spending Score (1-100)"],
-                 y_vars = ["Age", "Annual Income (k$)", "Spending Score (1-100)"],
-                 hue = "Gender",
+    pairplot = sns.pairplot(customers, x_vars = ["age", "annual_income", "spending_score"],
+                 y_vars = ["age", "annual_income", "spending_score"],
+                 hue = "gender",
                  kind= "scatter",
                  palette = "YlGnBu",
                  height = 2,
                  plot_kws={"s": 35, "alpha": 0.8});
 
     fig = pairplot.figure
-    fig.savefig(os.path.join(MODEL_PATH, 'confusionmatrix3.png'))
 
-    X = customers.iloc[:, 2:]
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png')
+    fig.savefig(os.path.join(MODEL_PATH, 'plot3.png'))
+    buf.seek(0)
+    binary3 = pg.Binary(buf.read())
+
+    X = customers.iloc[:, 2:5]
 
     print(X.head())
 
@@ -131,7 +159,28 @@ def main():
     # Transform samples using the PCA fit
     pca_2d = pca.transform(X)
 
-
+    # # Source: https://datascience.stackexchange.com/questions/57122/in-elbow-curve-how-to-find-the-point-from-where-the-curve-starts-to-rise
+    # wcss = []
+    # for i in range(1,11):
+    #     km = KMeans(n_clusters=i,init='k-means++', max_iter=300, n_init=10, random_state=0)
+    #     km.fit(X)
+    #     wcss.append([i, km.inertia_])
+    #
+    # print(np.array(wcss))
+    # elbow_index = find_elbow(np.array(wcss), get_data_radiant(np.array(wcss)))
+    # print(elbow_index)
+    #
+    #
+    # hp = []
+    # for x, y in np.array(wcss):
+    #     dist = x**2 + y**2
+    #     print(dist)
+    #     heapq.heappush(hp, (-dist, -x, y))
+    #     if len(hp) >= 2:
+    #         heapq.heappop(hp)
+    #
+    # res = [(-x, y) for d, x, y in hp]
+    # print(res)
 
     # Kmeans algorithm
     # n_clusters: Number of clusters. In our case 5
@@ -164,17 +213,30 @@ def main():
     plt.xlabel("Component 1", size = 14, labelpad=10)
     plt.ylabel("Component 2", size = 14, labelpad=10)
 
-    plt.title('Dominios agrupados en 5 clusters', size=16)
+    plt.title('Domains grouped into 5 clusters', size=16)
 
 
     plt.colorbar(ticks=[0, 1, 2, 3, 4]);
 
-    fig.savefig(os.path.join(MODEL_PATH, 'confusionmatrix4.png'))
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png')
+    fig.savefig(os.path.join(MODEL_PATH, 'plot4.png'))
+    buf.seek(0)
+    binary4 = pg.Binary(buf.read())
+
+
 
     X_new = np.array([[43, 76, 56]])
 
     new_customer = kmeans.predict(X_new)
     print(f"The new customer belongs to segment {new_customer[0]}")
+
+    with connection.cursor() as cur:
+        cur.execute("DELETE FROM mlinfo;")
+        cur.execute(
+            "INSERT INTO mlinfo (id, image2, image3, image4) VALUES (%s, %s, %s, %s)",
+            (1, binary2, binary3, binary4))
+    connection.commit()
 
 if __name__ == '__main__':
     main()

@@ -26,6 +26,16 @@ with psycopg.connect("dbname=segmentationdb user=segmentmaster") as conn:
                 spending_score integer,
                 segment integer)
             """)
+
+        # Execute a command: this creates a new table
+        cur.execute("""
+            DROP TABLE mlinfo;
+            CREATE TABLE mlinfo (
+                id serial PRIMARY KEY,
+                image2 bytea,
+                image3 bytea,
+                image4 bytea)
+            """)
     conn.commit()
 # for psycopg3 you need to use it with postgresql+psycopg manner, simple postgresql will use only psycopg2
 # TODO: another pro tip: https://stackoverflow.com/a/63178240/1026
