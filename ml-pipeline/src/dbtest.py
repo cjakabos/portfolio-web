@@ -14,6 +14,7 @@ with psycopg.connect("dbname=riskdb user=riskmaster") as conn:
 
         # Execute a command: this creates a new table
         cur.execute("""
+            DROP TABLE test;
             CREATE TABLE test (
                 id serial PRIMARY KEY,
                 corporation text,
