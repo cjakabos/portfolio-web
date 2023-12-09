@@ -17,8 +17,7 @@ with psycopg.connect("dbname=segmentationdb user=segmentmaster") as conn:
 
         # Execute a command: this creates a new table
         cur.execute("""
-            DROP TABLE test;
-            CREATE TABLE test (
+            CREATE TABLE IF NOT EXISTS test (
                 id serial PRIMARY KEY,
                 gender text,
                 age integer,
@@ -29,8 +28,7 @@ with psycopg.connect("dbname=segmentationdb user=segmentmaster") as conn:
 
         # Execute a command: this creates a new table
         cur.execute("""
-            DROP TABLE mlinfo;
-            CREATE TABLE mlinfo (
+            CREATE TABLE IF NOT EXISTS mlinfo (
                 id serial PRIMARY KEY,
                 image2 bytea,
                 image3 bytea,

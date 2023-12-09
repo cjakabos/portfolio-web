@@ -8,8 +8,10 @@ import re
 import subprocess
 import pandas as pd
 import psycopg as pg
+import base64
+import json
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
 
@@ -32,6 +34,25 @@ def getCustomers(pg=pg):
     connection = pg.connect("dbname='riskdb' user='riskmaster' host='127.0.0.1' port='5432' password='apetite'")
     data_df = pd.read_sql('select * from test', connection)
     return data_df.to_json(orient='records')
+
+@app.route('/getMLInfo', methods=['GET'])
+def getMLInfo(pg=pg):
+    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    data_df = pd.read_sql('select * from mlinfo', connection)
+    #print(data_df['image2'][0])
+    encoded_img2 = base64.b64encode(data_df['image2'][0]).decode("utf-8")
+    encoded_img3 = base64.b64encode(data_df['image3'][0]).decode("utf-8")
+    encoded_img4 = base64.b64encode(data_df['image4'][0]).decode("utf-8")
+
+    value = {
+        "image2": encoded_img2,
+        "image3": encoded_img3,
+        "image4": encoded_img4
+    }
+
+    #images = ({'a': 54}, {'b': 41, 'c':87})
+
+    return json.dumps(value)
 
 #inspiration: https://www.geeksforgeeks.org/how-to-insert-a-pandas-dataframe-to-an-existing-postgresql-table/
 @app.route('/ingest', methods=['POST'])

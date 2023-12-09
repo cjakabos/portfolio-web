@@ -24,6 +24,12 @@ const initialGetCustomerValues = {
         exited: 0
 };
 
+const initialImageValues = {
+    image2: "test2",
+    image3: "test3",
+    image4: "test4"
+};
+
 export const mlEndpoint = "http://127.0.0.1:8600";
 
 export default function MLOps(this: any) {
@@ -31,10 +37,12 @@ export default function MLOps(this: any) {
     const [loading, setLoading] = useState(false)
     const [values, setValues] = useState(initialCustomerValues);
     const [customers, setCustomers] = useState([initialGetCustomerValues])
+    const [images, setImages] = useState(initialImageValues)
 
     // Load all get methods once, when page renders
     useEffect(() => {
         getCustomers()
+        getMLInfo()
     }, []);
 
 
@@ -72,6 +80,24 @@ export default function MLOps(this: any) {
             })
     }
 
+    function getMLInfo() {
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+
+        axios.get(mlEndpoint + "/getMLInfo", axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", response.data);
+                setImages(response.data)
+
+            })
+            .catch((error) => {
+                //console.log("AXIOS ERROR: ", Data);
+            })
+    }
+
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         newCustomer(values)
@@ -98,6 +124,7 @@ export default function MLOps(this: any) {
         axios.post(mlEndpoint + "/ingest", postData, axiosConfig)
             .then((response) => {
                 getCustomers()
+                getMLInfo()
                 //console.log("RESPONSE RECEIVED: ", response);
             })
             .catch((error) => {
@@ -196,6 +223,12 @@ export default function MLOps(this: any) {
                             </>
                         )}
                     </div>
+                </div>
+                <div className="container">
+                    <h3>React Js Display Base64 Image</h3>
+                    <img src={'data:image/png;base64,' + images.image2} alt="Base64 Image" />
+                    <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image" />
+                    <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image" />
                 </div>
             </article>
         </section>
