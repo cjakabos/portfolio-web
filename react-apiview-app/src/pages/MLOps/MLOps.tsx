@@ -15,6 +15,10 @@ const initialCustomerValues = {
     exited: 0
 };
 
+const initialSampleValues = {
+    sampleSize: 10,
+};
+
 const initialGetCustomerValues = {
         id: "",
         corporation: 0,
@@ -36,13 +40,14 @@ export default function MLOps(this: any) {
 
     const [loading, setLoading] = useState(false)
     const [values, setValues] = useState(initialCustomerValues);
+    const [values2, setValues2] = useState(initialSampleValues);
     const [customers, setCustomers] = useState([initialGetCustomerValues])
     const [images, setImages] = useState(initialImageValues)
 
     // Load all get methods once, when page renders
     useEffect(() => {
         getCustomers()
-        getMLInfo()
+        getMLInfo(-2)
     }, []);
 
 
@@ -53,7 +58,15 @@ export default function MLOps(this: any) {
             ...values,
             [name]: value,
         });
-        getCustomers()
+    };
+
+    const handleChange2 = (event: { target: { name: any; value: any; }; }) => {
+        console.log(values2);
+        const {name, value} = event.target;
+        setValues2({
+            ...values2,
+            [name]: value,
+        });
     };
 
 
@@ -80,14 +93,18 @@ export default function MLOps(this: any) {
             })
     }
 
-    function getMLInfo() {
+    function getMLInfo(sample: number) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
             }
         };
 
-        axios.get(mlEndpoint + "/getMLInfo", axiosConfig)
+        const postData = {
+            sampleSize: sample,
+        };
+
+        axios.post(mlEndpoint + "/getMLInfo", postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setImages(response.data)
@@ -101,6 +118,11 @@ export default function MLOps(this: any) {
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         newCustomer(values)
+    };
+
+    const handleMLSubmit = (e: { preventDefault: () => void; }) => {
+        e.preventDefault();
+        getMLInfo(values2.sampleSize)
     };
 
     function newCustomer(input: any) {
@@ -124,7 +146,7 @@ export default function MLOps(this: any) {
         axios.post(mlEndpoint + "/ingest", postData, axiosConfig)
             .then((response) => {
                 getCustomers()
-                getMLInfo()
+                getMLInfo(0)
                 //console.log("RESPONSE RECEIVED: ", response);
             })
             .catch((error) => {
@@ -225,7 +247,55 @@ export default function MLOps(this: any) {
                     </div>
                 </div>
                 <div className="container">
-                    <h3>React Js Display Base64 Image</h3>
+                    <h1>{("MLInfo")}
+                        <form onSubmit={handleMLSubmit}>
+                            <label>
+                                Sample info:
+                                <p/>
+                                <input
+                                    type="number"
+                                    name="sampleSize"
+                                    placeholder="Enter sampleSize"
+                                    onChange={handleChange2}
+                                    value={values2.sampleSize}
+                                    maxLength={50}
+                                    required
+                                    size={100}
+                                    min="10"
+                                    max="200"
+                                />
+                            </label>
+                            <input className="login-submit" id="loginButton" type="submit" value="Get MLInfo"/>
+                        </form>
+                    </h1>
+                    <div className="container">
+                        <button className="update-button"
+                                style={{background: 'green', color: 'white'}}
+                                onClick={() => getMLInfo(10)}
+                        > Simulate 10 customers
+                        </button>
+                        <button className="update-button"
+                                style={{background: 'green', color: 'white'}}
+                                onClick={() => getMLInfo(20)}
+                        > Simulate 20 customers
+                        </button>
+                        <button className="update-button"
+                                style={{background: 'green', color: 'white'}}
+                                onClick={() => getMLInfo(50)}
+                        > Simulate 50 customers
+                        </button>
+                        <button className="update-button"
+                                style={{background: 'green', color: 'white'}}
+                                onClick={() => getMLInfo(100)}
+                        > Simulate 100 customers
+                        </button>
+                        <button className="update-button"
+                                style={{background: 'green', color: 'white'}}
+                                onClick={() => getMLInfo(200)}
+                        > Simulate 200 customers
+                        </button>
+
+                    </div>
                     <img src={'data:image/png;base64,' + images.image2} alt="Base64 Image" />
                     <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image" />
                     <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image" />

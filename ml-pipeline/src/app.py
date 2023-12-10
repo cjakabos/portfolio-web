@@ -35,8 +35,35 @@ def getCustomers(pg=pg):
     data_df = pd.read_sql('select * from test', connection)
     return data_df.to_json(orient='records')
 
-@app.route('/getMLInfo', methods=['GET'])
+@app.route('/getMLInfo', methods=['POST'])
 def getMLInfo(pg=pg):
+    data = request.json
+
+    '''
+    General logic for 1. reinit and 2. resegment and 3. read segment results:
+    - if sampleSize is > 0, reinit with default csv or with sampleSize amount of datapoints from csv, also resegment
+    - if sampleSize is -1, means new datapoint from UI, do not reinit, but resegment
+    - if sampleSize is -2, only read current MLOps info, do not reinit and do not resegment
+    '''
+
+    # 1. reinit DB, if needed
+    #if sampleSize is specific to non-zero, sample only that set of database, otherwise run on full DB
+    if data.get("sampleSize") > 0:
+        os.system("python3 init_segmentationdb.py " + str(data.get("sampleSize")))
+    #if sampleSize is 0, reset db
+    elif data.get("sampleSize") == 0:
+        os.system("python3 init_segmentationdb.py")
+
+    # 2. resegment DB, if needed
+    '''
+    if sampleSize is >= 0, we reinit with a set of data point from original csv, thus we should resegment
+    if sampleSize is -1, means new datapoint from UI, thus we should resegment
+    if sampleSize is below -2, skip resegment, only read data from previous segmentation
+    '''
+    if data.get("sampleSize") >= -1:
+        os.system("python3 segmentation_process.py")
+
+    # 3. read segment results: Connect to db and read latest segmentation results
     connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
     data_df = pd.read_sql('select * from mlinfo', connection)
     #print(data_df['image2'][0])
@@ -49,8 +76,6 @@ def getMLInfo(pg=pg):
         "image3": encoded_img3,
         "image4": encoded_img4
     }
-
-    #images = ({'a': 54}, {'b': 41, 'c':87})
 
     return json.dumps(value)
 
