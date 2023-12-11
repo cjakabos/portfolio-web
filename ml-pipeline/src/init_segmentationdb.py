@@ -9,6 +9,24 @@ import psycopg
 import pandas as pd
 import psycopg as pg
 from sqlalchemy import create_engine
+from sqlalchemy.sql import text
+
+def to_sql_seq(df,table_name, engine):
+
+    get_seq_id_sql = f"""
+                       select your_sequence.nextval as id
+                        from dual 
+                         connect by level < {df.shape[0]}
+                     """
+
+    # sql_get_max_id = f'select max({index_name}) as id from {table_name}'
+
+    s_id = pd.read_sql(get_seq_id_sql , engine)
+
+    df.index =s_id['id'].values
+    df.index.name=index_name
+    df.to_sql(table_name,engine,if_exists='append')
+    return
 
 def main():
     # Connect to an existing database
@@ -19,6 +37,7 @@ def main():
 
             # Execute a command: this creates a new table
             cur.execute("""
+                DROP TABLE IF EXISTS test;
                 CREATE TABLE IF NOT EXISTS test (
                     id serial PRIMARY KEY,
                     gender text,
@@ -53,12 +72,22 @@ def main():
         with open('../customers/customers.csv', 'r') as file:
             df = pd.read_csv(file)
 
-
     #TODO: check indexing df.to_sql('test', con=conn, index=True, index_label='id', if_exists='append')
-    df.to_sql('test', con=conn, index=False, if_exists='replace')
+    df.to_sql('test', con=conn, if_exists="append", index=False)
+    print(df.shape[0])
+    #to_sql_seq(df, 'test', db)
+    conn.execute(text("SELECT setval(pg_get_serial_sequence('test', 'id'), (SELECT MAX(id) FROM test));"))
 
     conn = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
     conn.autocommit = True
+
+    conn.close()
+
+
+
+
+
+
 
 if __name__ == '__main__':
     main()

@@ -3,7 +3,7 @@
 This is a collection of my hobby development projects:
 - Back-end API services and basic HTML front-end developed by me during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a user interface.
 - New React front-end for utilizing these back-end services from above and new services below. [React Apiview App](react-apiview-app/README.md)
-- New ML pipeline for [Dynamic Risk Assessment](ml-pipeline/README.md)
+- New ML pipeline for [Dynamic Customer Segmentation](ml-pipeline/README.md)
 - External api service integration, such as:
   - [OpenAI API](react-apiview-app/README.md#openai)
   - [Google Maps API](react-apiview-app/README.md#googlemaps)
@@ -35,6 +35,7 @@ for running them separately check the READMEs below)to one main front-end interf
 - [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
 - [x] OpenAI interface for OpenAI API. [Description](#openai-interface-extra-tab)
+- [x] Google Maps api interface for visualizing vehicles from the Car service's API. [Description](#openai-interface-extra-tab)
 
 Brand new React front-end, to integrate all previous solutions together, with several new external API integrations:
 

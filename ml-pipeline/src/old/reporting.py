@@ -11,8 +11,8 @@ import pandas as pd
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib.colors import lavender, red, green
+from reportlab.platypus import Table
+from reportlab.lib.colors import lavender
 
 import diagnostics
 from config import DATA_PATH, MODEL_PATH, TEST_DATA_PATH

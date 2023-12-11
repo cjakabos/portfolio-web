@@ -1,6 +1,18 @@
-# Machine learning system for Risk Assessment
+# Machine learning system for Customer Segmentation
 
-This is a Machine Learning Model Risk Scoring and Monitoring project from my previous [github repository for Predictive Analytics for Business](https://github.com/cjakabos/portfolio-business-analytics), development will continue in this repository. The problem is to create, deploy, and monitor a risk assessment ML model that will estimate the attrition risk of each of the company's clients. Also setting up processes to re-train, re-deploy, monitor and report on the ML model.
+This is a Machine Learning project for Customer Segmentation. The problem is to create, deploy, and monitor a customer segmentation ML model.
+
+You are the owner of a shop. It doesn't matter if you own an e-commerce or a supermarket. It doesn't matter if it is a small shop or a huge company such as Amazon or Netflix, it's better to know your customers.
+
+You were able to collect basic data about your customers holding a membership card such as Customer ID, age, gender, annual income, and spending score. This last one is a score based on customer behavior and purchasing data. There are some new products on the market that you are interested in selling. But you want to target a specific type of clients for each one of the products.
+
+Machine learning comes in handy for this task. Particularly, clustering, the most important unsupervised learning problem, is able to create categories grouping similar individuals. These categories are called clusters. A cluster is a collection of points in a dataset. These points are more similar between them than they are to points belonging to other clusters. Distance-based clustering groups the points into some number of clusters such that distances within the cluster should be small while distances between clusters should be large.
+
+[Detailed info of the cluster process](customers/clustering_analysis.ipynb), the Machine learning system is a live implementation of the same Jupyter notebook.
+
+<p align="center">
+	<img src="customers/Screen.png" >
+</p>  
 
 ## Prerequisites
 - Python 3 required
@@ -14,258 +26,33 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dep
 
 ## Project Structure
 ```bash
-📦Dynamic-Risk-Assessment-System
+📦Dynamic-Customer-Segmentation-System
  ┣
- ┣ 📂data
- ┃ ┣ 📂ingesteddata                 # Contains csv and metadata of the ingested data
- ┃ ┃ ┣ 📜finaldata.csv
- ┃ ┃ ┗ 📜ingestedfiles.txt
- ┃ ┣ 📂practicedata                 # Data used for practice mode initially
- ┃ ┃ ┣ 📜dataset1.csv
- ┃ ┃ ┗ 📜dataset2.csv
- ┃ ┣ 📂sourcedata                   # Data used for production mode
- ┃ ┃ ┣ 📜dataset3.csv
- ┃ ┃ ┗ 📜dataset4.csv
- ┃ ┗ 📂testdata                     # Test data
- ┃ ┃ ┗ 📜testdata.csv
- ┣ 📂model
- ┃ ┣ 📂models                       # Models pickle, score, and reports for production mode
- ┃ ┃ ┣ 📜apireturns.txt
- ┃ ┃ ┣ 📜confusionmatrix.png
- ┃ ┃ ┣ 📜latestscore.txt
- ┃ ┃ ┣ 📜summary_report.pdf
- ┃ ┃ ┗ 📜trainedmodel.pkl
- ┃ ┣ 📂practicemodels               # Models pickle, score, and reports for practice mode
- ┃ ┃ ┣ 📜apireturns.txt
- ┃ ┃ ┣ 📜confusionmatrix.png
- ┃ ┃ ┣ 📜latestscore.txt
- ┃ ┃ ┣ 📜summary_report.pdf
- ┃ ┃ ┗ 📜trainedmodel.pkl
- ┃ ┗ 📂production_deployment        # Deployed models and model metadata needed
- ┃ ┃ ┣ 📜ingestedfiles.txt
- ┃ ┃ ┣ 📜latestscore.txt
- ┃ ┃ ┗ 📜trainedmodel.pkl
+ ┣ 📂customers
+ ┃ ┣ 📜customers.csv                # Contains csv to initiate db
+ ┃ ┗ 📜clustering_analysis.ipynb    # Initial Jupyter notebook to run clustering analysis
+ ┣ 📂react-mlops-app                # React UI to interact add new customers, run segmentation and visualize segmentation results
  ┣ 📂src
- ┃ ┣ 📜apicalls.py                  # Runs app endpoints
  ┃ ┣ 📜app.py                       # Flask app
- ┃ ┣ 📜config.py                    # Config file for the project which depends on config.json
- ┃ ┣ 📜deployment.py                # Model deployment script
- ┃ ┣ 📜dbtest.py                    # DB setup test script
- ┃ ┣ 📜diagnostics.py               # Model diagnostics script
- ┃ ┣ 📜fullprocess.py               # Process automation
- ┃ ┣ 📜ingestion.py                 # Data ingestion script
- ┃ ┣ 📜pretty_confusion_matrix.py   # Plots confusion matrix
- ┃ ┣ 📜reporting.py                 # Generates confusion matrix and PDF report
- ┃ ┣ 📜scoring.py                   # Scores trained model
- ┃ ┣ 📜training.py                  # Model training
- ┃ ┗ 📜wsgi.py
- ┣ 📜config.json                    # Config json file
- ┣ 📜cronjob.txt                    # Holds cronjob created for automation
- ┣ 📜README.md
+ ┃ ┣ 📜init_segmentationdb.py       # DB setup script to initiate postgres db based on customers.csv
+ ┃ ┗ 📜segmentation_process.py      # The whole segmentation process for reading data, estimating segments and writing it to db, based on clustering_analysis.ipynb 
  ┗ 📜requirements.txt               # Projects required dependencies
 ```
 
-## Steps Overview
-1. **Data ingestion:** Automatically check if new data that can be used for model training. Compile all training data to a training dataset and save it to folder. 
-2. **Training, scoring, and deploying:** Write scripts that train an ML model that predicts attrition risk, and score the model. Saves the model and the scoring metrics.
-3. **Diagnostics:** Determine and save summary statistics related to a dataset. Time the performance of some functions. Check for dependency changes and package updates.
-4. **Reporting:** Automatically generate plots and PDF document that report on model metrics and diagnostics. Provide an API endpoint that can return model predictions and metrics.
-5. **Process Automation:** Create a script and cron job that automatically run all previous steps at regular intervals.
-
-<img src="images/fullprocess.jpg" width=550 height=300>
-
 ## Usage
 
-### 0- Run Flask App in separate terminal, run the rest of the steps in another terminal
-```bash
-virtualenv venv
-source venv/bin/active
-pip3 install -r requirements.txt
-python3 app.py
-```
-
-### 1- Edit config.json file to use practice data
-
-```bash
-"input_folder_path": "practicedata",
-"output_folder_path": "ingesteddata", 
-"test_data_path": "testdata", 
-"output_model_path": "practicemodels", 
-"prod_deployment_path": "production_deployment"
-```
-
-### 2- Run data ingestion
-```bash
-cd src
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 ingestion.py
-```
-Artifacts output:
-```
-data/ingesteddata/finaldata.csv
-data/ingesteddata/ingestedfiles.txt
-```
-
-### 3- Model training
-```bash
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 training.py
-```
-Artifacts output:
-```
-models/practicemodels/trainedmodel.pkl
-```
-
-###  4- Model scoring 
-```bash
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 scoring.py
-```
-Artifacts output: 
-```
-models/practicemodels/latestscore.txt
-``` 
-
-### 5- Model deployment
-```bash
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 deployment.py
-```
-Artifacts output:
-```
-model/prod_deployment_path/ingestedfiles.txt
-model/prod_deployment_path/trainedmodel.pkl
-model/prod_deployment_path/latestscore.txt
-``` 
-
-### 6- Run diagnostics
-```bash
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 diagnostics.py
-```
-
-### 7- Run reporting
-```bash
-python3 reporting.py
-```
-Artifacts output:
-```
-models/practicemodels/confusionmatrix.png
-models/practicemodels/summary_report.pdf
-```
-
-### 8- Run API endpoints
-```bash
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 apicalls.py
-```
-Artifacts output:
-```
-models/practicemodels/apireturns.txt
-```
-
-### 9- Edit config.json file to use production data
-
-```bash
-"input_folder_path": "sourcedata",
-"output_folder_path": "ingesteddata", 
-"test_data_path": "testdata", 
-"output_model_path": "models", 
-"prod_deployment_path": "production_deployment"
-```
-
-### 10- Full process automation
-```bash
-virtualenv venv2
-source venv2/bin/active
-pip3 install -r requirements.txt
-python3 fullprocess.py scripted
-```
-### 11- Cron job
-
-Start cron service
-```bash
-sudo service cron start
-```
-
-Edit crontab file
-```bash
-sudo crontab -e
-```
-   - Select **option 3** to edit file using vim text editor
-   - Press **i** to insert a cron job
-   - Write the cron job in ```cronjob.txt``` which runs ```fullprocces.py``` every 10 mins
-   - Save after editing, press **esc key**, then type **:wq** and press enter
-  
-View crontab file
-```bash
-sudo crontab -l
-```
-
-Moving from local csv files to DB version:
-Install Postgres, on mac:
-
+### 1- Setup postgres db
+Install postgres and start it
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
 echo 'export PATH=/opt/homebrew/opt/postgresql@15/bin/postgres:$PATH  ' >> ~/.zshrc
-```
-
-Start postgres and create riskdb
-
-```
 psql postgres
-
-CREATE DATABASE riskdb;
-
-CREATE USER riskmaster WITH PASSWORD 'apetite';
-
-GRANT ALL ON DATABASE riskdb TO riskmaster;
-
-ALTER DATABASE riskdb OWNER TO riskmaster;
-
-GRANT ALL PRIVILEGES ON DATABASE riskdb TO riskmaster;
-
-\c riskdb riskmaster
-
-GRANT ALL ON SCHEMA public TO riskmaster;
-
-exit
 ```
 
-Example of sending a new customer request, this will triger the full Risk scoring pipeline:
-```bash
-curl -H "Content-Type: application/json" -X POST -d \
-'{
-    "fields": {
-        "corporation": "Risky AB",
-        "lastmonth_activity": 100,
-        "lastyear_activity": 1200,
-        "number_of_employees": 16,
-        "exited": 0
-    }
-}' \
-http://127.0.0.1:8000/ingest
-```
+Create segmentationdb
 
-
-Start postgres and create segmentationdb
-
-```
-psql postgres
-
+```sql
 CREATE DATABASE segmentationdb;
 
 CREATE USER segmentmaster WITH PASSWORD 'segment';
@@ -282,3 +69,50 @@ GRANT ALL ON SCHEMA public TO segmentmaster;
 
 exit
 ```
+
+### 2- Run init_segmentationdb and Flask App in one terminal, run the rest of the steps in another terminal
+```bash
+virtualenv venv
+source venv/bin/active
+pip3 install -r requirements.txt
+cd src
+python3 init_segmentationdb.py
+python3 app.py
+```
+
+Example of sending a new customer request, this will triger the full Customer Segmentation pipeline:
+```
+curl -H "Content-Type: application/json" -X POST -d \
+'{
+    "fields": {
+       "gender": "Female",
+       "age": 35,
+       "annual_income": 335,
+       "spending_score": 95,
+       "segment": 0
+   }
+}' \
+http://127.0.0.1:8600/addCustomer
+```
+### 3- Run Flask App in separate terminal, run the rest of the steps in another terminal
+```bash
+cd react-mlops-app
+npm install
+npm start
+```
+
+Go to: http://localhost:5001/
+
+And there are several options for the user:
+1. Add new customer data point to the database.
+2. Sample reference database with user specified samples.
+3. Sample reference database with predefined 10-20-50-100-200 amount of samples.
+All these steps will retrigger the segmentation process and then the pictures and tables will update with the new results.
+
+View results:  
+- Pictures: correlation between parameters and the different segments  
+- Table: current db from postgres.
+
+<p align="center">
+	<img src="customers/Screen.png" >
+</p>  

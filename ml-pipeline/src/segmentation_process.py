@@ -1,34 +1,21 @@
 import os
 import io
-import re
 import sys
 import logging
 import pandas as pd
 import numpy as np
-import sklearn
 import psycopg as pg
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from sklearn.metrics import f1_score
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import MinMaxScaler
+from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 
-from plotly.offline import iplot, init_notebook_mode
-import plotly.graph_objs as go
-import plotly.io as pio
 import heapq
 
-
-import scoring
-import training
-import ingestion
-import fullreporting
-import deployment
-import diagnostics
-from config import INPUT_FOLDER_PATH, MODEL_PATH, PROD_DEPLOYMENT_PATH, DATA_PATH
-
+from config import MODEL_PATH
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -115,7 +102,9 @@ def main():
     logging.info("Checking for new data")
 
     # First, read customers from DB
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost/segmentationdb"
+    db = create_engine(conn_string)
+    connection = db.connect()
     customers = pd.read_sql('select * from test', connection)
     mlinfo = pd.read_sql('select * from mlinfo', connection)
 
@@ -194,6 +183,17 @@ def main():
     y_means = kmeans.fit_predict(X)
 
 
+    #Update segments and save it to db
+    customers['segment'] = y_means
+
+
+    #Make sure to clean table with DELETE from and use if_exists='append', otherwise if_exists='replace' would overwrite PRIMARY KEY
+    connection.execute(text("DELETE FROM test;"))
+    customers.to_sql('test', con=connection, index=False, if_exists='append')
+
+
+
+    #Plot segment clusters
     fig, ax = plt.subplots(figsize = (8, 6))
 
     plt.scatter(pca_2d[:, 0], pca_2d[:, 1],
@@ -231,12 +231,21 @@ def main():
     new_customer = kmeans.predict(X_new)
     print(f"The new customer belongs to segment {new_customer[0]}")
 
-    with connection.cursor() as cur:
-        cur.execute("DELETE FROM mlinfo;")
-        cur.execute(
-            "INSERT INTO mlinfo (id, image2, image3, image4) VALUES (%s, %s, %s, %s)",
-            (1, binary2, binary3, binary4))
+
     connection.commit()
+
+    connection.close()
+
+    # Update mlinfo
+    with pg.connect("dbname=segmentationdb user=segmentmaster") as conn:
+        # Open a cursor to perform database operations
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM mlinfo;")
+            cur.execute(
+                "INSERT INTO mlinfo (id, image2, image3, image4) VALUES (%s, %s, %s, %s)",
+                (1, binary2, binary3, binary4))
+        conn.commit()
+    conn.close()
 
 if __name__ == '__main__':
     main()

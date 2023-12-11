@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import { Document, Page, pdfjs } from 'react-pdf';
+import Select from "react-select";
 
 const initialValues = {
     prompt: ""
@@ -8,11 +8,11 @@ const initialValues = {
 
 const initialCustomerValues = {
     id: "",
-    corporation: "",
-    lastmonth_activity: 0,
-    lastyear_activity: 0,
-    number_of_employees: 0,
-    exited: 0
+    gender: "",
+    age: 18,
+    annual_income: 15,
+    spending_score: 5,
+    segment: 0
 };
 
 const initialSampleValues = {
@@ -20,12 +20,12 @@ const initialSampleValues = {
 };
 
 const initialGetCustomerValues = {
-        id: "",
-        corporation: 0,
-        lastmonth_activity: 0,
-        lastyear_activity: 0,
-        number_of_employees: 0,
-        exited: 0
+    id: "",
+    gender: "",
+    age: 0,
+    annual_income: 0,
+    spending_score: 0,
+    segment: 0
 };
 
 const initialImageValues = {
@@ -33,6 +33,11 @@ const initialImageValues = {
     image3: "test3",
     image4: "test4"
 };
+
+export const genders = [
+    {value: "Female", label: "Female"},
+    {value: "Male", label: "Male"}
+];
 
 export const mlEndpoint = "http://127.0.0.1:8600";
 
@@ -43,6 +48,7 @@ export default function MLOps(this: any) {
     const [values2, setValues2] = useState(initialSampleValues);
     const [customers, setCustomers] = useState([initialGetCustomerValues])
     const [images, setImages] = useState(initialImageValues)
+    const [selectedGender, setSelectedGender] = useState("Female");
 
     // Load all get methods once, when page renders
     useEffect(() => {
@@ -75,6 +81,14 @@ export default function MLOps(this: any) {
         getCustomers()
     };
 
+    const handleOptionSelect = (event: { target: { options: any; }; }) => {
+        for (var i = 0, l = event.target.options.length; i < l; i++) {
+            if (event.target.options[i].selected) {
+                setSelectedGender(event.target.options[i].value)
+            }
+        }
+    };
+
     function getCustomers() {
         let axiosConfig = {
             headers: {
@@ -82,7 +96,7 @@ export default function MLOps(this: any) {
             }
         };
 
-        axios.get(mlEndpoint + "/getCustomers", axiosConfig)
+        axios.get(mlEndpoint + "/getSegmentationCustomers", axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setCustomers(response.data)
@@ -101,13 +115,16 @@ export default function MLOps(this: any) {
         };
 
         const postData = {
-            sampleSize: sample,
+            sampleSize: Number(sample),
         };
+
+        console.log("postData: ", postData);
 
         axios.post(mlEndpoint + "/getMLInfo", postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setImages(response.data)
+                getCustomers()
 
             })
             .catch((error) => {
@@ -128,11 +145,11 @@ export default function MLOps(this: any) {
     function newCustomer(input: any) {
         const postData = {
             fields: {
-                corporation: input.corporation,
-                lastmonth_activity: Number(input.lastmonth_activity),
-                lastyear_activity: Number(input.lastyear_activity),
-                number_of_employees: Number(input.number_of_employees),
-                exited: 0
+                gender: selectedGender,
+                age: Number(input.age),
+                annual_income: Number(input.annual_income),
+                spending_score: Number(input.spending_score),
+                segment: 0
             }
         };
 
@@ -143,132 +160,45 @@ export default function MLOps(this: any) {
         };
 
         console.log("postData: ", postData);
-        axios.post(mlEndpoint + "/ingest", postData, axiosConfig)
+
+        axios.post(mlEndpoint + "/addCustomer", postData, axiosConfig)
             .then((response) => {
                 getCustomers()
-                getMLInfo(0)
+                getMLInfo(-1)
                 //console.log("RESPONSE RECEIVED: ", response);
             })
             .catch((error) => {
                 //console.log("AXIOS ERROR: ", error.response);
             })
+
     }
 
 
     return (
         <section>
             <article>
-                <div className="login-top">
-                    <h1>{("Create a customer")}</h1>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        Customer info:
-                        <p/>
-                        <input
-                            type="text"
-                            name="corporation"
-                            placeholder="Enter corporation name"
-                            onChange={handleChange}
-                            value={values.corporation}
-                            maxLength={50}
-                            required
-                            size={100}
-                        />
-                        <input
-                            type="number"
-                            name="lastmonth_activity"
-                            placeholder="Enter customer lastmonth_activity"
-                            onChange={handleChange}
-                            value={values.lastmonth_activity}
-                            maxLength={50}
-                            required
-                            size={100}
-                        />
-                        <input
-                            type="number"
-                            name="lastyear_activity"
-                            placeholder="Enter customer lastyear_activity"
-                            onChange={handleChange}
-                            value={values.lastyear_activity}
-                            maxLength={50}
-                            required
-                            size={100}
-                        />
-                        <input
-                            type="number"
-                            name="number_of_employees"
-                            placeholder="Enter customer number_of_employees"
-                            onChange={handleChange}
-                            value={values.number_of_employees}
-                            maxLength={50}
-                            required
-                            size={100}
-                        />
-                    </label>
-                    <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
-                </form>
-                <div>
-                    <div className="login-top">
-                        <h1>{("All customers")}
-                            <form onSubmit={handleGetSubmit}>
-                                <input className="login-submit" id="loginButton" type="submit" value="Get customers"/>
-                            </form>
-                        </h1>
-                    </div>
-
-                    <div className="Item">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>Id</th>
-                                        <th>Corporation</th>
-                                        <th>Last Month Activity</th>
-                                        <th>Last Year Activity</th>
-                                        <th>Number of Employees</th>
-                                        <th>Exited</th>
-                                    </tr>
-                                    {customers.map(customer => (
-                                        <tr key={customer.id}>
-                                            <td>{customer.id}</td>
-                                            <td>{customer.corporation}</td>
-                                            <td>{customer.lastmonth_activity}</td>
-                                            <td>{customer.lastyear_activity}</td>
-                                            <td>{customer.number_of_employees}</td>
-                                            <td>{customer.exited}</td>
-                                        </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
-                    </div>
-                </div>
                 <div className="container">
-                    <h1>{("MLInfo")}
-                        <form onSubmit={handleMLSubmit}>
-                            <label>
-                                Sample info:
-                                <p/>
-                                <input
-                                    type="number"
-                                    name="sampleSize"
-                                    placeholder="Enter sampleSize"
-                                    onChange={handleChange2}
-                                    value={values2.sampleSize}
-                                    maxLength={50}
-                                    required
-                                    size={100}
-                                    min="10"
-                                    max="200"
-                                />
-                            </label>
-                            <input className="login-submit" id="loginButton" type="submit" value="Get MLInfo"/>
-                        </form>
-                    </h1>
+                    <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
+                    <form onSubmit={handleMLSubmit}>
+                        <label>
+                            1. Test a sample size from predefined DB:<br/>
+                            <input
+                                type="number"
+                                name="sampleSize"
+                                placeholder="Enter sampleSize"
+                                onChange={handleChange2}
+                                value={values2.sampleSize}
+                                maxLength={50}
+                                required
+                                size={100}
+                                min="10"
+                                max="200"
+                            />
+                        </label>
+                        <input className="login-submit" id="loginButton" type="submit" value="Get MLInfo"/>
+                    </form>
                     <div className="container">
+                        <br/><br/>2. Test a sample size from predefined DB:<br/>
                         <button className="update-button"
                                 style={{background: 'green', color: 'white'}}
                                 onClick={() => getMLInfo(10)}
@@ -296,13 +226,118 @@ export default function MLOps(this: any) {
                         </button>
 
                     </div>
-                    <img src={'data:image/png;base64,' + images.image2} alt="Base64 Image" />
+                    <br/>
+                    <br/>
+                    <form onSubmit={handleSubmit}>
+                        <label>
+                            3. Add new Customer info on the top of predefined data:
+                            <p/>
+                            <table>
+                                <tr>
+                                    <th>Gender</th>
+                                    <th>Age</th>
+                                    <th>Spending score</th>
+                                    <th>Annual Income</th>
+                                    <th> </th>
+                                </tr>
+                                <td>
+                                    <select onChange={handleOptionSelect}>
+                                        {genders.map((gender, index) => (
+                                            <option key={index} value={gender.value}>
+                                                {gender.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="age"
+                                        placeholder="Enter customer age"
+                                        onChange={handleChange}
+                                        value={values.age}
+                                        maxLength={50}
+                                        required
+                                        size={100}
+                                        min="18"
+                                        max="120"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="annual_income"
+                                        placeholder="Enter customer annual_income"
+                                        onChange={handleChange}
+                                        value={values.annual_income}
+                                        maxLength={50}
+                                        required
+                                        size={100}
+                                        min="15"
+                                        max="140"
+                                    />
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="spending_score"
+                                        placeholder="Enter customer spending_score"
+                                        onChange={handleChange}
+                                        value={values.spending_score}
+                                        maxLength={50}
+                                        required
+                                        size={100}
+                                        min="5"
+                                        max="100"
+                                    />
+                                </td>
+                                <td>
+                                    <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                                </td>
+                            </table>
+
+                        </label>
+
+                    </form>
+                    <br/>
+                    <br/>
+                    <h1>{("MLInfo Results: ")}</h1>
                     <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image" />
                     <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image" />
+                </div>
+                <br/>
+                <br/>
+                <br/>
+                <div className="Item">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            <table>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Gender</th>
+                                    <th>Age</th>
+                                    <th>Annual Income</th>
+                                    <th>Spending Score</th>
+                                    <th>Segment</th>
+                                </tr>
+                                {customers.map(customer => (
+                                    <tr key={customer.id}>
+                                        <td>{customer.id}</td>
+                                        <td>{customer.gender}</td>
+                                        <td>{customer.age}</td>
+                                        <td>{customer.annual_income}</td>
+                                        <td>{customer.spending_score}</td>
+                                        <td>{customer.segment}</td>
+                                    </tr>
+                                ))}
+                            </table>
+                        </>
+                    )}
                 </div>
             </article>
         </section>
 
     )
 }
-
