@@ -3,10 +3,10 @@
 This is a collection of my development projects from Web Development and Predictive Analytics Nanodegrees:
 - Back-end [API services](#required-api-services) developed by me during my Nanodegree [Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035).
 - React front-end [interface](#react-front-end) for utilizing these back-end services from above and new services below.
-- ML pipeline for [Dynamic Customer Segmentation](#1-machine-learning-system-for-customer-segmentation-), building on my Nanodegree in [Predictive Analytics for Business](https://www.udacity.com/course/predictive-analytics-for-business-nanodegree--nd008t)
+- ML pipeline for [Dynamic Customer Segmentation](#1-machine-learning-system-for-customer-segmentation), building on my Nanodegree in [Predictive Analytics for Business](https://www.udacity.com/course/predictive-analytics-for-business-nanodegree--nd008t)
 - External api service integration, such as:
   - [OpenAI API](#5-openai)
-  - [Google Maps API](#4-googlemaps)
+  - [Google Maps API](#4-google-maps-api-key-how-to-get)
   - [Jira API with an internal proxy API service to avoid CORS](#6-jira)
 - [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
 
@@ -39,7 +39,7 @@ If everything is correctly started, you should see a login page:
 And you should be able to register and log in, [after starting the backend services, ecommerce is a must, the rest is optional](#2-ecommerce-api), and see the current front-end of the api integrations from the services above:
 ![](examples/react2.png)
 
-## 1. Machine learning system for Customer Segmentation  
+## 1. Machine learning system for Customer Segmentation
 ![](ml-pipeline/customers/Screen.png)  
 MLOps interface for [Customer Segmentation API](ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
