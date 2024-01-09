@@ -1,6 +1,7 @@
+'use client';
 import React, {useState} from "react";
 import axios from "axios";
-import {Store, STORE_KEY} from "../../Store";
+//import {Store, STORE_KEY} from "@/Store";
 import {Link} from "react-router-dom";
 
 
@@ -54,12 +55,12 @@ export default function Login(this: any) {
                 const token = response.headers.authorization;
 
                 //set JWT token to local
-                localStorage.setItem("REACT-APP-MY-TOKEN", token);
+                localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
 
                 setLoginFeedback("OK")
-                localStorage.setItem("REACT-APP-MY-USERNAME", postData.username)
+                localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", postData.username)
 
-                Store.setValue(STORE_KEY.USERTOKEN, token);
+                //Store.setValue(STORE_KEY.USERTOKEN, token);
 
                 window.location.reload()
 

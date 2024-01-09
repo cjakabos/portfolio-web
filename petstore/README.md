@@ -26,6 +26,7 @@ operations on the server. The user should have permissions on localhost:
 ```
 CREATE SCHEMA `petstore` ; -- Create the petstore database 
 CREATE USER 'root'@'localhost' IDENTIFIED BY 'root'; -- Create the user if you haven’t yet 
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'; -- Make sure that the password is set
 GRANT ALL ON petstore.* TO 'root'@'localhost'; -- Gives all privileges to the new user on petstore
 ```
 

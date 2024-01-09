@@ -1,7 +1,5 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import {Store, STORE_KEY} from "../../Store";
-import {Link} from "react-router-dom";
 
 const initialValues = {
     prompt: ""
@@ -17,7 +15,7 @@ const initialDalleFeedback = {
 
 export default function OpenAI(this: any) {
 
-    const openAIKey = (process.env.REACT_APP_OPENAI_KEY || 'test')
+    const openAIKey = (process.env.NEXT_PUBLIC_OPENAI_KEY || 'test')
     const openAiUrl = "https://api.openai.com/v1";
 
     const [values, setValues] = useState(initialValues);

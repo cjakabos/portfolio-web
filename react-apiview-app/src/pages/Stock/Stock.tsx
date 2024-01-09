@@ -94,7 +94,7 @@ export default function Stock() {
 
     return (
         <div>
-            <img src='/logo.svg' className="App-logo" alt="logo"/>
+            <img src='../../vercel.svg' className="App-logo" alt="logo" style={{ height: 200, width: 200 }}/>
             <section>
                 <article>
                     <div>

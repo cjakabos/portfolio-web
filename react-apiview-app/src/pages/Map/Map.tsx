@@ -36,7 +36,7 @@ export default function Map() {
     }, []);
 
     const {isLoaded, loadError} = useLoadScript({
-        googleMapsApiKey: (process.env.REACT_APP_GMAPS_API_KEY || 'test'),
+        googleMapsApiKey: (process.env.NEXT_PUBLIC_GMAPS_API_KEY || 'test'),
     });
     const [markers, setMarkers] = React.useState([
         {
@@ -98,7 +98,7 @@ export default function Map() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -122,7 +122,7 @@ export default function Map() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
 
@@ -158,7 +158,7 @@ export default function Map() {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
 

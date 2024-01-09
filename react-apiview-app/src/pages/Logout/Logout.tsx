@@ -1,9 +1,8 @@
-import React, {useState} from "react";
-
+'use client';
 
 export default function Logout() {
     console.log('LOGOUT');
-    localStorage.setItem("REACT-APP-MY-USERNAME", '')
-    localStorage.setItem("REACT-APP-MY-TOKEN", '')
+    localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", '')
+    localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", '')
     window.location.reload()
 }

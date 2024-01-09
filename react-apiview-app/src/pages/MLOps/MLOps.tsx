@@ -1,3 +1,4 @@
+'use client';
 import React, {useEffect, useState} from "react";
 import axios from "axios";
 import Select from "react-select";
@@ -41,7 +42,7 @@ export const genders = [
 
 export const mlEndpoint = "http://127.0.0.1:8600";
 
-export default function MLOps(this: any) {
+export const MLOps: React.FunctionComponent = () => {
 
     const [loading, setLoading] = useState(false)
     const [values, setValues] = useState(initialCustomerValues);
@@ -179,24 +180,24 @@ export default function MLOps(this: any) {
             <article>
                 <div className="container">
                     <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
-                    <form onSubmit={handleMLSubmit}>
-                        <label>
-                            1. Test a sample size from predefined DB:<br/>
-                            <input
-                                type="number"
-                                name="sampleSize"
-                                placeholder="Enter sampleSize"
-                                onChange={handleChange2}
-                                value={values2.sampleSize}
-                                maxLength={50}
-                                required
-                                size={100}
-                                min="10"
-                                max="200"
-                            />
-                        </label>
-                        <input className="login-submit" id="loginButton" type="submit" value="Get MLInfo"/>
-                    </form>
+                        <form onSubmit={handleMLSubmit}>
+                            <label>
+                                1. Test a sample size from predefined DB:<br/>
+                                <input
+                                    type="number"
+                                    name="sampleSize"
+                                    placeholder="Enter sampleSize"
+                                    onChange={handleChange2}
+                                    value={values2.sampleSize}
+                                    maxLength={50}
+                                    required
+                                    size={100}
+                                    min="10"
+                                    max="200"
+                                />
+                            </label>
+                            <input className="login-submit" id="loginButton" type="submit" value="Get MLInfo"/>
+                        </form>
                     <div className="container">
                         <br/><br/>2. Test a sample size from predefined DB:<br/>
                         <button className="update-button"
@@ -341,3 +342,4 @@ export default function MLOps(this: any) {
 
     )
 }
+

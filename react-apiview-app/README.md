@@ -6,7 +6,7 @@ Install packages and start React front-end from root of react-apiview-app:
 
 ```bash
 npm install
-npm start
+npm run dev
 ```
 
 Runs the app in the development mode.\

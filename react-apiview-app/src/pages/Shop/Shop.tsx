@@ -54,7 +54,7 @@ export default function Shop(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -89,7 +89,7 @@ export default function Shop(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -112,13 +112,13 @@ export default function Shop(this: any) {
     function getCart() {
 
         var postData = {
-            username: localStorage.getItem("REACT-APP-MY-USERNAME"),
+            username: localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"),
         };
 
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -144,13 +144,13 @@ export default function Shop(this: any) {
     function clearCart() {
 
         var postData = {
-            username: localStorage.getItem("REACT-APP-MY-USERNAME"),
+            username: localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"),
         };
 
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -170,7 +170,7 @@ export default function Shop(this: any) {
         console.log("Row: " + arg0.name);
 
         var postData = {
-            username: localStorage.getItem("REACT-APP-MY-USERNAME"),
+            username: localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"),
             itemId: arg0.id,
             quantity: 1
         };
@@ -178,7 +178,7 @@ export default function Shop(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
@@ -199,18 +199,18 @@ export default function Shop(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8099/api/order/submit/' + localStorage.getItem("REACT-APP-MY-USERNAME"), '', axiosConfig)
+        axios.post('http://localhost:8099/api/order/submit/' + localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"), '', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //setName(response.data);
                 getHistory()
             })
             .catch((error) => {
-                console.log("AXIOS ERROR: ", 'http://localhost:8099/api/order/submit/' + localStorage.getItem("REACT-APP-MY-USERNAME"));
+                console.log("AXIOS ERROR: ", 'http://localhost:8099/api/order/submit/' + localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"));
                 //setName(error.response);
             })
 
@@ -228,11 +228,11 @@ export default function Shop(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': localStorage.getItem("REACT-APP-MY-TOKEN")
+                'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8099/api/order/history/' + localStorage.getItem("REACT-APP-MY-USERNAME"), axiosConfig)
+        axios.get('http://localhost:8099/api/order/history/' + localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"), axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setCartHistory(response.data);

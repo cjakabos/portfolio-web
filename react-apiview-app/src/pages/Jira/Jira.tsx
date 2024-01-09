@@ -1,3 +1,4 @@
+'use client';
 import React, {useEffect, useState} from "react";
 import axios from "axios";
 import {PopUp} from "../../components/PopUp/PopUp";
@@ -21,10 +22,7 @@ const initialGetTicketValues = {
         description: ""
     }
 };
-
-export const jiraKey = (process.env.REACT_APP_JIRA_KEY || 'test')
 export const jiraProxy = "http://localhost:8500/webDomain";
-export const jiraDomain = (process.env.REACT_APP_JIRA_DOMAIN || 'test')
 
 export default function Jira(this: any) {
 
@@ -35,8 +33,15 @@ export default function Jira(this: any) {
     const [isOpen, setIsOpen] = useState(false)
     const [isTicketOpen, setTicketIsOpen] = useState(false)
 
+    // Set the value received from the proces.env to a local state
+    var [jiraKey, setJiraKey] = useState("")
+    var [jiraDomain, setJiraDomain] = useState("")
+
+
     // Load all get methods once, when page renders
     useEffect(() => {
+        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         getTickets()
     }, []);
 
@@ -72,7 +77,7 @@ export default function Jira(this: any) {
         //console.log("postData: ", postData);
         axios.post(jiraProxy + "/get", postData, axiosConfig)
             .then((response) => {
-                //console.log("RESPONSE RECEIVED: ", response.data.issues);
+                console.log("RESPONSE RECEIVED: ", response.data.issues);
                 setTickets(response.data.issues)
 
             })
@@ -168,7 +173,7 @@ export default function Jira(this: any) {
                     name: "Task"
                 },
             },
-            webDomain: "https://web-portfolio.atlassian.net/rest/api/latest/issue",
+            webDomain: jiraDomain + "/rest/api/latest/issue",
             webApiKey: "Basic " + jiraKey
         };
 
@@ -189,6 +194,7 @@ export default function Jira(this: any) {
             })
     }
 
+    if (loading) return <p>Loading...</p>
 
     return (
         <section>
