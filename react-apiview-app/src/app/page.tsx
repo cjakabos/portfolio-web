@@ -16,7 +16,20 @@ import PetStore from "@/pages/PetStore/PetStore";
 import Jira from "@/pages/Jira/Jira";
 import Map from "@/pages/Map/Map";
 import Logout from "@/pages/Logout/Logout";
+import USMap from "@/pages/USMap/us-map";
+import KoreaBubbleMap, {KoreaMapData} from "@/pages/InteractiveMap/KoreaBubbleMap";
 
+const data: KoreaMapData = {
+    sido: [{ code: "1100000000", name: "Seoul", count: 400 }],
+    sigungu: [
+        { code: "1168000000", name: "Gangnam-gu district", count: 300 },
+        { code: "1171000000", name: "Songpa-gu district", count: 100 },
+    ],
+    emd: [
+        { code: "1168010100", name: "Yeoksam-dong ward", count: 300 },
+        { code: "1171010100", name: "Jamsil-dong ward", count: 100 },
+    ],
+};
 export default function Home() {
 
     // Set the value received from the local storage to a local state
@@ -60,6 +73,8 @@ export default function Home() {
                         <Route path="shop" element={<Shop/>}/>
                         <Route path="pet" element={<PetStore/>}/>
                         <Route path="map" element={<Map/>}/>
+                        <Route path="usmap" element={<USMap/>}/>
+                        <Route path="koreamap" element={<KoreaBubbleMap width={1000} height={1000} data={data}/>}/>
                         <Route path="openai" element={<OpenAI/>}/>
                         <Route path="jira" element={<Jira/>}/>
                         <Route path="mlops" element={<MLOps/>}/>
