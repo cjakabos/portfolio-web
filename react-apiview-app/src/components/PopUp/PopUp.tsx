@@ -47,7 +47,7 @@ export const PopUp: React.FunctionComponent<Props> = ({
                                 onChange={change}
                                 maxLength={50}
                                 required
-                                size={100}
+                                size={50}
                             />
                             <input
                                 type="text"
@@ -57,11 +57,13 @@ export const PopUp: React.FunctionComponent<Props> = ({
                                 onChange={change}
                                 maxLength={50}
                                 required
-                                size={100}
+                                size={50}
                             />
                         </label>
+                        <br/>
                         <input className="popup-submit" id="submitButton" type="submit" value="Submit"/>
                     </form>
+
                     <form onSubmit={closePopup}>
                         <input className="popup-close" id="closeButton" type="submit" value="CLOSE"/>
                     </form>

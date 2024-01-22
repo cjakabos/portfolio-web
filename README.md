@@ -20,6 +20,16 @@ Example view with ML pipeline and other tabs:
 
 ## REACT front-end
 
+Add .env file at root:
+```bash
+NEXT_PUBLIC_MY_TOKEN = 'my-secret-api-token'
+NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
+NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
+NEXT_PUBLIC_API_KEY = 'my-secret-api-key'
+NEXT_PUBLIC_GMAPS_API_KEY=xxxxxxxxxxxxxx
+NEXT_PUBLIC_OPENAI_KEY=xxxxxxxxxxxxxx
+```
+
 Install packages and start React front-end from root of react-apiview-app:
 
 ```bash
@@ -167,17 +177,28 @@ $ java -jar target/boogle-maps-0.0.1-SNAPSHOT.jar
 
 ## 4. Pet Store api:
 
-```
-Install msql, eg. on mac:
+```bash
+#Install msql, eg. on mac:
 brew install mysql
 brew services start mysql
 
-Start mysql and flush privileges, if issues arise:
+#Start mysql and flush privileges, if issues arise:
 mysql -u root    
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED BY ‘root’;
 
-start the service from repo root:
+```
+
+```sql
+--Create db:
+CREATE SCHEMA `petstore` ; -- Create the petstore database
+CREATE USER 'root'@'localhost' IDENTIFIED BY 'root'; -- Create the user if you haven’t yet
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'; -- Make sure that the password is set
+GRANT ALL ON petstore.* TO 'root'@'localhost'; -- Gives all privileges to the new user on petstore
+```
+
+```bash
+#start the service from repo root:
 cd petstore
 mvn clean package
 java -jar target/petstore-0.0.1-SNAPSHOT.jar

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 const initialValues = {
     username: "",
@@ -92,92 +92,104 @@ export default function Stock() {
             })
     }, [Name]) // useEffect will trigger whenever Name is different.*/
 
+    const navigate = useNavigate();
+
     return (
         <div>
             <img src='../../vercel.svg' className="App-logo" alt="logo" style={{ height: 200, width: 200 }}/>
             <section>
                 <article>
                     <div>
-                        <div className="login-top">
-                            <h1>{("Sign up")}</h1>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <label>
-                                First name:
-                                <input
-                                    type="text"
-                                    name="firstname"
-                                    id="firstname"
-                                    placeholder="Enter First Name"
-                                    onChange={handleChange}
-                                    value={values.firstname}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <br/>
-                            <label>
-                                Last name:
-                                <input
-                                    type="text"
-                                    name="lastname"
-                                    id="lastname"
-                                    placeholder="Enter Last Name"
-                                    onChange={handleChange}
-                                    value={values.lastname}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <br/>
-                            <label>
-                                Username:
-                                <input
-                                    type="username"
-                                    name="username"
-                                    id="username"
-                                    placeholder="Enter Username"
-                                    onChange={handleChange}
-                                    value={values.username}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <br/>
-                            <label>
-                                Password:
-                                <input
-                                    type="password"
-                                    name="password"
-                                    id="password"
-                                    placeholder="Enter Password"
-                                    onChange={handleChange}
-                                    value={values.password}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <label>
-                                Confirm Password:
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    id="confirmPassword"
-                                    placeholder="Confirm Password"
-                                    onChange={handleChange}
-                                    value={values.confirmPassword}
-                                    maxLength={20}
-                                    required
-                                />
-                            </label>
-                            <br/>
-                            {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
-                            {/*   onClick={() => functionName()}                        */}
-                            {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
-                            <input className="submitbutton" type="submit" value="Submit"/>
+
                             <div className="login-top">
-                                {Feedback === 'OK' && <h1 style={{color: 'green'}}>{("Successful registration")} <Link
-                                    to="/login"> Login </Link></h1>}
+                                {Feedback !== 'OK' ? (
+                                    <>
+                                        <div className="login-top">
+                                            <h1>{("Sign up")}</h1>
+                                        </div>
+                                        <form onSubmit={handleSubmit}>
+                                            <label>
+                                                First name:
+                                                <input
+                                                    type="text"
+                                                    name="firstname"
+                                                    id="firstname"
+                                                    placeholder="Enter First Name"
+                                                    onChange={handleChange}
+                                                    value={values.firstname}
+                                                    maxLength={20}
+                                                    required
+                                                />
+                                            </label>
+                                            <br/>
+                                            <label>
+                                                Last name:
+                                                <input
+                                                    type="text"
+                                                    name="lastname"
+                                                    id="lastname"
+                                                    placeholder="Enter Last Name"
+                                                    onChange={handleChange}
+                                                    value={values.lastname}
+                                                    maxLength={20}
+                                                    required
+                                                />
+                                            </label>
+                                            <br/>
+                                            <label>
+                                                Username:
+                                                <input
+                                                    type="username"
+                                                    name="username"
+                                                    id="username"
+                                                    placeholder="Enter Username"
+                                                    onChange={handleChange}
+                                                    value={values.username}
+                                                    maxLength={20}
+                                                    required
+                                                />
+                                            </label>
+                                            <br/>
+                                            <label>
+                                                Password:
+                                                <input
+                                                    type="password"
+                                                    name="password"
+                                                    id="password"
+                                                    placeholder="Enter Password"
+                                                    onChange={handleChange}
+                                                    value={values.password}
+                                                    maxLength={20}
+                                                    required
+                                                />
+                                            </label>
+                                            <label>
+                                                Confirm Password:
+                                                <input
+                                                    type="password"
+                                                    name="confirmPassword"
+                                                    id="confirmPassword"
+                                                    placeholder="Confirm Password"
+                                                    onChange={handleChange}
+                                                    value={values.confirmPassword}
+                                                    maxLength={20}
+                                                    required
+                                                />
+                                            </label>
+                                            <br/>
+                                            {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
+                                            {/*   onClick={() => functionName()}                        */}
+                                            {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
+                                            <input className="submitbutton" type="submit" value="Submit"/>
+                                        </form>
+                                    </>
+                                ) :
+                                    <>
+                                        <button className="submitbutton" type="submit" value="Submit" onClick={() => navigate('login')}>
+                                            Login
+                                        </button>
+                                    </>
+                                }
                             </div>
                             <div className="login-top">
                                 {Feedback === 'ERROR' && <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
@@ -186,7 +198,7 @@ export default function Stock() {
                                 {Feedback === 'PASSWORDERROR' &&
                                     <h1 style={{color: 'red'}}>{("Passwords do not mach")}</h1>}
                             </div>
-                        </form>
+
                     </div>
                 </article>
             </section>

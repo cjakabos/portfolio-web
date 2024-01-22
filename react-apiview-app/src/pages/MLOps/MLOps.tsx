@@ -200,28 +200,23 @@ export const MLOps: React.FunctionComponent = () => {
                         </form>
                     <div className="container">
                         <br/><br/>2. Test a sample size from predefined DB:<br/>
-                        <button className="update-button"
-                                style={{background: 'green', color: 'white'}}
+                        <button className="ml-update-button"
                                 onClick={() => getMLInfo(10)}
                         > Simulate 10 customers
                         </button>
-                        <button className="update-button"
-                                style={{background: 'green', color: 'white'}}
+                        <button className="ml-update-button"
                                 onClick={() => getMLInfo(20)}
                         > Simulate 20 customers
                         </button>
-                        <button className="update-button"
-                                style={{background: 'green', color: 'white'}}
+                        <button className="ml-update-button"
                                 onClick={() => getMLInfo(50)}
                         > Simulate 50 customers
                         </button>
-                        <button className="update-button"
-                                style={{background: 'green', color: 'white'}}
+                        <button className="ml-update-button"
                                 onClick={() => getMLInfo(100)}
                         > Simulate 100 customers
                         </button>
-                        <button className="update-button"
-                                style={{background: 'green', color: 'white'}}
+                        <button className="ml-update-button"
                                 onClick={() => getMLInfo(200)}
                         > Simulate 200 customers
                         </button>

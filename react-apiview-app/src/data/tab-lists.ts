@@ -2,16 +2,17 @@ export type TabListType = {
     tabKey: string;
     title: string;
     route: string;
+    color: string;
 };
 export const tabLists = [
-    {tabKey: "home", title: "Home", route: "Hello"},
-    {tabKey: "shop", title: "Shop", route: "Shop"},
-    {tabKey: "pet", title: "Pet Store", route: "Pet Store"},
-    {tabKey: "map", title: "Map", route: "Map"},
-    {tabKey: "usmap", title: "USMap", route: "USMap"},
-    {tabKey: "koreamap", title: "KoreaMap", route: "KoreaMap"},
-    {tabKey: "openai", title: "openai", route: "Openai"},
-    {tabKey: "jira", title: "jira", route: "Jira"},
-    {tabKey: "mlops", title: "mlops", route: "Mlops"},
-    {tabKey: "logout", title: "Logout", route: "Logout"}
+    {tabKey: "home", title: "Home", route: "Hello", color: "#efefef"},
+    {tabKey: "shop", title: "Shop", route: "Shop", color: "#efefef"},
+    {tabKey: "pet", title: "Pet Store", route: "Pet Store", color: "#efefef"},
+    {tabKey: "map", title: "Map", route: "Map", color: "#efefef"},
+    {tabKey: "usmap", title: "USMap", route: "USMap", color: "#efefef"},
+    {tabKey: "koreamap", title: "KoreaMap", route: "KoreaMap", color: "#efefef"},
+    {tabKey: "openai", title: "openai", route: "Openai", color: "#efefef"},
+    {tabKey: "jira", title: "jira", route: "Jira", color: "#efefef"},
+    {tabKey: "mlops", title: "mlops", route: "Mlops", color: "#efefef"},
+    {tabKey: "logout", title: "Logout", route: "Logout", color: "#ff9e9e"}
 ];

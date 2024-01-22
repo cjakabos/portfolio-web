@@ -170,22 +170,22 @@ java -jar target/petstore-0.0.1-SNAPSHOT.jar
 
 ```
 To be stored in the .env file in the root directory in this format:
-REACT_APP_GMAPS_API_KEY=xxxxxxxxxxxxxx
+NEXT_PUBLIC_GMAPS_API_KEY=xxxxxxxxxxxxxx
 ```
 
 ## 5. OpenAI API key:
 
 ```
 To be stored in the .env file in the root directory in this format:
-REACT_APP_OPENAI_KEY==xxxxxxxxxxxxxx
+NEXT_PUBLIC_OPENAI_KEY=xxxxxxxxxxxxxx
 ```
 ## 6. Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
 ```
 To be stored in the .env file in the root directory in this format:
-REACT_APP_JIRA_KEY=XXXXXXXXXX
+NEXT_PUBLIC_JIRA_KEY=XXXXXXXXXX
 Together with your requested domain name
-REACT_APP_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
+NEXT_PUBLIC_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
 ```
 ## 7. Web-proxy
 Start [Web Proxy API](../web-proxy/README.md) to avoid CORS issue with Jira [background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)

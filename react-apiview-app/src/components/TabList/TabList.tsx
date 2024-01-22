@@ -9,7 +9,7 @@ const TabList = ({tabLists}: TabListProps) => {
     return (
         <TabListContainer>
             {tabLists.map((TabList) => (
-                <StyledNavLink key={TabList.tabKey} to={TabList.tabKey}>
+                <StyledNavLink key={TabList.tabKey} to={TabList.tabKey} style={{background: TabList.color}}>
                     {TabList.title}
                 </StyledNavLink>
             ))}

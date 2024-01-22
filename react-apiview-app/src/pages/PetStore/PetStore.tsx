@@ -363,7 +363,6 @@ export default function PetStore(this: any) {
     };
 
 
-    // @ts-ignore
     return (
         <table>
             <td style={{borderRight: "solid", width: 600}}>

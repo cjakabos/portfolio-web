@@ -28,7 +28,7 @@ export default function Jira(this: any) {
 
     const [loading, setLoading] = useState(false)
     const [values, setValues] = useState(initialTicketValues);
-    const [tickets, setTickets] = useState([initialGetTicketValues])
+    const [tickets, setTickets] = useState(null)
     const [selectedTicket, setSelectedTicket] = useState(initialGetTicketValues)
     const [isOpen, setIsOpen] = useState(false)
     const [isTicketOpen, setTicketIsOpen] = useState(false)
@@ -63,6 +63,8 @@ export default function Jira(this: any) {
     };
 
     function getTickets() {
+        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         const postData = {
             webDomain: jiraDomain + "/rest/api/latest/search?jql=project=PW&maxResults=1000&fields=key,summary,description",
             webApiKey: "Basic " + jiraKey
@@ -74,7 +76,7 @@ export default function Jira(this: any) {
             }
         };
 
-        //console.log("postData: ", postData);
+        console.log("postData: ", postData);
         axios.post(jiraProxy + "/get", postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data.issues);
@@ -87,6 +89,8 @@ export default function Jira(this: any) {
     }
 
     function updateTicket(ticket: any, reference: any) {
+        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         console.log("reference: ", reference);
         console.log("ticket: ", ticket);
         let postData = {
@@ -132,6 +136,8 @@ export default function Jira(this: any) {
     }
 
     function deleteTicket(ticketKey: string) {
+        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         const postData = {
             webDomain: jiraDomain + "/rest/api/latest/issue/" + ticketKey,
             webApiKey: "Basic " + jiraKey
@@ -143,7 +149,7 @@ export default function Jira(this: any) {
             }
         };
 
-        //console.log("postData: ", postData);
+        console.log("postData: ", postData);
         axios.post(jiraProxy + "/delete", postData, axiosConfig)
             .then((response) => {
                 //console.log("RESPONSE RECEIVED: ", response.data.issues);
@@ -161,6 +167,8 @@ export default function Jira(this: any) {
     };
 
     function newTicket(input: any) {
+        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         const postData = {
             fields: {
                 project:
@@ -193,6 +201,7 @@ export default function Jira(this: any) {
                 //console.log("AXIOS ERROR: ", error.response);
             })
     }
+    console.log('tickets', tickets)
 
     if (loading) return <p>Loading...</p>
 
@@ -246,7 +255,7 @@ export default function Jira(this: any) {
                     </div>
 
                     <div className="Item">
-                        {loading ? (
+                        {tickets != null && loading ? (
                             <div>Loading...</div>
                         ) : (
                             <>
@@ -256,7 +265,7 @@ export default function Jira(this: any) {
                                         <th>Summary</th>
                                         <th>Description</th>
                                     </tr>
-                                    {tickets.map(ticket => (
+                                    {tickets != null && tickets.map(ticket => (
                                         <tr key={ticket.key}>
                                             <td>{ticket.key}</td>
                                             <td>{ticket.fields.summary}</td>

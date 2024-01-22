@@ -341,9 +341,7 @@ export default function Shop(this: any) {
                     {/*<form onSubmit={handleCartFetch}>*/}
                     {/*    <input id="fetchButton" type="submit" value="Get cart contents"/>*/}
                     {/*</form>*/}
-                    <form onSubmit={handleCartClear}>
-                        <input className="submitbutton" id="fetchButton" type="submit" value="Clear cart contents"/>
-                    </form>
+
                     <div className="Cart">
                         {loading ? (
                             <div>Loading...</div>
@@ -373,6 +371,9 @@ export default function Shop(this: any) {
                     <form onSubmit={handleCartSubmit}>
 
                         <input className="submitbutton" id="fetchButton" type="submit" value="Submit cart"/>
+                    </form>
+                    <form onSubmit={handleCartClear}>
+                        <input className="clearbutton" id="fetchButton" type="submit" value="Clear cart contents"/>
                     </form>
                     <div className="login-top">
                         <h1>{("Order history")}</h1>
