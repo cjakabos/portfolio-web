@@ -402,7 +402,7 @@ export default function PetStore(this: any) {
                                 />
                             </td>
                         </table>
-                        <input className="customerButton" type="submit" value="Submit"/>
+                        <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
                     <div className="login-top">
                         <h1>{("All customers")}</h1>
@@ -530,7 +530,7 @@ export default function PetStore(this: any) {
                             </td>
                         </table>
 
-                        <input className="employeeButton" type="submit" value="Submit"/>
+                        <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
                     <div className="login-top">
                         <h1>{("All employees")}</h1>
@@ -588,7 +588,7 @@ export default function PetStore(this: any) {
                                 onChange={date => setDate((date || new Date()))}
                             />
                             <br/>
-                            <input id="fetchButton" type="submit" value="Get availability"/>
+                            <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
                         </form>
                         <div className="Availability2">
                             {loading ? (

@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {JiraTicket} from "../../data/dataJira";
-import "./PopUp.scss";
+
 const initialTicketValues = {
     summary: "",
     description: "",
@@ -60,10 +60,10 @@ export const PopUp: React.FunctionComponent<Props> = ({
                                 size={100}
                             />
                         </label>
-                        <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                        <input className="popup-submit" id="submitButton" type="submit" value="Submit"/>
                     </form>
                     <form onSubmit={closePopup}>
-                        <input className="login-submit" id="loginButton" type="submit" value="CLOSE"/>
+                        <input className="popup-close" id="closeButton" type="submit" value="CLOSE"/>
                     </form>
                 </div>
             </dialog>

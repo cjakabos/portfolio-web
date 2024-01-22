@@ -196,7 +196,7 @@ export const MLOps: React.FunctionComponent = () => {
                                     max="200"
                                 />
                             </label>
-                            <input className="login-submit" id="loginButton" type="submit" value="Get MLInfo"/>
+                            <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
                         </form>
                     <div className="container">
                         <br/><br/>2. Test a sample size from predefined DB:<br/>
@@ -293,7 +293,7 @@ export const MLOps: React.FunctionComponent = () => {
                                     />
                                 </td>
                                 <td>
-                                    <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                                 </td>
                             </table>
 

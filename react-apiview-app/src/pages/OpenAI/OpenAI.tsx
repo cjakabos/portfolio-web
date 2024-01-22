@@ -123,7 +123,7 @@ export default function OpenAI(this: any) {
                                 size={100}
                             />
                         </label>
-                        <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                         <div className="login-error">
                             {Feedback && <h1 style={{color: 'green'}}>{(Feedback)}</h1>}
                         </div>
@@ -147,7 +147,7 @@ export default function OpenAI(this: any) {
                                 size={100}
                             />
                         </label>
-                        <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                         <br/>
                         {DalleFeedback && <img src={DalleFeedback.url1}></img>}
                         <br/>

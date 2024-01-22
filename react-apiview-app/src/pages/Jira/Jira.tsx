@@ -234,13 +234,13 @@ export default function Jira(this: any) {
                             size={100}
                         />
                     </label>
-                    <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                 </form>
                 <div>
                     <div className="login-top">
                         <h1>{("All Jira tickets")}
                             <form onSubmit={handleGetSubmit}>
-                                <input className="login-submit" id="loginButton" type="submit" value="Get tickets"/>
+                                <input className="submitbutton" id="loginButton" type="submit" value="Get tickets"/>
                             </form>
                         </h1>
                     </div>
@@ -261,13 +261,11 @@ export default function Jira(this: any) {
                                             <td>{ticket.key}</td>
                                             <td>{ticket.fields.summary}</td>
                                             <td>{ticket.fields.description}</td>
-                                            <button className="update-button"
-                                                    style={{background: 'green', color: 'white'}}
+                                            <button className="submitbutton"
                                                     onClick={() => initiateUpdateTicket(ticket)}
                                             > Update
                                             </button>
-                                            <button className="delete-button"
-                                                    style={{background: 'red', color: 'white'}}
+                                            <button className="clearbutton"
                                                     onClick={() => deleteTicket(ticket.key)}
                                             > Delete
                                             </button>

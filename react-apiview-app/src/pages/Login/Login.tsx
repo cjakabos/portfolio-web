@@ -5,6 +5,7 @@ import axios from "axios";
 import {Link} from "react-router-dom";
 
 
+
 const initialValues = {
     username: "",
     password: "",
@@ -107,7 +108,7 @@ export default function Login(this: any) {
                                 required
                             />
                         </label>
-                        <input className="login-submit" id="loginButton" type="submit" value="Submit"/>
+                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                         <div>
                             <h1 style={{color: 'red'}}>{("New user?")} <Link to="/signup"> Signup </Link></h1>
                         </div>

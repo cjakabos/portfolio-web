@@ -174,7 +174,7 @@ export default function Stock() {
                             {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
                             {/*   onClick={() => functionName()}                        */}
                             {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
-                            <input type="submit" value="Submit"/>
+                            <input className="submitbutton" type="submit" value="Submit"/>
                             <div className="login-top">
                                 {Feedback === 'OK' && <h1 style={{color: 'green'}}>{("Successful registration")} <Link
                                     to="/login"> Login </Link></h1>}

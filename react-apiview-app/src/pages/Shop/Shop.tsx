@@ -294,7 +294,7 @@ export default function Shop(this: any) {
                             </td>
                         </table>
 
-                        <input className="itemButton" type="submit" value="Submit"/>
+                        <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
                 </div>
                 <div>
@@ -321,7 +321,7 @@ export default function Shop(this: any) {
                                             <td>{item.name}</td>
                                             <td>{item.price}</td>
                                             <td>{item.description}</td>
-                                            <button className="cart-button" onClick={() => addToCart(item)}>Add to
+                                            <button className="submitbutton" onClick={() => addToCart(item)}>Add to
                                                 cart
                                             </button>
                                         </tr>
@@ -342,7 +342,7 @@ export default function Shop(this: any) {
                     {/*    <input id="fetchButton" type="submit" value="Get cart contents"/>*/}
                     {/*</form>*/}
                     <form onSubmit={handleCartClear}>
-                        <input id="fetchButton" type="submit" value="Clear cart contents"/>
+                        <input className="submitbutton" id="fetchButton" type="submit" value="Clear cart contents"/>
                     </form>
                     <div className="Cart">
                         {loading ? (
@@ -372,7 +372,7 @@ export default function Shop(this: any) {
                     </div>
                     <form onSubmit={handleCartSubmit}>
 
-                        <input id="fetchButton" type="submit" value="Submit cart"/>
+                        <input className="submitbutton" id="fetchButton" type="submit" value="Submit cart"/>
                     </form>
                     <div className="login-top">
                         <h1>{("Order history")}</h1>
