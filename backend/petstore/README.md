@@ -79,7 +79,7 @@ Each entry in this collection contains information in its `Body` tab for test pu
 7. Look up currently scheduled events for an employee, a pet, or a customer.
 
 **The postman interface**
-![](./petstore_postman.png)
+![](petstore_postman.png)
 
 ## Built With
 

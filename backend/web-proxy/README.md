@@ -14,7 +14,7 @@ java -jar target/web-proxy-0.0.1-SNAPSHOT.jar
 ```
 In a Jira example "fields" it the request body to [create a new ticket](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post)
 while webDomain and webApiKey are custom made fields by me, to specifify what URL endpoint and what Authentication you want to use
-More details: [Web Proxy API](../react-apiview-app/README.md#web-proxy)
+More details: [Web Proxy API](../../frontend/react-apiview-app/README.md#web-proxy)
 ```json
 {
   "fields": {

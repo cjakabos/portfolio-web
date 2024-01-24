@@ -2,12 +2,12 @@
 
 This is a collection of my hobby development projects:
 - Back-end API services and basic HTML front-end developed by me during my Nanodegree [Java Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035), combined to a user interface.
-- New React front-end for utilizing these back-end services from above and new services below. [React Apiview App](react-apiview-app/README.md)
-- New ML pipeline for [Dynamic Customer Segmentation](ml-pipeline/README.md)
+- New React front-end for utilizing these back-end services from above and new services below. [React Apiview App](frontend/react-apiview-app/README.md)
+- New ML pipeline for [Dynamic Customer Segmentation](backend/ml-pipeline/README.md)
 - External api service integration, such as:
-  - [OpenAI API](react-apiview-app/README.md#openai)
-  - [Google Maps API](react-apiview-app/README.md#googlemaps)
-  - [Jira API](react-apiview-app/README.md#jira)
+  - [OpenAI API](frontend/react-apiview-app/README.md#openai)
+  - [Google Maps API](frontend/react-apiview-app/README.md#googlemaps)
+  - [Jira API](frontend/react-apiview-app/README.md#jira)
 - [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
 
 ## Certificates
@@ -32,17 +32,17 @@ Extra layers of cloud interface application, which are extra curriculum work by 
 for running them separately check the READMEs below)to one main front-end interface:
 
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
-- [x] Pet interface for the Pet Store's REST API. The [third project](petstore/README.md) of the nanodegree.
+- [x] Pet interface for the Pet Store's REST API. The [third project](backend/petstore/README.md) of the nanodegree.
 - [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
 - [x] OpenAI interface for OpenAI API. [Description](#openai-interface-extra-tab)
 - [x] Google Maps api interface for visualizing vehicles from the Car service's API. [Description](#openai-interface-extra-tab)
 
 Brand new React front-end, to integrate all previous solutions together, with several new external API integrations:
 
-- [x] [New front-end](react-apiview-app/README.md) 
-- [x] [Google maps](react-apiview-app/README.md#googlemaps)
-- [x] [OpenAI](react-apiview-app/README.md#openai)
-- [x] [Jira](react-apiview-app/README.md#jira)
+- [x] [New front-end](frontend/react-apiview-app/README.md) 
+- [x] [Google maps](frontend/react-apiview-app/README.md#googlemaps)
+- [x] [OpenAI](frontend/react-apiview-app/README.md#openai)
+- [x] [Jira](frontend/react-apiview-app/README.md#jira)
 
 ### The Back-End
 
@@ -74,7 +74,7 @@ Features:
 **4. Features of extra services**
 
 - [Vehicles Service](vehicles-api/README.md).
-- [Petstore Service](petstore/README.md).
+- [Petstore Service](backend/petstore/README.md).
 - [eCommerce Service](ecommerce/README.md).
 
 ### The Front-End
@@ -104,32 +104,32 @@ I. Files (base functionality)</u>
 - Any errors related to file actions is displayed (no duplicates or empty/large files).
   Files: upload, view, delete.
 
-![](./examples/files.png)
+![](frontend/examples/files.png)
 
 II. Notes (base functionality)
 
 - The user can create notes and see/edit/delete notes they have previously created. Size limit is 1000 character.
 
-![](./examples/notes.png)
+![](frontend/examples/notes.png)
 
 III. Credentials (base functionality)
 
 - The user can store credentials for specific websites and see/edit/delete the credentials they've previously stored.
 - Passwords are displayed in encrypted form in the list, but upon editing they are able to see the unencrypted values.
 
-![](./examples/credentials.png)
+![](frontend/examples/credentials.png)
 
 IV. Cars (extra tab, optional)
 
 - The user can do basic CRUD operations from the Cars tab, which uses [Vehicles service API interface](vehicles-api/README.md).
 - Any errors related to the operations is displayed.
 
-![](./examples/cars.png)
+![](frontend/examples/cars.png)
 
 V. Pets (extra tab, optional)
 
 - The user can create owners, employees and pets and assign them a schedule from the Pets tab, which uses [Petstore
-  service API interface](petstore/README.md):.
+  service API interface](backend/petstore/README.md):.
 - Any errors related to the operations is displayed.
 - Order of usage:
   * add a new owner
@@ -138,7 +138,7 @@ V. Pets (extra tab, optional)
   * assign a schedule to it
   * add a schedule based on date, pet and employee and it's skill
 
-![](./examples/petstore.png)
+![](frontend/examples/petstore.png)
 
 VI. eCommerce (extra tab, optional)
 
@@ -150,21 +150,21 @@ VI. eCommerce (extra tab, optional)
   * Add items to the cart, clear or submit order, when it is done.
   * Check previous orders, if any, in the table.
   
-![](./examples/ecommerce.png)
+![](frontend/examples/ecommerce.png)
 
 ### OpenAI interface (extra tab)
 
 - The user can create OpenAI completition and Dall-E image generation via the OpenAI API.
 - Order of usage:
-  * Make sure to use your OpenAI key in openApiKey parameter in [application.properties](cloudinterface/src/main/resources/application.properties) ![](./examples/OpenAI_0_apiKey.png)
-  * Click Add a New OpenAI Completition request. This will initiate a completition request in the background. ![](./examples/OpenAI_1_tab.png)
-  * Fill out the text you want to use for completition.![](./examples/OpenAI_2_input.png)
-  * Upon Submit, you will get a response from OpenAI.![](./examples/OpenAI_3_output.png)
-  * The latest submission is always visible at the OpenAI request tab.![](./examples/OpenAI_4_history.png)
-  * Click Add a New OpenAI Image request. This will initiate a Dall-E request in the background. ![](./examples/OpenAI_1_tab.png)
-  * Fill out the text you want to use for image generation.![](./examples/OpenAI_5_input.png)
-  * Upon Submit, you will get an image response from OpenAI.![](./examples/OpenAI_6_output.png)
-  * The latest submission is always visible at the OpenAI request tab.![](./examples/OpenAI_7_history.png)
+  * Make sure to use your OpenAI key in openApiKey parameter in [application.properties](cloudinterface/src/main/resources/application.properties) ![](frontend/examples/OpenAI_0_apiKey.png)
+  * Click Add a New OpenAI Completition request. This will initiate a completition request in the background. ![](frontend/examples/OpenAI_1_tab.png)
+  * Fill out the text you want to use for completition.![](frontend/examples/OpenAI_2_input.png)
+  * Upon Submit, you will get a response from OpenAI.![](frontend/examples/OpenAI_3_output.png)
+  * The latest submission is always visible at the OpenAI request tab.![](frontend/examples/OpenAI_4_history.png)
+  * Click Add a New OpenAI Image request. This will initiate a Dall-E request in the background. ![](frontend/examples/OpenAI_1_tab.png)
+  * Fill out the text you want to use for image generation.![](frontend/examples/OpenAI_5_input.png)
+  * Upon Submit, you will get an image response from OpenAI.![](frontend/examples/OpenAI_6_output.png)
+  * The latest submission is always visible at the OpenAI request tab.![](frontend/examples/OpenAI_7_history.png)
 
 
 ### Testing
@@ -197,7 +197,7 @@ reading order) at once for full operation. Either follow base of full functional
 - [Pricing Service](pricing-service/README.md): a mock service to simulate a backend for vehicle pricing.
 - [Vehicles API](vehicles-api/README.md): second main project of nanodegree program. A REST API to maintain vehicle data
   and to provide a complete view of vehicle details including price and address.
-- [Petstore](petstore/README.md): third main project of nanodegree program. A REST API to maintain petstore data with
+- [Petstore](backend/petstore/README.md): third main project of nanodegree program. A REST API to maintain petstore data with
   pets, owners, employees and schedules.
 - [eCommerce](ecommerce/README.md): fourth main project of nanodegree program. A REST API to maintain ecommerce data
   with users, items, carts and orders.
@@ -256,7 +256,7 @@ java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
 java -jar target/petstore-0.0.1-SNAPSHOT.jar
 ```
 
-• The service is available by default on port 8083. Check [README](petstore/README.md) for Postman usage.
+• The service is available by default on port 8083. Check [README](backend/petstore/README.md) for Postman usage.
 
 7. Ecommerce:
 

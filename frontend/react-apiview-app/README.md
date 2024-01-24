@@ -22,8 +22,8 @@ And you should be able to log in, and see the current front-end of the api integ
 ![](../examples/react2.png)
 
 ## 1. Machine learning system for Customer Segmentation  
-![](../ml-pipeline/customers/Screen.png)  
-MLOps interface for [Customer Segmentation API](../ml-pipeline/README.md), the user is able to:
+![](../../backend/ml-pipeline/customers/Screen.png)  
+MLOps interface for [Customer Segmentation API](../../backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
 - Sample reference database with predefined 10-20-50-100-200 amount of samples.
@@ -43,7 +43,7 @@ View results:
 - Submit cart and check order history.
   ![](../examples/react3.png)
 
-## 3. Pet Store interface for the [Pet Store's REST API](../petstore/README.md), the user is able to:
+## 3. Pet Store interface for the [Pet Store's REST API](../../backend/petstore/README.md), the user is able to:
 
 - Add new customer.
 - Add a new Pet to existing customers.
@@ -188,7 +188,7 @@ Together with your requested domain name
 NEXT_PUBLIC_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
 ```
 ## 7. Web-proxy
-Start [Web Proxy API](../web-proxy/README.md) to avoid CORS issue with Jira [background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
+Start [Web Proxy API](../../backend/web-proxy/README.md) to avoid CORS issue with Jira [background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
 ```
 mvn clean package
 java -jar target/web-proxy-0.0.1-SNAPSHOT.jar

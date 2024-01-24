@@ -27,6 +27,6 @@ hs_err_pid*
 */*.mvn
 */target
 */.gitignore
-ml-pipeline/data/
-ml-pipeline/model/
+backend/ml-pipeline/data/
+backend/ml-pipeline/model/
 package-lock.json
