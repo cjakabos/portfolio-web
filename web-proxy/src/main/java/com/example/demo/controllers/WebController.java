@@ -65,7 +65,7 @@ public class WebController {
         HttpResponse response;
         response = httpClient.execute(request);
 
-        return response.getStatusLine().toString();
+        return EntityUtils.toString(response.getEntity(), "UTF-8");
     }
 
     @CrossOrigin(origins = "http://localhost:5001")

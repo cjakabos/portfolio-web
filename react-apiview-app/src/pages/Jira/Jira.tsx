@@ -33,15 +33,8 @@ export default function Jira(this: any) {
     const [isOpen, setIsOpen] = useState(false)
     const [isTicketOpen, setTicketIsOpen] = useState(false)
 
-    // Set the value received from the proces.env to a local state
-    var [jiraKey, setJiraKey] = useState("")
-    var [jiraDomain, setJiraDomain] = useState("")
-
-
     // Load all get methods once, when page renders
     useEffect(() => {
-        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
-        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         getTickets()
     }, []);
 
@@ -63,11 +56,9 @@ export default function Jira(this: any) {
     };
 
     function getTickets() {
-        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
-        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         const postData = {
-            webDomain: jiraDomain + "/rest/api/latest/search?jql=project=PW&maxResults=1000&fields=key,summary,description",
-            webApiKey: "Basic " + jiraKey
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/search?jql=project=PW&maxResults=1000&fields=key,summary,description",
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
         };
 
         let axiosConfig = {
@@ -89,8 +80,6 @@ export default function Jira(this: any) {
     }
 
     function updateTicket(ticket: any, reference: any) {
-        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
-        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         console.log("reference: ", reference);
         console.log("ticket: ", ticket);
         let postData = {
@@ -106,8 +95,8 @@ export default function Jira(this: any) {
                     }
                 ]
             },
-            webDomain: jiraDomain + "/rest/api/latest/issue/" + reference.key,
-            webApiKey: "Basic " + jiraKey
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue/" + reference.key,
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
         };
 
 
@@ -136,11 +125,9 @@ export default function Jira(this: any) {
     }
 
     function deleteTicket(ticketKey: string) {
-        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
-        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         const postData = {
-            webDomain: jiraDomain + "/rest/api/latest/issue/" + ticketKey,
-            webApiKey: "Basic " + jiraKey
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue/" + ticketKey,
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
         };
 
         let axiosConfig = {
@@ -167,8 +154,6 @@ export default function Jira(this: any) {
     };
 
     function newTicket(input: any) {
-        jiraKey = (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
-        jiraDomain = (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test2')
         const postData = {
             fields: {
                 project:
@@ -181,8 +166,8 @@ export default function Jira(this: any) {
                     name: "Task"
                 },
             },
-            webDomain: jiraDomain + "/rest/api/latest/issue",
-            webApiKey: "Basic " + jiraKey
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue",
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
         };
 
         let axiosConfig = {
@@ -201,6 +186,16 @@ export default function Jira(this: any) {
                 //console.log("AXIOS ERROR: ", error.response);
             })
     }
+    const [updates, setUpdates] = useState(initialTicketValues);
+    const change = (event: { target: { name: any; value: any; }; }) => {
+        console.log(updates);
+        const {name, value} = event.target;
+        setUpdates({
+            ...updates,
+            [name]: value,
+        });
+    };
+
     console.log('tickets', tickets)
 
     if (loading) return <p>Loading...</p>
@@ -210,10 +205,40 @@ export default function Jira(this: any) {
             <article>
                 {isTicketOpen ?
                     <PopUp
-                        jiraTicket={selectedTicket}
-                        closePopup={() => setTicketIsOpen(false)}
-                        submit={updateTicket}
-                    />
+                    >
+                        <form onSubmit={() => updateTicket(updates, selectedTicket)}>
+                            <label>
+                                Ticket info:
+                                <p/>
+                                <input
+                                    type="text"
+                                    name="summary"
+                                    defaultValue={selectedTicket.fields.summary}
+                                    //value={updates.summary}
+                                    onChange={change}
+                                    maxLength={50}
+                                    required
+                                    size={50}
+                                />
+                                <input
+                                    type="text"
+                                    name="description"
+                                    defaultValue={selectedTicket.fields.description}
+                                    //value={updates.description}
+                                    onChange={change}
+                                    maxLength={50}
+                                    required
+                                    size={50}
+                                />
+                            </label>
+                            <br/>
+                            <input className="popup-submit" id="submitButton" type="submit" value="Submit"/>
+                        </form>
+
+                        <form onSubmit={() => setTicketIsOpen(false)}>
+                            <input className="popup-close" id="closeButton" type="submit" value="CLOSE"/>
+                        </form>
+                    </PopUp>
                     : null}
                 <div className="login-top">
                     <h1>{("Create a Jira ticket")}</h1>
@@ -231,7 +256,9 @@ export default function Jira(this: any) {
                             maxLength={50}
                             required
                             size={100}
+                            height={500}
                         />
+                        <br/>
                         <input
                             type="text"
                             name="description"
@@ -241,8 +268,10 @@ export default function Jira(this: any) {
                             maxLength={50}
                             required
                             size={100}
+                            height={50}
                         />
                     </label>
+                    <br/>
                     <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                 </form>
                 <div>
