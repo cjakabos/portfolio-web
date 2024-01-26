@@ -18,6 +18,7 @@ import Map from "@/pages/Map/Map";
 import Logout from "@/pages/Logout/Logout";
 import USMap from "@/pages/USMap/us-map";
 import KoreaBubbleMap, {KoreaMapData} from "@/pages/InteractiveMap/KoreaBubbleMap";
+import OpenMaps from "@/pages/OpenMaps/OpenMaps";
 
 const data: KoreaMapData = {
     sido: [{ code: "1100000000", name: "Seoul", count: 400 }],
@@ -75,6 +76,7 @@ export default function Home() {
                         <Route path="map" element={<Map/>}/>
                         <Route path="usmap" element={<USMap/>}/>
                         <Route path="koreamap" element={<KoreaBubbleMap width={1000} height={1000} data={data}/>}/>
+                        <Route path="openmaps" element={<OpenMaps/>}/>
                         <Route path="openai" element={<OpenAI/>}/>
                         <Route path="jira" element={<Jira/>}/>
                         <Route path="mlops" element={<MLOps/>}/>
