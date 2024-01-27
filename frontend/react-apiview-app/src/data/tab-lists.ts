@@ -14,6 +14,6 @@ export const tabLists = [
     {tabKey: "openmaps", title: "OpenMaps", route: "OpenMaps", color: "#efefef"},
     {tabKey: "openai", title: "openai", route: "Openai", color: "#efefef"},
     {tabKey: "jira", title: "jira", route: "Jira", color: "#efefef"},
-    {tabKey: "mlops", title: "mlops", route: "Mlops", color: "#efefef"},
+    {tabKey: "mlops", title: "ML Segmentation", route: "Mlops", color: "#efefef"},
     {tabKey: "logout", title: "Logout", route: "Logout", color: "#ff9e9e"}
 ];

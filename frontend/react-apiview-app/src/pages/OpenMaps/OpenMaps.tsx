@@ -1,12 +1,26 @@
 "use client";
-import React, {useMemo, useState} from "react";
-import { MapContainer, Marker, TileLayer, LayersControl } from 'react-leaflet'
+import React, {useEffect, useMemo, useState} from "react";
+import {
+	MapContainer,
+	Marker,
+	Popup,
+	TileLayer,
+	GeoJSON,
+	useMap,
+	LayersControl,
+	useMapEvent,
+	Rectangle,
+} from 'react-leaflet';
 import L, { Icon, LatLng, LeafletMouseEvent } from 'leaflet'
 import { addressPoints } from './realworld'
 import 'leaflet/dist/leaflet.css'
 import MarkerClusterGroup from "react-leaflet-cluster";
 import {iconCultual, iconFood, iconTourism, iconSport} from "@/pages/OpenMaps/Icons";
+import { GeometryCollection, Topology } from "topojson-specification";
 type AdressPoint = Array<[number, number, string]>
+import SwedenMapData from '../../../public/svenska-landskap.geo.json';
+import SwedenMuncipalityMapData from '../../../public/svenska-kommun.geo.json';
+import WorldMapData from '../../../public/world.geo.json';
 
 export default function OpenMaps() {
 
@@ -40,18 +54,11 @@ export default function OpenMaps() {
 
 		function onMapClick(e: { latlng: L.LatLngExpression }) {
 			const cords = getXyCoords(e.latlng.toString());
-			const roundedCoords: number[] = [];
-
-			cords.forEach(element => {
-				const roundedCoord = Math.round(parseInt(element, 10));
-
-				roundedCoords.push(roundedCoord);
-			});
 
 			popup
 				.setLatLng(e.latlng)
 				.setContent(`
-                You clicked the map at ${roundedCoords.toString()}
+                You clicked the map at ${cords.toString()}
                 `)
 				.openOn(map);
 		}
@@ -76,13 +83,7 @@ export default function OpenMaps() {
 		return icon
 	}, [])
 	const [center, setCenter] = useState<any>([59.328246, 18.053383]);
-	const [bounds, setBounds] = useState<any>([
-		[center[0]-0.25, center[1]-0.15],
-		[center[0]+0.25, center[1]+0.15],
-	]);
 
-	console.log(center)
-	console.log(bounds)
 
 	return (
 		<div>
@@ -92,9 +93,6 @@ export default function OpenMaps() {
 				// touchZoom={true}
 				scrollWheelZoom={true}
 				style={{ height: "1000px", width: "100%" }}
-				maxBounds={bounds}
-				minZoom={12}
-				maxZoom={16}
 				fullscreenControl={true}
 				ref={async (map) => {
 					if(map) {
@@ -115,12 +113,28 @@ export default function OpenMaps() {
 							url="https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"
 						/>
 					</LayersControl.BaseLayer>
-					<LayersControl.BaseLayer name="Landscape">
+					<LayersControl.BaseLayer name="GoogleSateliteHybrid">
+						<TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" />
+					</LayersControl.BaseLayer>
+					<LayersControl.BaseLayer name="Google Maps">
+						<TileLayer url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" />
+					</LayersControl.BaseLayer>
+					<LayersControl.BaseLayer name="Esri World Street Map">
 						<TileLayer
-							attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-							url="https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png"
+							url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+							minZoom={0}
+							maxZoom={20}
 						/>
 					</LayersControl.BaseLayer>
+					<LayersControl.Overlay name="Sweden counties">
+						<GeoJSON style={{ color: "red" }} data={SwedenMapData as any} />
+					</LayersControl.Overlay>
+					<LayersControl.Overlay name="Sweden muncipalities">
+						<GeoJSON style={{ color: "blue" }} data={SwedenMuncipalityMapData as any} />
+					</LayersControl.Overlay>
+					<LayersControl.Overlay name="World">
+						<GeoJSON style={{ color: "green" }} data={WorldMapData as any} />
+					</LayersControl.Overlay>
 
 					<MarkerClusterGroup chunkedLoading>
 						{(addressPoints as AdressPoint).map((address, index) => (
