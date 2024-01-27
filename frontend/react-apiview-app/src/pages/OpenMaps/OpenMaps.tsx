@@ -8,64 +8,31 @@ import {
 	GeoJSON,
 	useMap,
 	LayersControl,
-	useMapEvent,
+	useMapEvents,
 	Rectangle,
 } from 'react-leaflet';
 import L, { Icon, LatLng, LeafletMouseEvent } from 'leaflet'
 import { addressPoints } from './realworld'
 import 'leaflet/dist/leaflet.css'
 import MarkerClusterGroup from "react-leaflet-cluster";
-import {iconCultual, iconFood, iconTourism, iconSport} from "@/pages/OpenMaps/Icons";
+import axios from "axios";
+import {iconCultual, iconFood, iconTourism, iconSport, iconVoyager} from "@/pages/OpenMaps/Icons";
 import { GeometryCollection, Topology } from "topojson-specification";
 type AdressPoint = Array<[number, number, string]>
 import SwedenMapData from '../../../public/svenska-landskap.geo.json';
 import SwedenMuncipalityMapData from '../../../public/svenska-kommun.geo.json';
 import WorldMapData from '../../../public/world.geo.json';
+import VoyagerIcon from '../../../public/voyager.svg';
 
 export default function OpenMaps() {
 
-	function getXyCoords(latLngString: string): string[] {
-		try {
-			const match = latLngString.match(/\(([^)]+)\)/);
-
-			if(match) {
-				return match[1].split(',');
-			} else {
-				return [];
-			}
-		} catch (error) {
-			console.log(error, 'red');
-		}
-	}
-
-	const setMapReference = (map: L.Map) => {
-		if (!map) {
-			console.log('Map not ready yet...', 'yellow');
-
-			return;
-		}
-
-		// Set the map bounds to the map size
-		//myMarkers.addTo(map);
-		//setMyMarkers(myMarkers);
-
-		// Getting map co-ordinates on click
-		const popup = L.popup();
-
-		function onMapClick(e: { latlng: L.LatLngExpression }) {
-			const cords = getXyCoords(e.latlng.toString());
-
-			popup
-				.setLatLng(e.latlng)
-				.setContent(`
-                You clicked the map at ${cords.toString()}
-                `)
-				.openOn(map);
-		}
-		map.on('click', onMapClick);
-	};
-
-
+	// Load all get methods once, when page renders
+	useEffect(() => {
+		(async () => {
+			const vehicles = await getVehicles();
+		})();
+	}, []);
+	
 	const icon1 = useMemo(() => {
 		const icon: Icon = iconFood
 		return icon
@@ -82,7 +49,164 @@ export default function OpenMaps() {
 		const icon: Icon = iconSport
 		return icon
 	}, [])
+	const icon5 = useMemo(() => {
+		const icon: Icon = iconVoyager
+		return icon
+	}, [])
+
 	const [center, setCenter] = useState<any>([59.328246, 18.053383]);
+	const [markers, setMarkers] = React.useState([
+		{
+			lat: 999,
+			lng: 999,
+			time: new Date(),
+			comment: "",
+			id: "",
+		}
+	]);
+
+	function vehicleSubmit(lat: number, lng: number) {
+		var postData = {
+			condition: "USED",
+			details: {
+				body: "sedan",
+				model: "Impala",
+				manufacturer: {
+					code: 101,
+					name: "Chevrolet"
+				},
+				numberOfDoors: 4,
+				fuelType: "Gasoline",
+				engine: "3.6L V6",
+				mileage: 32280,
+				modelYear: 2018,
+				productionYear: 2018,
+				externalColor: "white"
+			},
+			location: {
+				lat: lat,
+				lon: lng
+			}
+		};
+
+		let axiosConfig = {
+			headers: {
+				'Content-Type': 'application/json;charset=UTF-8',
+				'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
+			}
+		};
+		//setName(JSON.stringify(postData));
+		axios.post('http://localhost:8080/cars', postData, axiosConfig)
+			.then((response) => {
+				console.log("RESPONSE RECEIVED: ", response.data);
+
+			})
+			.catch((error) => {
+				console.log("AXIOS ERROR: ", postData);
+				if (error.code === 'ERR_NETWORK') {
+				}
+			})
+
+
+	};
+
+	async function getVehicles() {
+
+		let axiosConfig = {
+			headers: {
+				'Content-Type': 'application/json;charset=UTF-8',
+				'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
+			}
+		};
+
+		axios.get('http://localhost:8080/cars', axiosConfig)
+			.then((response) => {
+				// for each element received, put up a marker
+				response.data._embedded.carList.map((option: { location: any; id: any }) => (
+					setMarkers((current) => [
+						...current,
+						{
+							lat: Number(option.location.lat),
+							lng: Number(option.location.lon),
+							time: new Date(),
+							comment: "vehicle-api fetch",
+							id: option.id,
+						},
+					])
+
+				));
+				//setMapFeedback('OK')
+				console.log("response: ", response.data._embedded.carList);
+				return response.data._embedded.carList;
+			})
+			.catch((error) => {
+				console.log("AXIOS ERROR: ", axiosConfig);
+				//setName(error.response);
+				if (error.code === 'ERR_NETWORK') {
+					//setMapFeedback('API ERROR')
+				}
+			})
+
+	};
+
+	function deleteVehicle(vehicleId: string) {
+		let axiosConfig = {
+			headers: {
+				'Content-Type': 'application/json;charset=UTF-8',
+				'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
+			}
+		};
+
+		axios.delete('http://localhost:8080/cars/' + vehicleId, axiosConfig)
+			.then((response) => {
+				//setMapFeedback('OK')
+				console.log("response delete: ", response.status);
+			})
+			.catch((error) => {
+				console.log("AXIOS ERROR: ", axiosConfig);
+				//setName(error.response);
+				if (error.code === 'ERR_NETWORK') {
+					//setMapFeedback('API ERROR')
+				}
+			})
+	};
+
+	const handleMapClick = (e) => {
+		const comment = prompt("Enter a comment for this location:", "");
+		if (comment == '') {
+			return null;
+		}
+		const newMarker = {
+			lat: e.latlng.lat,
+			lng: e.latlng.lng,
+			//iconKey: selectedIcon, // Save the key of the selected icon
+			comment: comment || "No comment provided"
+		};
+		setMarkers([...markers, newMarker]);
+		vehicleSubmit(newMarker.lat, newMarker.lng)
+		console.log('newMarker', markers)
+
+		/*		if (userId) {
+                    saveUserData(userId, { markers: [...markers, newMarker], mapState });
+                }*/
+	};
+
+	const handleRemoveMarker = (markerIndex, vehicleId) => {
+		deleteVehicle(vehicleId)
+		const updatedMarkers = markers.filter((_, index) => index !== markerIndex);
+		setMarkers(updatedMarkers);
+	};
+
+
+
+	const MapEvents = ({ onMapClick, onMapMove, onMapZoom }) => {
+		useMapEvents({
+			click: onMapClick,
+			moveend: onMapMove,
+			zoomend: onMapZoom
+		});
+		return null;
+	};
 
 
 	return (
@@ -94,12 +218,17 @@ export default function OpenMaps() {
 				scrollWheelZoom={true}
 				style={{ height: "1000px", width: "100%" }}
 				fullscreenControl={true}
-				ref={async (map) => {
+				onClick={handleMapClick}
+/*				ref={async (map) => {
 					if(map) {
 						setMapReference(map);
 					}
-				}}
+				}}*/
 			>
+				<MapEvents
+					onMapClick={handleMapClick}
+				/>
+
 				<LayersControl position="topright">
 					<LayersControl.BaseLayer checked name="OpenStreetMap">
 						<TileLayer
@@ -137,8 +266,20 @@ export default function OpenMaps() {
 					</LayersControl.Overlay>
 
 					<MarkerClusterGroup chunkedLoading>
-						{(addressPoints as AdressPoint).map((address, index) => (
+{/*						{(addressPoints as AdressPoint).map((address, index) => (
 							<Marker key={index} position={[address[0], address[1]]} title={address[2]} icon={icon4} ></Marker>
+						))}*/}
+						{markers.map((marker, idx) => (
+							<Marker key={`${marker.lat}-${marker.lng}`} position={{lat: marker.lat, lng: marker.lng}} icon={icon5}>
+								<Popup className="markerpopup">
+									<div className="markercomment">{marker.comment}</div>
+									<br />
+									<button className="clearbutton" onClick={(e) => {
+										e.stopPropagation(); // Prevent triggering map click
+										handleRemoveMarker(idx, marker.id);
+									}}>Remove</button>
+								</Popup>
+							</Marker>
 						))}
 					</MarkerClusterGroup>
 				</LayersControl>

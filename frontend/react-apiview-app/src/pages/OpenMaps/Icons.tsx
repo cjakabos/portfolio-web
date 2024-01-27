@@ -19,3 +19,7 @@ export const iconSport = new L.Icon({
   iconUrl: 'icons/athlete.png',
   iconSize: new L.Point(32, 32),
 })
+export const iconVoyager = new L.Icon({
+  iconUrl: 'icons/voyager.png',
+  iconSize: new L.Point(32, 32),
+})
