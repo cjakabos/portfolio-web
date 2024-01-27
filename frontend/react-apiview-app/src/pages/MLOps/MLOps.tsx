@@ -298,8 +298,15 @@ export const MLOps: React.FunctionComponent = () => {
                     <br/>
                     <br/>
                     <h1>{("MLInfo Results: ")}</h1>
-                    <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image" />
-                    <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image" />
+                    <div id="banner">
+                        <div className="inline-block">
+                            <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image" style={{height:500, width:500}}/>
+                        </div>
+                        <div className="inline-block">
+                            <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image" style={{height:500, width:500}}/>
+                        </div>
+                    </div>
+
                 </div>
                 <br/>
                 <br/>

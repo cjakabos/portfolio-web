@@ -420,7 +420,7 @@ export default function PetStore(this: any) {
                                         <tr key={customer.id}>
                                             <td>{customer.name}</td>
                                             <td>{customer.phoneNumber}</td>
-                                            {customer.id && <button className="pet-button"
+                                            {customer.id && <button className="submitbutton"
                                                                     onClick={() => petSubmit(customer.id)}>Add a pet
                                             </button>}
                                         </tr>
@@ -614,7 +614,7 @@ export default function PetStore(this: any) {
                                                     ))}
                                                 </select>}
                                                 {employee.id &&
-                                                    <button className="pet-button" onClick={() => scheduleSubmit(
+                                                    <button className="submitbutton" onClick={() => scheduleSubmit(
                                                         employee.id,
                                                         selectedOption
                                                     )}>Add a schedule</button>}

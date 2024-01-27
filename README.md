@@ -11,7 +11,7 @@ This is a collection of my development projects from Web Development and Predict
 - [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
 
 Example view with ML pipeline and other tabs:
-![](backend/ml-pipeline/customers/Screen.png)
+![](examples/react8.png)
 
 ## Certificates
 [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
@@ -44,13 +44,13 @@ The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
 If everything is correctly started, you should see a login page:
-![](frontend/examples/react1.png)
+![](examples/react1.png)
 
 And you should be able to register and log in, [after starting the backend services, ecommerce is a must, the rest is optional](#2-ecommerce-api), and see the current front-end of the api integrations from the services above:
-![](frontend/examples/react2.png)
+![](examples/react2.png)
 
 ## 1. Machine learning system for Customer Segmentation
-![](backend/ml-pipeline/customers/Screen.png)  
+![](examples/react8.png)  
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
@@ -63,7 +63,7 @@ View results:
 
 
 ## 2. Shop interface for [eCommerce web store REST API](ecommerce/README.md), 
-![](frontend/examples/react3.png)
+![](examples/react3.png)
 The user is able to:
 - Create new items.
 - Add existing items to the cart.
@@ -72,7 +72,7 @@ The user is able to:
   
 
 ## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
-![](frontend/examples/react4.png)
+![](examples/react4.png)
 The user is able to:
 - Add new customer.
 - Add a new Pet to existing customers.
@@ -81,16 +81,16 @@ The user is able to:
 - Plan a new schedule for an employee and assign it to a pet.
 
 
-## 4.  GoogleMaps
-![](frontend/examples/react5.png)
-Map interface for integrating Google Maps API with the [Vehicle location service's REST API](vehicles-api/README.md).
+## 4.  Maps
+![](examples/react5.png)
+Map interface for integrating Open Street Map with the [Vehicle location service's REST API](vehicles-api/README.md).
 The user is able to:
 - Click on the map to add new vehicle locations.
 - Click on existing locations and check basic info and delete the location.
   
 
 ## 5. OpenAI
-![](frontend/examples/react6.png)
+![](examples/react6.png)
 OpenAI interface for communicating with
 the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is able to:
 - Send a prompt and receive a Completion.
@@ -106,14 +106,8 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 
 The user is able to:
 
-- Create a new Jira ticket
-  ![](frontend/examples/react7.png)
-- List existing tickets and delete them
-  ![](frontend/examples/react8.png)
-- Update existing tickets
-  ![](frontend/examples/react9.png)
-- See updated values
-  ![](frontend/examples/react10.png)
+- Create/list/update/delete Jira ticket
+  ![](examples/react7.png)
 
 
 # Required api services

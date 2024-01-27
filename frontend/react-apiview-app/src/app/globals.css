@@ -97,4 +97,7 @@ body {
   border-radius: 12px;
 }
 
+.inline-block {
+  display: inline-block;
+}
 

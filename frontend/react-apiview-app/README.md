@@ -16,13 +16,13 @@ The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
 If everything is correctly started, you should see a login page:
-![](../examples/react1.png)
+![](../../examples/react1.png)
 
 And you should be able to log in, and see the current front-end of the api integrations from the services above:
-![](../examples/react2.png)
+![](../../examples/react2.png)
 
 ## 1. Machine learning system for Customer Segmentation  
-![](../../backend/ml-pipeline/customers/Screen.png)  
+![](../../examples/react8.png)
 MLOps interface for [Customer Segmentation API](../../backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
@@ -41,7 +41,7 @@ View results:
 - Add existing items to the cart.
 - See and clear the cart.
 - Submit cart and check order history.
-  ![](../examples/react3.png)
+  ![](../../examples/react3.png)
 
 ## 3. Pet Store interface for the [Pet Store's REST API](../../backend/petstore/README.md), the user is able to:
 
@@ -50,15 +50,15 @@ View results:
 - Add new employees with skills and schedules.
 - Check availability based on skills and schedules.
 - Plan a new schedule for an employee and assign it to a pet.
-  ![](../examples/react4.png)
+  ![](../../examples/react4.png)
 
-## 4.  GoogleMaps
-Map interface for integrating Google Maps API with the [Vehicle location service's REST API](../vehicles-api/README.md),
+## 4.  Maps
+Map interface for integrating Open Street Maps with the [Vehicle location service's REST API](../vehicles-api/README.md),
 the user is able to:
 
 - Click on the map to add new vehicle locations.
 - Click on existing locations and check basic info and delete the location.
-  ![](../examples/react5.png)
+  ![](../../examples/react5.png)
 
 ## 5. OpenAI
 OpenAI interface for communicating with
@@ -66,7 +66,7 @@ the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is ab
 
 - Send a prompt and receive a Completion.
 - Send a prompt and receive two DallE image response.
-  ![](../examples/react6.png)
+  ![](../../examples/react6.png)
 
 ## 6. Jira
 Jira interface for communicating with
@@ -77,14 +77,8 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 
 The user is able to:
 
-- Create a new Jira ticket
-  ![](../examples/react7.png)
-- List existing tickets and delete them
-  ![](../examples/react8.png)
-- Update existing tickets
-  ![](../examples/react9.png)
-- See updated values
-  ![](../examples/react10.png)
+- Create/list/update/delete Jira ticket
+  ![](../../examples/react7.png)
 
 
 # Required api services

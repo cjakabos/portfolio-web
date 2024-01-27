@@ -73,9 +73,6 @@ export default function Home() {
                         />
                         <Route path="shop" element={<Shop/>}/>
                         <Route path="pet" element={<PetStore/>}/>
-                        <Route path="map" element={<Map/>}/>
-                        <Route path="usmap" element={<USMap/>}/>
-                        <Route path="koreamap" element={<KoreaBubbleMap width={1000} height={1000} data={data}/>}/>
                         <Route path="openmaps" element={<OpenMaps/>}/>
                         <Route path="openai" element={<OpenAI/>}/>
                         <Route path="jira" element={<Jira/>}/>
