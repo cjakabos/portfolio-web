@@ -232,9 +232,9 @@ export default function OpenMaps() {
 				zoom={15}
 				// touchZoom={true}
 				scrollWheelZoom={true}
-				style={{ height: "1000px", width: "100%" }}
+				style={{ height: "90vh", width: "100%" }}
 				fullscreenControl={true}
-				ref={mapRef}
+				/*ref={mapRef}*/
 /*				ref={async (map) => {
 					if(map) {
 						setMapReference(map);
@@ -285,7 +285,7 @@ export default function OpenMaps() {
 {/*						{(addressPoints as AdressPoint).map((address, index) => (
 							<Marker key={index} position={[address[0], address[1]]} title={address[2]} icon={icon4} ></Marker>
 						))}*/}
-						{newLocation && (
+						{(newLocation && newLocation.lat != center[0] && newLocation.lng != center[1]) && (
 							<Marker
 								ref={tempMarkerRef}
 								position={[newLocation.lat, newLocation.lng]}
@@ -305,7 +305,7 @@ export default function OpenMaps() {
 										};
 										setMarkers([...markers, newMarker]);
 										vehicleSubmit(newLocation.lat, newLocation.lng);
-										setNewLocation(null)
+										setNewLocation({lat: center[0], lng: center[1]})
 
 									}}>📌 Pin this location!</button>
 								</Popup>

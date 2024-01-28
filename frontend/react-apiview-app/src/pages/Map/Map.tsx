@@ -166,7 +166,7 @@ export default function Map() {
             .then((response) => {
                 setMapFeedback('OK')
                 console.log("response delete: ", response.status);
-                window.location.reload()
+                //window.location.reload()
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", axiosConfig);

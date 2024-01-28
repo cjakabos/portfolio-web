@@ -28,22 +28,61 @@ function NavBar ()  {
         console.log(error)
     }
 
+    const handleClick=(e)=>{
+        e.preventDefault();
+        //e.target.style.background = 'red'
+        //console.log(e.target);
+        navigate("/home")
+    }
+
     const authedRoutes = (
         <>
-            <Link href="/home" onClick={() => navigate("/home")} style={{ color: "green" }}>Home</Link>
-            <Link href="/shop" onClick={() => navigate("/shop")}>Shop</Link>
-            <Link href="/pet" onClick={() => navigate("/pet")}>PetStore</Link>
-            <Link href="/openmaps" onClick={() => navigate("/openmaps")}>OpenMaps</Link>
-            <Link href="/openai" onClick={() => navigate("/openai")}>OpenAI</Link>
-            <Link href="/jira" onClick={() => navigate("/jira")}>Jira</Link>
-            <Link href="/mlops" onClick={() => navigate("/mlops")}>MLOps</Link>
-            <Link href="/logout" onClick={() => navigate("/logout")} style={{ color: "red" }}>Logout</Link>
+            <button className="menubutton" onClick={handleClick}>
+                Home
+            </button>
+            <button className="menubutton" onClick={() => navigate("/shop")}>
+                Shop
+            </button>
+            <button className="menubutton" onClick={() => navigate("/pet")}>
+                PetStore
+            </button>
+            <button className="menubutton" onClick={() => navigate("/openmaps")}>
+                📌 OpenMaps 📌
+            </button>
+            <button className="menubutton" onClick={() => navigate("/openai")}>
+                OpenAI
+            </button>
+            <button className="menubutton" onClick={() => navigate("/jira")}>
+                Jira
+            </button>
+            <button className="menubutton" onClick={() => navigate("/mlops")}>
+                MLOps
+            </button>
+            <button className="popup-close" onClick={() => navigate("/logout")}>
+                Logout
+            </button>
         </>
     );
 
 
     return (
         <>
+            <nav
+                // z-index 1001 is needed because of leaflet GeoMap
+                className="
+                  fixed
+                  left-0
+                  top-0
+                  z-[1001]
+                  h-16
+                  w-screen
+                  bg-white
+                  border-b-[0.5px]
+                  border-neutral-200
+                  dark:border-neutral-700
+                  dark:bg-neutral-100-dark
+                  "
+            >
             <div className="container mx-auto flex items-center justify-between h-24">
             {(userToken === null || userToken === '') ? (
                     <>
@@ -56,6 +95,7 @@ function NavBar ()  {
                 </>
             }
             </div>
+            </nav>
         </>
     );
 }
@@ -66,7 +106,7 @@ export default function Home() {
     } catch (error) {
         console.log(error)
     }
-    
+
     return (
         <>
             <RecoilRoot>
