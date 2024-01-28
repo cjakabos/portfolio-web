@@ -5,7 +5,7 @@ export const iconFood = new L.Icon({
   iconSize: new L.Point(32, 32),
 })
 
-export const iconCultual = new L.Icon({
+export const iconCultural = new L.Icon({
   iconUrl: 'icons/masks.png',
   iconSize: new L.Point(32, 32),
 })

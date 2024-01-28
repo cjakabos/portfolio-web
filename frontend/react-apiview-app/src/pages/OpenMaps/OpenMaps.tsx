@@ -1,5 +1,5 @@
 "use client";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import {
 	MapContainer,
 	Marker,
@@ -12,11 +12,12 @@ import {
 	Rectangle,
 } from 'react-leaflet';
 import L, { Icon, LatLng, LeafletMouseEvent } from 'leaflet'
+import * as R from "leaflet-responsive-popup";
 import { addressPoints } from './realworld'
 import 'leaflet/dist/leaflet.css'
 import MarkerClusterGroup from "react-leaflet-cluster";
 import axios from "axios";
-import {iconCultual, iconFood, iconTourism, iconSport, iconVoyager} from "@/pages/OpenMaps/Icons";
+import {iconCultural, iconFood, iconTourism, iconSport, iconVoyager} from "@/pages/OpenMaps/Icons";
 import { GeometryCollection, Topology } from "topojson-specification";
 type AdressPoint = Array<[number, number, string]>
 import SwedenMapData from '../../../public/svenska-landskap.geo.json';
@@ -32,13 +33,13 @@ export default function OpenMaps() {
 			const vehicles = await getVehicles();
 		})();
 	}, []);
-	
+
 	const icon1 = useMemo(() => {
 		const icon: Icon = iconFood
 		return icon
 	}, [])
 	const icon2 = useMemo(() => {
-		const icon: Icon = iconCultual
+		const icon: Icon = iconCultural
 		return icon
 	}, [])
 	const icon3 = useMemo(() => {
@@ -54,6 +55,7 @@ export default function OpenMaps() {
 		return icon
 	}, [])
 
+	const mapRef = useRef();
 	const [center, setCenter] = useState<any>([59.328246, 18.053383]);
 	const [markers, setMarkers] = React.useState([
 		{
@@ -64,6 +66,13 @@ export default function OpenMaps() {
 			id: "",
 		}
 	]);
+
+	const [newLocation, setNewLocation] = useState<{
+		lat: number;
+		lng: number;
+	} | null>({lat: center[0], lng: center[1]});
+
+	const tempMarkerRef = useRef(null);
 
 	function vehicleSubmit(lat: number, lng: number) {
 		var postData = {
@@ -99,7 +108,6 @@ export default function OpenMaps() {
 		axios.post('http://localhost:8080/cars', postData, axiosConfig)
 			.then((response) => {
 				console.log("RESPONSE RECEIVED: ", response.data);
-
 			})
 			.catch((error) => {
 				console.log("AXIOS ERROR: ", postData);
@@ -172,8 +180,16 @@ export default function OpenMaps() {
 	};
 
 	const handleMapClick = (e) => {
-		const comment = prompt("Enter a comment for this location:", "");
-		if (comment == '') {
+		const comment = ''//prompt("Enter a comment for this location:", "");
+
+		setNewLocation(e.latlng);
+		
+		const tempMarker = tempMarkerRef.current;
+		if (tempMarker) {
+			(tempMarker as any).openPopup();
+		}
+		
+/*		if (comment == '') {
 			return null;
 		}
 		const newMarker = {
@@ -183,7 +199,7 @@ export default function OpenMaps() {
 			comment: comment || "No comment provided"
 		};
 		setMarkers([...markers, newMarker]);
-		vehicleSubmit(newMarker.lat, newMarker.lng)
+		vehicleSubmit(newMarker.lat, newMarker.lng)*/
 		console.log('newMarker', markers)
 
 		/*		if (userId) {
@@ -218,7 +234,7 @@ export default function OpenMaps() {
 				scrollWheelZoom={true}
 				style={{ height: "1000px", width: "100%" }}
 				fullscreenControl={true}
-				onClick={handleMapClick}
+				ref={mapRef}
 /*				ref={async (map) => {
 					if(map) {
 						setMapReference(map);
@@ -269,6 +285,32 @@ export default function OpenMaps() {
 {/*						{(addressPoints as AdressPoint).map((address, index) => (
 							<Marker key={index} position={[address[0], address[1]]} title={address[2]} icon={icon4} ></Marker>
 						))}*/}
+						{newLocation && (
+							<Marker
+								ref={tempMarkerRef}
+								position={[newLocation.lat, newLocation.lng]}
+								icon={icon3}
+							>
+								<Popup className="temppopup">
+									<div className="markercomment"> Are you sure you want to pin?</div>
+									<br />
+									<button className="submitbutton" onClick={(e) => {
+										e.stopPropagation(); // Prevent triggering map click
+
+										const newMarker = {
+											lat: newLocation.lat,
+											lng: newLocation.lng,
+											//iconKey: selectedIcon, // Save the key of the selected icon
+											comment: "No comment provided"
+										};
+										setMarkers([...markers, newMarker]);
+										vehicleSubmit(newLocation.lat, newLocation.lng);
+										setNewLocation(null)
+
+									}}>📌 Pin this location!</button>
+								</Popup>
+							</Marker>
+						)}
 						{markers.map((marker, idx) => (
 							<Marker key={`${marker.lat}-${marker.lng}`} position={{lat: marker.lat, lng: marker.lng}} icon={icon5}>
 								<Popup className="markerpopup">
