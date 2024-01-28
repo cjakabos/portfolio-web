@@ -1,12 +1,10 @@
 'use client';
 import Image from 'next/image'
+import Link from 'next/link';
 import React, {useEffect, useState} from "react";
-import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
+import {BrowserRouter, Routes, Route, Navigate, useNavigate} from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import {MLOps} from "../pages/MLOps/MLOps";
-import Tabs from "../components/Tabs/Tabs";
-import {tabLists} from "../data/tab-lists";
-import {tabListsDefault} from "../data/tab-lists-default";
 import Login from "@/pages/Login/Login";
 import Hello from "@/pages/Hello/Hello";
 import Stock from "@/pages/Stock/Stock";
@@ -14,74 +12,89 @@ import Shop from "@/pages/Shop/Shop";
 import OpenAI from "@/pages/OpenAI/OpenAI";
 import PetStore from "@/pages/PetStore/PetStore";
 import Jira from "@/pages/Jira/Jira";
-import Map from "@/pages/Map/Map";
 import Logout from "@/pages/Logout/Logout";
-import USMap from "@/pages/USMap/us-map";
-import KoreaBubbleMap, {KoreaMapData} from "@/pages/InteractiveMap/KoreaBubbleMap";
 import OpenMaps from "@/pages/OpenMaps/OpenMaps";
 
-const data: KoreaMapData = {
-    sido: [{ code: "1100000000", name: "Seoul", count: 400 }],
-    sigungu: [
-        { code: "1168000000", name: "Gangnam-gu district", count: 300 },
-        { code: "1171000000", name: "Songpa-gu district", count: 100 },
-    ],
-    emd: [
-        { code: "1168010100", name: "Yeoksam-dong ward", count: 300 },
-        { code: "1171010100", name: "Jamsil-dong ward", count: 100 },
-    ],
-};
+function NavBar ()  {
+    const navigate = useNavigate();
+    //const session = useAppSelector(selectSession);
+    //const history = useHistory();
+    //const dispatch = useAppDispatch();
+    //const doLogout = () => dispatch(logout(history));
+
+    try {
+        var userToken = (localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+    } catch (error) {
+        console.log(error)
+    }
+
+    const authedRoutes = (
+        <>
+            <Link href="/home" onClick={() => navigate("/home")} style={{ color: "green" }}>Home</Link>
+            <Link href="/shop" onClick={() => navigate("/shop")}>Shop</Link>
+            <Link href="/pet" onClick={() => navigate("/pet")}>PetStore</Link>
+            <Link href="/openmaps" onClick={() => navigate("/openmaps")}>OpenMaps</Link>
+            <Link href="/openai" onClick={() => navigate("/openai")}>OpenAI</Link>
+            <Link href="/jira" onClick={() => navigate("/jira")}>Jira</Link>
+            <Link href="/mlops" onClick={() => navigate("/mlops")}>MLOps</Link>
+            <Link href="/logout" onClick={() => navigate("/logout")} style={{ color: "red" }}>Logout</Link>
+        </>
+    );
+
+
+    return (
+        <>
+            <div className="container mx-auto flex items-center justify-between h-24">
+            {(userToken === null || userToken === '') ? (
+                    <>
+                        <Link href="/signup" onClick={() => navigate("/signup")}>Sign Up</Link>
+                        <Link href="/login" onClick={() => navigate("/login")}>Login</Link>
+                    </>
+                ) :
+                <>
+                    {authedRoutes}
+                </>
+            }
+            </div>
+        </>
+    );
+}
 export default function Home() {
 
-    // Set the value received from the local storage to a local state
-    const [token, setToken] = useState("")
-
-    var userToken = '';
-
-    useEffect(() => {
-        userToken = (localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
-        setToken(userToken)
-        console.log("test0: ", userToken);
-    }, []);
-
-
-    if (token === null || token === '') {
-        console.log("test: ", token);
-
-        return (
-            <BrowserRouter>
-                    <Tabs tabLists={tabListsDefault}>
-                    <Routes>
-                        <Route path="signup" element={<Stock/>}/>
-                        <Route path="login" element={<Login/>}/>
-                        <Route path="*" element={<Login/>}/>
-                    </Routes>
-                </Tabs>
-            </BrowserRouter>
-        );
-
+    try {
+        var userToken = (localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+    } catch (error) {
+        console.log(error)
     }
-    console.log("test2: ", token);
+    
     return (
-        <RecoilRoot>
-            <BrowserRouter>
-                <Tabs tabLists={tabLists}>
+        <>
+            <RecoilRoot>
+                <BrowserRouter>
+                    <NavBar />
                     <Routes>
-                        <Route
-                            path="home"
-                            element={<Hello/>}
-                        />
-                        <Route path="shop" element={<Shop/>}/>
-                        <Route path="pet" element={<PetStore/>}/>
-                        <Route path="openmaps" element={<OpenMaps/>}/>
-                        <Route path="openai" element={<OpenAI/>}/>
-                        <Route path="jira" element={<Jira/>}/>
-                        <Route path="mlops" element={<MLOps/>}/>
-                        <Route path="logout" element={<Logout/>}/>
-                        <Route path="*" element={<Navigate to="home"/>}/>
+                        {(userToken === null || userToken === '') ? (
+                                <>
+                                    <Route path="signup" element={<Stock/>}/>
+                                    <Route path="login" element={<Login/>}/>
+                                    <Route path="*" element={<Login/>}/>
+                                </>
+                            ) :
+                            <>
+                                <Route path="home" element={<Hello/>}/>
+                                <Route path="shop" element={<Shop/>}/>
+                                <Route path="pet" element={<PetStore/>}/>
+                                <Route path="openmaps" element={<OpenMaps/>}/>
+                                <Route path="openai" element={<OpenAI/>}/>
+                                <Route path="jira" element={<Jira/>}/>
+                                <Route path="mlops" element={<MLOps/>}/>
+                                <Route path="logout" element={<Logout/>}/>
+                                <Route path="*" element={<Navigate to="home"/>}/>
+                            </>
+                        }
                     </Routes>
-                </Tabs>
-            </BrowserRouter>
-        </RecoilRoot>
+                </BrowserRouter>
+            </RecoilRoot>
+        </>
     );
 }
