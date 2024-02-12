@@ -1,37 +1,32 @@
 package com.example.demo.model.persistence;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.annotation.LastModifiedDate;
+
+import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "user")
+@Table(name = "usertable")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty
-    private long id;
+    private Long id;
 
     @Column(nullable = false, unique = true)
     @JsonProperty
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     @JsonProperty
     private String password;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "cart_id", referencedColumnName = "id")
     @JsonIgnore
     private Cart cart;
@@ -39,7 +34,7 @@ public class User {
     public User() {
     }
 
-    public User(long id, String username, String password) {
+    public User(Long id, String username, String password) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -53,11 +48,11 @@ public class User {
         this.cart = cart;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -76,5 +71,5 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
-
+    
 }
