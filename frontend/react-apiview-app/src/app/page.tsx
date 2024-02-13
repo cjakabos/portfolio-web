@@ -14,6 +14,7 @@ import PetStore from "@/pages/PetStore/PetStore";
 import Jira from "@/pages/Jira/Jira";
 import Logout from "@/pages/Logout/Logout";
 import OpenMaps from "@/pages/OpenMaps/OpenMaps";
+import NoteFile from "@/pages/NoteFile/NoteFile";
 
 function NavBar ()  {
     const navigate = useNavigate();
@@ -57,6 +58,9 @@ function NavBar ()  {
             </button>
             <button className="menubutton" onClick={() => navigate("/mlops")}>
                 MLOps
+            </button>
+            <button className="menubutton" onClick={() => navigate("/note")}>
+                Notes and Files
             </button>
             <button className="popup-close" onClick={() => navigate("/logout")}>
                 Logout
@@ -124,6 +128,7 @@ export default function Home() {
                                 <Route path="home" element={<Hello/>}/>
                                 <Route path="shop" element={<Shop/>}/>
                                 <Route path="pet" element={<PetStore/>}/>
+                                <Route path="note" element={<NoteFile/>}/>
                                 <Route path="openmaps" element={<OpenMaps/>}/>
                                 <Route path="openai" element={<OpenAI/>}/>
                                 <Route path="jira" element={<Jira/>}/>
