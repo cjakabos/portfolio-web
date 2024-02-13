@@ -133,7 +133,7 @@ CREATE USER segmentmaster WITH PASSWORD 'segment';
 GRANT ALL ON DATABASE segmentationdb TO segmentmaster;
 ALTER DATABASE segmentationdb OWNER TO segmentmaster;
 GRANT ALL PRIVILEGES ON DATABASE segmentationdb TO segmentmaster;
-\c riskdb segmentmaster
+\c segmentationdb segmentmaster
 GRANT ALL ON SCHEMA public TO segmentmaster;
 exit
 ```
@@ -150,23 +150,31 @@ python3 app.py
 
 ## 2. eCommerce api:
 
+Create segmentationdb
+
+```sql
+CREATE DATABASE ecommercedb;
+CREATE USER websitemaster WITH PASSWORD 'local';
+GRANT ALL ON DATABASE ecommercedb TO websitemaster;
+ALTER DATABASE ecommercedb OWNER TO websitemaster;
+GRANT ALL PRIVILEGES ON DATABASE ecommercedb TO websitemaster;
+\c ecommercedb websitemaster
+GRANT ALL ON SCHEMA public TO websitemaster;
+exit
+```
+
 ```
 cd ecommerce
 mvn clean package
 java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
 ```
 
-## 3. Vehicles api and boogle-maps:
+## 3. Vehicles api:
 
 ```
 cd vehicles-api
 mvn clean package
 java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
-```
-```
-cd boogle-maps
-mvn clean package
-$ java -jar target/boogle-maps-0.0.1-SNAPSHOT.jar
 ```
 
 ## 4. Pet Store api:
