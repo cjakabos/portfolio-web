@@ -8,7 +8,7 @@ This is a collection of my development projects from Web Development and Predict
   - [OpenAI API](#5-openai)
   - [Google Maps API](#4-google-maps-api-key-how-to-get)
   - [Jira API with an internal proxy API service to avoid CORS](#6-jira)
-- [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
+- [Logging with log4j](cloudapp/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](cloudapp/README.md#cicd-with-jenkins)
 
 Example view with ML pipeline and other tabs:
 ![](examples/react8.png)
@@ -46,7 +46,7 @@ You may also see any lint errors in the console.
 If everything is correctly started, you should see a login page:
 ![](examples/react1.png)
 
-And you should be able to register and log in, [after starting the backend services, ecommerce is a must, the rest is optional](#2-ecommerce-api), and see the current front-end of the api integrations from the services above:
+And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
 ![](examples/react2.png)
 
 ## 1. Machine learning system for Customer Segmentation
@@ -62,7 +62,7 @@ View results:
 - Table: current db from postgres.
 
 
-## 2. Shop interface for [eCommerce web store REST API](ecommerce/README.md), 
+## 2. Shop interface for [Cloudapp web store REST API](cloudapp/README.md), 
 ![](examples/react3.png)
 The user is able to:
 - Create new items.
@@ -148,25 +148,25 @@ python3 init_segmentationdb.py
 python3 app.py
 ```
 
-## 2. eCommerce api:
+## 2. Cloudapp api:
 
-Create segmentationdb
+Create cloudappdb
 
 ```sql
-CREATE DATABASE ecommercedb;
+CREATE DATABASE cloudappdb;
 CREATE USER websitemaster WITH PASSWORD 'local';
-GRANT ALL ON DATABASE ecommercedb TO websitemaster;
-ALTER DATABASE ecommercedb OWNER TO websitemaster;
-GRANT ALL PRIVILEGES ON DATABASE ecommercedb TO websitemaster;
-\c ecommercedb websitemaster
+GRANT ALL ON DATABASE cloudappdb TO websitemaster;
+ALTER DATABASE cloudappdb OWNER TO websitemaster;
+GRANT ALL PRIVILEGES ON DATABASE cloudappdb TO websitemaster;
+\c cloudappdb websitemaster
 GRANT ALL ON SCHEMA public TO websitemaster;
 exit
 ```
 
 ```
-cd ecommerce
+cd cloudapp
 mvn clean package
-java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
+java -jar target/cloudapp-0.0.1-SNAPSHOT.jar
 ```
 
 ## 3. Vehicles api:

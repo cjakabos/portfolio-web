@@ -1,9 +1,9 @@
-# eCommerce Application
+# Cloudapp Application
 
 This is the final project to demonstrate the security and DevOps skills that I learned in the last part of the program.
-The goal was to setup an ecommerce app with the following requirements:
+The goal was to setup an cloudapp app with the following requirements:
 
-* handle different HTTP requests to manipulate the ecommerce in-memory database
+* handle different HTTP requests to manipulate the cloudapp in-memory database
 * a proper authentication and authorization controls so users can only access their data, and that data can only be
   accessed in a secure way
 * the testing should reach at least 80% Coverage
@@ -73,7 +73,7 @@ The remaining implementation:
 ## Usage
 
 Once started, using a REST client, such as
-Postman [(file included here)](src/main/resources/ecommerce.postman_collection.json), explore the APIs.  
+Postman [(file included here)](src/main/resources/cloudapp.postman_collection.json), explore the APIs.  
 Creating a user:
 ![screenshots/img.png](screenshots/img.png)
 

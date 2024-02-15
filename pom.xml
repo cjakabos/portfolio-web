@@ -12,7 +12,7 @@
     <modules>
         <module>boogle-maps</module>
         <module>cloudinterface</module>
-        <module>ecommerce</module>
+        <module>cloudapp</module>
         <module>eureka</module>
         <module>pricing-service</module>
         <module>vehicles-api</module>

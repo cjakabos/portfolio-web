@@ -13,12 +13,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableJpaRepositories("com.example.demo.model.persistence.repositories")
 @EntityScan("com.example.demo.model.persistence")
 @SpringBootApplication
-public class EcommerceApplication {
+public class CloudappApplication {
     @Autowired
     public PasswordEncoder passwordEncoder;
 
     public static void main(String[] args) {
-        SpringApplication.run(EcommerceApplication.class, args);
+        SpringApplication.run(CloudappApplication.class, args);
     }
 
 }

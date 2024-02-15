@@ -23,9 +23,9 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("Ecommerce API")
+                        .title("Cloudapp API")
                         .version("v0.01")
-                        .description("Documentation Ecommerce API v0.01: Bearer token is received via user-controller /api/user/login endpoint")
+                        .description("Documentation Cloudapp API v0.01: Bearer token is received via user-controller /api/user/login endpoint")
                         .termsOfService("http://swagger.io/terms/")
                         .license(new License()
                                 .name("Apache 2.0")

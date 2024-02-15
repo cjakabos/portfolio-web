@@ -8,7 +8,7 @@ This is a collection of my hobby development projects:
   - [OpenAI API](frontend/react-apiview-app/README.md#openai)
   - [Google Maps API](frontend/react-apiview-app/README.md#googlemaps)
   - [Jira API](frontend/react-apiview-app/README.md#jira)
-- [Logging with log4j](ecommerce/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](ecommerce/README.md#cicd-with-jenkins)
+- [Logging with log4j](cloudapp/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](cloudapp/README.md#cicd-with-jenkins)
 
 ## Certificates
   [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
@@ -33,7 +33,7 @@ for running them separately check the READMEs below)to one main front-end interf
 
 - [x] Cars interface for the Car service's REST API. The [second project](vehicles-api/README.md) of the nanodegree.
 - [x] Pet interface for the Pet Store's REST API. The [third project](backend/petstore/README.md) of the nanodegree.
-- [x] eCommerce interface for eCommerce web store REST API. The [fourth project](ecommerce/README.md) of the nanodegree.
+- [x] Cloudapp interface for Cloudapp web store REST API. The [fourth project](cloudapp/README.md) of the nanodegree.
 - [x] OpenAI interface for OpenAI API. [Description](#openai-interface-extra-tab)
 - [x] Google Maps api interface for visualizing vehicles from the Car service's API. [Description](#openai-interface-extra-tab)
 
@@ -75,7 +75,7 @@ Features:
 
 - [Vehicles Service](vehicles-api/README.md).
 - [Petstore Service](backend/petstore/README.md).
-- [eCommerce Service](ecommerce/README.md).
+- [Cloudapp Service](cloudapp/README.md).
 
 ### The Front-End
 
@@ -140,17 +140,17 @@ V. Pets (extra tab, optional)
 
 ![](frontend/examples/petstore.png)
 
-VI. eCommerce (extra tab, optional)
+VI. Cloudapp (extra tab, optional)
 
-- The user can create ecommerce users, items, carts and orders for the [eCommerce service](ecommerce/README.md): through its API.
+- The user can create cloudapp users, items, carts and orders for the [Cloudapp service](cloudapp/README.md): through its API.
 - Any errors related to the operations is displayed.
 - Order of usage:
-  * add a new user, which then it is logged in to the eCommerce system with a Bearer token.
+  * add a new user, which then it is logged in to the Cloudapp system with a Bearer token.
   * Add optional items to the database, if needed.
   * Add items to the cart, clear or submit order, when it is done.
   * Check previous orders, if any, in the table.
   
-![](frontend/examples/ecommerce.png)
+![](frontend/examples/cloudapp.png)
 
 ### OpenAI interface (extra tab)
 
@@ -199,7 +199,7 @@ reading order) at once for full operation. Either follow base of full functional
   and to provide a complete view of vehicle details including price and address.
 - [Petstore](backend/petstore/README.md): third main project of nanodegree program. A REST API to maintain petstore data with
   pets, owners, employees and schedules.
-- [eCommerce](ecommerce/README.md): fourth main project of nanodegree program. A REST API to maintain ecommerce data
+- [Cloudapp](cloudapp/README.md): fourth main project of nanodegree program. A REST API to maintain cloudapp data
   with users, items, carts and orders.
 - [CloudInterface](cloudinterface/README.md): first main project of nanodegree program, extended to communicate with the
   Vehicles API and send/receive data with it.
@@ -258,13 +258,13 @@ java -jar target/petstore-0.0.1-SNAPSHOT.jar
 
 • The service is available by default on port 8083. Check [README](backend/petstore/README.md) for Postman usage.
 
-7. Ecommerce:
+7. Cloudapp:
 
 ```
-java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
+java -jar target/cloudapp-0.0.1-SNAPSHOT.jar
 ```
 
-• The service is available by default on port 8099. Check [README](ecommerce/README.md) for Postman usage.
+• The service is available by default on port 8099. Check [README](cloudapp/README.md) for Postman usage.
 
 8. Cloud interface:
 

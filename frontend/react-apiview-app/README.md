@@ -35,7 +35,7 @@ View results:
 
 [Check Project - Machine learning system for Customer Segmentation](Project6_Extra/README.md)
 
-## 2. Shop interface for [eCommerce web store REST API](../ecommerce/README.md), the user is able to:
+## 2. Shop interface for [Cloudapp web store REST API](../cloudapp/README.md), the user is able to:
 
 - Create new items.
 - Add existing items to the cart.
@@ -126,12 +126,12 @@ python3 init_segmentationdb.py
 python3 app.py
 ```
 
-## 2. eCommerce api:
+## 2. Cloudapp api:
 
 ```
-cd ecommerce
+cd cloudapp
 mvn clean package
-java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
+java -jar target/cloudapp-0.0.1-SNAPSHOT.jar
 ```
 
 ## 3. Vehicles api:

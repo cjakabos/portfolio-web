@@ -29,7 +29,7 @@ public class JwtUtilities {
 
     public String generateToken(Authentication auth) {
         return JWT.create()
-                .withIssuer("ecommerce")
+                .withIssuer("cloudapp")
                 .withSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername())
                 .withExpiresAt(new Date(System.currentTimeMillis() + 864_000_000))
                 .sign(Algorithm.HMAC512(apiSecret));
@@ -40,7 +40,7 @@ public class JwtUtilities {
         try {
             Algorithm algorithm = Algorithm.HMAC512(apiSecret);
             verifier = JWT.require(algorithm)
-                    .withIssuer("ecommerce")
+                    .withIssuer("cloudapp")
                     .build()
                     .verify(token);
             verifier.getSubject();
