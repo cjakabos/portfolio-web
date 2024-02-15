@@ -4,14 +4,15 @@ import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.Cart;
 import com.example.demo.model.persistence.Item;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.requests.ModifyCartRequest;
-import org.junit.*;
 
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.demo.model.persistence.repositories.*;
@@ -29,7 +30,7 @@ public class CartControllerTest {
 
     private ItemRepository itemRepository = mock(ItemRepository.class);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         cartController = new CartController();
         TestUtils.injectObjects(cartController, "cartRepository", cartRepository);

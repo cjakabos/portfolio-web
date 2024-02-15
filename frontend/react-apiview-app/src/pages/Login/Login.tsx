@@ -49,7 +49,7 @@ export default function Login(this: any) {
         };
 
 
-        axios.post('http://localhost:8099/login', postData, axiosConfig)
+        axios.post('http://localhost:8099/api/user/login', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //get token from response

@@ -3,12 +3,13 @@ package com.example.demo.controllers;
 import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.Item;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.*;
 
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import com.example.demo.model.persistence.repositories.ItemRepository;
 
@@ -23,7 +24,7 @@ public class ItemControllerTest {
 
     private List<Item> items = new ArrayList<>();
 
-    @Before
+    @BeforeEach
     public void setup() {
         itemController = new ItemController();
         TestUtils.injectObjects(itemController, "itemRepository", itemRepository);

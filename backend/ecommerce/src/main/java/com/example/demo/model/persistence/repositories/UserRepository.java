@@ -1,6 +1,6 @@
 package com.example.demo.model.persistence.repositories;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.demo.model.persistence.User;

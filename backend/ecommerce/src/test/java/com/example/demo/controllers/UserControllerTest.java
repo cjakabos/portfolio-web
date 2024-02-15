@@ -5,16 +5,16 @@ import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.CreateUserRequest;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Before;
-import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,17 +27,17 @@ public class UserControllerTest {
 
     private CartRepository cartRepository = mock(CartRepository.class);
 
-    private BCryptPasswordEncoder encoder = mock(BCryptPasswordEncoder.class);
+    private PasswordEncoder encoder = mock(PasswordEncoder.class);
 
     private CreateUserRequest r = new CreateUserRequest();
 
 
-    @Before
+    @BeforeEach
     public void setUp() {
         userController = new UserController();
         TestUtils.injectObjects(userController, "userRepository", userRepository);
         TestUtils.injectObjects(userController, "cartRepository", cartRepository);
-        TestUtils.injectObjects(userController, "bCryptPasswordEncoder", encoder);
+        TestUtils.injectObjects(userController, "passwordEncoder", encoder);
 
 
         when(encoder.encode("testpassword")).thenReturn("thisIsHashed");

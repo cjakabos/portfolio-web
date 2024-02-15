@@ -2,7 +2,7 @@ package com.example.demo.model.persistence;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "notes")

@@ -1,16 +1,16 @@
 package com.example.demo.controllers;
 
 import com.example.demo.model.persistence.UserOrder;
-import junit.framework.TestCase;
 import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.*;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.CreateUserRequest;
-import org.junit.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -25,7 +25,7 @@ public class OrderControllerTest {
     private OrderRepository orderRepository = mock(OrderRepository.class);
     private UserRepository userRepository = mock(UserRepository.class);
 
-    @Before
+    @BeforeEach
     public void setup() {
         orderController = new OrderController();
         TestUtils.injectObjects(orderController, "userRepository", userRepository);
