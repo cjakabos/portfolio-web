@@ -8,7 +8,7 @@ This is a collection of my development projects from Web Development and Predict
   - [OpenAI API](#5-openai)
   - [Google Maps API](#4-google-maps-api-key-how-to-get)
   - [Jira API with an internal proxy API service to avoid CORS](#6-jira)
-- [Logging with log4j](cloudapp/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](cloudapp/README.md#cicd-with-jenkins)
+- [Logging with log4j](backend/cloudapp/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](backend/cloudapp/README.md#cicd-with-jenkins)
 
 Example view with ML pipeline and other tabs:
 ![](examples/react8.png)
@@ -62,7 +62,7 @@ View results:
 - Table: current db from postgres.
 
 
-## 2. Shop interface for [Cloudapp web store REST API](cloudapp/README.md), 
+## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md), 
 ![](examples/react3.png)
 The user is able to:
 - Create new items.
@@ -83,7 +83,7 @@ The user is able to:
 
 ## 4.  Maps
 ![](examples/react5.png)
-Map interface for integrating Open Street Map with the [Vehicle location service's REST API](vehicles-api/README.md).
+Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
 The user is able to:
 - Click on the map to add new vehicle locations.
 - Click on existing locations and check basic info and delete the location.
@@ -233,16 +233,6 @@ Start [Web Proxy API](backend/web-proxy/README.md) to avoid CORS issue with Jira
 mvn clean package
 java -jar target/web-proxy-0.0.1-SNAPSHOT.jar
 ```
-
-## 8. Eureka
-Microservice registration and discovery, background: https://www.baeldung.com/spring-cloud-netflix-eureka
-```
-mvn clean package
-java -jar target\eureka-0.0.1-SNAPSHOT.jar
-```
-
-The server runs on http://localhost:8761, at the default interface other services from above can be observed:
-
 
 
 
