@@ -25,7 +25,7 @@ hs_err_pid*
 
 .idea
 */*.mvn
-*/target
+backend/*/target
 */.gitignore
 backend/ml-pipeline/data/
 backend/ml-pipeline/model/

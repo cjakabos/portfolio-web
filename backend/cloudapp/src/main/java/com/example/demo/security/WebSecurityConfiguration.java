@@ -45,6 +45,10 @@ public class WebSecurityConfiguration {
             "/swagger-ui.html"
     };
 
+    private static final String[] AUTH_WHITELIST = {
+            "/ws/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
@@ -55,6 +59,7 @@ public class WebSecurityConfiguration {
         http.authorizeHttpRequests(authHttpRequests -> authHttpRequests
                 .requestMatchers(HttpMethod.POST,"/api/user/create", "/api/user/login").permitAll()
                 .requestMatchers(HttpMethod.GET, AUTH_WHITELIST_SWAGGER).permitAll()
+                .requestMatchers(AUTH_WHITELIST).permitAll()
                 .anyRequest()
                 .authenticated()
         );
