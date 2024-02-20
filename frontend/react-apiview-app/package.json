@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.12.3",
+    "@mui/system": "^5.12.3",
     "@react-google-maps/api": "^2.19.2",
     "@types/d3": "^7.4.1",
     "@types/geojson": "^7946.0.12",
@@ -34,7 +36,10 @@
     "tinycolor2": "^1.6.0",
     "topojson-client": "^3.1.0",
     "next": "14.0.4",
-    "styled-components": "^6.0.7"
+    "sockjs": "^0.3.24",
+    "sockjs-client": "^1.6.1",
+    "styled-components": "^6.0.7",
+    "webstomp-client": "^1.2.6"
   },
   "devDependencies": {
     "typescript": "^5",
