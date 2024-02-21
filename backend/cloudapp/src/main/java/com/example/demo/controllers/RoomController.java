@@ -6,6 +6,7 @@ import com.example.demo.model.persistence.model.ApiResponse;
 import com.example.demo.model.persistence.model.ECode;
 import com.example.demo.model.persistence.model.Room;
 import com.example.demo.model.requests.CreateRoomRequest;
+import com.example.demo.model.service.inf.IMessageService;
 import com.example.demo.model.service.inf.IRoomService;
 
 import java.security.Principal;
@@ -36,6 +37,9 @@ public class RoomController {
 
     @Autowired
     private IRoomService roomService;
+
+    @Autowired
+    private IMessageService messageService;
 
     @Autowired
     private ApiResponse apiResp;
@@ -84,14 +88,15 @@ public class RoomController {
         String username = ((User) auth.getPrincipal()).getUsername();
         ApiResponse resp = apiResp.getApiResponse(ECode.SUCCESS);
         try {
-            Pair<ECode, List<RoomEntity>> ret = roomService.findByCreatedBy(username);
-            if (ECode.isFailed(ret.getFirst())) {
-                return apiResp.getApiResponse(ret.getFirst());
+            List<String> ret = messageService.findRoomsByUser(username);
+            if (ret ==  null) {
+                return apiResp.getApiResponse(ECode.NOT_EXISTS_ROOM);
             }
-            List<Room> data = ret.getSecond().stream().map(item -> {
+            List<Room> data = ret.stream().map(item -> {
+                Pair<ECode, RoomEntity> roomEntity = roomService.findByCode(item);
                 Room room = new Room();
-                room.setName(item.getName());
-                room.setCode(item.getCode());
+                room.setName(roomEntity.getSecond().getName());
+                room.setCode(roomEntity.getSecond().getCode());
                 return room;
             }).collect(Collectors.toList());
             resp.setData(data);
