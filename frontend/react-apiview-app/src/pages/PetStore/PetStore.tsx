@@ -364,9 +364,8 @@ export default function PetStore(this: any) {
 
 
     return (
-        <table>
-            <td style={{borderRight: "solid", width: 600}}>
-                <div className="topPane">
+        <div className="flex w-full flex-col lg:flex-row ">
+            <div className="relative h-full w-full lg:w-1/2">
                     <div className="login-top">
                         <h1>{("Create a new customer")}</h1>
                     </div>
@@ -458,9 +457,8 @@ export default function PetStore(this: any) {
                     </div>
 
                 </div>
-            </td>
-            <td>
-                <div className="bottomPane">
+
+                 <div className="flex w-full flex-col lg:w-1/2">
                     <div className="login-top">
                         <h1>{("Create a new employee")}</h1>
                     </div>
@@ -657,7 +655,6 @@ export default function PetStore(this: any) {
                         )}
                     </div>
                 </div>
-            </td>
-        </table>
+        </div>
     )
 }

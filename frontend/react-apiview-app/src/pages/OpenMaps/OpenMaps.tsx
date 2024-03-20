@@ -105,7 +105,7 @@ export default function OpenMaps() {
 			}
 		};
 		//setName(JSON.stringify(postData));
-		axios.post('http://localhost:8080/cars', postData, axiosConfig)
+		axios.post('http://localhost:8880/cars', postData, axiosConfig)
 			.then((response) => {
 				console.log("RESPONSE RECEIVED: ", response.data);
 			})
@@ -127,7 +127,7 @@ export default function OpenMaps() {
 			}
 		};
 
-		axios.get('http://localhost:8080/cars', axiosConfig)
+		axios.get('http://localhost:8880/cars', axiosConfig)
 			.then((response) => {
 				// for each element received, put up a marker
 				response.data._embedded.carList.map((option: { location: any; id: any }) => (
@@ -165,7 +165,7 @@ export default function OpenMaps() {
 			}
 		};
 
-		axios.delete('http://localhost:8080/cars/' + vehicleId, axiosConfig)
+		axios.delete('http://localhost:8880/cars/' + vehicleId, axiosConfig)
 			.then((response) => {
 				//setMapFeedback('OK')
 				console.log("response delete: ", response.status);
@@ -183,12 +183,12 @@ export default function OpenMaps() {
 		const comment = ''//prompt("Enter a comment for this location:", "");
 
 		setNewLocation(e.latlng);
-		
+
 		const tempMarker = tempMarkerRef.current;
 		if (tempMarker) {
 			(tempMarker as any).openPopup();
 		}
-		
+
 /*		if (comment == '') {
 			return null;
 		}
@@ -226,7 +226,7 @@ export default function OpenMaps() {
 
 
 	return (
-		<div>
+		<div className="flex w-full flex-col items-center justify-center">
 			<MapContainer
 				center={[59.328246, 18.053383]}
 				zoom={15}

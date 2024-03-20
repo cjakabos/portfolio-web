@@ -243,195 +243,190 @@ export default function Shop(this: any) {
     };
 
     return (
-        <table>
-            <td style={{borderRight: "solid", width: 600}}>
-                <div className="topPane">
-                    <div className="login-top">
-                        <h1>{("Create item")}</h1>
-                    </div>
-                    <form onSubmit={handleItemSubmit}>
-                        <table>
-                            <tr>
-                                <th>Item name</th>
-                                <th>Price</th>
-                                <th>Description</th>
-                            </tr>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    placeholder="Enter item name"
-                                    onChange={handleChange}
-                                    value={values.name}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                            <td>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    id="price"
-                                    placeholder="Enter price"
-                                    onChange={handleChange}
-                                    value={values.price}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    id="description"
-                                    placeholder="Enter description"
-                                    onChange={handleChange}
-                                    value={values.description}
-                                    maxLength={100}
-                                    required
-                                />
-                            </td>
-                        </table>
-
-                        <input className="submitbutton" type="submit" value="Submit"/>
-                    </form>
+        <div className="flex w-full flex-col lg:h-[400px] lg:flex-row ">
+            <div className="relative h-full w-full lg:w-1/2">
+                <div className="login-top">
+                    <h1>{("Create item")}</h1>
                 </div>
-                <div>
-                    <div className="login-top">
-                        <h1>{("All items")}</h1>
-                    </div>
-                    {/*<form onSubmit={handleItemFetch}>*/}
+                <form onSubmit={handleItemSubmit}>
+                    <table>
+                        <tr>
+                            <th>Item name</th>
+                            <th>Price</th>
+                            <th>Description</th>
+                        </tr>
+                        <td>
+                            <input
+                                type="text"
+                                name="name"
+                                id="name"
+                                placeholder="Enter item name"
+                                onChange={handleChange}
+                                value={values.name}
+                                maxLength={20}
+                                required
+                            />
+                        </td>
+                        <td>
+                            <input
+                                type="number"
+                                name="price"
+                                id="price"
+                                placeholder="Enter price"
+                                onChange={handleChange}
+                                value={values.price}
+                                maxLength={20}
+                                required
+                            />
+                        </td>
+                        <td>
+                            <input
+                                type="text"
+                                name="description"
+                                id="description"
+                                placeholder="Enter description"
+                                onChange={handleChange}
+                                value={values.description}
+                                maxLength={100}
+                                required
+                            />
+                        </td>
+                    </table>
 
-                    {/*    <input id="fetchButton" type="submit" value="Get all items"/>*/}
-                    {/*</form>*/}
-                    <div className="Item">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Price</th>
-                                        <th>Description</th>
+                    <input className="submitbutton" type="submit" value="Submit"/>
+                </form>
+                <div className="login-top">
+                    <h1>{("All items")}</h1>
+                </div>
+                {/*<form onSubmit={handleItemFetch}>*/}
+
+                {/*    <input id="fetchButton" type="submit" value="Get all items"/>*/}
+                {/*</form>*/}
+                <div className="Item">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            <table>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Description</th>
+                                </tr>
+                                {items.map(item => (
+                                    <tr key={item.id}>
+                                        <td>{item.name}</td>
+                                        <td>{item.price}</td>
+                                        <td>{item.description}</td>
+                                        <button className="submitbutton" onClick={() => addToCart(item)}>Add to
+                                            cart
+                                        </button>
                                     </tr>
-                                    {items.map(item => (
-                                        <tr key={item.id}>
-                                            <td>{item.name}</td>
-                                            <td>{item.price}</td>
-                                            <td>{item.description}</td>
-                                            <button className="submitbutton" onClick={() => addToCart(item)}>Add to
-                                                cart
-                                            </button>
-                                        </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
-                    </div>
+                                ))}
+                            </table>
+                        </>
+                    )}
                 </div>
-            </td>
-            <td>
-                <div className="bottomPane">
+            </div>
+            <div className="flex w-full flex-col lg:w-1/2">
 
-                    <div className="login-top">
-                        <h1>{("Cart contents")}</h1>
-                    </div>
-                    {/*<form onSubmit={handleCartFetch}>*/}
-                    {/*    <input id="fetchButton" type="submit" value="Get cart contents"/>*/}
-                    {/*</form>*/}
+                <div className="login-top">
+                    <h1>{("Cart contents")}</h1>
+                </div>
+                {/*<form onSubmit={handleCartFetch}>*/}
+                {/*    <input id="fetchButton" type="submit" value="Get cart contents"/>*/}
+                {/*</form>*/}
 
-                    <div className="Cart">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Price</th>
-                                        <th>Description</th>
+                <div className="Cart">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            <table>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Description</th>
+                                </tr>
+                                {cart.map(item => (
+                                    <tr key={item.id}>
+                                        <td>{item.name}</td>
+                                        <td>{item.price}</td>
+                                        <td>{item.description}</td>
                                     </tr>
-                                    {cart.map(item => (
-                                        <tr key={item.id}>
-                                            <td>{item.name}</td>
-                                            <td>{item.price}</td>
-                                            <td>{item.description}</td>
-                                        </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
-                    </div>
-
-                    <div className="login-top">
-                        <h1>{("Submit cart")}</h1>
-                    </div>
-                    <form onSubmit={handleCartSubmit}>
-
-                        <input className="submitbutton" id="fetchButton" type="submit" value="Submit cart"/>
-                    </form>
-                    <form onSubmit={handleCartClear}>
-                        <input className="clearbutton" id="fetchButton" type="submit" value="Clear cart contents"/>
-                    </form>
-                    <div className="login-top">
-                        <h1>{("Order history")}</h1>
-                    </div>
-                    {/*<form onSubmit={handleOrderHistorySubmit}>*/}
-
-                    {/*    <input id="fetchButton" type="submit" value="Get order history"/>*/}
-                    {/*</form>*/}
-
-                    <div className="Item">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                {cartHistory.map((cart, index) => (
-
-                                        // cart.forEach((index) => {
-                                        //console.log("item: ", JSON.stringify(cart.items))
-                                        // })
-
-                                        <table>
-                                            <tr>
-                                                <th></th>
-                                                <th></th>
-                                                <th></th>
-                                            </tr>
-                                            <tr>
-                                                <th> Order {index + 1} - Total price: {cart.total} </th>
-                                                <th></th>
-                                                <th></th>
-                                            </tr>
-                                            <tr>
-                                                <th></th>
-                                                <th></th>
-                                                <th></th>
-                                            </tr>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Price</th>
-                                                <th>Description</th>
-                                            </tr>
-                                            {cart.items.map(item => (
-                                                <tr key={item.id}>
-                                                    <td>{item.name}</td>
-                                                    <td>{item.price}</td>
-                                                    <td>{item.description}</td>
-                                                </tr>
-                                            ))
-                                            }
-                                        </table>
-
-                                    )
-                                )}
-                            </>
-                        )}
-                    </div>
+                                ))}
+                            </table>
+                        </>
+                    )}
                 </div>
-            </td>
-        </table>
+
+                <div className="login-top">
+                    <h1>{("Submit cart")}</h1>
+                </div>
+                <form onSubmit={handleCartSubmit}>
+
+                    <input className="submitbutton" id="fetchButton" type="submit" value="Submit cart"/>
+                </form>
+                <form onSubmit={handleCartClear}>
+                    <input className="clearbutton" id="fetchButton" type="submit" value="Clear cart contents"/>
+                </form>
+                <div className="login-top">
+                    <h1>{("Order history")}</h1>
+                </div>
+                {/*<form onSubmit={handleOrderHistorySubmit}>*/}
+
+                {/*    <input id="fetchButton" type="submit" value="Get order history"/>*/}
+                {/*</form>*/}
+
+                <div className="Item">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            {cartHistory.map((cart, index) => (
+
+                                    // cart.forEach((index) => {
+                                    //console.log("item: ", JSON.stringify(cart.items))
+                                    // })
+
+                                    <table>
+                                        <tr>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th> Order {index + 1} - Total price: {cart.total} </th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Price</th>
+                                            <th>Description</th>
+                                        </tr>
+                                        {cart.items.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{item.name}</td>
+                                                <td>{item.price}</td>
+                                                <td>{item.description}</td>
+                                            </tr>
+                                        ))
+                                        }
+                                    </table>
+
+                                )
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+
     )
 }

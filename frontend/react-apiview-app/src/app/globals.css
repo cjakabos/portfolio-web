@@ -5,7 +5,7 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-end-rgb: 214, 219, 220;
 }
 
 @media (prefers-color-scheme: light) {
@@ -37,11 +37,11 @@ html, body, #root {
   background-color: #04AA6D; /* Green */
   border: none;
   color: white;
-  padding: 15px 32px;
+  padding: 5px 25px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
+  font-size: 14px;
   border-radius: 12px;
 }
 
@@ -49,11 +49,11 @@ html, body, #root {
   background-color: blue;
   border: none;
   color: white;
-  padding: 15px 32px;
+  padding: 5px 25px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
+  font-size: 14px;
   border-radius: 12px;
 }
 
@@ -61,11 +61,11 @@ html, body, #root {
   background-color: red; /* Green */
   border: none;
   color: white;
-  padding: 15px 32px;
+  padding: 5px 25px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
+  font-size: 14px;
   border-radius: 12px;
 }
 
@@ -83,11 +83,11 @@ html, body, #root {
   background-color: #04AA6D; /* Green */
   border: none;
   color: white;
-  padding: 15px 32px;
+  padding: 5px 25px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
+  font-size: 14px;
   border-radius: 12px
 }
 
@@ -95,9 +95,12 @@ html, body, #root {
   background-color: red; /* Green */
   border: none;
   color: white;
+  padding: 5px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
   border-radius: 12px;
-  width: 80px;
-
 }
 
 .inline-block {

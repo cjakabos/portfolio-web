@@ -103,9 +103,8 @@ export default function OpenAI(this: any) {
     };
 
     return (
-        <section>
-            <article>
-                <div>
+        <div className="flex w-full flex-col">
+            <div className="flex w-full flex-col items-center justify-center">
                     <div className="login-top">
                         <h1>{("Send a OpenAI Completition request")}</h1>
                     </div>
@@ -120,7 +119,7 @@ export default function OpenAI(this: any) {
                                 // value={values.prompt}
                                 maxLength={50}
                                 required
-                                size={100}
+                                size={50}
                             />
                         </label>
                         <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
@@ -128,8 +127,6 @@ export default function OpenAI(this: any) {
                             {Feedback && <h1 style={{color: 'green'}}>{(Feedback)}</h1>}
                         </div>
                     </form>
-                </div>
-                <div>
                     <div className="login-top">
                         <h1>{("Send an DALL-E request")}</h1>
                     </div>
@@ -144,7 +141,7 @@ export default function OpenAI(this: any) {
                                 // value={values.prompt}
                                 maxLength={50}
                                 required
-                                size={100}
+                                size={50}
                             />
                         </label>
                         <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
@@ -153,9 +150,8 @@ export default function OpenAI(this: any) {
                         <br/>
                         {DalleFeedback && <img src={DalleFeedback.url2}></img>}
                     </form>
-                </div>
-            </article>
-        </section>
+            </div>
+        </div>
 
 
     )

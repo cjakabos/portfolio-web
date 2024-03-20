@@ -16,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="h-full pt-16">{children}</body>
+      <body className="h-full pt-16 flex w-full flex-col items-center">{children}</body>
     </html>
   )
 }

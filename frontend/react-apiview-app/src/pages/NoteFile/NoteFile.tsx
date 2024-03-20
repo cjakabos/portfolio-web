@@ -327,8 +327,7 @@ export default function NoteFile(this: any) {
     if (loading) return <p>Loading...</p>
 
     return (
-        <section>
-            <article>
+        <div className="flex w-full flex-col items-center justify-center">
                 {isNoteOpen ?
                     <PopUp
                     >
@@ -381,8 +380,8 @@ export default function NoteFile(this: any) {
                             value={values.title}
                             maxLength={50}
                             required
-                            size={100}
-                            height={500}
+                            size={50}
+                            height={50}
                         />
                         <br/>
                         <input
@@ -393,7 +392,7 @@ export default function NoteFile(this: any) {
                             value={values.description}
                             maxLength={50}
                             required
-                            size={100}
+                            size={50}
                             height={50}
                         />
                     </label>
@@ -440,8 +439,6 @@ export default function NoteFile(this: any) {
                         )}
                     </div>
                 </div>
-            </article>
-            <article>
                 <div className="login-top">
                     <h1>{("Upload a file")}</h1>
                 </div>
@@ -491,8 +488,7 @@ export default function NoteFile(this: any) {
                         )}
                     </div>
                 </div>
-            </article>
-        </section>
+        </div>
 
 
     )

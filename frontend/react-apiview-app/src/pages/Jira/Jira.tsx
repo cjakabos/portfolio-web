@@ -201,8 +201,8 @@ export default function Jira(this: any) {
     if (loading) return <p>Loading...</p>
 
     return (
-        <section>
-            <article>
+        <div className="flex w-full flex-col">
+            <div className="flex w-full flex-col items-center justify-center">
                 {isTicketOpen ?
                     <PopUp
                     >
@@ -236,7 +236,7 @@ export default function Jira(this: any) {
                         </form>
 
                         <form onSubmit={() => setTicketIsOpen(false)}>
-                            <input className="popup-close" id="closeButton" type="submit" value="CLOSE"/>
+                            <input className="popup-close" id="clearButton" type="submit" value="CLOSE"/>
                         </form>
                     </PopUp>
                     : null}
@@ -255,8 +255,8 @@ export default function Jira(this: any) {
                             value={values.summary}
                             maxLength={50}
                             required
-                            size={100}
-                            height={500}
+                            size={50}
+                            height={50}
                         />
                         <br/>
                         <input
@@ -267,7 +267,7 @@ export default function Jira(this: any) {
                             value={values.description}
                             maxLength={50}
                             required
-                            size={100}
+                            size={50}
                             height={50}
                         />
                     </label>
@@ -314,8 +314,8 @@ export default function Jira(this: any) {
                         )}
                     </div>
                 </div>
-            </article>
-        </section>
+        </div>
+        </div>
 
 
     )
