@@ -3,7 +3,7 @@
 This is the final project to demonstrate the security and DevOps skills that I learned in the last part of the program.
 The goal was to setup an cloudapp app with the following requirements:
 
-* handle different HTTP requests to manipulate the cloudapp in-memory database
+* handle different HTTP requests to manipulate the cloudapp postgres database
 * a proper authentication and authorization controls so users can only access their data, and that data can only be
   accessed in a secure way
 * the testing should reach at least 80% Coverage

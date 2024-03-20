@@ -104,83 +104,93 @@ export default function Stock() {
                             <div className="login-top">
                                 {Feedback !== 'OK' ? (
                                     <>
-                                        <div className="login-top">
+                                        <div className="flex items-center justify-center">
                                             <h1>{("Sign up")}</h1>
                                         </div>
                                         <form onSubmit={handleSubmit}>
-                                            <label>
-                                                First name:
-                                                <input
-                                                    type="text"
-                                                    name="firstname"
-                                                    id="firstname"
-                                                    placeholder="Enter First Name"
-                                                    onChange={handleChange}
-                                                    value={values.firstname}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </label>
-                                            <br/>
-                                            <label>
-                                                Last name:
-                                                <input
-                                                    type="text"
-                                                    name="lastname"
-                                                    id="lastname"
-                                                    placeholder="Enter Last Name"
-                                                    onChange={handleChange}
-                                                    value={values.lastname}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </label>
-                                            <br/>
-                                            <label>
-                                                Username:
-                                                <input
-                                                    type="username"
-                                                    name="username"
-                                                    id="username"
-                                                    placeholder="Enter Username"
-                                                    onChange={handleChange}
-                                                    value={values.username}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </label>
-                                            <br/>
-                                            <label>
-                                                Password:
-                                                <input
-                                                    type="password"
-                                                    name="password"
-                                                    id="password"
-                                                    placeholder="Enter Password"
-                                                    onChange={handleChange}
-                                                    value={values.password}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </label>
-                                            <label>
-                                                Confirm Password:
-                                                <input
-                                                    type="password"
-                                                    name="confirmPassword"
-                                                    id="confirmPassword"
-                                                    placeholder="Confirm Password"
-                                                    onChange={handleChange}
-                                                    value={values.confirmPassword}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </label>
-                                            <br/>
+                                            <table>
+                                                <tr>
+                                                    <th>First name</th>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            name="firstname"
+                                                            id="firstname"
+                                                            placeholder="Enter First Name"
+                                                            onChange={handleChange}
+                                                            value={values.firstname}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Last name</th>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            name="lastname"
+                                                            id="lastname"
+                                                            placeholder="Enter Last Name"
+                                                            onChange={handleChange}
+                                                            value={values.lastname}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Username</th>
+                                                    <td>
+                                                        <input
+                                                            type="username"
+                                                            name="username"
+                                                            id="username"
+                                                            placeholder="Enter Username"
+                                                            onChange={handleChange}
+                                                            value={values.username}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Password</th>
+                                                    <td>
+                                                        <input
+                                                            type="password"
+                                                            name="password"
+                                                            id="password"
+                                                            placeholder="Enter Password"
+                                                            onChange={handleChange}
+                                                            value={values.password}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Confirm password</th>
+                                                    <td>
+                                                        <input
+                                                            type="password"
+                                                            name="confirmPassword"
+                                                            id="confirmPassword"
+                                                            placeholder="Confirm Password"
+                                                            onChange={handleChange}
+                                                            value={values.confirmPassword}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            </table>
                                             {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
                                             {/*   onClick={() => functionName()}                        */}
                                             {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
-                                            <input className="submitbutton" type="submit" value="Submit"/>
+                                            <div className="flex items-center justify-center">
+                                                <input className="submitbutton" type="submit" value="Submit"/>
+                                            </div>
                                         </form>
                                     </>
                                 ) :

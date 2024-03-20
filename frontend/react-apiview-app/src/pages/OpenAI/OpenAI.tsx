@@ -9,8 +9,7 @@ const initialDalleValues = {
     prompt: ""
 };
 const initialDalleFeedback = {
-    url1: "",
-    url2: ""
+    url: ""
 };
 
 export default function OpenAI(this: any) {
@@ -48,10 +47,17 @@ export default function OpenAI(this: any) {
         e.preventDefault();
 
         const postData = {
-            model: 'text-davinci-003',
-            prompt: values.prompt,
-            max_tokens: 30,
-            temperature: 0.7
+            model: "gpt-3.5-turbo",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a helpful assistant"
+                },
+                {
+                    role: "user",
+                    content: values.prompt
+                }
+            ]
         };
 
         let axiosConfig = {
@@ -60,12 +66,13 @@ export default function OpenAI(this: any) {
                 'Authorization': 'Bearer ' + openAIKey
             }
         };
+        console.log("RESPONSE RECEIVED!!!!!!!!!!!!", postData);
+        console.log("RESPONSE RECEIVED!!!!!!!!!!!!", axiosConfig);
 
-
-        axios.post(openAiUrl + '/completions', postData, axiosConfig)
+        axios.post(openAiUrl + '/chat/completions', postData, axiosConfig)
             .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data.choices[0].text);
-                setFeedback(response.data.choices[0].text)
+                console.log("RESPONSE RECEIVED: ", response.data.choices[0].message.content);
+                setFeedback(response.data.choices[0].message.content)
 
             })
             .catch((error) => {
@@ -78,9 +85,10 @@ export default function OpenAI(this: any) {
         e.preventDefault();
 
         const postData = {
+            model: "dall-e-3",
             prompt: dalleValues.prompt,
-            n: 2,
-            size: "256x256"
+            n: 1,
+            size: "1024x1024"
         };
 
         let axiosConfig = {
@@ -90,10 +98,13 @@ export default function OpenAI(this: any) {
             }
         };
 
+        console.log('openAIKey', dalleValues.prompt)
+
 
         axios.post(openAiUrl + '/images/generations', postData, axiosConfig)
             .then((response) => {
-                setDalleFeedback({url1: response.data.data[0].url, url2: response.data.data[1].url})
+                console.log(response.data.data[0].url)
+                setDalleFeedback({url: response.data.data[0].url})
 
             })
             .catch((error) => {
@@ -139,17 +150,15 @@ export default function OpenAI(this: any) {
                                 placeholder="Enter DALL-E prompt"
                                 onChange={handleDalleChange}
                                 // value={values.prompt}
-                                maxLength={50}
+                                maxLength={150}
                                 required
                                 size={50}
                             />
                         </label>
                         <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                         <br/>
-                        {DalleFeedback && <img src={DalleFeedback.url1}></img>}
-                        <br/>
-                        {DalleFeedback && <img src={DalleFeedback.url2}></img>}
                     </form>
+                {DalleFeedback && <img src={DalleFeedback.url}></img>}
             </div>
         </div>
 

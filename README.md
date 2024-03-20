@@ -2,16 +2,16 @@
 
 This is a collection of my development projects from Web Development and Predictive Analytics Nanodegrees:
 - Back-end [API services](#required-api-services) developed by me during my Nanodegree [Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035).
-- React front-end [interface](#react-front-end) for utilizing these back-end services from above and new services below.
+- Next.js 14 front-end [interface](#react-front-end) for utilizing these back-end services from above and new services below.
 - ML pipeline for [Dynamic Customer Segmentation](#1-machine-learning-system-for-customer-segmentation), building on my Nanodegree in [Predictive Analytics for Business](https://www.udacity.com/course/predictive-analytics-for-business-nanodegree--nd008t)
 - External api service integration, such as:
   - [OpenAI API](#5-openai)
-  - [Google Maps API](#4-google-maps-api-key-how-to-get)
   - [Jira API with an internal proxy API service to avoid CORS](#6-jira)
+- [Kafka based Chat](#8-chat)
 - [Logging with log4j](backend/cloudapp/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](backend/cloudapp/README.md#cicd-with-jenkins)
 
 Example view with ML pipeline and other tabs:
-![](examples/react8.png)
+![](examples/example8.png)
 
 ## Certificates
 [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
@@ -22,11 +22,8 @@ Example view with ML pipeline and other tabs:
 
 Add .env file at root:
 ```bash
-NEXT_PUBLIC_MY_TOKEN = 'my-secret-api-token'
 NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
 NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
-NEXT_PUBLIC_API_KEY = 'my-secret-api-key'
-NEXT_PUBLIC_GMAPS_API_KEY=xxxxxxxxxxxxxx
 NEXT_PUBLIC_OPENAI_KEY=xxxxxxxxxxxxxx
 ```
 
@@ -44,13 +41,13 @@ The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
 If everything is correctly started, you should see a login page:
-![](examples/react1.png)
+![](examples/example1.png)
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
-![](examples/react2.png)
+![](examples/example2.png)
 
 ## 1. Machine learning system for Customer Segmentation
-![](examples/react8.png)  
+![](examples/example8.png)  
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
@@ -63,7 +60,7 @@ View results:
 
 
 ## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md), 
-![](examples/react3.png)
+![](examples/example3.png)
 The user is able to:
 - Create new items.
 - Add existing items to the cart.
@@ -72,7 +69,7 @@ The user is able to:
   
 
 ## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
-![](examples/react4.png)
+![](examples/example4.png)
 The user is able to:
 - Add new customer.
 - Add a new Pet to existing customers.
@@ -82,7 +79,7 @@ The user is able to:
 
 
 ## 4.  Maps
-![](examples/react5.png)
+![](examples/example5.png)
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
 The user is able to:
 - Click on the map to add new vehicle locations.
@@ -90,11 +87,11 @@ The user is able to:
   
 
 ## 5. OpenAI
-![](examples/react6.png)
+![](examples/example6.png)
 OpenAI interface for communicating with
 the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is able to:
-- Send a prompt and receive a Completion.
-- Send a prompt and receive two DallE image response.
+- Send a prompt to ChatGPT and receive a response..
+- Send a prompt to DallE and receive an image response.
   
 
 ## 6. Jira
@@ -107,12 +104,26 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 The user is able to:
 
 - Create/list/update/delete Jira ticket
-  ![](examples/react7.png)
+  ![](examples/example7.png)  
+
+## 7. Notes and Files
+A service for creating personal notes and uploading personal files.
+![](examples/example9.png)
+
+## 8. Chat
+A Kafka based chat service, the user is able to:
+
+- Create new chat rooms, furthermore share and enter chat room id
+![](examples/example10.png)
+- Talk to other users in chat rooms
+![](examples/example11.png)
+  
 
 
-# Required api services
 
-In the repository start these 3 backend services in different terminals
+# Required background services
+
+In the repository start these 4 backend API, Kafka and MongoDB services in different terminals
 
 ## 1. MLOps api:
 
@@ -169,6 +180,8 @@ mvn clean package
 java -jar target/cloudapp-0.0.1-SNAPSHOT.jar
 ```
 
+Swagger, note the "Authorize" button for jwt authorization: http://localhost:8099/swagger-ui/index.html#/
+
 ## 3. Vehicles api:
 
 ```
@@ -206,28 +219,51 @@ mvn clean package
 java -jar target/petstore-0.0.1-SNAPSHOT.jar
 ```
 
-## 4. Google Maps API key, [how to get](https://developers.google.com/maps/documentation/embed/get-api-key):
+## 5. Kafka and MongoDB for Chat service:
+
+Install, start and initialize MongoDB
+```
+brew tap mongodb/brew
+brew install mongodb-community@7.0
+brew services start mongodb/brew/mongodb-community
+brew services start mongodb-community@7.0
+mongosh
+use cloudappdb
+db.user.insertOne({name: "Test User", age: 999})
+```
+
+Install Kafka and Zookeeper
+```
+brew install kafka
+brew install zookeeper
+brew services start zookeeper
+brew services start kafka
+```
+
+Create chat topic
+```
+kafka-topics --bootstrap-server localhost:9092 --topic chat --create --partitions 3 --replication-factor 1
+```
+
+# Optional api services
+
+If OpenAI and Jira functionality is to be used, follow the instructions below:
+
+## OpenAI API key:
 
 ```
-To be stored in the .env file in the root directory in this format:
-NEXT_PUBLIC_GMAPS_API_KEY=xxxxxxxxxxxxxx
-```
-
-## 5. OpenAI API key:
-
-```
-To be stored in the .env file in the root directory in this format:
+To be stored in the .env file in the frontend/react-apiview-app root directory in this format:
 NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
-## 6. Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
+## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
 ```
-To be stored in the .env file in the root directory in this format:
+To be stored in the .env file in the frontend/react-apiview-app root directory in this format:
 NEXT_PUBLIC_JIRA_KEY=XXXXXXXXXX
 Together with your requested domain name
 NEXT_PUBLIC_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
 ```
-## 7. Web-proxy
+## Start web-proxy for Jira
 Start [Web Proxy API](backend/web-proxy/README.md) to avoid CORS issue with Jira [background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
 ```
 mvn clean package
