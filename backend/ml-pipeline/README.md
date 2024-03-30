@@ -8,7 +8,7 @@ You were able to collect basic data about your customers holding a membership ca
 
 Machine learning comes in handy for this task. Particularly, clustering, the most important unsupervised learning problem, is able to create categories grouping similar individuals. These categories are called clusters. A cluster is a collection of points in a dataset. These points are more similar between them than they are to points belonging to other clusters. Distance-based clustering groups the points into some number of clusters such that distances within the cluster should be small while distances between clusters should be large.
 
-[Detailed info of the cluster process](customers/clustering_analysis.ipynb), the Machine learning system is a live implementation of the same Jupyter notebook.
+[Detailed info of the cluster process](https://github.com/cjakabos/portfolio-business-analytics/blob/main/Project6_Extra/customers/clustering_analysis.ipynb), the Machine learning system is a live implementation of the same Jupyter notebook.
 
 <p align="center">
 	<img src="customers/Screen.png" >
@@ -29,13 +29,13 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dep
 📦Dynamic-Customer-Segmentation-System
  ┣
  ┣ 📂customers
- ┃ ┣ 📜customers.csv                # Contains csv to initiate db
- ┃ ┗ 📜clustering_analysis.ipynb    # Initial Jupyter notebook to run clustering analysis
+ ┃ ┗ 📜customers.csv    # Contains csv to initiate db
+ analysis
  ┣ 📂react-mlops-app                # React UI to interact add new customers, run segmentation and visualize segmentation results
  ┣ 📂src
  ┃ ┣ 📜app.py                       # Flask app
  ┃ ┣ 📜init_segmentationdb.py       # DB setup script to initiate postgres db based on customers.csv
- ┃ ┗ 📜segmentation_process.py      # The whole segmentation process for reading data, estimating segments and writing it to db, based on clustering_analysis.ipynb 
+ ┃ ┗ 📜segmentation_process.py      # The whole segmentation process for reading data, estimating segments and writing it to db, based on [Detailed info of the cluster process](https://github.com/cjakabos/portfolio-business-analytics/blob/main/Project6_Extra/customers/clustering_analysis.ipynb)
  ┗ 📜requirements.txt               # Projects required dependencies
 ```
 
