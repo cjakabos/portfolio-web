@@ -40,7 +40,7 @@ export const genders = [
     {value: "Male", label: "Male"}
 ];
 
-export const mlEndpoint = "http://127.0.0.1:8600";
+export const mlEndpoint = "http://localhost:8600";
 
 export const MLOps: React.FunctionComponent = () => {
 

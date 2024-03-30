@@ -15,7 +15,7 @@ def to_sql_seq(df,table_name, engine):
 
     get_seq_id_sql = f"""
                        select your_sequence.nextval as id
-                        from dual 
+                        from dual
                          connect by level < {df.shape[0]}
                      """
 
@@ -30,7 +30,7 @@ def to_sql_seq(df,table_name, engine):
 
 def main():
     # Connect to an existing database
-    with psycopg.connect("dbname=segmentationdb user=segmentmaster") as conn:
+    with psycopg.connect("postgres://segmentmaster:segment@localhost:5434/segmentationdb") as conn:
 
         # Open a cursor to perform database operations
         with conn.cursor() as cur:
@@ -59,7 +59,7 @@ def main():
     # for psycopg3 you need to use it with postgresql+psycopg manner, simple postgresql will use only psycopg2
     # TODO: another pro tip: https://stackoverflow.com/a/63178240/1026
 
-    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost/segmentationdb"
+    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost:5434/segmentationdb"
 
     db = create_engine(conn_string)
     conn = db.connect()
@@ -78,7 +78,7 @@ def main():
     #to_sql_seq(df, 'test', db)
     conn.execute(text("SELECT setval(pg_get_serial_sequence('test', 'id'), (SELECT MAX(id) FROM test));"))
 
-    conn = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    conn = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
     conn.autocommit = True
 
     conn.close()

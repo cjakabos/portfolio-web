@@ -102,7 +102,7 @@ def main():
     logging.info("Checking for new data")
 
     # First, read customers from DB
-    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost/segmentationdb"
+    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost:5434/segmentationdb"
     db = create_engine(conn_string)
     connection = db.connect()
     customers = pd.read_sql('select * from test', connection)
@@ -237,7 +237,7 @@ def main():
     connection.close()
 
     # Update mlinfo
-    with pg.connect("dbname=segmentationdb user=segmentmaster") as conn:
+    with pg.connect("dbname=segmentationdb user=segmentmaster host='localhost' port='5434' password='segment'") as conn:
         # Open a cursor to perform database operations
         with conn.cursor() as cur:
             cur.execute("DELETE FROM mlinfo;")

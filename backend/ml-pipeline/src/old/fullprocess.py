@@ -23,7 +23,7 @@ def main():
 
     if (sys.argv[1] == 'apitrigger'):
         logging.info("Running in API trigger mode")
-        connection = pg.connect("dbname='riskdb' user='riskmaster' host='127.0.0.1' port='5432' password='apetite'")
+        connection = pg.connect("dbname='riskdb' user='riskmaster' host='localhost' port='5434' password='apetite'")
         data_df = pd.read_sql('select * from test', connection)
         #print(data_df.to_string())
 

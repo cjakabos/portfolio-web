@@ -32,13 +32,13 @@ def index():
 
 @app.route('/getCustomers', methods=['GET'])
 def getCustomers(pg=pg):
-    connection = pg.connect("dbname='riskdb' user='riskmaster' host='127.0.0.1' port='5432' password='apetite'")
+    connection = pg.connect("dbname='riskdb' user='riskmaster' host='localhost' port='5434' password='apetite'")
     data_df = pd.read_sql('select * from test', connection)
     return data_df.to_json(orient='records')
 
 @app.route('/getSegmentationCustomers', methods=['GET'])
 def getSegmentationCustomers(pg=pg):
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
     data_df = pd.read_sql('select * from test', connection)
     return data_df.to_json(orient='records')
 
@@ -71,7 +71,7 @@ def getMLInfo(pg=pg):
         os.system("python3 segmentation_process.py")
 
     # 3. read segment results: Connect to db and read latest segmentation results
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
     data_df = pd.read_sql('select * from mlinfo', connection)
     #print(data_df['image2'][0])
     encoded_img2 = base64.b64encode(data_df['image2'][0]).decode("utf-8")
@@ -91,7 +91,7 @@ def addCustomer(pg=pg):
     data = request.json
 
     # for psycopg3 you need to use it with postgresql+psycopg manner, simple postgresql will use only psycopg2
-    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost/segmentationdb"
+    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost:5434/segmentationdb"
 
     db = create_engine(conn_string)
     connection = db.connect()
@@ -104,7 +104,7 @@ def addCustomer(pg=pg):
     print(df)
     #connection.execute(text("SELECT setval(pg_get_serial_sequence('test', 'id'), (SELECT MAX(id) FROM test)+1);"))
     df.to_sql('test', con=connection, if_exists='append', index=False)
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='127.0.0.1' port='5432' password='segment'")
+    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
     connection.autocommit = True
     connection.close()
 
@@ -132,7 +132,7 @@ def ingest(pg=pg):
     print(df)
 
     df.to_sql('test', con=connection, if_exists='append', index=False)
-    connection = pg.connect("dbname='riskdb' user='riskmaster' host='127.0.0.1' port='5432' password='apetite'")
+    connection = pg.connect("dbname='riskdb' user='riskmaster' host='localhost' port='5434' password='apetite'")
     connection.autocommit = True
     connection.close()
 
@@ -213,4 +213,4 @@ def diag():
 
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8600, debug=True, threaded=True)
+    app.run(host='localhost', port=8600, debug=True, threaded=True)

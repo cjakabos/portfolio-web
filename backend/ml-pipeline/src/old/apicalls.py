@@ -16,7 +16,7 @@ from config import TEST_DATA_PATH, MODEL_PATH
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-URL = "http://127.0.0.1:8000"
+URL = "http://localhost:8000"
 
 logging.info(
     f"Post request /prediction for {os.path.join(TEST_DATA_PATH, 'testdata.csv')}")

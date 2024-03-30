@@ -66,7 +66,7 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dep
 ```
 
 ## Steps Overview
-1. **Data ingestion:** Automatically check if new data that can be used for model training. Compile all training data to a training dataset and save it to folder. 
+1. **Data ingestion:** Automatically check if new data that can be used for model training. Compile all training data to a training dataset and save it to folder.
 2. **Training, scoring, and deploying:** Write scripts that train an ML model that predicts attrition risk, and score the model. Saves the model and the scoring metrics.
 3. **Diagnostics:** Determine and save summary statistics related to a dataset. Time the performance of some functions. Check for dependency changes and package updates.
 4. **Reporting:** Automatically generate plots and PDF document that report on model metrics and diagnostics. Provide an API endpoint that can return model predictions and metrics.
@@ -88,9 +88,9 @@ python3 app.py
 
 ```bash
 "input_folder_path": "practicedata",
-"output_folder_path": "ingesteddata", 
-"test_data_path": "testdata", 
-"output_model_path": "practicemodels", 
+"output_folder_path": "ingesteddata",
+"test_data_path": "testdata",
+"output_model_path": "practicemodels",
 "prod_deployment_path": "production_deployment"
 ```
 
@@ -120,17 +120,17 @@ Artifacts output:
 models/practicemodels/trainedmodel.pkl
 ```
 
-###  4- Model scoring 
+###  4- Model scoring
 ```bash
 virtualenv venv2
 source venv2/bin/active
 pip3 install -r requirements.txt
 python3 scoring.py
 ```
-Artifacts output: 
+Artifacts output:
 ```
 models/practicemodels/latestscore.txt
-``` 
+```
 
 ### 5- Model deployment
 ```bash
@@ -144,7 +144,7 @@ Artifacts output:
 model/prod_deployment_path/ingestedfiles.txt
 model/prod_deployment_path/trainedmodel.pkl
 model/prod_deployment_path/latestscore.txt
-``` 
+```
 
 ### 6- Run diagnostics
 ```bash
@@ -180,9 +180,9 @@ models/practicemodels/apireturns.txt
 
 ```bash
 "input_folder_path": "sourcedata",
-"output_folder_path": "ingesteddata", 
-"test_data_path": "testdata", 
-"output_model_path": "models", 
+"output_folder_path": "ingesteddata",
+"test_data_path": "testdata",
+"output_model_path": "models",
 "prod_deployment_path": "production_deployment"
 ```
 
@@ -208,7 +208,7 @@ sudo crontab -e
    - Press **i** to insert a cron job
    - Write the cron job in ```cronjob.txt``` which runs ```fullprocces.py``` every 10 mins
    - Save after editing, press **esc key**, then type **:wq** and press enter
-  
+
 View crontab file
 ```bash
 sudo crontab -l
@@ -257,7 +257,7 @@ curl -H "Content-Type: application/json" -X POST -d \
         "exited": 0
     }
 }' \
-http://127.0.0.1:8000/ingest
+http://localhost:8000/ingest
 ```
 
 

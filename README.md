@@ -20,13 +20,6 @@ Example view with ML pipeline and other tabs:
 
 ## REACT front-end
 
-Add .env file at root:
-```bash
-NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
-NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
-NEXT_PUBLIC_OPENAI_KEY=xxxxxxxxxxxxxx
-```
-
 Install packages and start React front-end from root of react-apiview-app:
 
 ```bash
@@ -125,31 +118,14 @@ A Kafka based chat service, the user is able to:
 
 In the repository start these 4 backend API, Kafka and MongoDB services in different terminals
 
+Setup and start Mysql, Postgres, MongoDB and Zookeeper/Kafka services with docker-compose:
+```bash
+docker-compose up -d
+```
+
 ## 1. MLOps api:
 
-1- Setup postgres db
-Install postgres and start it
-```bash
-brew install postgresql@15
-brew services start postgresql@15
-echo 'export PATH=/opt/homebrew/opt/postgresql@15/bin/postgres:$PATH  ' >> ~/.zshrc
-psql postgres
-```
-
-Create segmentationdb
-
-```sql
-CREATE DATABASE segmentationdb;
-CREATE USER segmentmaster WITH PASSWORD 'segment';
-GRANT ALL ON DATABASE segmentationdb TO segmentmaster;
-ALTER DATABASE segmentationdb OWNER TO segmentmaster;
-GRANT ALL PRIVILEGES ON DATABASE segmentationdb TO segmentmaster;
-\c segmentationdb segmentmaster
-GRANT ALL ON SCHEMA public TO segmentmaster;
-exit
-```
-
-2- Run init_segmentationdb and Flask App in one terminal, run the rest of the steps in another terminal
+1- Run init_segmentationdb and Flask App in one terminal, run the rest of the steps in another terminal
 ```bash
 virtualenv venv
 source venv/bin/active
@@ -161,26 +137,13 @@ python3 app.py
 
 ## 2. Cloudapp api:
 
-Create cloudappdb
-
-```sql
-CREATE DATABASE cloudappdb;
-CREATE USER websitemaster WITH PASSWORD 'local';
-GRANT ALL ON DATABASE cloudappdb TO websitemaster;
-ALTER DATABASE cloudappdb OWNER TO websitemaster;
-GRANT ALL PRIVILEGES ON DATABASE cloudappdb TO websitemaster;
-\c cloudappdb websitemaster
-GRANT ALL ON SCHEMA public TO websitemaster;
-exit
-```
-
 ```
 cd cloudapp
 mvn clean package
 java -jar target/cloudapp-0.0.1-SNAPSHOT.jar
 ```
 
-Swagger, note the "Authorize" button for jwt authorization: http://localhost:8099/swagger-ui/index.html#/
+OpenAPI documentation, note the "Authorize" button for jwt authorization: http://localhost:8099/swagger-ui/index.html#/
 
 ## 3. Vehicles api:
 
@@ -193,57 +156,11 @@ java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
 ## 4. Pet Store api:
 
 ```bash
-#Install msql, eg. on mac:
-brew install mysql
-brew services start mysql
-
-#Start mysql and flush privileges, if issues arise:
-mysql -u root    
-FLUSH PRIVILEGES;
-ALTER USER 'root'@'localhost' IDENTIFIED BY ‘root’;
-
-```
-
-```sql
---Create db:
-CREATE SCHEMA `petstore` ; -- Create the petstore database
-CREATE USER 'root'@'localhost' IDENTIFIED BY 'root'; -- Create the user if you haven’t yet
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'; -- Make sure that the password is set
-GRANT ALL ON petstore.* TO 'root'@'localhost'; -- Gives all privileges to the new user on petstore
-```
-
-```bash
-#start the service from repo root:
 cd petstore
 mvn clean package
 java -jar target/petstore-0.0.1-SNAPSHOT.jar
 ```
 
-## 5. Kafka and MongoDB for Chat service:
-
-Install, start and initialize MongoDB
-```
-brew tap mongodb/brew
-brew install mongodb-community@7.0
-brew services start mongodb/brew/mongodb-community
-brew services start mongodb-community@7.0
-mongosh
-use cloudappdb
-db.user.insertOne({name: "Test User", age: 999})
-```
-
-Install Kafka and Zookeeper
-```
-brew install kafka
-brew install zookeeper
-brew services start zookeeper
-brew services start kafka
-```
-
-Create chat topic
-```
-kafka-topics --bootstrap-server localhost:9092 --topic chat --create --partitions 3 --replication-factor 1
-```
 
 # Optional api services
 
@@ -257,8 +174,15 @@ NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
+Frontend: Add .env file at backend/cloudapp root directory in this format:
+```bash
+NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
+NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
+NEXT_PUBLIC_OPENAI_KEY=xxxxxxxxxxxxxx
 ```
-To be stored in the .env file in the frontend/react-apiview-app root directory in this format:
+
+Backend: Add .env file at frontend/react-apiview-app root directory in this format:
+```bash
 NEXT_PUBLIC_JIRA_KEY=XXXXXXXXXX
 Together with your requested domain name
 NEXT_PUBLIC_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
