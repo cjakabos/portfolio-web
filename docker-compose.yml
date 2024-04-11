@@ -25,7 +25,7 @@ services:
     image: mysql:8.0
     container_name: mysql-petstore
     ports:
-      - "3307:3306"
+      - "3307:3307"
     volumes:
       - petstore:/var/lib/mysql
     environment:
@@ -63,9 +63,31 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_CREATE_TOPICS: 'chat'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://host.docker.internal:9092,PLAINTEXT_INTERNAL://broker:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  web-proxy:
+    image: web-proxy:latest
+    container_name: web-proxy
+    ports:
+      - 8500:8500
+  vehicles-api:
+    image: vehicles-api:latest
+    container_name: vehicles-api
+    ports:
+      - 8880:8880
+  petstore:
+    image: petstore:latest
+    container_name: petstore
+    ports:
+      - 8083:8083
+  cloudapp:
+    image: cloudapp:latest
+    container_name: cloudapp
+    ports:
+      - 8099:8099
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal
 volumes:
   petstore:

@@ -23,6 +23,9 @@ public class KafkaConsumerConfig {
     @Value("${kafka.config.consumer}")
     private String consumerConfigFilePath;
 
+    @Value("${spring.kafka.consumer.bootstrap-servers}")
+    private String consumerBootStrapServers;
+
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         try {
@@ -31,6 +34,7 @@ public class KafkaConsumerConfig {
                     .getResourceAsStream(consumerConfigFilePath)) {
                 props.load(input);
             }
+            props.setProperty("bootstrap.servers", consumerBootStrapServers);
             return new DefaultKafkaConsumerFactory(props);
         } catch (IOException ex) {
             LOGGER.error(ex.getMessage(), ex);

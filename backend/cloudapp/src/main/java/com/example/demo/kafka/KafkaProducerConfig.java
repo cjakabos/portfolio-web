@@ -21,6 +21,9 @@ public class KafkaProducerConfig {
     @Value("${kafka.config.producer}")
     private String producerConfigFilePath;
 
+    @Value("${spring.kafka.producer.bootstrap-servers}")
+    private String producerBootStrapServers;
+
     public KafkaTemplate<String, Message> kafkaTemplate() {
         try {
             Properties props = new Properties();
@@ -28,6 +31,7 @@ public class KafkaProducerConfig {
                     .getResourceAsStream(producerConfigFilePath)) {
                 props.load(input);
             }
+            props.setProperty("bootstrap.servers", producerBootStrapServers);
             ProducerFactory<String, Message> producerFactory
                     = new DefaultKafkaProducerFactory(props);
             return new KafkaTemplate<>(producerFactory);

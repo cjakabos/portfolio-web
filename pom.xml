@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.springboot</groupId>
+	<artifactId>microservice</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>springboot-parent-pom</name>
+	<description>Spring Boot - Parent Pom</description>
+
+	<properties>
+		<docker.image.name>${project.artifactId}</docker.image.name>
+		<docker.image.from>openjdk:21-jdk</docker.image.from>
+		<docker.image.from.fabric8>openjdk:21-jdk</docker.image.from.fabric8>
+		<dockerfile-maven-plugin.version>1.3.4</dockerfile-maven-plugin.version>
+		<docker.env.JAVA_OPTS>--enable-preview -Xmx512m -Dfile.encoding=UTF-8 -XX:+UseG1GC -verbose:gc -XX:+PrintGCDetails</docker.env.JAVA_OPTS>
+	</properties>
+
+	<modules>
+		<module>backend/petstore</module>
+		<module>backend/vehicles-api</module>
+		<module>backend/web-proxy</module>
+		<module>backend/cloudapp</module>
+	</modules>
+
+
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>io.fabric8</groupId>
+					<artifactId>docker-maven-plugin</artifactId>
+					<version>0.43.4</version>
+					<configuration>
+						<skip>true</skip>
+					</configuration>
+				</plugin>
+
+
+			</plugins>
+		</pluginManagement>
+	</build>
+
+</project>
