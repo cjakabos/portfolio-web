@@ -18,18 +18,32 @@ Example view with ML pipeline and other tabs:
 
 [Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)
 
-## REACT front-end
+## Install and run
 
-Install packages and start React front-end from root of react-apiview-app:
-
+Setup and start Mysql, Postgres, MongoDB and Zookeeper/Kafka services with docker-compose:
 ```bash
+docker-compose -f docker-compose-infrastructure.yml up -d
+```
+Build the Docker images for the Java based services:
+Go to root folder of the repository
+```bash
+mvn clean package docker:build
+```
+Start the Java based Docker images and build and start the Python based ml-pipeline and the Next.js based frontend:
+```bash
+docker-compose -f docker-compose-app.yml up -d
+```
+
+Runs the app in the production mode.\
+Open http://localhost:5001 to view it in your browser.
+
+Alternative option: To run the front-end in development mode.
+```bash
+cd frontend/react-apiview-app
 npm install
 npm run dev
 ```
-
-Runs the app in the development mode.\
-Open http://localhost:5001 to view it in your browser.
-
+Open http://localhost:5001 to view it in your browser.  
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
@@ -110,89 +124,27 @@ A Kafka based chat service, the user is able to:
 ![](examples/example10.png)
 - Talk to other users in chat rooms
 ![](examples/example11.png)
-  
 
 
-
-# Required background services
-
-In the repository start these 4 backend API, Kafka and MongoDB services in different terminals
-
-Setup and start Mysql, Postgres, MongoDB and Zookeeper/Kafka services with docker-compose:
-```bash
-docker-compose up -d
-```
-
-## 1. MLOps api:
-
-1- Run init_segmentationdb and Flask App in one terminal, run the rest of the steps in another terminal
-```bash
-virtualenv venv
-source venv/bin/active
-pip3 install -r requirements.txt
-cd src
-python3 init_segmentationdb.py
-python3 app.py
-```
-
-## 2. Cloudapp api:
-
-```
-cd cloudapp
-mvn clean package
-java -jar target/cloudapp-0.0.1-SNAPSHOT.jar
-```
-
-OpenAPI documentation, note the "Authorize" button for jwt authorization: http://localhost:8099/swagger-ui/index.html#/
-
-## 3. Vehicles api:
-
-```
-cd vehicles-api
-mvn clean package
-java -jar target/vehicles-api-0.0.1-SNAPSHOT.jar
-```
-
-## 4. Pet Store api:
-
-```bash
-cd petstore
-mvn clean package
-java -jar target/petstore-0.0.1-SNAPSHOT.jar
-```
-
-
-# Optional api services
+# Optional API services
 
 If OpenAI and Jira functionality is to be used, follow the instructions below:
 
 ## OpenAI API key:
-
-```
 To be stored in the .env file in the frontend/react-apiview-app root directory in this format:
+
+```bash
 NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Frontend: Add .env file at backend/cloudapp root directory in this format:
+Frontend: Add .env file at frontend/react-apiview-app root directory in this format:
 ```bash
 NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
 NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
-NEXT_PUBLIC_OPENAI_KEY=xxxxxxxxxxxxxx
 ```
+NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.
 
-Backend: Add .env file at frontend/react-apiview-app root directory in this format:
-```bash
-NEXT_PUBLIC_JIRA_KEY=XXXXXXXXXX
-Together with your requested domain name
-NEXT_PUBLIC_JIRA_DOMAIN="https:/XXXXX.atlassian.net"
-```
-## Start web-proxy for Jira
-Start [Web Proxy API](backend/web-proxy/README.md) to avoid CORS issue with Jira [background](https://jira.atlassian.com/browse/JRASERVER-59101?focusedCommentId=2406855&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-2406855)
-```
-mvn clean package
-java -jar target/web-proxy-0.0.1-SNAPSHOT.jar
-```
 
 
 

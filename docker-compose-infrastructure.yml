@@ -67,36 +67,5 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-  web-proxy:
-    image: web-proxy:latest
-    container_name: web-proxy
-    ports:
-      - 8500:8500
-  vehicles-api:
-    image: vehicles-api:latest
-    container_name: vehicles-api
-    ports:
-      - 8880:8880
-  petstore:
-    image: petstore:latest
-    container_name: petstore
-    ports:
-      - 8083:8083
-  cloudapp:
-    image: cloudapp:latest
-    container_name: cloudapp
-    ports:
-      - 8099:8099
-    environment:
-      - DOCKER_HOST_IP=host.docker.internal
-  ml-pipeline:
-    build:
-      context: ./backend/ml-pipeline
-      dockerfile: Dockerfile
-    container_name: ml-pipeline
-    ports:
-      - 8600:8600
-    environment:
-      - DOCKER_HOST_IP=host.docker.internal
 volumes:
   petstore:
