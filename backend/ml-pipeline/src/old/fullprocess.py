@@ -16,6 +16,7 @@ from config import INPUT_FOLDER_PATH, PROD_DEPLOYMENT_PATH, DATA_PATH
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
+host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
 
 def main():
 
@@ -23,7 +24,7 @@ def main():
 
     if (sys.argv[1] == 'apitrigger'):
         logging.info("Running in API trigger mode")
-        connection = pg.connect("dbname='riskdb' user='riskmaster' host='localhost' port='5434' password='apetite'")
+        connection = pg.connect(f"dbname='riskdb' user='riskmaster' host='{host_ip}' port='5434' password='apetite'")
         data_df = pd.read_sql('select * from test', connection)
         #print(data_df.to_string())
 

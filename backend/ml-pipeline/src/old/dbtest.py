@@ -7,7 +7,7 @@ This script used to test the postgres DB connection with psycopg
 import psycopg
 
 # Connect to an existing database
-with psycopg.connect("dbname=riskdb user=riskmaster") as conn:
+with psycopg.connect(f"dbname=riskdb user=riskmaster") as conn:
 
     # Open a cursor to perform database operations
     with conn.cursor() as cur:

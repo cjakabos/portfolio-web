@@ -19,9 +19,9 @@ from sqlalchemy.sql import text
 
 # Set up variables for use in our script
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5001"}})
+host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
+CORS(app, resources={r"/*": {"origins": f"http://localhost:5001"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
-
 
 @app.route('/')
 @cross_origin()
@@ -30,7 +30,7 @@ def index():
 
 @app.route('/getSegmentationCustomers', methods=['GET'])
 def getSegmentationCustomers(pg=pg):
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
+    connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
     data_df = pd.read_sql('select * from test', connection)
     return data_df.to_json(orient='records')
 
@@ -48,10 +48,10 @@ def getMLInfo(pg=pg):
     # 1. reinit DB, if needed
     #if sampleSize is specific to non-zero, sample only that set of database, otherwise run on full DB
     if data.get("sampleSize") > 0:
-        os.system("python3 init_segmentationdb.py " + str(data.get("sampleSize")))
+        os.system("python3 src/init_segmentationdb.py " + str(data.get("sampleSize")))
     #if sampleSize is 0, reset db
     elif data.get("sampleSize") == 0:
-        os.system("python3 init_segmentationdb.py")
+        os.system("python3 src/init_segmentationdb.py")
 
     # 2. resegment DB, if needed
     '''
@@ -60,10 +60,10 @@ def getMLInfo(pg=pg):
     if sampleSize is below -2, skip resegment, only read data from previous segmentation
     '''
     if data.get("sampleSize") >= -1:
-        os.system("python3 segmentation_process.py")
+        os.system("python3 src/segmentation_process.py")
 
     # 3. read segment results: Connect to db and read latest segmentation results
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
+    connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
     data_df = pd.read_sql('select * from mlinfo', connection)
     #print(data_df['image2'][0])
     encoded_img2 = base64.b64encode(data_df['image2'][0]).decode("utf-8")
@@ -83,7 +83,7 @@ def addCustomer(pg=pg):
     data = request.json
 
     # for psycopg3 you need to use it with postgresql+psycopg manner, simple postgresql will use only psycopg2
-    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost:5434/segmentationdb"
+    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
 
     db = create_engine(conn_string)
     connection = db.connect()
@@ -96,7 +96,7 @@ def addCustomer(pg=pg):
     print(df)
     #connection.execute(text("SELECT setval(pg_get_serial_sequence('test', 'id'), (SELECT MAX(id) FROM test)+1);"))
     df.to_sql('test', con=connection, if_exists='append', index=False)
-    connection = pg.connect("dbname='segmentationdb' user='segmentmaster' host='localhost' port='5434' password='segment'")
+    connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
     connection.autocommit = True
     connection.close()
 
@@ -107,4 +107,4 @@ def addCustomer(pg=pg):
 
 
 if __name__ == "__main__":
-    app.run(host='localhost', port=8600, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=8600, debug=True, threaded=True)

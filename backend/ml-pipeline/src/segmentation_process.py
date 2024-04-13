@@ -18,7 +18,7 @@ import heapq
 from config import MODEL_PATH
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
+host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
 
 def statistics(variable):
     if variable.dtype == "int64" or variable.dtype == "float64":
@@ -102,7 +102,7 @@ def main():
     logging.info("Checking for new data")
 
     # First, read customers from DB
-    conn_string = "postgresql+psycopg://segmentmaster:segment@localhost:5434/segmentationdb"
+    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
     db = create_engine(conn_string)
     connection = db.connect()
     customers = pd.read_sql('select * from test', connection)
@@ -237,7 +237,8 @@ def main():
     connection.close()
 
     # Update mlinfo
-    with pg.connect("dbname=segmentationdb user=segmentmaster host='localhost' port='5434' password='segment'") as conn:
+    print('updating report', {host_ip})
+    with pg.connect(f"dbname=segmentationdb user=segmentmaster host='{host_ip}' port='5434' password='segment'") as conn:
         # Open a cursor to perform database operations
         with conn.cursor() as cur:
             cur.execute("DELETE FROM mlinfo;")
