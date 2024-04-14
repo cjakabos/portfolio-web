@@ -46,20 +46,20 @@ export default function Page(this: any) {
 
     const [userToken, setUserToken] = useState('');
     const [username, setUsername] = useState('');
-    //Make sure useEffect only runs once
+
+    //Make sure only runs once
     const effectRan = useRef(false);
-    // @ts-ignore
-    useEffect(() => {
-        if (!effectRan.current) {
-            if (typeof window !== "undefined") {
-                setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
-                setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
-                console.log('this is the username: ', username)
-            }
+    if (!effectRan.current) {
+        if (typeof window !== "undefined") {
+            setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+            setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
+            console.log('this is the username: ', username)
+            effectRan.current = true;
         }
+    }
+    useEffect(() => {
         getNotes()
         getFiles()
-        return () => effectRan.current = true;
     }, []);
 
 
