@@ -24,12 +24,7 @@ Setup and start Mysql, Postgres, MongoDB and Zookeeper/Kafka services with docke
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```
-Build the Docker images for the Java based services:
-Go to root folder of the repository
-```bash
-mvn clean package docker:build
-```
-Start the Java based Docker images and build and start the Python based ml-pipeline and the Next.js based frontend:
+Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
 ```bash
 docker-compose -f docker-compose-app.yml up -d
 ```

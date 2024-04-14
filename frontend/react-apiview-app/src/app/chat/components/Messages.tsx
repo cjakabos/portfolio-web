@@ -18,11 +18,7 @@ const Messages = ({ messages, currentUser }) => {
 
     let renderMessage = (message) => {
         const { sender, content, timestamp } = message;
-        const [username, setUsername] = useState('');
-        if (typeof window !== "undefined") {
-            setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
-        }
-        const messageFromMe = username === message.sender;
+        const messageFromMe = currentUser === message.sender;
         const className = messageFromMe ? "Messages-message currentUser" : "Messages-message";
 
         // Convert the timestamp to a human-readable format

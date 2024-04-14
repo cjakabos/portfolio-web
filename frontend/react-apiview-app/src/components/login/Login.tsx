@@ -115,7 +115,7 @@ export default function Login() {
                         </label>
                         <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                         <div>
-                            <button className="menubutton" onClick={() => router.push("/Signup")}>
+                            <button className="menubutton" onClick={() => router.push("/stock")}>
                                 <h1 style={{color: 'red'}}>{("New user?")} Signup </h1>
                             </button>
                         </div>

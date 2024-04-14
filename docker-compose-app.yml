@@ -4,21 +4,35 @@ services:
   web-proxy:
     image: web-proxy:latest
     container_name: web-proxy
+    build:
+      context: ./backend/web-proxy
+      dockerfile: Dockerfile
     ports:
       - 8500:8500
   vehicles-api:
     image: vehicles-api:latest
     container_name: vehicles-api
+    build:
+      context: ./backend/vehicles-api
+      dockerfile: Dockerfile
     ports:
       - 8880:8880
   petstore:
     image: petstore:latest
     container_name: petstore
+    build:
+      context: ./backend/petstore
+      dockerfile: Dockerfile
     ports:
       - 8083:8083
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal
   cloudapp:
     image: cloudapp:latest
     container_name: cloudapp
+    build:
+      context: ./backend/cloudapp
+      dockerfile: Dockerfile
     ports:
       - 8099:8099
     environment:

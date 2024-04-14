@@ -13,26 +13,21 @@ const SOCKET_URL = 'http://localhost:8099/ws/';
 let client;
 export default function Chat() {
 
-    let [username, setUsername] = useState('hello');
-    //Make sure useEffect only runs once
+    let [username, setUsername] = useState('');
+    //Make sure only runs once
     const effectRan = useRef(false);
-    // @ts-ignore
-    useEffect(() => {
-        if (!effectRan.current) {
-            try {
-                console.log('username', username)
-                setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
-                console.log('username changed', username)
-            } catch (error) {
-                console.log(error)
-            }
+    if (!effectRan.current) {
+        if (typeof window !== "undefined") {
+            setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
+            console.log('this is the username: ', username)
+            effectRan.current = true;
         }
+    }
+    useEffect(() => {
         handleGetUserRooms()
-        return () => effectRan.current = true;
     }, []);
 
     const [messages, setMessages] = useState([])
-    const [user, setUser] = useState(username)
     const [connectedUsers, setConnectedUsers] = useState([]);
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -174,14 +169,13 @@ export default function Chat() {
     if (effectRan.current) {
         return (
             <div className="Chat">
-                Hi {username} {username}
-                {!!user && !enteredRoom ? (
+                {!!username && !enteredRoom ? (
                     <Room onCreateRoom={handleCreateRoom} onEnterRoom={handleEnterRoom} userRooms={userRooms}/>
                 ) : null}
 
-                {!!user && enteredRoom ? (
+                {!!username && enteredRoom ? (
                     <>
-                        <Messages messages={messages} currentUser={user}/>
+                        <Messages messages={messages} currentUser={username}/>
                         <Input onSendMessage={onSendMessage}/>
                     </>
                 ) : null}
