@@ -1,6 +1,15 @@
 version: "3.8"
 
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - petstore
+      - vehicles-api
   web-proxy:
     image: web-proxy:latest
     container_name: web-proxy
