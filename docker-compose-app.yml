@@ -14,14 +14,14 @@ services:
 #      - ./frontend/nginx/localhost+3-key.pub:/etc/nginx/localhost+3-key.pub
     depends_on:
         - petstore
-  web-proxy:
-    image: web-proxy:latest
-    container_name: web-proxy
+  jiraproxy:
+    image: jiraproxy:latest
+    container_name: jiraproxy
     build:
       context: ./backend/web-proxy
       dockerfile: Dockerfile
     ports:
-      - 8500:8500
+      - 8501:8501
   vehicles-api:
     image: vehicles-api:latest
     container_name: vehicles-api
@@ -40,16 +40,16 @@ services:
       - 8083:8083
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-#  cloudapp:
-#    image: cloudapp:latest
-#    container_name: cloudapp
-#    build:
-#      context: ./backend/cloudapp
-#      dockerfile: Dockerfile
-#    ports:
-#      - 8099:8099
-#    environment:
-#      - DOCKER_HOST_IP=host.docker.internal
+  cloudapp:
+    image: cloudapp:latest
+    container_name: cloudapp
+    build:
+      context: ./backend/cloudapp
+      dockerfile: Dockerfile
+    ports:
+      - 8099:8099
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal
   ml-pipeline:
     build:
       context: ./backend/ml-pipeline
@@ -59,12 +59,12 @@ services:
       - 8600:8600
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-#  next-frontend:
-#    build:
-#      context: ./frontend/react-apiview-app
-#      dockerfile: Dockerfile
-#    container_name: next-frontend
-#    ports:
-#      - 5001:5001
-#    environment:
-#      - DOCKER_HOST_IP=host.docker.internal
+  next-frontend:
+    build:
+      context: ./frontend/react-apiview-app
+      dockerfile: Dockerfile
+    container_name: next-frontend
+    ports:
+      - 5001:5001
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal

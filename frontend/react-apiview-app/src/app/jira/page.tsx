@@ -22,7 +22,7 @@ const initialGetTicketValues = {
         description: ""
     }
 };
-const jiraProxy = "http://localhost:8500/webDomain";
+const jiraProxy = "http://localhost:8501/jiraproxy/webDomain";
 
 export default function Page(this: any) {
 

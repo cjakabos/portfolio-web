@@ -27,7 +27,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/customer",
+          "raw": "http://localhost:8083/petstore/user/customer",
           "protocol": "http",
           "host": [
             "localhost"
@@ -63,7 +63,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/pet/1",
+          "raw": "http://localhost:8083/petstore/pet/1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -99,7 +99,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/employee",
+          "raw": "http://localhost:8083/petstore/user/employee",
           "protocol": "http",
           "host": [
             "localhost"
@@ -135,7 +135,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/employee/3",
+          "raw": "http://localhost:8083/petstore/user/employee/3",
           "protocol": "http",
           "host": [
             "localhost"
@@ -175,7 +175,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/employee/availability",
+          "raw": "http://localhost:8083/petstore/user/employee/availability",
           "protocol": "http",
           "host": [
             "localhost"
@@ -212,7 +212,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/schedule",
+          "raw": "http://localhost:8083/petstore/schedule",
           "protocol": "http",
           "host": [
             "localhost"
@@ -250,7 +250,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/schedule/pet/2",
+          "raw": "http://localhost:8083/petstore/schedule/pet/2",
           "protocol": "http",
           "host": [
             "localhost"
@@ -290,7 +290,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/schedule/employee/3",
+          "raw": "http://localhost:8083/petstore/schedule/employee/3",
           "protocol": "http",
           "host": [
             "localhost"
@@ -330,7 +330,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/schedule/customer/1",
+          "raw": "http://localhost:8083/petstore/schedule/customer/1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -370,7 +370,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/pet",
+          "raw": "http://localhost:8083/petstore/pet",
           "protocol": "http",
           "host": [
             "localhost"
@@ -408,7 +408,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/employee",
+          "raw": "http://localhost:8083/petstore/user/employee",
           "protocol": "http",
           "host": [
             "localhost"
@@ -447,7 +447,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/customer",
+          "raw": "http://localhost:8083/petstore/user/customer",
           "protocol": "http",
           "host": [
             "localhost"
@@ -486,7 +486,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/pet/owner/1",
+          "raw": "http://localhost:8083/petstore/pet/owner/1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -526,7 +526,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8083/user/customer/pet/2",
+          "raw": "http://localhost:8083/petstore/user/customer/pet/2",
           "protocol": "http",
           "host": [
             "localhost"

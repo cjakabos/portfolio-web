@@ -37,7 +37,7 @@ mvn clean package
 java -jar target\petstore-0.0.1-SNAPSHOT.jar
 ```
 
-You should see the message "Petstore Starter installed successfully" in your browser at http://localhost:8083/test
+You should see the message "Petstore Starter installed successfully" in your browser at http://localhost:8083/petstore/test
 
 ### Tested Conditions
 

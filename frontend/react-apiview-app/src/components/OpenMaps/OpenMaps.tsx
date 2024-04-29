@@ -113,7 +113,7 @@ export default function OpenMaps() {
 			}
 		};
 		//setName(JSON.stringify(postData));
-		axios.post('http://localhost:8880/cars', postData, axiosConfig)
+		axios.post('http://localhost:8880/vehicles/cars', postData, axiosConfig)
 			.then((response) => {
 				console.log("RESPONSE RECEIVED: ", response.data);
 			})
@@ -135,7 +135,7 @@ export default function OpenMaps() {
 			}
 		};
 
-		axios.get('http://localhost:8880/cars', axiosConfig)
+		axios.get('http://localhost:8880/vehicles/cars', axiosConfig)
 			.then((response) => {
 				// for each element received, put up a marker
 				response.data._embedded.carList.map((option: { location: any; id: any }) => (
@@ -173,7 +173,7 @@ export default function OpenMaps() {
 			}
 		};
 
-		axios.delete('http://localhost:8880/cars/' + vehicleId, axiosConfig)
+		axios.delete('http://localhost:8880/vehicles/cars/' + vehicleId, axiosConfig)
 			.then((response) => {
 				//setMapFeedback('OK')
 				console.log("response delete: ", response.status);
