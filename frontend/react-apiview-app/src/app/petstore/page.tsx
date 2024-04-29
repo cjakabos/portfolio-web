@@ -1,5 +1,5 @@
 'use client';
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -74,6 +74,16 @@ export default function Page(this: any) {
     const [selectedDayOption, setSelectedDayOption] = useState(["MONDAY", "TUESDAY", "FRIDAY"]);
     const [date, setDate] = useState(new Date());
 
+    const [userToken, setUserToken] = useState('');
+    //Make sure only runs once
+    const effectRan = useRef(false);
+    if (!effectRan.current) {
+        if (typeof window !== "undefined") {
+            setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+            effectRan.current = true;
+        }
+    }
+
     // Load all get methods once, when page renders
     useEffect(() => {
         getCustomers()
@@ -81,7 +91,6 @@ export default function Page(this: any) {
         getEmployees()
         getSchedules()
     }, []);
-
 
     const handleChange = (event: { target: { name: any; value: any; }; }) => {
         const {name, value} = event.target;
@@ -118,10 +127,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8083/petstore/user/customer', postData, axiosConfig)
+        axios.post('http://localhost:80/petstore/user/customer', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", customer.phoneNumber);
                 getCustomers()
@@ -143,10 +153,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8083/petstore/user/customer', axiosConfig)
+        axios.get('http://localhost:80/petstore/user/customer', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setAllCustomers(response.data);
@@ -169,10 +180,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8083/petstore/user/employee', postData, axiosConfig)
+        axios.post('http://localhost:80/petstore/user/employee', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 getEmployees()
@@ -194,10 +206,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8083/petstore/user/employee', axiosConfig)
+        axios.get('http://localhost:80/petstore/user/employee', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setAllEmployees(response.data);
@@ -222,10 +235,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8083/petstore/pet', postData, axiosConfig)
+        axios.post('http://localhost:80/petstore/pet', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", postData);
                 getPets()
@@ -246,10 +260,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8083/petstore/pet', axiosConfig)
+        axios.get('http://localhost:80/petstore/pet', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setAllPets(response.data);
@@ -277,10 +292,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8083/petstore/user/employee/availability', postData, axiosConfig)
+        axios.post('http://localhost:80/petstore/user/employee/availability', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", postData);
                 setAvailableEmployees(response.data);
@@ -331,10 +347,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8083/petstore/schedule', postData, axiosConfig)
+        axios.post('http://localhost:80/petstore/schedule', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 getSchedules()
@@ -349,10 +366,11 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8083/petstore/schedule', axiosConfig)
+        axios.get('http://localhost:80/petstore/schedule', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setSchedules(response.data);

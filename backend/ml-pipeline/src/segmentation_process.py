@@ -118,7 +118,7 @@ def main():
 
     buf = io.BytesIO()
     fig.savefig(buf, format='png')
-    fig.savefig(os.path.join(MODEL_PATH, 'plot2.png'))
+    #fig.savefig(os.path.join(MODEL_PATH, 'plot2.png'))
     buf.seek(0)
     binary2 = pg.Binary(buf.read())
 
@@ -134,7 +134,7 @@ def main():
 
     buf = io.BytesIO()
     fig.savefig(buf, format='png')
-    fig.savefig(os.path.join(MODEL_PATH, 'plot3.png'))
+    #fig.savefig(os.path.join(MODEL_PATH, 'plot3.png'))
     buf.seek(0)
     binary3 = pg.Binary(buf.read())
 
@@ -220,7 +220,7 @@ def main():
 
     buf = io.BytesIO()
     fig.savefig(buf, format='png')
-    fig.savefig(os.path.join(MODEL_PATH, 'plot4.png'))
+    #fig.savefig(os.path.join(MODEL_PATH, 'plot4.png'))
     buf.seek(0)
     binary4 = pg.Binary(buf.read())
 

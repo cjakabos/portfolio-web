@@ -1,5 +1,5 @@
 'use client';
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import {PopUp} from "../../components/PopUp/PopUp";
 import {JiraTicket} from "../../data/dataJira";
@@ -22,7 +22,7 @@ const initialGetTicketValues = {
         description: ""
     }
 };
-const jiraProxy = "http://localhost:8501/jiraproxy/webDomain";
+const jiraProxy = "http://localhost:80/jiraproxy/webDomain";
 
 export default function Page(this: any) {
 
@@ -32,6 +32,16 @@ export default function Page(this: any) {
     const [selectedTicket, setSelectedTicket] = useState(initialGetTicketValues)
     const [isOpen, setIsOpen] = useState(false)
     const [isTicketOpen, setTicketIsOpen] = useState(false)
+
+    const [userToken, setUserToken] = useState('');
+    //Make sure only runs once
+    const effectRan = useRef(false);
+    if (!effectRan.current) {
+        if (typeof window !== "undefined") {
+            setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+            effectRan.current = true;
+        }
+    }
 
     // Load all get methods once, when page renders
     useEffect(() => {
@@ -64,6 +74,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 
@@ -103,6 +114,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 
@@ -133,6 +145,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 
@@ -173,6 +186,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 

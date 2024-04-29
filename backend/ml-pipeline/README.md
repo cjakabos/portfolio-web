@@ -92,7 +92,7 @@ curl -H "Content-Type: application/json" -X POST -d \
        "segment": 0
    }
 }' \
-http://127.0.0.1:8600/addCustomer
+http://127.0.0.1:8600/mlops-segmentation/addCustomer
 ```
 ### 3- Run Flask App in separate terminal, run the rest of the steps in another terminal
 ```bash

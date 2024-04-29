@@ -27,12 +27,14 @@ import WorldMapData from '../../../public/world.geo.json';
 export default function OpenMaps() {
 
 	const [userToken, setUserToken] = useState('');
-
-	useEffect(() => {
+	//Make sure only runs once
+	const effectRan = useRef(false);
+	if (!effectRan.current) {
 		if (typeof window !== "undefined") {
 			setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+			effectRan.current = true;
 		}
-	}, []);
+	}
 
 
 	// Load all get methods once, when page renders
@@ -113,7 +115,7 @@ export default function OpenMaps() {
 			}
 		};
 		//setName(JSON.stringify(postData));
-		axios.post('http://localhost:8880/vehicles/cars', postData, axiosConfig)
+		axios.post('http://localhost:80/vehicles/cars', postData, axiosConfig)
 			.then((response) => {
 				console.log("RESPONSE RECEIVED: ", response.data);
 			})
@@ -135,7 +137,7 @@ export default function OpenMaps() {
 			}
 		};
 
-		axios.get('http://localhost:8880/vehicles/cars', axiosConfig)
+		axios.get('http://localhost:80/vehicles/cars', axiosConfig)
 			.then((response) => {
 				// for each element received, put up a marker
 				response.data._embedded.carList.map((option: { location: any; id: any }) => (
@@ -173,7 +175,7 @@ export default function OpenMaps() {
 			}
 		};
 
-		axios.delete('http://localhost:8880/vehicles/cars/' + vehicleId, axiosConfig)
+		axios.delete('http://localhost:80/vehicles/cars/' + vehicleId, axiosConfig)
 			.then((response) => {
 				//setMapFeedback('OK')
 				console.log("response delete: ", response.status);

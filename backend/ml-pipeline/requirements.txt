@@ -11,3 +11,4 @@ pip-outdated==0.6.0
 psycopg==3.1.14
 psycopg-binary==3.1.14
 sqlalchemy==2.0.23
+werkzeug==3.0.1

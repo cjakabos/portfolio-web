@@ -1,5 +1,5 @@
 'use client';
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import Select from "react-select";
 
@@ -40,7 +40,7 @@ const genders = [
     {value: "Male", label: "Male"}
 ];
 
-const mlEndpoint = "http://127.0.0.1:8600";
+const mlEndpoint = "http://localhost:80/mlops-segmentation";
 
 export default function Page(this: any) {
 
@@ -50,6 +50,16 @@ export default function Page(this: any) {
     const [customers, setCustomers] = useState([initialGetCustomerValues])
     const [images, setImages] = useState(initialImageValues)
     const [selectedGender, setSelectedGender] = useState("Female");
+
+    const [userToken, setUserToken] = useState('');
+    //Make sure only runs once
+    const effectRan = useRef(false);
+    if (!effectRan.current) {
+        if (typeof window !== "undefined") {
+            setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
+            effectRan.current = true;
+        }
+    }
 
     // Load all get methods once, when page renders
     useEffect(() => {
@@ -94,6 +104,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 
@@ -112,6 +123,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 
@@ -119,7 +131,7 @@ export default function Page(this: any) {
             sampleSize: Number(sample),
         };
 
-        console.log("postData: ", postData);
+        console.log("axiosConfig: ", axiosConfig);
 
         axios.post(mlEndpoint + "/getMLInfo", postData, axiosConfig)
             .then((response) => {
@@ -157,6 +169,7 @@ export default function Page(this: any) {
         let axiosConfig = {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': userToken
             }
         };
 

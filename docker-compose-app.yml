@@ -50,11 +50,11 @@ services:
       - 8099:8099
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-  ml-pipeline:
+  mlops-segmentation:
     build:
       context: ./backend/ml-pipeline
       dockerfile: Dockerfile
-    container_name: ml-pipeline
+    container_name: mlops-segmentation
     ports:
       - 8600:8600
     environment:

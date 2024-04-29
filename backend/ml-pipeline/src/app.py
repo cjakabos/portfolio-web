@@ -14,14 +14,16 @@ import json
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
-from sqlalchemy.sql import text
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 
 # Set up variables for use in our script
 app = Flask(__name__)
+default_prefix = '/mlops-segmentation'
 host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
-CORS(app, resources={r"/*": {"origins": f"http://localhost:5001"}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:5001", "https://localhost:5001", "http://127.0.0.1:5001", "https://127.0.0.1:5001", "http://127.0.0.1:80", "https://127.0.0.1:443"]}})
 app.config['CORS_HEADERS'] = 'Content-Type'
+app.config['APPLICATION_ROOT'] = default_prefix
 
 @app.route('/')
 @cross_origin()
@@ -105,6 +107,7 @@ def addCustomer(pg=pg):
 
     return jsonify(data['fields'])
 
+app.wsgi_app = DispatcherMiddleware(index, {default_prefix: app.wsgi_app})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8600, debug=True, threaded=True)
