@@ -20,7 +20,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/api/user/create",
+          "raw": "http://localhost:8099/cloudapp/user/create",
           "protocol": "http",
           "host": [
             "localhost"
@@ -50,7 +50,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/login",
+          "raw": "http://localhost:8099/cloudapp/user/login",
           "protocol": "http",
           "host": [
             "localhost"
@@ -69,7 +69,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8099/api/user/testUser",
+          "raw": "http://localhost:8099/cloudapp/user/testUser",
           "protocol": "http",
           "host": [
             "localhost"
@@ -99,7 +99,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/api/item",
+          "raw": "http://localhost:8099/cloudapp/item",
           "protocol": "http",
           "host": [
             "localhost"
@@ -128,7 +128,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/api/cart/addToCart",
+          "raw": "http://localhost:8099/cloudapp/cart/addToCart",
           "protocol": "http",
           "host": [
             "localhost"
@@ -158,7 +158,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/api/cart/getCart",
+          "raw": "http://localhost:8099/cloudapp/cart/getCart",
           "protocol": "http",
           "host": [
             "localhost"
@@ -188,7 +188,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/api/order/submit/testUser",
+          "raw": "http://localhost:8099/cloudapp/order/submit/testUser",
           "protocol": "http",
           "host": [
             "localhost"
@@ -210,7 +210,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8099/api/order/history/testUser",
+          "raw": "http://localhost:8099/cloudapp/order/history/testUser",
           "protocol": "http",
           "host": [
             "localhost"
@@ -232,7 +232,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8099/api/item/1",
+          "raw": "http://localhost:8099/cloudapp/item/1",
           "protocol": "http",
           "host": [
             "localhost"

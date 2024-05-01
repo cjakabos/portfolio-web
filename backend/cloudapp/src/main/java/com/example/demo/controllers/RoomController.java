@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping(value = "/api")
+@RequestMapping(value = "/room")
 public class RoomController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RoomController.class);
@@ -44,7 +44,7 @@ public class RoomController {
     @Autowired
     private ApiResponse apiResp;
 
-    @PostMapping(value = "/room")
+    @PostMapping
     public ApiResponse create(
             @RequestBody CreateRoomRequest room) {
         ApiResponse resp = apiResp.getApiResponse(ECode.SUCCESS);
@@ -64,7 +64,7 @@ public class RoomController {
         return resp;
     }
 
-    @GetMapping(value = "/room/{code}")
+    @GetMapping(value = "/{code}")
     public ApiResponse find(@PathVariable String code) {
         ApiResponse resp = apiResp.getApiResponse(ECode.SUCCESS);
         try {
@@ -83,7 +83,7 @@ public class RoomController {
         return resp;
     }
 
-    @GetMapping(value = "/rooms")
+    @GetMapping
     public ApiResponse findRoomByUsername(Authentication auth) {
         String username = ((User) auth.getPrincipal()).getUsername();
         ApiResponse resp = apiResp.getApiResponse(ECode.SUCCESS);

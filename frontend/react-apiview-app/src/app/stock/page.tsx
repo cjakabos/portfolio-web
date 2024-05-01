@@ -56,7 +56,7 @@ export default function Page() {
                 }
             };
 
-            axios.post('http://localhost:8099/api/user/create', postData, axiosConfig)
+            axios.post('http://localhost:8099/cloudapp/user/create', postData, axiosConfig)
                 .then((response) => {
                     console.log("RESPONSE RECEIVED: ", response);
 

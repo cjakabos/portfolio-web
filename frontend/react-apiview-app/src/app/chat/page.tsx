@@ -9,7 +9,7 @@ import chatHttpApi from '../../hooks/chatHttpApi';
 import Popup from './components/Popup'
 import Room from "./components/Room";
 
-const SOCKET_URL = 'http://localhost:8099/ws/';
+const SOCKET_URL = 'http://localhost:8099/cloudapp' + '/ws/';
 let client;
 export default function Chat() {
 

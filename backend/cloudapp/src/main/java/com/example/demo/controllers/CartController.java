@@ -21,7 +21,7 @@ import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.ModifyCartRequest;
 
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping("cart")
 public class CartController {
 
     @Autowired

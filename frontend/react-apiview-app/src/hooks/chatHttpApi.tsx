@@ -2,7 +2,7 @@ import Axios from "axios";
 import {useState} from "react";
 
 const api = Axios.create({
-    baseURL: 'http://localhost:8099/api/',
+    baseURL: 'http://localhost:8099/cloudapp/',
 });
 
 let userToken;
@@ -48,7 +48,7 @@ const chatHttpApi = {
 
     getRoom: () => {
         console.log('trying to get rooms', userToken)
-        return api.get(`rooms`, {
+        return api.get(`room`, {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
                 'Authorization': localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")

@@ -74,7 +74,7 @@ export default function Page(this: any) {
         };
         console.log('console.log(axiosConfig)',axiosConfig)
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8099/api/item', postData, axiosConfig)
+        axios.post('http://localhost:8099/cloudapp/item', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //setName(response.data);
@@ -109,7 +109,7 @@ export default function Page(this: any) {
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8099/api/item', axiosConfig)
+        axios.get('http://localhost:8099/cloudapp/item', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setItems(response.data);
@@ -138,7 +138,7 @@ export default function Page(this: any) {
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8099/api/cart/getCart', postData, axiosConfig)
+        axios.post('http://localhost:8099/cloudapp/cart/getCart', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 if (response.data != '') {
@@ -170,7 +170,7 @@ export default function Page(this: any) {
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8099/api/cart/clearCart', postData, axiosConfig)
+        axios.post('http://localhost:8099/cloudapp/cart/clearCart', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 setCart(response.data.items);
@@ -198,7 +198,7 @@ export default function Page(this: any) {
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8099/api/cart/addToCart', postData, axiosConfig)
+        axios.post('http://localhost:8099/cloudapp/cart/addToCart', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 getCart()
@@ -219,14 +219,14 @@ export default function Page(this: any) {
             }
         };
         //setName(JSON.stringify(postData));
-        axios.post('http://localhost:8099/api/order/submit/' + username, '', axiosConfig)
+        axios.post('http://localhost:8099/cloudapp/order/submit/' + username, '', axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.status);
                 //setName(response.data);
                 getHistory()
             })
             .catch((error) => {
-                console.log("AXIOS ERROR: ", 'http://localhost:8099/api/order/submit/' + username);
+                console.log("AXIOS ERROR: ", 'http://localhost:8099/cloudapp/order/submit/' + username);
                 //setName(error.response);
             })
 
@@ -248,7 +248,7 @@ export default function Page(this: any) {
             }
         };
         //setName(JSON.stringify(postData));
-        axios.get('http://localhost:8099/api/order/history/' + username, axiosConfig)
+        axios.get('http://localhost:8099/cloudapp/order/history/' + username, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setCartHistory(response.data);

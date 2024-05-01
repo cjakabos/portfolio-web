@@ -14,7 +14,7 @@ import com.example.demo.model.persistence.Item;
 import com.example.demo.model.persistence.repositories.ItemRepository;
 
 @RestController
-@RequestMapping("/api/item")
+@RequestMapping("item")
 public class ItemController {
 
     @Autowired

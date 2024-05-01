@@ -50,6 +50,7 @@ services:
       - 8099:8099
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      - DOCKER_HOST_KAFKA_PORT=9092
   mlops-segmentation:
     build:
       context: ./backend/ml-pipeline
