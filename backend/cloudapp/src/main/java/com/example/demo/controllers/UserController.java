@@ -56,7 +56,7 @@ public class UserController {
     }
     // Allow React CORS connection from localhost:5001
     @CrossOrigin(origins = "http://localhost:5001")
-    @PostMapping("/create")
+    @PostMapping("/user-register")
     public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
         User user = new User();
 
@@ -78,7 +78,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PostMapping(value = "/login")
+    @PostMapping(value = "/user-login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

@@ -57,7 +57,7 @@ public class WebSecurityConfiguration {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
         http.authorizeHttpRequests(authHttpRequests -> authHttpRequests
-                .requestMatchers(HttpMethod.POST,"/user/create", "/user/login").permitAll()
+                .requestMatchers(HttpMethod.POST,"/user/user-register", "/user/user-login").permitAll()
                 .requestMatchers(HttpMethod.GET, AUTH_WHITELIST_SWAGGER).permitAll()
                 .requestMatchers(AUTH_WHITELIST).permitAll()
                 .anyRequest()
@@ -65,7 +65,6 @@ public class WebSecurityConfiguration {
         );
 
         http.addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
-        http.exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
         return http.build();
     }
 

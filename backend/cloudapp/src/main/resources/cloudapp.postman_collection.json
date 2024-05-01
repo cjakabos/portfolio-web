@@ -6,7 +6,7 @@
   },
   "item": [
     {
-      "name": "Create User",
+      "name": "Register User",
       "request": {
         "method": "POST",
         "header": [],
@@ -20,16 +20,16 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/cloudapp/user/create",
+          "raw": "http://localhost:8099/cloudapp/user/user-register",
           "protocol": "http",
           "host": [
             "localhost"
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "user",
-            "create"
+            "user-register"
           ]
         }
       },
@@ -50,14 +50,16 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8099/cloudapp/user/login",
+          "raw": "http://localhost:8099/cloudapp/user/user-login",
           "protocol": "http",
           "host": [
             "localhost"
           ],
           "port": "8099",
           "path": [
-            "login"
+            "cloudapp",
+            "user",
+            "user-login"
           ]
         }
       },
@@ -76,7 +78,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "user",
             "testUser"
           ]
@@ -106,7 +108,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "item"
           ]
         }
@@ -135,7 +137,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "cart",
             "addToCart"
           ]
@@ -165,7 +167,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "cart",
             "getCart"
           ]
@@ -195,7 +197,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "order",
             "submit",
             "testUser"
@@ -217,7 +219,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "order",
             "history",
             "testUser"
@@ -239,7 +241,7 @@
           ],
           "port": "8099",
           "path": [
-            "api",
+            "cloudapp",
             "item",
             "1"
           ]

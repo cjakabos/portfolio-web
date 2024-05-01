@@ -87,7 +87,7 @@ export default function Page(this: any) {
             }
         };
 
-        axios.get("http://localhost:8099/cloudapp" + "/note/user/" + username, axiosConfig)
+        axios.get("http://localhost:80/cloudapp" + "/note/user/" + username, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setNotes(response.data)
@@ -116,7 +116,7 @@ export default function Page(this: any) {
         };
 
         console.log("postData: ", postData);
-        axios.post("http://localhost:8099/cloudapp" + "/note/updateNote", postData, axiosConfig)
+        axios.post("http://localhost:80/cloudapp" + "/note/updateNote", postData, axiosConfig)
             .then((response) => {
                 console.log("AXIOS response: ", response);
                 getNotes()
@@ -145,7 +145,7 @@ export default function Page(this: any) {
             }
         };
 
-        axios.get("http://localhost:8099/cloudapp" + "/note/delete/" + noteKey, axiosConfig)
+        axios.get("http://localhost:80/cloudapp" + "/note/delete/" + noteKey, axiosConfig)
             .then((response) => {
                 //console.log("RESPONSE RECEIVED: ", response.data.issues);
                 getNotes()
@@ -177,7 +177,7 @@ export default function Page(this: any) {
 
         console.log("postData: ", postData);
         console.log("axiosConfig: ", axiosConfig);
-        axios.post("http://localhost:8099/cloudapp" + "/note/addNote", postData, axiosConfig)
+        axios.post("http://localhost:80/cloudapp" + "/note/addNote", postData, axiosConfig)
             .then((response) => {
                 getNotes()
                 //console.log("RESPONSE RECEIVED: ", response);
@@ -207,7 +207,7 @@ export default function Page(this: any) {
             }
         };
 
-        axios.get("http://localhost:8099/cloudapp" + "/file/user/" + username, axiosConfig)
+        axios.get("http://localhost:80/cloudapp" + "/file/user/" + username, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", response.data);
                 setFiles(response.data)
@@ -238,7 +238,7 @@ export default function Page(this: any) {
         }
 
         try {
-            fetch("http://localhost:8099/cloudapp" + "/file/get-file/" + fileKey, options)
+            fetch("http://localhost:80/cloudapp" + "/file/get-file/" + fileKey, options)
                 .then((response) => {
                     console.log('response.headers.get(\'Content-Type\')', response.headers.get('Content-Type'))
                     response.blob().then((blob) => {
@@ -273,7 +273,7 @@ export default function Page(this: any) {
             }
         };
 
-        axios.get("http://localhost:8099/cloudapp" + "/file/delete-file/" + fileKey, axiosConfig)
+        axios.get("http://localhost:80/cloudapp" + "/file/delete-file/" + fileKey, axiosConfig)
             .then((response) => {
                 //console.log("RESPONSE RECEIVED: ", response.data.issues);
                 getFiles()
@@ -303,7 +303,7 @@ export default function Page(this: any) {
 
 
             axios.post(
-                'http://localhost:8099/cloudapp' + '/file/upload',
+                'http://localhost:80/cloudapp' + '/file/upload',
                 formData,
                 {
                     headers: {
