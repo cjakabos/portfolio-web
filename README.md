@@ -1,26 +1,26 @@
-# Web development portfolio
+# Web Development and Predictive Analytics Portfolio
 
-This is a collection of my development projects from Web Development and Predictive Analytics Nanodegrees:
-- Back-end [API services](#required-api-services) developed by me during my Nanodegree [Web Development at Udacity](https://www.udacity.com/course/java-developer-nanodegree--nd035).
-- Next.js 14 front-end [interface](#react-front-end) for utilizing these back-end services from above and new services below.
-- ML pipeline for [Dynamic Customer Segmentation](#1-machine-learning-system-for-customer-segmentation), building on my Nanodegree in [Predictive Analytics for Business](https://www.udacity.com/course/predictive-analytics-for-business-nanodegree--nd008t)
-- External api service integration, such as:
-  - [OpenAI API](#5-openai)
-  - [Jira API with an internal proxy API service to avoid CORS](#6-jira)
-- [Kafka based Chat](#8-chat)
-- [Logging with log4j](backend/cloudapp/README.md#logging-with-slf4j-and-log4j) and [CI/CD with Jenkins](backend/cloudapp/README.md#cicd-with-jenkins)
+Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web Development and Predictive Analytics Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces and robust data analytics models.
+
+## What's Inside?
+
+- **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
+- **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
+- **Interactive Next.js 14 Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services. [Explore the frontend](./frontend/react-apiview-app/README.md).
+- **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
+- **Integrated External APIs**: Enhance functionality with third-party services like OpenAI and Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#5-openai).
+- **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
+- **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
 
 Example view with ML pipeline and other tabs:
 ![](examples/example8.png)
 
-## Certificates
-[Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
 
-[Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)
+## Quick Start
 
-## Install and run
+### Setup with Docker
 
-Setup and start Mysql, Postgres, MongoDB and Zookeeper/Kafka services with docker-compose:
+Setup and start databases and esential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```
@@ -32,15 +32,6 @@ docker-compose -f docker-compose-app.yml up -d
 Runs the app in the production mode.\
 Open http://localhost:5001 to view it in your browser.
 
-Alternative option: To run the front-end in development mode.
-```bash
-cd frontend/react-apiview-app
-npm install
-npm run dev
-```
-Open http://localhost:5001 to view it in your browser.  
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
 If everything is correctly started, you should see a login page:
 ![](examples/example1.png)
@@ -67,8 +58,12 @@ The user is able to:
 - Create new items.
 - Add existing items to the cart.
 - See and clear the cart.
-- Submit cart and check order history.
-  
+- Submit cart and check order history.  
+
+Shop API documentation: 
+- [Items](http://localhost:8099/cloudapp/swagger-ui/index.html#/item-controller)
+- [Cart](http://localhost:8099/cloudapp/swagger-ui/index.html#/cart-controller)
+- [Order](http://localhost:8099/cloudapp/swagger-ui/index.html#/order-controller)
 
 ## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
 ![](examples/example4.png)
@@ -85,8 +80,9 @@ The user is able to:
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
 The user is able to:
 - Click on the map to add new vehicle locations.
-- Click on existing locations and check basic info and delete the location.
-  
+- Click on existing locations and check basic info and delete the location.  
+
+Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 
 ## 5. OpenAI
 ![](examples/example6.png)
@@ -111,7 +107,8 @@ The user is able to:
 ## 7. Notes and Files
 A service for creating personal notes and uploading personal files.
 ![](examples/example9.png)
-
+- Notes [API documentation](http://localhost:8099/cloudapp/swagger-ui/index.html#/note-controller)
+- Files [API documentation](http://localhost:8099/cloudapp/swagger-ui/index.html#/file-controller)
 ## 8. Chat
 A Kafka based chat service, the user is able to:
 
@@ -140,6 +137,9 @@ NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
 ```
 NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.
 
+## Certificates
+[Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)
+[Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
 
 
 
