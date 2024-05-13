@@ -18,7 +18,12 @@ import org.springframework.web.bind.annotation.*;
 import org.apache.http.HttpResponse;
 import java.io.IOException;
 
-@CrossOrigin(origins = "http://localhost:5001")
+@CrossOrigin(origins = {
+        "http://localhost:5001",
+        "https://localhost:5001",
+        "http://localhost:80",
+        "https://localhost:80"
+})
 @RestController
 @RequestMapping("/webDomain")
 public class WebController {

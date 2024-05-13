@@ -1,8 +1,8 @@
 package com.udacity.vehicles.api;
 
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.udacity.vehicles.domain.car.Car;
 import com.udacity.vehicles.service.CarService;
@@ -11,10 +11,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +28,12 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 /**
  * Implements a REST-based controller for the Vehicles API.
  */
-@CrossOrigin(origins = "http://localhost:5001")
+@CrossOrigin(origins = {
+        "http://localhost:5001",
+        "https://localhost:5001",
+        "http://localhost:80",
+        "https://localhost:80"
+})
 @RestController
 @RequestMapping("/cars")
 class CarController {
@@ -48,11 +52,10 @@ class CarController {
      * @return list of vehicles
      */
     @GetMapping
-    Resources<Resource<Car>> list() {
-        List<Resource<Car>> resources = carService.list().stream().map(assembler::toResource)
+    ResponseEntity<?> list() {
+        List<EntityModel<Car>> resources = carService.list().stream().map(assembler::toModel)
                 .collect(Collectors.toList());
-        return new Resources<>(resources,
-                linkTo(methodOn(CarController.class).list()).withSelfRel());
+        return ResponseEntity.ok().body(resources);
     }
 
     /**
@@ -62,7 +65,7 @@ class CarController {
      * @return all information for the requested vehicle
      */
     @GetMapping("/{id}")
-    Resource<Car> get(@PathVariable Long id) {
+    ResponseEntity<?> get(@PathVariable Long id) {
         /**
          * TODO: Use the `findById` method from the Car Service to get car information.
          * TODO: Use the `assembler` on that car and return the resulting output.
@@ -72,7 +75,7 @@ class CarController {
         Car car = carService.findById(id);
 
         //Use the `assembler` on that car and return the resulting output.
-        return assembler.toResource(car);
+        return ResponseEntity.ok().body(assembler.toModel(car));
     }
 
     /**
@@ -93,8 +96,8 @@ class CarController {
         Car carSaved = carService.save(car);
 
         //Use the `assembler` on that saved car and return as part of the response.
-        Resource<Car> resource = assembler.toResource(carSaved);
-        return ResponseEntity.created(new URI(resource.getId().expand().getHref())).body(resource);
+        EntityModel<Car> resource = assembler.toModel(carSaved);
+        return ResponseEntity.ok().body(resource);
     }
 
     /**
@@ -120,7 +123,7 @@ class CarController {
         Car carSaved = carService.save(car);
 
         //Use the `assembler` on that updated car and return as part of the response.
-        Resource<Car> resource = assembler.toResource(carSaved);
+        EntityModel<Car> resource = assembler.toModel(carSaved);
         return ResponseEntity.ok(resource);
     }
 

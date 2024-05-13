@@ -3,7 +3,7 @@ package com.udacity.jdnd.course3.petstore.entity;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.Nationalized;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Entity

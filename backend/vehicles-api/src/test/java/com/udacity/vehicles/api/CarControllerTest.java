@@ -24,9 +24,8 @@ import com.udacity.vehicles.service.CarService;
 import java.net.URI;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,7 +42,6 @@ import static org.hamcrest.Matchers.*;
 /**
  * Implements testing of the CarController class.
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
@@ -67,7 +65,7 @@ public class CarControllerTest {
     /**
      * Creates pre-requisites for testing, such as an example car.
      */
-    @Before
+    @BeforeEach
     public void setup() {
         Car car = getCar();
         car.setId(1L);
@@ -89,7 +87,7 @@ public class CarControllerTest {
                                 .content(json.write(car).getJson())
                                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                                 .accept(MediaType.APPLICATION_JSON_UTF8))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
     }
 
     /**

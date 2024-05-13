@@ -1,39 +1,34 @@
 package com.udacity.vehicles.config;
 
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
-import java.util.Collections;
 
 @Configuration
-@EnableSwagger2
 public class SwaggerConfig {
+
     @Bean
-    public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
-                .build()
-                .apiInfo(apiInfo());
+    public OpenAPI api() {
+        return new OpenAPI()
+                .info(apiInfo());
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfo(
-                "Vehicle REST API",
-                "This API returns a vehicle info.",
-                "1.0",
-                "http://www.udacity.com/tos",
-                new Contact("Udacious Student", "www.udacity.com", "myeaddress@udacity.com"),
-                "License of API", "http://www.udacity.com/license", Collections.emptyList());
+    private Info apiInfo() {
+        return new Info()
+                .title("Vehicle REST API")
+                .description("This API returns a vehicle info.")
+                .version("v1.0")
+                .contact(new Contact().name("Udacious Student").url("www.udacity.com").email("myeaddress@udacity.com"))
+                .license(new License()
+                        .name("License of API")
+                        .url("http://www.udacity.com/license"));
     }
 
 }
-

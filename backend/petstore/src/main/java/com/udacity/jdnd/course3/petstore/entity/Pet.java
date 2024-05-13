@@ -3,7 +3,7 @@ package com.udacity.jdnd.course3.petstore.entity;
 import com.udacity.jdnd.course3.petstore.pet.PetType;
 import org.hibernate.annotations.Nationalized;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.*;
 import java.util.*;
 
