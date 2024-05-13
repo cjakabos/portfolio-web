@@ -263,42 +263,53 @@ export default function Page(this: any) {
                 <div className="section">
                     <h1>Create Item</h1>
                     <form onSubmit={handleItemSubmit}>
-                        <label htmlFor="name">Item Name:</label>
-                        <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            placeholder="Enter item name"
-                            onChange={handleChange}
-                            value={values.name}
-                            maxLength={20}
-                            required
-                        />
-
-                        <label htmlFor="price">Price:</label>
-                        <input
-                            type="number"
-                            name="price"
-                            id="price"
-                            placeholder="Enter price"
-                            onChange={handleChange}
-                            value={values.price}
-                            maxLength={20}
-                            required
-                        />
-
-                        <label htmlFor="description">Description:</label>
-                        <input
-                            type="text"
-                            name="description"
-                            id="description"
-                            placeholder="Enter description"
-                            onChange={handleChange}
-                            value={values.description}
-                            maxLength={100}
-                            required
-                        />
-
+                        <table>
+                            <tr>
+                                <th><label htmlFor="name">Item Name:</label></th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        id="name"
+                                        placeholder="Enter item name"
+                                        onChange={handleChange}
+                                        value={values.name}
+                                        maxLength={20}
+                                        required
+                                    />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label htmlFor="price">Price:</label></th>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        id="price"
+                                        placeholder="Enter price"
+                                        onChange={handleChange}
+                                        value={values.price}
+                                        maxLength={20}
+                                        required
+                                    />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><label htmlFor="description">Description:</label></th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        id="description"
+                                        placeholder="Enter description"
+                                        onChange={handleChange}
+                                        value={values.description}
+                                        maxLength={100}
+                                        required
+                                    />
+                                </td>
+                            </tr>
+                        </table>
                         <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
                 </div>
@@ -307,7 +318,7 @@ export default function Page(this: any) {
                     {loading ? <div className="loading">Loading...</div> : (
                         <table>
                             <tr>
-                                <th>Name</th>
+                            <th>Name</th>
                                 <th>Price</th>
                                 <th>Description</th>
                             </tr>
