@@ -97,19 +97,18 @@ export default function Page() {
 
     return (
         <div>
-            <img src='../../vercel.svg' className="App-logo" alt="logo" style={{ height: 200, width: 200 }}/>
             <section>
                 <article>
                     <div>
-
                             <div className="login-top">
                                 {Feedback !== 'OK' ? (
                                     <>
                                         <div className="flex items-center justify-center">
-                                            <h1>{("Sign up")}</h1>
+                                            <img src='../../drawing.svg' className="App-logo" alt="logo"
+                                                 style={{height: 200, width: 200}}/>
                                         </div>
                                         <form onSubmit={handleSubmit}>
-                                            <table>
+                                        <table>
                                                 <tr>
                                                     <th>First name</th>
                                                     <td>
@@ -144,7 +143,7 @@ export default function Page() {
                                                     <th>Username</th>
                                                     <td>
                                                         <input
-                                                            type="username"
+                                                            type="text"
                                                             name="username"
                                                             id="username"
                                                             placeholder="Enter Username"

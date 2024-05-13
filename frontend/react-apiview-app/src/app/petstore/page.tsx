@@ -385,178 +385,166 @@ export default function Page(this: any) {
 
     return (
         <div className="flex w-full flex-col lg:flex-row ">
-            <div className="relative h-full w-full lg:w-1/2">
-                    <div className="login-top">
-                        <h1>{("Create a new customer")}</h1>
-                    </div>
+            <div className="flex-container">
+                {/* Customer creation and listing */}
+                <div className="section">
+                    <h1>Create a New Customer</h1>
                     <form onSubmit={handleCustomerSubmit}>
-                        <table>
-                            <tr>
-                                <th>Customer name</th>
-                                <th>Phone number</th>
-                            </tr>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    placeholder="Enter customer name"
-                                    onChange={handleChange}
-                                    value={customer.name}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                            <td>
-                                <input
-                                    type="phone"
-                                    name="phoneNumber"
-                                    id="phoneNumber "
-                                    placeholder="Enter phone number"
-                                    onChange={handleChange}
-                                    value={customer.phoneNumber}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                        </table>
+                        <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            placeholder="Enter customer name"
+                            onChange={handleChange}
+                            value={customer.name}
+                            maxLength={20}
+                            required
+                        />
+                        <input
+                            type="phone"
+                            name="phoneNumber"
+                            id="phoneNumber "
+                            placeholder="Enter phone number"
+                            onChange={handleChange}
+                            value={customer.phoneNumber}
+                            maxLength={20}
+                            required
+                        />
                         <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
-                    <div className="login-top">
-                        <h1>{("All customers")}</h1>
-                    </div>
-                    <div className="Item">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Phone</th>
+                    <h1>All Customers</h1>
+                    {loading ? <p>Loading...</p> : (
+                        <>
+                            <table>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                </tr>
+                                {allCustomers.map(customer => (
+                                    <tr key={customer.id}>
+                                        <td>{customer.name}</td>
+                                        <td>{customer.phoneNumber}</td>
+                                        {customer.id && <button className="submitbutton"
+                                                                onClick={() => petSubmit(customer.id)}>Add a pet
+                                        </button>}
                                     </tr>
-                                    {allCustomers.map(customer => (
-                                        <tr key={customer.id}>
-                                            <td>{customer.name}</td>
-                                            <td>{customer.phoneNumber}</td>
-                                            {customer.id && <button className="submitbutton"
-                                                                    onClick={() => petSubmit(customer.id)}>Add a pet
-                                            </button>}
-                                        </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
-                    </div>
-
-
-                    <div className="login-top">
-                        <h1>{("All pets")}</h1>
-                    </div>
-                    <div className="Item">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>Id</th>
-                                        <th>Name</th>
-                                        <th>OwnerId</th>
+                                ))}
+                            </table>
+                        </>
+                    )}
+                </div>
+                <div className="section">
+                    <h1>All Pets</h1>
+                    {loading ? <p>Loading...</p> : (
+                        <>
+                            <table>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Name</th>
+                                    <th>OwnerId</th>
+                                </tr>
+                                {allPets.map(pet => (
+                                    <tr key={pet.id}>
+                                        <td>{pet.id}</td>
+                                        <td>{pet.name}</td>
+                                        <td>{pet.ownerId}</td>
                                     </tr>
-                                    {allPets.map(pet => (
-                                        <tr key={pet.id}>
-                                            <td>{pet.id}</td>
-                                            <td>{pet.name}</td>
-                                            <td>{pet.ownerId}</td>
-                                        </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
-                    </div>
-
+                                ))}
+                            </table>
+                        </>
+                    )}
                 </div>
 
-                 <div className="flex w-full flex-col lg:w-1/2">
-                    <div className="login-top">
-                        <h1>{("Create a new employee")}</h1>
-                    </div>
+                {/* Employee creation and listing */}
+                <div className="section">
+                    <h1>Create a New Employee</h1>
                     <form onSubmit={handleEmployeeSubmit}>
-                        {/*<table>*/}
-                        {/*    <tr>*/}
-                        {/*        <th>Item name</th>*/}
-                        {/*        <th>Price</th>*/}
-                        {/*        <th>Description</th>*/}
-                        {/*    </tr>*/}
-                        {/*    <td>*/}
-
-                        {/*    </td>*/}
-                        {/*    <td>*/}
-
-                        {/*    </td>*/}
-                        {/*    <td>*/}
-
-                        {/*    </td>*/}
-                        {/*</table>*/}
-                        <table>
-                            <tr>
-                                <th>Employee name</th>
-                                <th>Skills</th>
-                                <th>Days available</th>
-                            </tr>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    placeholder="Enter employee name"
-                                    onChange={handleEmployeeChange}
-                                    value={employee.name}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                            <td>
-                                <select
-                                    onChange={handleMultiSelect}
-                                    id="dropdown"
-                                    multiple
-                                    size={options.length}
-                                >
-                                    {options.map((option, index) => (
-                                        <option key={index} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </td>
-                            <td>
-                                <select
-                                    onChange={handleDaysMultiSelect}
-                                    id="dropdown2"
-                                    multiple
-                                    size={days.length}
-                                >
-                                    {days.map((day, index) => (
-                                        <option key={index} value={day.value}>
-                                            {day.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </td>
-                        </table>
-
+                        <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            placeholder="Enter employee name"
+                            onChange={handleEmployeeChange}
+                            value={employee.name}
+                            maxLength={20}
+                            required
+                        />
+                        <select
+                            onChange={handleMultiSelect}
+                            id="dropdown"
+                            multiple
+                            size={options.length}
+                        >
+                            {options.map((option, index) => (
+                                <option key={index} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            onChange={handleDaysMultiSelect}
+                            id="dropdown2"
+                            multiple
+                            size={days.length}
+                        >
+                            {days.map((day, index) => (
+                                <option key={index} value={day.value}>
+                                    {day.label}
+                                </option>
+                            ))}
+                        </select>
                         <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
-                    <div className="login-top">
-                        <h1>{("All employees")}</h1>
-                    </div>
-                    {/*<form onSubmit={handleEmployeeFetch}>*/}
-
-                    {/*    <input id="fetchButton" type="submit" value="Get all employees"/>*/}
-                    {/*</form>*/}
-                    <div className="Item">
+                </div>
+                <div className="section">
+                    <h1>All Employees</h1>
+                    {loading ? <p>Loading...</p> : (
+                        <>
+                            <table>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Skill</th>
+                                    <th>Days available</th>
+                                </tr>
+                                {allEmployees.map(employee => (
+                                    <tr key={employee.id}>
+                                        <td>{employee.name}</td>
+                                        <td>{employee.skills}</td>
+                                        <td>{employee.daysAvailable}</td>
+                                    </tr>
+                                ))}
+                            </table>
+                        </>
+                    )}
+                </div>
+                <div className="section">
+                    <h1>{("Availability")}</h1>
+                    <form onSubmit={handleAvailabilityFetch}>
+                        <label>
+                            Skills
+                            <br/>
+                            <select
+                                onChange={handleMultiSelect}
+                                id="dropdown"
+                                multiple
+                                size={options.length}
+                            >
+                                {options.map((option, index) => (
+                                    <option key={index} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <DatePicker
+                            dateFormat="yyyy-MM-dd"
+                            selected={date}
+                            onChange={date => setDate((date || new Date()))}
+                        />
+                        <br/>
+                        <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
+                    </form>
+                    <div className="Availability2">
                         {loading ? (
                             <div>Loading...</div>
                         ) : (
@@ -567,89 +555,33 @@ export default function Page(this: any) {
                                         <th>Skill</th>
                                         <th>Days available</th>
                                     </tr>
-                                    {allEmployees.map(employee => (
+                                    {availableEmployees.map(employee => (
                                         <tr key={employee.id}>
                                             <td>{employee.name}</td>
                                             <td>{employee.skills}</td>
                                             <td>{employee.daysAvailable}</td>
+                                            {employee.id && <select onChange={handleOptionSelect}>
+                                                <option value="string">Select...</option>
+                                                {allPets.map((pet, index) => (
+                                                    <option key={index} value={pet.id}>
+                                                        Id: {pet.id}, Name: {pet.name}
+                                                    </option>
+                                                ))}
+                                            </select>}
+                                            {employee.id &&
+                                                <button className="submitbutton" onClick={() => scheduleSubmit(
+                                                    employee.id,
+                                                    selectedOption
+                                                )}>Add a schedule</button>}
                                         </tr>
                                     ))}
                                 </table>
                             </>
                         )}
                     </div>
-                    <div className="login-top">
-                        <h1>{("Availability")}</h1>
-                    </div>
-                    <div>
-                        <form onSubmit={handleAvailabilityFetch}>
-                            <label>
-                                Skills
-                                <br/>
-                                <select
-                                    onChange={handleMultiSelect}
-                                    id="dropdown"
-                                    multiple
-                                    size={options.length}
-                                >
-                                    {options.map((option, index) => (
-                                        <option key={index} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <DatePicker
-                                dateFormat="yyyy-MM-dd"
-                                selected={date}
-                                onChange={date => setDate((date || new Date()))}
-                            />
-                            <br/>
-                            <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
-                        </form>
-                        <div className="Availability2">
-                            {loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    <table>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Skill</th>
-                                            <th>Days available</th>
-                                        </tr>
-                                        {availableEmployees.map(employee => (
-                                            <tr key={employee.id}>
-                                                <td>{employee.name}</td>
-                                                <td>{employee.skills}</td>
-                                                <td>{employee.daysAvailable}</td>
-                                                {employee.id && <select onChange={handleOptionSelect}>
-                                                    <option value="string">Select...</option>
-                                                    {allPets.map((pet, index) => (
-                                                        <option key={index} value={pet.id}>
-                                                            Id: {pet.id}, Name: {pet.name}
-                                                        </option>
-                                                    ))}
-                                                </select>}
-                                                {employee.id &&
-                                                    <button className="submitbutton" onClick={() => scheduleSubmit(
-                                                        employee.id,
-                                                        selectedOption
-                                                    )}>Add a schedule</button>}
-                                            </tr>
-                                        ))}
-                                    </table>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                    <div className="login-top">
-                        <h1>{("All planned schedules")}</h1>
-                    </div>
-                    {/*<form onSubmit={handleEmployeeFetch}>*/}
-
-                    {/*    <input id="fetchButton" type="submit" value="Get all employees"/>*/}
-                    {/*</form>*/}
+                </div>
+                <div className="section">
+                    <h1>{("All planned schedules")}</h1>
                     <div className="Schedule">
                         {loading ? (
                             <div>Loading...</div>
@@ -676,5 +608,6 @@ export default function Page(this: any) {
                     </div>
                 </div>
         </div>
-    )
+</div>
+)
 }

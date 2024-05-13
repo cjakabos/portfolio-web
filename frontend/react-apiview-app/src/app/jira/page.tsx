@@ -246,11 +246,11 @@ export default function Page(this: any) {
                                 />
                             </label>
                             <br/>
-                            <input className="popup-submit" id="submitButton" type="submit" value="Submit"/>
+                            <input className="submitbutton" id="submitButton" type="submit" value="Submit"/>
                         </form>
 
                         <form onSubmit={() => setTicketIsOpen(false)}>
-                            <input className="popup-close" id="clearButton" type="submit" value="CLOSE"/>
+                            <input className="clearbutton" id="clearButton" type="submit" value="CLOSE"/>
                         </form>
                     </PopUp>
                     : null}

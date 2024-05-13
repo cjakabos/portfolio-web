@@ -80,51 +80,72 @@ export default function Login() {
     };
 
     return (
-        <section>
-            <article>
-                <div>
-                    <div className="login-top">
-                        <h1>{("Sign in")}</h1>
+        <div>
+            <section>
+                <article>
+                    <div>
+                        <div className="login-top">
+                                    <>
+                                        <div className="flex items-center justify-center">
+                                            <img src='../../drawing.svg' className="App-logo" alt="logo"
+                                                 style={{height: 200, width: 200}}/>
+                                        </div>
+                                        <form onSubmit={handleSubmit}>
+                                            <table>
+                                                <tr>
+                                                    <th>Username</th>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            name="username"
+                                                            id="inputUsername"
+                                                            placeholder="Enter Username"
+                                                            onChange={handleChange}
+                                                            value={values.username}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Password</th>
+                                                    <td>
+                                                        <input
+                                                            type="password"
+                                                            name="password"
+                                                            id="inputPassword"
+                                                            placeholder="Enter Password"
+                                                            onChange={handleChange}
+                                                            value={values.password}
+                                                            maxLength={20}
+                                                            required
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th> </th>
+                                                    <td>
+                                                        <input className="submitbutton" id="loginButton" type="submit"
+                                                               value="Submit"/>
+                                                        <div>
+                                                            <button className="menubutton"
+                                                                    onClick={() => router.push("/stock")}>
+                                                                <h1 style={{color: 'red'}}>{("New user?")} Signup </h1>
+                                                            </button>
+                                                        </div>
+                                                        <div className="login-error">
+                                                            {LoginFeedback === 'ERROR' &&
+                                                                <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </form>
+                                    </>
+                        </div>
                     </div>
-                    <form onSubmit={handleSubmit}>
-                        <label>
-                            Username:
-                            <input
-                                type="username"
-                                name="username"
-                                id="inputUsername"
-                                placeholder="Enter Username"
-                                onChange={handleChange}
-                                value={values.username}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
-                        <label>
-                            Password:
-                            <input
-                                type="password"
-                                name="password"
-                                id="inputPassword"
-                                placeholder="Enter Password"
-                                onChange={handleChange}
-                                value={values.password}
-                                maxLength={20}
-                                required
-                            />
-                        </label>
-                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                        <div>
-                            <button className="menubutton" onClick={() => router.push("/stock")}>
-                                <h1 style={{color: 'red'}}>{("New user?")} Signup </h1>
-                            </button>
-                        </div>
-                        <div className="login-error">
-                            {LoginFeedback === 'ERROR' && <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
-                        </div>
-                    </form>
-                </div>
-            </article>
-        </section>
+                </article>
+            </section>
+        </div>
     )
 }

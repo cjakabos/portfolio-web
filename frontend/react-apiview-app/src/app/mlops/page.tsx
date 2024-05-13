@@ -191,170 +191,180 @@ export default function Page(this: any) {
     return (
         <section>
             <article>
-                <div className="container">
-                    <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
-                        <form onSubmit={handleMLSubmit}>
-                            <label>
-                                1. Test a sample size from predefined DB:<br/>
-                                <input
-                                    type="number"
-                                    name="sampleSize"
-                                    placeholder="Enter sampleSize"
-                                    onChange={handleChange2}
-                                    value={values2.sampleSize}
-                                    maxLength={50}
-                                    required
-                                    size={100}
-                                    min="10"
-                                    max="200"
-                                />
-                            </label>
-                            <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
-                        </form>
-                    <div className="container">
-                        <br/><br/>2. Test a sample size from predefined DB:<br/>
-                        <button className="ml-update-button"
-                                onClick={() => getMLInfo(10)}
-                        > Simulate 10 customers
-                        </button>
-                        <button className="ml-update-button"
-                                onClick={() => getMLInfo(20)}
-                        > Simulate 20 customers
-                        </button>
-                        <button className="ml-update-button"
-                                onClick={() => getMLInfo(50)}
-                        > Simulate 50 customers
-                        </button>
-                        <button className="ml-update-button"
-                                onClick={() => getMLInfo(100)}
-                        > Simulate 100 customers
-                        </button>
-                        <button className="ml-update-button"
-                                onClick={() => getMLInfo(200)}
-                        > Simulate 200 customers
-                        </button>
-
-                    </div>
-                    <br/>
-                    <br/>
-                    <form onSubmit={handleSubmit}>
-                        <label>
-                            3. Add new Customer info on the top of predefined data:
-                            <p/>
-                            <table>
-                                <tr>
-                                    <th>Gender</th>
-                                    <th>Age</th>
-                                    <th>Spending score</th>
-                                    <th>Annual Income</th>
-                                    <th> </th>
-                                </tr>
-                                <td>
-                                    <select onChange={handleOptionSelect}>
-                                        {genders.map((gender, index) => (
-                                            <option key={index} value={gender.value}>
-                                                {gender.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </td>
-                                <td>
+                <div className="flex w-full flex-col lg:h-[400px] lg:flex-row ">
+                    <div className="flex-container">
+                        <div className="section">
+                            <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
+                            <form onSubmit={handleMLSubmit}>
+                                <label>
+                                    1. Test a sample size from predefined DB:<br/>
                                     <input
                                         type="number"
-                                        name="age"
-                                        placeholder="Enter customer age"
-                                        onChange={handleChange}
-                                        value={values.age}
+                                        name="sampleSize"
+                                        placeholder="Enter sampleSize"
+                                        onChange={handleChange2}
+                                        value={values2.sampleSize}
                                         maxLength={50}
                                         required
                                         size={100}
-                                        min="18"
-                                        max="120"
+                                        min="10"
+                                        max="200"
                                     />
-                                </td>
-                                <td>
-                                    <input
-                                        type="number"
-                                        name="annual_income"
-                                        placeholder="Enter customer annual_income"
-                                        onChange={handleChange}
-                                        value={values.annual_income}
-                                        maxLength={50}
-                                        required
-                                        size={100}
-                                        min="15"
-                                        max="140"
-                                    />
-                                </td>
-                                <td>
-                                    <input
-                                        type="number"
-                                        name="spending_score"
-                                        placeholder="Enter customer spending_score"
-                                        onChange={handleChange}
-                                        value={values.spending_score}
-                                        maxLength={50}
-                                        required
-                                        size={100}
-                                        min="5"
-                                        max="100"
-                                    />
-                                </td>
-                                <td>
-                                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                                </td>
-                            </table>
+                                </label>
+                                <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
+                            </form>
+                            <br/><br/>2. Test a sample size from predefined DB:<br/>
+                            <button className="ml-update-button"
+                                    onClick={() => getMLInfo(10)}
+                            > Simulate 10 customers
+                            </button>
+                            <button className="ml-update-button"
+                                    onClick={() => getMLInfo(20)}
+                            > Simulate 20 customers
+                            </button>
+                            <button className="ml-update-button"
+                                    onClick={() => getMLInfo(50)}
+                            > Simulate 50 customers
+                            </button>
+                            <button className="ml-update-button"
+                                    onClick={() => getMLInfo(100)}
+                            > Simulate 100 customers
+                            </button>
+                            <button className="ml-update-button"
+                                    onClick={() => getMLInfo(200)}
+                            > Simulate 200 customers
+                            </button>
 
-                        </label>
+                            <br/>
+                            <br/>
+                            <form onSubmit={handleSubmit}>
+                                <label>
+                                    3. Add new Customer info on the top of predefined data:
+                                    <p/>
+                                    <table>
+                                        <tr>
+                                            <th>Gender</th>
+                                            <th>Age</th>
+                                            <th>Spending score</th>
+                                            <th>Annual Income</th>
+                                            <th></th>
+                                        </tr>
+                                        <td>
+                                            <select onChange={handleOptionSelect}>
+                                                {genders.map((gender, index) => (
+                                                    <option key={index} value={gender.value}>
+                                                        {gender.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                name="age"
+                                                placeholder="Enter customer age"
+                                                onChange={handleChange}
+                                                value={values.age}
+                                                maxLength={50}
+                                                required
+                                                size={100}
+                                                min="18"
+                                                max="120"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                name="annual_income"
+                                                placeholder="Enter customer annual_income"
+                                                onChange={handleChange}
+                                                value={values.annual_income}
+                                                maxLength={50}
+                                                required
+                                                size={100}
+                                                min="15"
+                                                max="140"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                name="spending_score"
+                                                placeholder="Enter customer spending_score"
+                                                onChange={handleChange}
+                                                value={values.spending_score}
+                                                maxLength={50}
+                                                required
+                                                size={100}
+                                                min="5"
+                                                max="100"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input className="submitbutton" id="loginButton" type="submit"
+                                                   value="Submit"/>
+                                        </td>
+                                    </table>
 
-                    </form>
-                    <br/>
-                    <br/>
-                    <h1>{("MLInfo Results: ")}</h1>
-                    <div id="banner">
-                        <div className="inline-block">
-                            <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image" style={{height:500, width:500}}/>
+                                </label>
+
+                            </form>
+                            <br/>
+                            <br/>
                         </div>
-                        <div className="inline-block">
-                            <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image" style={{height:500, width:500}}/>
+                        <div className="section">
+                            <h1>{("MLInfo Results: ")}</h1>
+                            <div id="banner">
+                                <div className="inline-block">
+                                    <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image"
+                                         style={{height: 500, width: 500}}/>
+                                </div>
+                                <div className="inline-block">
+                                    <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image"
+                                         style={{height: 500, width: 500}}/>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div className="section">
+                            <br/>
+                            <br/>
+                            <br/>
+
+                            <div className="Item">
+                                {loading ? (
+                                    <div>Loading...</div>
+                                ) : (
+                                    <>
+                                        <table>
+                                            <tr>
+                                                <th>Id</th>
+                                                <th>Gender</th>
+                                                <th>Age</th>
+                                                <th>Annual Income</th>
+                                                <th>Spending Score</th>
+                                                <th>Segment</th>
+                                            </tr>
+                                            {customers.map(customer => (
+                                                <tr key={customer.id}>
+                                                    <td>{customer.id}</td>
+                                                    <td>{customer.gender}</td>
+                                                    <td>{customer.age}</td>
+                                                    <td>{customer.annual_income}</td>
+                                                    <td>{customer.spending_score}</td>
+                                                    <td>{customer.segment}</td>
+                                                </tr>
+                                            ))}
+                                        </table>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
-
-                </div>
-                <br/>
-                <br/>
-                <br/>
-                <div className="Item">
-                    {loading ? (
-                        <div>Loading...</div>
-                    ) : (
-                        <>
-                            <table>
-                                <tr>
-                                    <th>Id</th>
-                                    <th>Gender</th>
-                                    <th>Age</th>
-                                    <th>Annual Income</th>
-                                    <th>Spending Score</th>
-                                    <th>Segment</th>
-                                </tr>
-                                {customers.map(customer => (
-                                    <tr key={customer.id}>
-                                        <td>{customer.id}</td>
-                                        <td>{customer.gender}</td>
-                                        <td>{customer.age}</td>
-                                        <td>{customer.annual_income}</td>
-                                        <td>{customer.spending_score}</td>
-                                        <td>{customer.segment}</td>
-                                    </tr>
-                                ))}
-                            </table>
-                        </>
-                    )}
                 </div>
             </article>
         </section>
 
-    )
+)
 }
 

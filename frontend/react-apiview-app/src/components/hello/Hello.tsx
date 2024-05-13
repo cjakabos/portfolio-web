@@ -23,7 +23,10 @@ export default function Hello() {
     console.log(username)
     return (
         <div>
-            <img src='../../vercel.svg' className="App-logo" alt="logo" style={{ height: 200, width: 200 }}/>
+            <div className="flex items-center justify-center">
+                <img src='../../drawing.svg' className="App-logo" alt="logo"
+                     style={{height: 200, width: 200}}/>
+            </div>
             <div className="login-ok">
                 <h1 style={{color: 'green'}}>Hello {username}!</h1>
             </div>

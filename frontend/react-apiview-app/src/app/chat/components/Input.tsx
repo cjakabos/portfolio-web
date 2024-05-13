@@ -28,14 +28,14 @@ const Input = ({ onSendMessage }) => {
                         onSubmit();
                     }
                 }}
-                style={{ height: "30px", width: "80%", marginRight: '10px' }}
+                style={{ height: "30px", width: "600px", marginRight: '10px' }}
             />
 
             <Button
                 variant="contained"
                 color="primary"
                 onClick={onSubmit}
-                style={{ marginTop: '15px', padding: '16px' }}>
+                style={{ width: "30px", marginTop: '15px', padding: '16px' }}>
                 Send
             </Button>
         </div>

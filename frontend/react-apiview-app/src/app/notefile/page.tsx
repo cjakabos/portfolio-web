@@ -186,6 +186,7 @@ export default function Page(this: any) {
                 //console.log("AXIOS ERROR: ", error.response);
             })
     }
+
     const [updates, setUpdates] = useState(initialNoteValues);
     const change = (event: { target: { name: any; value: any; }; }) => {
         const {name, value} = event.target;
@@ -249,7 +250,7 @@ export default function Page(this: any) {
                             a.download = fileName;
                             document.body.appendChild(a);
                             a.click();
-                            setTimeout(function(){
+                            setTimeout(function () {
                                 document.body.removeChild(a);
                                 window.URL.revokeObjectURL(url);
                             }, 100);
@@ -264,6 +265,7 @@ export default function Page(this: any) {
             console.log(error)
         }
     }
+
     function deleteFile(fileKey: number) {
 
         let axiosConfig = {
@@ -295,7 +297,7 @@ export default function Page(this: any) {
     // Image/File Submit Handler
     const handleSubmitFile = () => {
 
-        if (currentFile !== null){
+        if (currentFile !== null) {
 
             let formData = new FormData();
             formData.append('fileUpload', (currentFile || 'test'));
@@ -325,167 +327,171 @@ export default function Page(this: any) {
     if (loading) return <p>Loading...</p>
 
     return (
-        <div className="flex w-full flex-col items-center justify-center">
-                {isNoteOpen ?
-                    <PopUp
-                    >
-                        <form onSubmit={() => updateNote(updates, selectedNote)}>
-                            <label>
-                                Note info:
-                                <p/>
-                                <input
-                                    type="text"
-                                    name="title"
-                                    defaultValue={selectedNote.title}
-                                    //value={updates.title}
-                                    onChange={change}
-                                    maxLength={50}
-                                    required
-                                    size={50}
-                                />
-                                <input
-                                    type="text"
-                                    name="description"
-                                    defaultValue={selectedNote.description}
-                                    //value={updates.description}
-                                    onChange={change}
-                                    maxLength={50}
-                                    required
-                                    size={50}
-                                />
-                            </label>
-                            <br/>
-                            <input className="popup-submit" id="submitButton" type="submit" value="Submit"/>
-                        </form>
-
-                        <form onSubmit={() => setNoteIsOpen(false)}>
-                            <input className="popup-close" id="closeButton" type="submit" value="CLOSE"/>
-                        </form>
-                    </PopUp>
-                    : null}
-                <div className="login-top">
-                    <h1>{("Create a note")}</h1>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        Note info:
-                        <p/>
-                        <input
-                            type="text"
-                            name="title"
-                            placeholder="Enter note title"
-                            onChange={handleChange}
-                            value={values.title}
-                            maxLength={50}
-                            required
-                            size={50}
-                            height={50}
-                        />
-                        <br/>
-                        <input
-                            type="text"
-                            name="description"
-                            placeholder="Enter note description"
-                            onChange={handleChange}
-                            value={values.description}
-                            maxLength={50}
-                            required
-                            size={50}
-                            height={50}
-                        />
-                    </label>
-                    <br/>
-                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                </form>
-                <div>
-                    <div className="login-top">
-                        <h1>{("All notes")}
-                            <form onSubmit={handleGetSubmit}>
-                                <input className="submitbutton" id="loginButton" type="submit" value="Get notes"/>
+        <div className="flex w-full flex-col lg:flex-row ">
+            <div className="flex-container">
+                {/* Customer creation and listing */}
+                <div className="section">
+                    {isNoteOpen ?
+                        <PopUp
+                        >
+                            <form onSubmit={() => updateNote(updates, selectedNote)}>
+                                <label>
+                                    Note info:
+                                    <p/>
+                                    <input
+                                        type="text"
+                                        name="title"
+                                        defaultValue={selectedNote.title}
+                                        //value={updates.title}
+                                        onChange={change}
+                                        maxLength={50}
+                                        required
+                                        size={50}
+                                    />
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        defaultValue={selectedNote.description}
+                                        //value={updates.description}
+                                        onChange={change}
+                                        maxLength={50}
+                                        required
+                                        size={50}
+                                    />
+                                </label>
+                                <br/>
+                                <input className="submitbutton" id="submitButton" type="submit" value="Submit"/>
                             </form>
-                        </h1>
-                    </div>
 
-                    <div className="Item">
-                        {notes != null && loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>Key</th>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                    </tr>
-                                    {notes != null && notes.map(note => (
-                                        <tr key={note.id}>
-                                            <td>{note.id}</td>
-                                            <td>{note.title}</td>
-                                            <td>{note.description}</td>
-                                            <button className="submitbutton"
-                                                    onClick={() => initiateUpdateNote(note)}
-                                            > Update
-                                            </button>
-                                            <button className="clearbutton"
-                                                    onClick={() => deleteNote(note.id)}
-                                            > Delete
-                                            </button>
-                                        </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
-                    </div>
-                </div>
-                <div className="login-top">
-                    <h1>{("Upload a file")}</h1>
-                </div>
-                <div>
+                            <form onSubmit={() => setNoteIsOpen(false)}>
+                                <input className="clearbutton" id="closeButton" type="submit" value="CLOSE"/>
+                            </form>
+                        </PopUp>
+                        : null}
                     <div className="login-top">
-                        <h1>{("All files")}
-                        </h1>
+                        <h1>{("Create a note")}</h1>
                     </div>
+                    <form onSubmit={handleSubmit}>
+                        <label>
+                            Note info:
+                            <p/>
+                            <input
+                                type="text"
+                                name="title"
+                                placeholder="Enter note title"
+                                onChange={handleChange}
+                                value={values.title}
+                                maxLength={50}
+                                required
+                                size={50}
+                                height={50}
+                            />
+                            <br/>
+                            <input
+                                type="text"
+                                name="description"
+                                placeholder="Enter note description"
+                                onChange={handleChange}
+                                value={values.description}
+                                maxLength={50}
+                                required
+                                size={50}
+                                height={50}
+                            />
+                        </label>
+                        <br/>
+                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
+                    </form>
+                </div>
+                <div className="section">
                     <div>
-                        {/* image preview */}
-                        {/*<img src={this.state.image_preview} alt="image preview"/>*/}
+                        <div className="login-top">
+                            <h1>{("All notes")}
+                                <form onSubmit={handleGetSubmit}>
+                                    <input className="submitbutton" id="loginButton" type="submit" value="Get notes"/>
+                                </form>
+                            </h1>
+                        </div>
 
-                        {/* image input field */}
-                        <input
-                            type="file"
-                            onChange={handleFilePreview}
-                        />
-                        <label>Upload file</label>
-                        <input  className="submitbutton" type="submit" onClick={handleSubmitFile} value="Submit"/>
-                    </div>
-                    <div className="Files">
-                        {notes != null && loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <table>
-                                    <tr>
-                                        <th>File name</th>
-                                        <th>File size</th>
-                                    </tr>
-                                    {files != null && files.map(file => (
-                                        <tr key={file.id}>
-                                            <td>{file.name}</td>
-                                            <td>{file.fileSize}</td>
-                                            <button className="submitbutton"
-                                                    onClick={() => downloadFile(file.id, file.name)}
-                                            > Download
-                                            </button>
-                                            <button className="clearbutton"
-                                                    onClick={() => deleteFile(file.id)}
-                                            > Delete
-                                            </button>
+                        <div className="Item">
+                            {notes != null && loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    <table>
+                                        <tr>
+                                            <th>Key</th>
+                                            <th>Title</th>
+                                            <th>Description</th>
                                         </tr>
-                                    ))}
-                                </table>
-                            </>
-                        )}
+                                        {notes != null && notes.map(note => (
+                                            <tr key={note.id}>
+                                                <td>{note.id}</td>
+                                                <td>{note.title}</td>
+                                                <td>{note.description}</td>
+                                                <button className="submitbutton"
+                                                        onClick={() => initiateUpdateNote(note)}
+                                                > Update
+                                                </button>
+                                                <button className="clearbutton"
+                                                        onClick={() => deleteNote(note.id)}
+                                                > Delete
+                                                </button>
+                                            </tr>
+                                        ))}
+                                    </table>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
+                <div className="section">
+                        <h1>{("Upload a file")}</h1>
+
+                        <div>
+                            {/* image preview */}
+                            {/*<img src={this.state.image_preview} alt="image preview"/>*/}
+
+                            {/* image input field */}
+                            <input
+                                type="file"
+                                onChange={handleFilePreview}
+                            />
+                            <label>Upload file</label>
+                            <input className="submitbutton" type="submit" onClick={handleSubmitFile} value="Submit"/>
+                        </div>
+                    </div>
+                    <div className="section">
+                        <div className="Files">
+                            {notes != null && loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    <table>
+                                        <tr>
+                                            <th>File name</th>
+                                            <th>File size</th>
+                                        </tr>
+                                        {files != null && files.map(file => (
+                                            <tr key={file.id}>
+                                                <td>{file.name}</td>
+                                                <td>{file.fileSize}</td>
+                                                <button className="submitbutton"
+                                                        onClick={() => downloadFile(file.id, file.name)}
+                                                > Download
+                                                </button>
+                                                <button className="clearbutton"
+                                                        onClick={() => deleteFile(file.id)}
+                                                > Delete
+                                                </button>
+                                            </tr>
+                                        ))}
+                                    </table>
+                                </>
+                            )}
+                        </div>
+                </div>
+            </div>
         </div>
 
 

@@ -114,6 +114,7 @@ export default function OpenMaps() {
 				'Authorization': userToken
 			}
 		};
+		console.log("axiosConfig: ", axiosConfig);
 		//setName(JSON.stringify(postData));
 		axios.post('http://localhost:80/vehicles/cars', postData, axiosConfig)
 			.then((response) => {
@@ -140,7 +141,7 @@ export default function OpenMaps() {
 		axios.get('http://localhost:80/vehicles/cars', axiosConfig)
 			.then((response) => {
 				// for each element received, put up a marker
-				response.data._embedded.carList.map((option: { location: any; id: any }) => (
+				response.data.forEach(function(option){
 					setMarkers((current) => [
 						...current,
 						{
@@ -151,11 +152,7 @@ export default function OpenMaps() {
 							id: option.id,
 						},
 					])
-
-				));
-				//setMapFeedback('OK')
-				console.log("response: ", response.data._embedded.carList);
-				return response.data._embedded.carList;
+				});
 			})
 			.catch((error) => {
 				console.log("AXIOS ERROR: ", axiosConfig);
