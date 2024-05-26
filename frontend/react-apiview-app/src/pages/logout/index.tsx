@@ -3,7 +3,7 @@ import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 
 
-export default function Page() {
+export default function Index() {
     const router = useRouter()
 
     useEffect(() => {
@@ -11,7 +11,7 @@ export default function Page() {
         try {
             localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", '')
             localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", '')
-            router.push('/login')
+            router.push('/')
             if (typeof window !== "undefined") {
                 window.location.reload()
             }

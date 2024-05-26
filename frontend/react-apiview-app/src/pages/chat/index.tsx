@@ -1,6 +1,5 @@
 'use client'
 import React, {useState, useEffect, useRef} from 'react';
-import './components/page.css';
 import Input from './components/Input';
 import Messages from './components/Messages';
 import SockJS from 'sockjs-client';
@@ -16,15 +15,17 @@ export default function Chat() {
     let [username, setUsername] = useState('');
     //Make sure only runs once
     const effectRan = useRef(false);
-    if (!effectRan.current) {
-        if (typeof window !== "undefined") {
-            setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
-            console.log('this is the username: ', username)
-            effectRan.current = true;
-        }
-    }
+
     useEffect(() => {
-        handleGetUserRooms()
+        if (!effectRan.current) {
+            if (typeof window !== "undefined") {
+                handleGetUserRooms()
+                setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
+                console.log('this is the username: ', username)
+                effectRan.current = true;
+            }
+        }
+
     }, []);
 
     const [messages, setMessages] = useState([])
@@ -166,24 +167,12 @@ export default function Chat() {
     }, [connectedUsers]);
 
 
-    if (effectRan.current) {
         return (
             <div className="Chat">
                 {!!username && !enteredRoom ? (
                     <Room onCreateRoom={handleCreateRoom} onEnterRoom={handleEnterRoom} userRooms={userRooms}/>
                 ) : null}
 
-                {!!username && enteredRoom ? (
-                    <>
-                        <Messages messages={messages} currentUser={username}/>
-                        <Input onSendMessage={onSendMessage}/>
-                    </>
-                ) : null}
-
-                {showErrorPopup && (
-                    <Popup message={errorMessage} key={popupKey}/>
-                )}
             </div>
         )
-    }
 }

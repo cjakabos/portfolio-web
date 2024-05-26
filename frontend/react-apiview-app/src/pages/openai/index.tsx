@@ -13,7 +13,7 @@ const initialDalleFeedback = {
     url: ""
 };
 
-export default function Page(this: any) {
+export default function Index(this: any) {
 
     const openAIKey = (process.env.NEXT_PUBLIC_OPENAI_KEY || 'test')
     const openAiUrl = "https://api.openai.com/v1";

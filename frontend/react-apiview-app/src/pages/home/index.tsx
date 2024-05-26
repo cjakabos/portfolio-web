@@ -1,7 +1,7 @@
 'use client';
 import React, {useEffect, useRef, useState} from "react";
 
-export default function Hello() {
+export default function Index() {
 
     const [username, setUsername] = useState('');
 

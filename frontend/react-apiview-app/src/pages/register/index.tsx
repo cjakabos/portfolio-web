@@ -11,7 +11,7 @@ const initialValues = {
     confirmPassword: "",
     feedback: "defaultFeedback",
 };
-export default function Page() {
+export default function Index() {
 
     const [values, setValues] = useState(initialValues);
     const [Name, setName] = useState("")
@@ -71,7 +71,7 @@ export default function Page() {
         } else {
             setFeedback("PASSWORDERROR")
         }
-
+        router.push("/login")
 
     };
 
@@ -101,7 +101,6 @@ export default function Page() {
                 <article>
                     <div>
                             <div className="login-top">
-                                {Feedback !== 'OK' ? (
                                     <>
                                         <div className="flex items-center justify-center">
                                             <img src='../../drawing.svg' className="App-logo" alt="logo"
@@ -193,13 +192,6 @@ export default function Page() {
                                             </div>
                                         </form>
                                     </>
-                                ) :
-                                    <>
-                                        <button className="submitbutton" type="submit" value="Submit" onClick={() => router.push('/login')}>
-                                            Login
-                                        </button>
-                                    </>
-                                }
                             </div>
                             <div className="login-top">
                                 {Feedback === 'ERROR' && <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}

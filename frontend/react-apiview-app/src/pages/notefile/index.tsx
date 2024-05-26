@@ -33,7 +33,7 @@ const initialFileValues = {
     name: "",
     fileSize: "",
 };
-export default function Page(this: any) {
+export default function Index(this: any) {
 
     const [loading, setLoading] = useState(false)
     const [values, setValues] = useState(initialNoteValues);

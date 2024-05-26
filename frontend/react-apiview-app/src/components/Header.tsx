@@ -1,10 +1,11 @@
-"use client";
-import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import {usePathname, useRouter} from "next/navigation";
+import Image from 'next/image'
+import Link from 'next/link'
+import {useRouter} from "next/navigation";
+import React, {useEffect, useState} from 'react'
 
-const Header = () => {
-    const router = useRouter()
+export default function Header() {
+
+    const router = useRouter();
 
     const [userToken, setUserToken] = useState('');
 
@@ -58,8 +59,8 @@ const Header = () => {
                 <div className="container mx-auto flex items-center justify-between h-24">
                     {(userToken === null || userToken === '') ? (
                             <>
-                                <Link href="/stock" onClick={() => router.push("/stock")}>Signup</Link>
-                                <Link href="/login" onClick={() => router.push("/login")}>Login</Link>
+                                <Link href="/register" onClick={() => router.push("/hom")}>Signup</Link>
+                                <Link href="/login" onClick={() => router.push("/")}>Login</Link>
                             </>
                         ) :
                         <>
@@ -69,7 +70,5 @@ const Header = () => {
                 </div>
             </nav>
         </>
-    );
-};
-
-export default Header;
+    )
+}

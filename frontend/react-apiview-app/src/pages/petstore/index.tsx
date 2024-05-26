@@ -59,7 +59,7 @@ const days = [
     {value: "SUNDAY", label: "Sunday"}
 ];
 
-export default function Page(this: any) {
+export default function Index(this: any) {
 
     const [customer, setCustomer] = useState(initialCustomer);
     const [employee, setEmployee] = useState(initialEmployee);

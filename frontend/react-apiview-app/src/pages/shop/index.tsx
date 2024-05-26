@@ -24,7 +24,7 @@ const cartInitialValues = {
 };
 
 
-export default function Page(this: any) {
+export default function Index(this: any) {
     const [values, setValues] = useState(initialValues);
     const [Name, setName] = useState("")
 

@@ -1,6 +1,7 @@
 "use client";
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import {
+	FeatureGroup,
 	MapContainer,
 	Marker,
 	Popup,
@@ -234,7 +235,7 @@ export default function OpenMaps() {
 
 	// @ts-ignore
 	return (
-		<div className="flex w-full flex-col items-center justify-center">
+		<>
 			<MapContainer
 				center={[59.328246, 18.053383]}
 				zoom={15}
@@ -288,7 +289,7 @@ export default function OpenMaps() {
 						<GeoJSON style={{ color: "green" }} data={WorldMapData as any} />
 					</LayersControl.Overlay>
 
-					<MarkerClusterGroup chunkedLoading>
+					<FeatureGroup><MarkerClusterGroup>
 {/*						{(addressPoints as AdressPoint).map((address, index) => (
 							<Marker key={index} position={[address[0], address[1]]} title={address[2]} icon={icon4} ></Marker>
 						))}*/}
@@ -333,8 +334,9 @@ export default function OpenMaps() {
 							</Marker>
 						))}
 					</MarkerClusterGroup>
+					</FeatureGroup>
 				</LayersControl>
 			</MapContainer>
-		</div>
+		</>
 	);
 }

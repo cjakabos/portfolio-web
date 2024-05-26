@@ -7,8 +7,8 @@ const Map = dynamic(() => import("../../components/OpenMaps/OpenMaps"), {
     ssr: false,
 });
 
-function Page() {
+function Index() {
     return <Map />;
 }
 
-export default Page;
+export default Index;
