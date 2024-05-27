@@ -2,8 +2,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {useRouter} from "next/navigation";
 import React, {useEffect, useState} from 'react'
+import { motion } from "framer-motion";
+import {Button} from "@mui/material";
+import SwitchTheme from "@/components/switch-theme";
 
-export default function Header() {
+const Layout = ({
+                             children,
+                         }: {
+    children: React.ReactNode;
+}) => {
 
     const router = useRouter();
 
@@ -40,23 +47,14 @@ export default function Header() {
 
     return (
         <>
-            <nav
-                // z-index 1001 is needed because of leaflet GeoMap
-                className="
-                  fixed
-                  left-0
-                  top-0
-                  z-[1001]
-                  h-16
-                  w-screen
-                  bg-white
-                  border-b-[0.5px]
-                  border-neutral-200
-                  dark:border-neutral-700
-                  dark:bg-neutral-100-dark
-                  "
+            <motion.main
+                initial={{opacity: 0, y: -15}}
+                animate={{opacity: 1, y: 0}}
+                exit={{opacity: 0}}
+                transition={{duration: 0.5}}
+                className="min-h-[100vh] flex-col m-auto lg:flex"
             >
-                <div className="container mx-auto flex items-center justify-between h-24">
+                <aside className="min-h-[10vh] p-4 flex flex-row gap-10 lg:sticky top-4 h-20">
                     {(userToken === null || userToken === '') ? (
                             <>
                                 <Link href="/register" onClick={() => router.push("/hom")}>Signup</Link>
@@ -67,8 +65,14 @@ export default function Header() {
                             {authedRoutes}
                         </>
                     }
-                </div>
-            </nav>
+                    <SwitchTheme></SwitchTheme>
+                </aside>
+                <section className="px-4 pb-4 pt-6">
+                    {children}
+                </section>
+            </motion.main>
         </>
     )
 }
+
+export default Layout;
