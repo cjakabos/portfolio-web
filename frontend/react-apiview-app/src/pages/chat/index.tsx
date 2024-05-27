@@ -69,7 +69,7 @@ export default function Chat() {
             // @ts-ignore
             setConnectedUsers((users) => [...users, msg.sender]);
         } else {
-            setMessages((messages) => messages.concat(msg));
+            setMessages((messages) => [...messages, msg]);
         }
     }
 
@@ -167,12 +167,24 @@ export default function Chat() {
     }, [connectedUsers]);
 
 
+    if (effectRan.current) {
         return (
             <div className="Chat">
                 {!!username && !enteredRoom ? (
                     <Room onCreateRoom={handleCreateRoom} onEnterRoom={handleEnterRoom} userRooms={userRooms}/>
                 ) : null}
 
+                {!!username && enteredRoom ? (
+                    <>
+                        <Messages messages={messages} currentUser={username}/>
+                        <Input onSendMessage={onSendMessage}/>
+                    </>
+                ) : null}
+
+                {showErrorPopup && (
+                    <Popup message={errorMessage} key={popupKey}/>
+                )}
             </div>
         )
+    }
 }

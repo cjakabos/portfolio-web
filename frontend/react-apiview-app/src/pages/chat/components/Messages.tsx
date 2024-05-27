@@ -16,6 +16,9 @@ const Messages = ({ messages, currentUser }) => {
         scrollToLatestMessage();
     }, [messages]);
 
+    // Make sure messages are in order
+    messages.sort((a, b) => a.timestamp - b.timestamp)
+
     let renderMessage = (message) => {
         const { sender, content, timestamp } = message;
         const messageFromMe = currentUser === message.sender;
