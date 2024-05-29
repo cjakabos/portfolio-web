@@ -3,6 +3,7 @@ import React, {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import {PopUp} from "../../components/PopUp/PopUp";
 import {NoteTicket} from "../../data/dataNote";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 
 const initialValues = {
@@ -324,6 +325,58 @@ export default function Index(this: any) {
         }
     }
 
+    const columnsNotes: GridColDef[] = [
+        { field: "id", headerName: "ID", width: 50 },
+        { field: "title", headerName: "Title", width: 105 },
+        { field: "description", headerName: "Description", width: 200 },
+        {
+            field: "edit",
+            headerName: "Edit",
+            sortable: false,
+            width: 100,
+            renderCell: ({row}) =>
+                <button className="submitbutton" onClick={() => initiateUpdateNote(row)}>
+                    Edit
+                </button>
+        },
+        {
+            field: "delete",
+            headerName: "Delete",
+            sortable: false,
+            width: 100,
+            renderCell: ({row}) =>
+                <button className="clearbutton" onClick={() => deleteNote(row)}>
+                    Delete
+                </button>
+        },
+    ];
+
+    const columnsFiles: GridColDef[] = [
+        { field: "id", headerName: "ID", width: 50 },
+        { field: "name", headerName: "Name", width: 200 },
+        { field: "fileSize", headerName: "Size", width: 80 },
+        {
+            field: "download",
+            headerName: "Download",
+            sortable: false,
+            width: 120,
+            renderCell: ({row}) =>
+                <button className="submitbutton" onClick={() => downloadFile(row)}>
+                    Download
+                </button>
+        },
+        {
+            field: "delete",
+            headerName: "Delete",
+            sortable: false,
+            width: 100,
+            renderCell: ({row}) =>
+                <button className="clearbutton" onClick={() => deleteFile(row)}>
+                    Delete
+                </button>
+        },
+    ];
+
     if (loading) return <p>Loading...</p>
 
     return (
@@ -404,12 +457,25 @@ export default function Index(this: any) {
                     </form>
                 </div>
                 <div className="section">
+                    <h1>{("Upload a file")}</h1>
+
+                    <div>
+                        {/* image preview */}
+                        {/*<img src={this.state.image_preview} alt="image preview"/>*/}
+
+                        {/* image input field */}
+                        <input
+                            type="file"
+                            onChange={handleFilePreview}
+                        />
+                        <label>Upload file</label>
+                        <input className="submitbutton" type="submit" onClick={handleSubmitFile} value="Submit"/>
+                    </div>
+                </div>
+                <div className="section">
                     <div>
                         <div className="login-top">
                             <h1>{("All notes")}
-                                <form onSubmit={handleGetSubmit}>
-                                    <input className="submitbutton" id="loginButton" type="submit" value="Get notes"/>
-                                </form>
                             </h1>
                         </div>
 
@@ -418,78 +484,52 @@ export default function Index(this: any) {
                                 <div>Loading...</div>
                             ) : (
                                 <>
-                                    <table>
-                                        <tr>
-                                            <th>Key</th>
-                                            <th>Title</th>
-                                            <th>Description</th>
-                                        </tr>
-                                        {notes != null && notes.map(note => (
-                                            <tr key={note.id}>
-                                                <td>{note.id}</td>
-                                                <td>{note.title}</td>
-                                                <td>{note.description}</td>
-                                                <button className="submitbutton"
-                                                        onClick={() => initiateUpdateNote(note)}
-                                                > Update
-                                                </button>
-                                                <button className="clearbutton"
-                                                        onClick={() => deleteNote(note.id)}
-                                                > Delete
-                                                </button>
-                                            </tr>
-                                        ))}
-                                    </table>
+                                    <DataGrid
+                                        rows={notes}
+                                        columns={columnsNotes}
+                                        className="text-black dark:text-white h-auto"
+                                        slotProps={{
+                                            row: {
+                                                className: "text-black dark:text-white"
+                                            },
+                                            cell: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                            pagination: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                        }}
+                                    />
                                 </>
                             )}
                         </div>
                     </div>
                 </div>
                 <div className="section">
-                        <h1>{("Upload a file")}</h1>
-
-                        <div>
-                            {/* image preview */}
-                            {/*<img src={this.state.image_preview} alt="image preview"/>*/}
-
-                            {/* image input field */}
-                            <input
-                                type="file"
-                                onChange={handleFilePreview}
-                            />
-                            <label>Upload file</label>
-                            <input className="submitbutton" type="submit" onClick={handleSubmitFile} value="Submit"/>
-                        </div>
+                    <div className="Files">
+                        {notes != null && loading ? (
+                            <div>Loading...</div>
+                        ) : (
+                            <>
+                                <DataGrid
+                                    rows={files}
+                                    columns={columnsFiles}
+                                    className="text-black dark:text-white h-auto"
+                                    slotProps={{
+                                        row: {
+                                            className: "text-black dark:text-white"
+                                        },
+                                        cell: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                        pagination: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                    }}
+                                />
+                            </>
+                        )}
                     </div>
-                    <div className="section">
-                        <div className="Files">
-                            {notes != null && loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    <table>
-                                        <tr>
-                                            <th>File name</th>
-                                            <th>File size</th>
-                                        </tr>
-                                        {files != null && files.map(file => (
-                                            <tr key={file.id}>
-                                                <td>{file.name}</td>
-                                                <td>{file.fileSize}</td>
-                                                <button className="submitbutton"
-                                                        onClick={() => downloadFile(file.id, file.name)}
-                                                > Download
-                                                </button>
-                                                <button className="clearbutton"
-                                                        onClick={() => deleteFile(file.id)}
-                                                > Delete
-                                                </button>
-                                            </tr>
-                                        ))}
-                                    </table>
-                                </>
-                            )}
-                        </div>
                 </div>
             </div>
         </div>

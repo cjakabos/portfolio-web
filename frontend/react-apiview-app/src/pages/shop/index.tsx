@@ -1,6 +1,7 @@
 'use client'
 import React, {FC, useRef, useEffect, useState} from "react";
 import axios from "axios";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 const initialValues = {
     id: "",
@@ -257,58 +258,83 @@ export default function Index(this: any) {
             })
     };
 
+    const columns: GridColDef[] = [
+        { field: "id", headerName: "ID", width: 50 },
+        { field: "name", headerName: "Name", width: 105 },
+        { field: "price", headerName: "Price", width: 105 },
+        { field: "description", headerName: "Description", width: 105 }
+    ];
+
+    const columnsButton: GridColDef[] = [
+        { field: "id", headerName: "ID", width: 50 },
+        { field: "name", headerName: "Name", width: 105 },
+        { field: "price", headerName: "Price", width: 105 },
+        { field: "description", headerName: "Description", width: 105 },
+        {
+            field: "action",
+            headerName: "Add to Cart",
+            sortable: false,
+            renderCell: ({row}) =>
+                <button className="submitbutton" onClick={() => addToCart(row)}>
+                    Add
+                </button>
+        },
+    ];
+
     return (
         <div className="flex w-full flex-col lg:h-[400px] lg:flex-row ">
             <div className="flex-container">
                 <div className="section">
-                    <h1>Create Item</h1>
+                <h1>Create Item</h1>
                     <form onSubmit={handleItemSubmit}>
                         <table>
-                            <tr>
-                                <th><label htmlFor="name">Item Name:</label></th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        id="name"
-                                        placeholder="Enter item name"
-                                        onChange={handleChange}
-                                        value={values.name}
-                                        maxLength={20}
-                                        required
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <th><label htmlFor="price">Price:</label></th>
-                                <td>
-                                    <input
-                                        type="number"
-                                        name="price"
-                                        id="price"
-                                        placeholder="Enter price"
-                                        onChange={handleChange}
-                                        value={values.price}
-                                        maxLength={20}
-                                        required
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <th><label htmlFor="description">Description:</label></th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        name="description"
-                                        id="description"
-                                        placeholder="Enter description"
-                                        onChange={handleChange}
-                                        value={values.description}
-                                        maxLength={100}
-                                        required
-                                    />
-                                </td>
-                            </tr>
+                            <tbody>
+                                <tr>
+                                    <th><label htmlFor="name">Item Name:</label></th>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            id="name"
+                                            placeholder="Enter item name"
+                                            onChange={handleChange}
+                                            value={values.name}
+                                            maxLength={20}
+                                            required
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label htmlFor="price">Price:</label></th>
+                                    <td>
+                                        <input
+                                            type="number"
+                                            name="price"
+                                            id="price"
+                                            placeholder="Enter price"
+                                            onChange={handleChange}
+                                            value={values.price}
+                                            maxLength={20}
+                                            required
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label htmlFor="description">Description:</label></th>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            name="description"
+                                            id="description"
+                                            placeholder="Enter description"
+                                            onChange={handleChange}
+                                            value={values.description}
+                                            maxLength={100}
+                                            required
+                                        />
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                         <input className="submitbutton" type="submit" value="Submit"/>
                     </form>
@@ -316,53 +342,57 @@ export default function Index(this: any) {
                 <div className="section">
                     <h1>All Items</h1>
                     {loading ? <div className="loading">Loading...</div> : (
-                        <table>
-                            <tr>
-                            <th>Name</th>
-                                <th>Price</th>
-                                <th>Description</th>
-                            </tr>
-                            {items.map(item => (
-                                <tr key={item.id}>
-                                    <td>{item.name}</td>
-                                    <td>{item.price}</td>
-                                    <td>{item.description}</td>
-                                    <button className="submitbutton" onClick={() => addToCart(item)}>
-                                        Add to cart
-                                    </button>
-                                </tr>
-                            ))}
-                        </table>
+                        <DataGrid
+                            rows={items}
+                            columns={columnsButton}
+                            className="text-black dark:text-white h-auto"
+                            slotProps={{
+                                row: {
+                                    className: "text-black dark:text-white"
+                                },
+                                cell: {
+                                    className: "text-black dark:text-white",
+                                },
+                                pagination: {
+                                    className: "text-black dark:text-white",
+                                },
+                            }}
+                        />
                     )}
                 </div>
                 <div className="section">
                     <h1>Cart Contents</h1>
                     {loading ? <div className="loading">Loading...</div> : (
                         <>
-                            <table>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Price</th>
-                                    <th>Description</th>
-                                </tr>
-                                {cart.map(item => (
-                                    <tr key={item.id}>
-                                        <td>{item.name}</td>
-                                        <td>{item.price}</td>
-                                        <td>{item.description}</td>
-                                    </tr>
-                                ))}
-                            </table>
+                            <div className="flex">
+                                <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
+                                <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
+                            </div>
+                            <DataGrid
+                                rows={cart}
+                                columns={columns}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
                         </>
                     )}
-                    <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
-                    <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
                 </div>
                 <div className="section">
                     <h1>Order History</h1>
                     <>
                         {cartHistory.map((cart, index) => (
-                                <table>
+                            <table>
+                                <tbody>
                                     <tr>
                                         <th></th>
                                         <th></th>
@@ -391,7 +421,8 @@ export default function Index(this: any) {
                                         </tr>
                                     ))
                                     }
-                                </table>
+                                </tbody>
+                            </table>
 
                             )
                         )}

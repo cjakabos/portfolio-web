@@ -14,6 +14,7 @@ services:
 #      - ./frontend/nginx/localhost+3-key.pub:/etc/nginx/localhost+3-key.pub
     depends_on:
         - petstore
+    restart: unless-stopped
   jiraproxy:
     image: jiraproxy:latest
     container_name: jiraproxy
@@ -22,6 +23,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8501:8501
+    restart: unless-stopped
   vehicles-api:
     image: vehicles-api:latest
     container_name: vehicles-api
@@ -30,6 +32,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8880:8880
+    restart: unless-stopped
   petstore:
     image: petstore:latest
     container_name: petstore
@@ -40,6 +43,7 @@ services:
       - 8083:8083
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    restart: unless-stopped
   cloudapp:
     image: cloudapp:latest
     container_name: cloudapp
@@ -51,6 +55,7 @@ services:
     environment:
       - DOCKER_HOST_IP=host.docker.internal
       - DOCKER_HOST_KAFKA_PORT=9092
+    restart: unless-stopped
   mlops-segmentation:
     build:
       context: ./backend/ml-pipeline

@@ -53,7 +53,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
     <Container maxWidth="sm">
       <Box mt={4} display="flex" flexDirection="column" alignItems="center">
         {(!showEnter && !showCreate) && (
-          <Button variant="contained" onClick={toggleCreate}>
+          <Button  onClick={toggleCreate}>
             Create room
           </Button>
         )}
@@ -64,7 +64,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
-            <Button variant="contained" onClick={handleCreateRoom} style={{ marginTop: '10px' }}>
+            <Button  onClick={handleCreateRoom} style={{ marginTop: '10px' }}>
               Create
             </Button>
           </Box>
@@ -73,7 +73,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
 
       <Box mt={4} display="flex" flexDirection="column" alignItems="center">
         {(!showEnter && !showCreate) && (
-          <Button variant="contained" onClick={toggleEnter}>
+          <Button  onClick={toggleEnter}>
             Enter room
           </Button>
         )}
@@ -85,7 +85,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value)}
             />
-            <Button variant="contained" onClick={handleEnterRoom} style={{ marginTop: '10px' }}>
+            <Button  onClick={handleEnterRoom} style={{ marginTop: '10px' }}>
               Enter
             </Button>
           </Box>
@@ -93,7 +93,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
       </Box>
       <br/>
       <h2>Your Rooms:</h2>
-        <TableContainer component={Paper}>
+        <TableContainer style={{ width: 600 }} component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
@@ -123,6 +123,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
                     <Button
                       variant="outlined"
                       onClick={() => onEnterRoom(room.code)}
+                      style={{ width: 100 }}
                     >
                       Enter
                     </Button>
@@ -133,6 +134,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
                       onClick={() => {
                         navigator.clipboard.writeText(room.code);
                       }}
+                      style={{ width: 100 }}
                     >
                       Copy
                     </Button>

@@ -3,17 +3,16 @@ version: "3.8"
 services:
   postgres:
     image: postgres:15
-    restart: unless-stopped
     environment:
       POSTGRES_USER: websitemaster
       POSTGRES_PASSWORD: local
       POSTGRES_DB: cloudappdb
     ports:
       - "5433:5432"
+    restart: unless-stopped
 
   postgres-ml:
     image: postgres:15
-    restart: unless-stopped
     volumes:
       - "./init-ml.sql:/docker-entrypoint-initdb.d/init-ml.sql"
     environment:
@@ -22,6 +21,7 @@ services:
       POSTGRES_DB: segmentationdb
     ports:
       - "5434:5432"
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
@@ -33,6 +33,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: petstore
+    restart: unless-stopped
 
   mongo:
     image: mongo
@@ -43,6 +44,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: websitemaster
       MONGO_INITDB_ROOT_PASSWORD: local
       MONGO_INITDB_DATABASE: cloudappdb
+    restart: unless-stopped
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.2.3
@@ -50,6 +52,7 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    restart: unless-stopped
 
   broker:
     image: confluentinc/cp-kafka:7.2.3
@@ -70,5 +73,6 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    restart: unless-stopped
 volumes:
   petstore:

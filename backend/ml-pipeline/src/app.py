@@ -50,10 +50,10 @@ def getMLInfo(pg=pg):
     # 1. reinit DB, if needed
     #if sampleSize is specific to non-zero, sample only that set of database, otherwise run on full DB
     if data.get("sampleSize") > 0:
-        os.system("python3 src/init_segmentationdb.py " + str(data.get("sampleSize")))
+        os.system("python3 init_segmentationdb.py " + str(data.get("sampleSize")))
     #if sampleSize is 0, reset db
     elif data.get("sampleSize") == 0:
-        os.system("python3 src/init_segmentationdb.py")
+        os.system("python3 init_segmentationdb.py")
 
     # 2. resegment DB, if needed
     '''
@@ -62,7 +62,7 @@ def getMLInfo(pg=pg):
     if sampleSize is below -2, skip resegment, only read data from previous segmentation
     '''
     if data.get("sampleSize") >= -1:
-        os.system("python3 src/segmentation_process.py")
+        os.system("python3 segmentation_process.py")
 
     # 3. read segment results: Connect to db and read latest segmentation results
     connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")

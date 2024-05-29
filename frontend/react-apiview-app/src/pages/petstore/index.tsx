@@ -3,6 +3,7 @@ import React, {useState, useEffect, useRef} from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 
 const initialCustomer = {
@@ -238,7 +239,7 @@ export default function Index(this: any) {
                 'Authorization': userToken
             }
         };
-        //setName(JSON.stringify(postData));
+        console.log(JSON.stringify(postData));
         axios.post('http://localhost:80/petstore/pet', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", postData);
@@ -382,11 +383,85 @@ export default function Index(this: any) {
             })
     };
 
+    const columnsCustomers: GridColDef[] = [
+        {field: "id", headerName: "ID", width: 30},
+        {field: "name", headerName: "Name", width: 105},
+        {field: "phoneNumber", headerName: "phoneNumber", width: 105},
+        {
+            field: "add",
+            headerName: "Add pet",
+            sortable: false,
+            renderCell: ({row}) =>
+                <>
+                    <button className="submitbutton"
+                            onClick={() => petSubmit(row.id)}
+                    > Add
+                    </button>
+                </>
+        }
+    ];
+
+    const columnsPets: GridColDef[] = [
+        {field: "id", headerName: "ID", width: 30},
+        {field: "name", headerName: "Name", width: 105},
+        {field: "ownerId", headerName: "ownerId", width: 105},
+    ];
+
+    const columnsEmployees: GridColDef[] = [
+        {field: "id", headerName: "ID", width: 30},
+        {field: "name", headerName: "Name", width: 105},
+        {field: "skills", headerName: "skills", width: 105},
+        {field: "daysAvailable", headerName: "daysAvailable", width: 105},
+    ];
+
+    const columnsSchedules: GridColDef[] = [
+        {field: "id", headerName: "ID", width: 30},
+        {field: "employeeIds", headerName: "employeeIds", width: 105},
+        {field: "petIds", headerName: "petIds", width: 105},
+        {field: "date", headerName: "date", width: 105},
+        {field: "activities", headerName: "activities", width: 105},
+    ];
+
+    const columnsAvailability: GridColDef[] = [
+        {field: "id", headerName: "ID", width: 30},
+        {field: "name", headerName: "Name", width: 105},
+        {field: "skills", headerName: "skills", width: 105},
+        {field: "daysAvailable", headerName: "daysAvailable", width: 105},
+        {
+            field: "pet",
+            headerName: "Pet",
+            sortable: false,
+            renderCell: ({row}) =>
+                <>
+                    <select onChange={handleOptionSelect}>
+                        <option value="string">Select...</option>
+                        {allPets.map((pet, index) => (
+                            <option key={index} value={pet.id}>
+                                Id: {pet.id}, Name: {pet.name}
+                            </option>
+                        ))}
+                    </select>
+                </>
+        },
+        {
+            field: "add",
+            headerName: "Add",
+            sortable: false,
+            renderCell: ({row}) =>
+                <>
+                    <button className="submitbutton" onClick={() => scheduleSubmit(
+                        row.id,
+                        selectedOption
+                    )}>Add
+                    </button>
+                </>
+        }
+    ];
 
     return (
         <div className="flex w-full flex-col lg:flex-row ">
             <div className="flex-container">
-                {/* Customer creation and listing */}
+            {/* Customer creation and listing */}
                 <div className="section">
                     <h1>Create a New Customer</h1>
                     <form onSubmit={handleCustomerSubmit}>
@@ -415,21 +490,22 @@ export default function Index(this: any) {
                     <h1>All Customers</h1>
                     {loading ? <p>Loading...</p> : (
                         <>
-                            <table>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Phone</th>
-                                </tr>
-                                {allCustomers.map(customer => (
-                                    <tr key={customer.id}>
-                                        <td>{customer.name}</td>
-                                        <td>{customer.phoneNumber}</td>
-                                        {customer.id && <button className="submitbutton"
-                                                                onClick={() => petSubmit(customer.id)}>Add a pet
-                                        </button>}
-                                    </tr>
-                                ))}
-                            </table>
+                            <DataGrid
+                                rows={allCustomers}
+                                columns={columnsCustomers}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
                         </>
                     )}
                 </div>
@@ -437,20 +513,22 @@ export default function Index(this: any) {
                     <h1>All Pets</h1>
                     {loading ? <p>Loading...</p> : (
                         <>
-                            <table>
-                                <tr>
-                                    <th>Id</th>
-                                    <th>Name</th>
-                                    <th>OwnerId</th>
-                                </tr>
-                                {allPets.map(pet => (
-                                    <tr key={pet.id}>
-                                        <td>{pet.id}</td>
-                                        <td>{pet.name}</td>
-                                        <td>{pet.ownerId}</td>
-                                    </tr>
-                                ))}
-                            </table>
+                            <DataGrid
+                                rows={allPets}
+                                columns={columnsPets}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
                         </>
                     )}
                 </div>
@@ -500,20 +578,22 @@ export default function Index(this: any) {
                     <h1>All Employees</h1>
                     {loading ? <p>Loading...</p> : (
                         <>
-                            <table>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Skill</th>
-                                    <th>Days available</th>
-                                </tr>
-                                {allEmployees.map(employee => (
-                                    <tr key={employee.id}>
-                                        <td>{employee.name}</td>
-                                        <td>{employee.skills}</td>
-                                        <td>{employee.daysAvailable}</td>
-                                    </tr>
-                                ))}
-                            </table>
+                            <DataGrid
+                                rows={allEmployees}
+                                columns={columnsEmployees}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
                         </>
                     )}
                 </div>
@@ -549,33 +629,22 @@ export default function Index(this: any) {
                             <div>Loading...</div>
                         ) : (
                             <>
-                                <table>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Skill</th>
-                                        <th>Days available</th>
-                                    </tr>
-                                    {availableEmployees.map(employee => (
-                                        <tr key={employee.id}>
-                                            <td>{employee.name}</td>
-                                            <td>{employee.skills}</td>
-                                            <td>{employee.daysAvailable}</td>
-                                            {employee.id && <select onChange={handleOptionSelect}>
-                                                <option value="string">Select...</option>
-                                                {allPets.map((pet, index) => (
-                                                    <option key={index} value={pet.id}>
-                                                        Id: {pet.id}, Name: {pet.name}
-                                                    </option>
-                                                ))}
-                                            </select>}
-                                            {employee.id &&
-                                                <button className="submitbutton" onClick={() => scheduleSubmit(
-                                                    employee.id,
-                                                    selectedOption
-                                                )}>Add a schedule</button>}
-                                        </tr>
-                                    ))}
-                                </table>
+                                <DataGrid
+                                    rows={availableEmployees}
+                                    columns={columnsAvailability}
+                                    className="text-black dark:text-white h-auto"
+                                    slotProps={{
+                                        row: {
+                                            className: "text-black dark:text-white"
+                                        },
+                                        cell: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                        pagination: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                    }}
+                                />
                             </>
                         )}
                     </div>
@@ -587,22 +656,22 @@ export default function Index(this: any) {
                             <div>Loading...</div>
                         ) : (
                             <>
-                                <table>
-                                    <tr>
-                                        <th>EmployeeId</th>
-                                        <th>PetId</th>
-                                        <th>Date</th>
-                                        <th>Activities</th>
-                                    </tr>
-                                    {schedules.map(schedule => (
-                                        <tr key={schedule.id}>
-                                            <td>{schedule.employeeIds}</td>
-                                            <td>{schedule.petIds}</td>
-                                            <td>{schedule.date}</td>
-                                            <td>{schedule.activities}</td>
-                                        </tr>
-                                    ))}
-                                </table>
+                                <DataGrid
+                                    rows={schedules}
+                                    columns={columnsSchedules}
+                                    className="text-black dark:text-white h-auto"
+                                    slotProps={{
+                                        row: {
+                                            className: "text-black dark:text-white"
+                                        },
+                                        cell: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                        pagination: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                    }}
+                                />
                             </>
                         )}
                     </div>

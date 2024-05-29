@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useTheme } from "next-themes";
 import { TbMoonStars, TbSun } from "react-icons/tb";
+import {Button} from "@mui/material";
 
 interface SwitchThemeProps {
   clases?: string;
@@ -25,18 +26,20 @@ const SwitchTheme: React.FC<SwitchThemeProps> = ({ ...props }) => {
   }, [theme]);
 
   return (
-    <div className={`${clases} z-50`}>
-      <TbMoonStars
-        id="moonStars"
-        onClick={() => setTheme("light")}
-        className="w-6 h-6 cursor-pointer"
-      />
-      <TbSun
-        id="sun"
-        onClick={() => setTheme("dark")}
-        className="w-6 h-6 hidden cursor-pointer"
-      />
-    </div>
+    <>
+      <Button className="styleButton">
+        <TbMoonStars
+            id="moonStars"
+            onClick={() => setTheme("light")}
+            className="w-6 h-6 cursor-pointer center"
+        />
+        <TbSun
+            id="sun"
+            onClick={() => setTheme("dark")}
+            className="w-6 h-6 hidden cursor-pointer center"
+        />
+      </Button>
+    </>
   );
 };
 

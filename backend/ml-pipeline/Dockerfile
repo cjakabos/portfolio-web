@@ -9,8 +9,9 @@ COPY ./customers /customers
 
 RUN pip install --upgrade pip && pip install --no-cache-dir -r ./requirements.txt
 
-CMD [ "python3", "src/init_segmentationdb.py"]
-CMD [ "python3", "src/app.py"]
+WORKDIR /src
+CMD [ "python3", "init_segmentationdb.py"]
+CMD [ "python3", "app.py"]
 
 ENV LISTEN_PORT 8600
 

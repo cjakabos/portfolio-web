@@ -1,5 +1,8 @@
 'use client';
 import React, {useEffect, useRef, useState} from "react";
+import Image from "next/image";
+import imgLogo from "../../../public/drawing.svg";
+
 
 export default function Index() {
 
@@ -24,14 +27,18 @@ export default function Index() {
     return (
         <div>
             <div className="flex items-center justify-center">
-                <img src='../../drawing.svg' className="App-logo" alt="logo"
-                     style={{height: 200, width: 200}}/>
+                <Image
+                    src={imgLogo}
+                    width={200}
+                    height={200}
+                    alt="Logo"
+                    className="dark:invert mb-6 transition ease-in-out duration-300 hover:transform hover:scale-105 cursor-pointer"
+                    quality={100}
+                />
             </div>
-            <div className="login-ok">
-                <h1 style={{color: 'green'}}>Hello {username}!</h1>
-            </div>
-            <div className="login-ok">
-                <h1> Welcome to the home page</h1>
+            <div className="flex items-center justify-center">
+                <h1 style={{color: 'green'}}>{username} </h1>
+                <h1>, welcome to the home page!</h1>
             </div>
         </div>
     )

@@ -15,9 +15,9 @@ const Input = ({ onSendMessage }) => {
     }
 
     return (
-        <div className="message-input">
+        <div className="message-input text-black dark:text-white">
             <TextField
-                className="inputField"
+                className="inputField text-black dark:text-white"
                 label="Type your message here..."
                 placeholder="Enter your message and press ENTER"
                 onChange={e => onChange(e)}
@@ -28,14 +28,14 @@ const Input = ({ onSendMessage }) => {
                         onSubmit();
                     }
                 }}
-                style={{ height: "30px", width: "600px", marginRight: '10px' }}
+                inputProps={{ style: { color: 'blue' } }}
+                InputLabelProps={{ style: { color: 'black' } }}
+                style={{ height: "40px", width: "600px", marginRight: '10px'}}
             />
 
             <Button
-                variant="contained"
-                color="primary"
                 onClick={onSubmit}
-                style={{ width: "30px", marginTop: '15px', padding: '16px' }}>
+                style={{ width: "30px", marginTop: '15px', padding: '10px', color: 'white', backgroundColor:'green' }}>
                 Send
             </Button>
         </div>

@@ -16,10 +16,16 @@ const Layout = ({
 
     const [userToken, setUserToken] = useState('');
 
+    let token = 'placeholder';
+
     useEffect(() => {
-        // This code now safely runs only on the client side
-        const token = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '';
-        setUserToken(token);
+        if (typeof window !== "undefined") {
+            token = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '';
+            setUserToken(token);
+            if (token === '') {
+                router.push("/");
+            }
+        }
     }, []);
 
     const handleClick=(e)=>{
@@ -31,16 +37,36 @@ const Layout = ({
 
     const authedRoutes = (
         <>
-            <Link href="/home" onClick={() => router.push("/home")} style={{ color: "green" }}>Home</Link>
-            <Link href="/shop" onClick={() => router.push("/shop")}>Shop</Link>
-            <Link href="/petstore" onClick={() => router.push("/petstore")}>PetStore</Link>
-            <Link href="/openmaps" onClick={() => router.push("/openmaps")}>📌 OpenMaps 📌</Link>
-            <Link href="/openai" onClick={() => router.push("/openai")}>OpenAI</Link>
-            <Link href="/jira" onClick={() => router.push("/jira")}>Jira</Link>
-            <Link href="/mlops" onClick={() => router.push("/mlops")}>MLOps</Link>
-            <Link href="/notefile" onClick={() => router.push("/notefile")}>Notes and Files</Link>
-            <Link href="/chat" onClick={() => router.push("/chat")}>Chat</Link>
-            <Link href="/logout" onClick={() => router.push("/logout")} style={{ color: "red" }}>Logout</Link>
+            <Button className="menuButton" style={{ color: "green" }} onClick={() => router.push("/home")}>
+                Home
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/shop")}>
+                Shop
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/petstore")}>
+                PetStore
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/openmaps")}>
+                Maps
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/openai")}>
+                OpenAI
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/jira")}>
+                Jira
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/mlops")}>
+                MLOps
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/notefile")}>
+                Files
+            </Button>
+            <Button className="menuButton" onClick={() => router.push("/chat")}>
+                Chat
+            </Button>
+            <Button className="menuButton" style={{ color: "red" }} onClick={() => router.push("/logout")}>
+                Logout
+            </Button>
         </>
     );
 
@@ -54,11 +80,15 @@ const Layout = ({
                 transition={{duration: 0.5}}
                 className="min-h-[100vh] flex-col m-auto lg:flex"
             >
-                <aside className="min-h-[10vh] p-4 flex flex-row gap-10 lg:sticky top-4 h-20">
+                <aside className="z-[1001] px-4 pb-4 pt-2 gap-10  lg:sticky top-4 h-25 bg-white dark:bg-stone-800 centered">
                     {(userToken === null || userToken === '') ? (
                             <>
-                                <Link href="/register" onClick={() => router.push("/hom")}>Signup</Link>
-                                <Link href="/login" onClick={() => router.push("/")}>Login</Link>
+                                <Button className="menuButton" onClick={() => router.push("/register")}>
+                                    Register
+                                </Button>
+                                <Button className="menuButton" onClick={() => router.push("/login")}>
+                                    Login
+                                </Button>
                             </>
                         ) :
                         <>

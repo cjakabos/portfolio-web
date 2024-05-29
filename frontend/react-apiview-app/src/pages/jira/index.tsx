@@ -3,6 +3,7 @@ import React, {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import {PopUp} from "../../components/PopUp/PopUp";
 import {JiraTicket} from "../../data/dataJira";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 
 const initialValues = {
@@ -10,12 +11,14 @@ const initialValues = {
 };
 
 const initialTicketValues = {
+    id: "",
     key: "",
     summary: "",
     description: "",
 };
 
 const initialGetTicketValues = {
+    id: "",
     key: "",
     fields: {
         summary: "",
@@ -106,7 +109,7 @@ export default function Index(this: any) {
                     }
                 ]
             },
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue/" + reference.key,
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue/" + reference.id,
             webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
         };
 
@@ -125,12 +128,11 @@ export default function Index(this: any) {
 
             })
             .catch((error) => {
-                getTickets()
+                console.log(error.status)
             })
-        getTickets()
     }
 
-    function initiateUpdateTicket(ticket: JiraTicket) {
+    function initiateUpdateTicket(ticket: any) {
         setSelectedTicket(ticket)
         setTicketIsOpen(!isTicketOpen)
         console.log("ticket: ", ticket);
@@ -212,6 +214,51 @@ export default function Index(this: any) {
 
     console.log('tickets', tickets)
 
+    const columnsButton: GridColDef[] = [
+        {field: "id", headerName: "ID", width: 30},
+        {field: "key", headerName: "Key", width: 105},
+        {
+            field: "summary",
+            headerName: "Summary",
+            width: 250,
+            renderCell: (params) => {
+                return <div className="rowitem">{params.row.fields.summary}</div>;
+            },
+        },
+        {
+            field: "description",
+            headerName: "Description",
+            width: 250,
+            renderCell: (params) => {
+                return <div className="rowitem">{params.row.fields.description}</div>;
+            },
+        },
+        {
+            field: "edit",
+            headerName: "Edit",
+            sortable: false,
+            renderCell: ({row}) =>
+                <>
+                    <button className="submitbutton"
+                            onClick={() => initiateUpdateTicket(row)}
+                    > Update
+                    </button>
+                </>
+        },
+        {
+            field: "delete",
+            headerName: "Delete",
+            sortable: false,
+            renderCell: ({row}) =>
+                <>
+                    <button className="clearbutton"
+                            onClick={() => deleteTicket(row.id)}
+                    > Delete
+                    </button>
+                </>
+        },
+    ];
+
     if (loading) return <p>Loading...</p>
 
     return (
@@ -222,8 +269,6 @@ export default function Index(this: any) {
                     >
                         <form onSubmit={() => updateTicket(updates, selectedTicket)}>
                             <label>
-                                Ticket info:
-                                <p/>
                                 <input
                                     type="text"
                                     name="summary"
@@ -258,9 +303,7 @@ export default function Index(this: any) {
                     <h1>{("Create a Jira ticket")}</h1>
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <label>
-                        Ticket info:
-                        <p/>
+                <label>
                         <input
                             type="text"
                             name="summary"
@@ -291,9 +334,6 @@ export default function Index(this: any) {
                 <div>
                     <div className="login-top">
                         <h1>{("All Jira tickets")}
-                            <form onSubmit={handleGetSubmit}>
-                                <input className="submitbutton" id="loginButton" type="submit" value="Get tickets"/>
-                            </form>
                         </h1>
                     </div>
 
@@ -302,28 +342,22 @@ export default function Index(this: any) {
                             <div>Loading...</div>
                         ) : (
                             <>
-                                <table>
-                                    <tr>
-                                        <th>Key</th>
-                                        <th>Summary</th>
-                                        <th>Description</th>
-                                    </tr>
-                                    {tickets != null && tickets.map(ticket => (
-                                        <tr key={ticket.key}>
-                                            <td>{ticket.key}</td>
-                                            <td>{ticket.fields.summary}</td>
-                                            <td>{ticket.fields.description}</td>
-                                            <button className="submitbutton"
-                                                    onClick={() => initiateUpdateTicket(ticket)}
-                                            > Update
-                                            </button>
-                                            <button className="clearbutton"
-                                                    onClick={() => deleteTicket(ticket.key)}
-                                            > Delete
-                                            </button>
-                                        </tr>
-                                    ))}
-                                </table>
+                                <DataGrid
+                                    rows={tickets}
+                                    columns={columnsButton}
+                                    className="text-black dark:text-white h-auto"
+                                    slotProps={{
+                                        row: {
+                                            className: "text-black dark:text-white"
+                                        },
+                                        cell: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                        pagination: {
+                                            className: "text-black dark:text-white",
+                                        },
+                                    }}
+                                />
                             </>
                         )}
                     </div>

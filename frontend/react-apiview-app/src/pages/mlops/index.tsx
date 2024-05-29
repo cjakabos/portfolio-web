@@ -2,6 +2,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import axios from "axios";
 import Select from "react-select";
+import {DataGrid, GridColDef} from "@mui/x-data-grid";
 
 const initialValues = {
     prompt: ""
@@ -187,6 +188,15 @@ export default function Index(this: any) {
 
     }
 
+    const columns: GridColDef[] = [
+        { field: "id", headerName: "ID", width: 50 },
+        { field: "gender", headerName: "Gender", width: 80 },
+        { field: "age", headerName: "Age", width: 50 },
+        { field: "annual_income", headerName: "Annual Income", width: 120 },
+        { field: "spending_score", headerName: "Spending score", width: 120 },
+        { field: "segment", headerName: "Segment", width: 105 }
+    ];
+
 
     return (
         <section>
@@ -213,7 +223,9 @@ export default function Index(this: any) {
                                 </label>
                                 <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
                             </form>
-                            <br/><br/>2. Test a sample size from predefined DB:<br/>
+                            <br/>
+                            2. Test a sample size from predefined DB:
+                            <br/>
                             <button className="ml-update-button"
                                     onClick={() => getMLInfo(10)}
                             > Simulate 10 customers
@@ -239,75 +251,41 @@ export default function Index(this: any) {
                             <br/>
                             <form onSubmit={handleSubmit}>
                                 <label>
-                                    3. Add new Customer info on the top of predefined data:
-                                    <p/>
-                                    <table>
-                                        <tr>
-                                            <th>Gender</th>
-                                            <th>Age</th>
-                                            <th>Spending score</th>
-                                            <th>Annual Income</th>
-                                            <th></th>
-                                        </tr>
-                                        <td>
-                                            <select onChange={handleOptionSelect}>
-                                                {genders.map((gender, index) => (
-                                                    <option key={index} value={gender.value}>
-                                                        {gender.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="number"
-                                                name="age"
-                                                placeholder="Enter customer age"
-                                                onChange={handleChange}
-                                                value={values.age}
-                                                maxLength={50}
-                                                required
-                                                size={100}
-                                                min="18"
-                                                max="120"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="number"
-                                                name="annual_income"
-                                                placeholder="Enter customer annual_income"
-                                                onChange={handleChange}
-                                                value={values.annual_income}
-                                                maxLength={50}
-                                                required
-                                                size={100}
-                                                min="15"
-                                                max="140"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="number"
-                                                name="spending_score"
-                                                placeholder="Enter customer spending_score"
-                                                onChange={handleChange}
-                                                value={values.spending_score}
-                                                maxLength={50}
-                                                required
-                                                size={100}
-                                                min="5"
-                                                max="100"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input className="submitbutton" id="loginButton" type="submit"
-                                                   value="Submit"/>
-                                        </td>
-                                    </table>
-
+                                    <select onChange={handleOptionSelect}>
+                                        {genders.map((gender, index) => (
+                                            <option key={index} value={gender.value}>
+                                                {gender.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <br/>
+                                    <input
+                                        type="number"
+                                        name="age"
+                                        placeholder="Enter customer age"
+                                        onChange={handleChange}
+                                        value={values.age}
+                                        maxLength={50}
+                                        required
+                                        size={100}
+                                        min="18"
+                                        max="120"
+                                    />
+                                    <input
+                                        type="number"
+                                        name="spending_score"
+                                        placeholder="Enter customer spending_score"
+                                        onChange={handleChange}
+                                        value={values.spending_score}
+                                        maxLength={50}
+                                        required
+                                        size={100}
+                                        min="5"
+                                        max="100"
+                                    />
                                 </label>
-
+                                <br/>
+                                <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                             </form>
                             <br/>
                             <br/>
@@ -327,35 +305,28 @@ export default function Index(this: any) {
 
                         </div>
                         <div className="section">
-                            <br/>
-                            <br/>
-                            <br/>
-
                             <div className="Item">
                                 {loading ? (
                                     <div>Loading...</div>
                                 ) : (
                                     <>
-                                        <table>
-                                            <tr>
-                                                <th>Id</th>
-                                                <th>Gender</th>
-                                                <th>Age</th>
-                                                <th>Annual Income</th>
-                                                <th>Spending Score</th>
-                                                <th>Segment</th>
-                                            </tr>
-                                            {customers.map(customer => (
-                                                <tr key={customer.id}>
-                                                    <td>{customer.id}</td>
-                                                    <td>{customer.gender}</td>
-                                                    <td>{customer.age}</td>
-                                                    <td>{customer.annual_income}</td>
-                                                    <td>{customer.spending_score}</td>
-                                                    <td>{customer.segment}</td>
-                                                </tr>
-                                            ))}
-                                        </table>
+                                        Customer List
+                                        <DataGrid
+                                            rows={customers}
+                                            columns={columns}
+                                            className="text-black dark:text-white h-auto"
+                                            slotProps={{
+                                                row: {
+                                                    className: "text-black dark:text-white"
+                                                },
+                                                cell: {
+                                                    className: "text-black dark:text-white",
+                                                },
+                                                pagination: {
+                                                    className: "text-black dark:text-white",
+                                                },
+                                            }}
+                                        />
                                     </>
                                 )}
                             </div>
@@ -365,6 +336,6 @@ export default function Index(this: any) {
             </article>
         </section>
 
-)
+    )
 }
 
