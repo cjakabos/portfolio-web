@@ -2,6 +2,8 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
 import {useRouter} from "next/navigation";
+import Image from "next/image";
+import imgLogo from "../../../public/drawing.svg";
 
 const initialValues = {
     username: "",
@@ -61,6 +63,7 @@ export default function Index() {
                     console.log("RESPONSE RECEIVED: ", response);
 
                     setFeedback("OK")
+                    router.push("/login")
                     //setName(response.data);
                 })
                 .catch((error) => {
@@ -71,7 +74,6 @@ export default function Index() {
         } else {
             setFeedback("PASSWORDERROR")
         }
-        router.push("/login")
 
     };
 
@@ -97,113 +99,113 @@ export default function Index() {
 
     return (
         <div>
-            <section>
-                <article>
-                    <div>
-                            <div className="login-top">
-                                    <>
-                                        <div className="flex items-center justify-center">
-                                            <img src='../../drawing.svg' className="App-logo" alt="logo"
-                                                 style={{height: 200, width: 200}}/>
-                                        </div>
-                                        <form onSubmit={handleSubmit}>
-                                        <table>
-                                                <tr>
-                                                    <th>First name</th>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            name="firstname"
-                                                            id="firstname"
-                                                            placeholder="Enter First Name"
-                                                            onChange={handleChange}
-                                                            value={values.firstname}
-                                                            maxLength={20}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Last name</th>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            name="lastname"
-                                                            id="lastname"
-                                                            placeholder="Enter Last Name"
-                                                            onChange={handleChange}
-                                                            value={values.lastname}
-                                                            maxLength={20}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Username</th>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            name="username"
-                                                            id="username"
-                                                            placeholder="Enter Username"
-                                                            onChange={handleChange}
-                                                            value={values.username}
-                                                            maxLength={20}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Password</th>
-                                                    <td>
-                                                        <input
-                                                            type="password"
-                                                            name="password"
-                                                            id="password"
-                                                            placeholder="Enter Password"
-                                                            onChange={handleChange}
-                                                            value={values.password}
-                                                            maxLength={20}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Confirm password</th>
-                                                    <td>
-                                                        <input
-                                                            type="password"
-                                                            name="confirmPassword"
-                                                            id="confirmPassword"
-                                                            placeholder="Confirm Password"
-                                                            onChange={handleChange}
-                                                            value={values.confirmPassword}
-                                                            maxLength={20}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                            {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
-                                            {/*   onClick={() => functionName()}                        */}
-                                            {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
-                                            <div className="flex items-center justify-center">
-                                                <input className="submitbutton" type="submit" value="Submit"/>
-                                            </div>
-                                        </form>
-                                    </>
-                            </div>
-                            <div className="login-top">
-                                {Feedback === 'ERROR' && <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
-                            </div>
-                            <div className="login-top">
-                                {Feedback === 'PASSWORDERROR' &&
-                                    <h1 style={{color: 'red'}}>{("Passwords do not mach")}</h1>}
-                            </div>
-
+            <div className="flex items-center justify-center">
+                <Image
+                    src={imgLogo}
+                    width={200}
+                    height={200}
+                    alt="Logo"
+                    className="dark:invert mb-6 transition ease-in-out duration-300 hover:transform hover:scale-105 cursor-pointer"
+                    quality={100}
+                />
+            </div>
+            <div className="flex items-center justify-center">
+                <form onSubmit={handleSubmit}>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <th>First name</th>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="firstname"
+                                    id="firstname"
+                                    placeholder="Enter First Name"
+                                    onChange={handleChange}
+                                    value={values.firstname}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Last name</th>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="lastname"
+                                    id="lastname"
+                                    placeholder="Enter Last Name"
+                                    onChange={handleChange}
+                                    value={values.lastname}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Username</th>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="username"
+                                    id="username"
+                                    placeholder="Enter Username"
+                                    onChange={handleChange}
+                                    value={values.username}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Password</th>
+                            <td>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    placeholder="Enter Password"
+                                    onChange={handleChange}
+                                    value={values.password}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Confirm password</th>
+                            <td>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    id="confirmPassword"
+                                    placeholder="Confirm Password"
+                                    onChange={handleChange}
+                                    value={values.confirmPassword}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    {/*<h2>Username: {values.username} and Password: {values.password} and feedback is: {Name}</h2>*/}
+                    {/*   onClick={() => functionName()}                        */}
+                    {/* <input id="loginButton" type="submit" value="Submit" onClick={e => setName("test")}/>*/}
+                    <div className="flex items-center justify-center">
+                        <input className="submitbutton" type="submit" value="Submit"/>
                     </div>
-                </article>
-            </section>
+                </form>
+
+            </div>
+            <div className="flex items-center justify-center">
+                <div className="login-top">
+                    {Feedback === 'ERROR' && <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
+                </div>
+                {Feedback === 'PASSWORDERROR' &&
+                    <h1 style={{color: 'red'}}>{("Passwords do not mach")}</h1>}
+            </div>
         </div>
     )
 }

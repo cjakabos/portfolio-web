@@ -199,7 +199,7 @@ def main():
     plt.scatter(pca_2d[:, 0], pca_2d[:, 1],
                 c=y_means,
                 edgecolor="none",
-                cmap=plt.cm.get_cmap("Spectral_r", 5),
+                cmap=plt.get_cmap("Spectral_r", 5),
                 alpha=0.5)
 
     plt.gca().spines["top"].set_visible(False)

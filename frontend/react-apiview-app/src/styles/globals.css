@@ -2,25 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 214, 219, 220;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-    --primary-color: black;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
@@ -42,9 +27,9 @@
   }
 
   .dark {
-    --background: #292524;
+    --background: 222.2 100% 0%;
     --foreground: 210 40% 98%;
-    --primary-color: white;
+    --primary-color: 0 0% 100%;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
@@ -62,6 +47,11 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+  }
+
+  body {
+    font-family: "Inter", sans-serif;
+    background-color: hsl(var(--background));
   }
 }
 

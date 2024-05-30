@@ -13,7 +13,7 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 - **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
 
 Example view with ML pipeline and other tabs:
-![](examples/example8.png)
+![](examples/11.png)
 
 
 ## Quick Start
@@ -33,14 +33,13 @@ Runs the app in the production mode.\
 Open http://localhost:5001 to view it in your browser.
 
 
-If everything is correctly started, you should see a login page:
-![](examples/example1.png)
+If everything is correctly started, you should see a login page with optional Dark Mode:
+![](examples/1.png)![](examples/2.png)
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
-![](examples/example2.png)
 
 ## 1. Machine learning system for Customer Segmentation
-![](examples/example8.png)  
+![](examples/11.png)  
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
@@ -53,7 +52,7 @@ View results:
 
 
 ## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md), 
-![](examples/example3.png)
+![](examples/4.png)
 The user is able to:
 - Create new items.
 - Add existing items to the cart.
@@ -66,7 +65,7 @@ Shop API documentation:
 - [Order](http://localhost:8099/cloudapp/swagger-ui/index.html#/order-controller)
 
 ## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
-![](examples/example4.png)
+![](examples/5.png)
 The user is able to:
 - Add new customer.
 - Add a new Pet to existing customers.
@@ -76,7 +75,7 @@ The user is able to:
 
 
 ## 4.  Maps
-![](examples/example5.png)
+![](examples/8.png)
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
 The user is able to:
 - Click on the map to add new vehicle locations.
@@ -85,7 +84,7 @@ The user is able to:
 Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 
 ## 5. OpenAI
-![](examples/example6.png)
+![](examples/9.png)
 OpenAI interface for communicating with
 the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is able to:
 - Send a prompt to ChatGPT and receive a response..
@@ -101,21 +100,24 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 
 The user is able to:
 
-- Create/list/update/delete Jira ticket
-  ![](examples/example7.png)  
+- Create/list/update/delete Jira ticket  
+
+![](examples/10.png)
 
 ## 7. Notes and Files
 A service for creating personal notes and uploading personal files.
-![](examples/example9.png)
+![](examples/12.png)
 - Notes [API documentation](http://localhost:8099/cloudapp/swagger-ui/index.html#/note-controller)
 - Files [API documentation](http://localhost:8099/cloudapp/swagger-ui/index.html#/file-controller)
 ## 8. Chat
 A Kafka based chat service, the user is able to:
 
-- Create new chat rooms, furthermore share and enter chat room id
-![](examples/example10.png)
-- Talk to other users in chat rooms
-![](examples/example11.png)
+- Create new chat rooms, furthermore share and enter chat room id  
+
+![](examples/13.png)
+- Talk to other users in chat rooms  
+
+![](examples/14.png)
 
 
 # Optional API services

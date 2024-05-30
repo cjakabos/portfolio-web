@@ -61,6 +61,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
           <Box mt={2} display="flex" flexDirection="column" alignItems="center">
             <TextField
               label="Enter room name"
+              style={{ background: 'white'}}
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
@@ -82,6 +83,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
             <TextField
               label="Enter room code"
               variant="outlined"
+              style={{ background: 'white'}}
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value)}
             />

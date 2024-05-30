@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM python:3.12
 
 RUN apt-get update
 
@@ -7,7 +7,7 @@ COPY ./config.json /config.json
 COPY ./src /src
 COPY ./customers /customers
 
-RUN pip install --upgrade pip && pip install --no-cache-dir -r ./requirements.txt
+RUN pip3 install --upgrade pip && pip3 install --no-cache-dir -r ./requirements.txt
 
 WORKDIR /src
 CMD [ "python3", "init_segmentationdb.py"]

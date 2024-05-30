@@ -48,7 +48,7 @@ export default function Index(this: any) {
         e.preventDefault();
 
         const postData = {
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o",
             messages: [
                 {
                     role: "system",
@@ -115,8 +115,7 @@ export default function Index(this: any) {
     };
 
     return (
-        <div className="flex w-full flex-col">
-            <div className="flex w-full flex-col items-center justify-center">
+        <>
                     <div className="login-top">
                         <h1>{("Send a OpenAI Completition request")}</h1>
                     </div>
@@ -160,8 +159,7 @@ export default function Index(this: any) {
                         <br/>
                     </form>
                 {DalleFeedback && <img src={DalleFeedback.url}></img>}
-            </div>
-        </div>
+        </>
 
 
     )

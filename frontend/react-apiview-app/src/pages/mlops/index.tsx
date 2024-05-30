@@ -199,142 +199,136 @@ export default function Index(this: any) {
 
 
     return (
-        <section>
-            <article>
-                <div className="flex w-full flex-col lg:h-[400px] lg:flex-row ">
-                    <div className="flex-container">
-                        <div className="section">
-                            <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
-                            <form onSubmit={handleMLSubmit}>
-                                <label>
-                                    1. Test a sample size from predefined DB:<br/>
-                                    <input
-                                        type="number"
-                                        name="sampleSize"
-                                        placeholder="Enter sampleSize"
-                                        onChange={handleChange2}
-                                        value={values2.sampleSize}
-                                        maxLength={50}
-                                        required
-                                        size={100}
-                                        min="10"
-                                        max="200"
-                                    />
-                                </label>
-                                <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
-                            </form>
-                            <br/>
-                            2. Test a sample size from predefined DB:
-                            <br/>
-                            <button className="ml-update-button"
-                                    onClick={() => getMLInfo(10)}
-                            > Simulate 10 customers
-                            </button>
-                            <button className="ml-update-button"
-                                    onClick={() => getMLInfo(20)}
-                            > Simulate 20 customers
-                            </button>
-                            <button className="ml-update-button"
-                                    onClick={() => getMLInfo(50)}
-                            > Simulate 50 customers
-                            </button>
-                            <button className="ml-update-button"
-                                    onClick={() => getMLInfo(100)}
-                            > Simulate 100 customers
-                            </button>
-                            <button className="ml-update-button"
-                                    onClick={() => getMLInfo(200)}
-                            > Simulate 200 customers
-                            </button>
+        <div className="flex-container">
+            <div className="section">
+                <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
+                <form onSubmit={handleMLSubmit}>
+                    <label>
+                        1. Test a sample size from predefined DB:<br/>
+                        <input
+                            type="number"
+                            name="sampleSize"
+                            placeholder="Enter sampleSize"
+                            onChange={handleChange2}
+                            value={values2.sampleSize}
+                            maxLength={50}
+                            required
+                            size={100}
+                            min="10"
+                            max="200"
+                        />
+                    </label>
+                    <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
+                </form>
+                <br/>
+                2. Test a sample size from predefined DB:
+                <br/>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(10)}
+                > Simulate 10 customers
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(20)}
+                > Simulate 20 customers
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(50)}
+                > Simulate 50 customers
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(100)}
+                > Simulate 100 customers
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(200)}
+                > Simulate 200 customers
+                </button>
 
-                            <br/>
-                            <br/>
-                            <form onSubmit={handleSubmit}>
-                                <label>
-                                    <select onChange={handleOptionSelect}>
-                                        {genders.map((gender, index) => (
-                                            <option key={index} value={gender.value}>
-                                                {gender.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <br/>
-                                    <input
-                                        type="number"
-                                        name="age"
-                                        placeholder="Enter customer age"
-                                        onChange={handleChange}
-                                        value={values.age}
-                                        maxLength={50}
-                                        required
-                                        size={100}
-                                        min="18"
-                                        max="120"
-                                    />
-                                    <input
-                                        type="number"
-                                        name="spending_score"
-                                        placeholder="Enter customer spending_score"
-                                        onChange={handleChange}
-                                        value={values.spending_score}
-                                        maxLength={50}
-                                        required
-                                        size={100}
-                                        min="5"
-                                        max="100"
-                                    />
-                                </label>
-                                <br/>
-                                <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                            </form>
-                            <br/>
-                            <br/>
-                        </div>
-                        <div className="section">
-                            <h1>{("MLInfo Results: ")}</h1>
-                            <div id="banner">
-                                <div className="inline-block">
-                                    <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image"
-                                         style={{height: 500, width: 500}}/>
-                                </div>
-                                <div className="inline-block">
-                                    <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image"
-                                         style={{height: 500, width: 500}}/>
-                                </div>
-                            </div>
-
-                        </div>
-                        <div className="section">
-                            <div className="Item">
-                                {loading ? (
-                                    <div>Loading...</div>
-                                ) : (
-                                    <>
-                                        Customer List
-                                        <DataGrid
-                                            rows={customers}
-                                            columns={columns}
-                                            className="text-black dark:text-white h-auto"
-                                            slotProps={{
-                                                row: {
-                                                    className: "text-black dark:text-white"
-                                                },
-                                                cell: {
-                                                    className: "text-black dark:text-white",
-                                                },
-                                                pagination: {
-                                                    className: "text-black dark:text-white",
-                                                },
-                                            }}
-                                        />
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                <br/>
+                <br/>
+                <form onSubmit={handleSubmit}>
+                    <label>
+                        <select onChange={handleOptionSelect}>
+                            {genders.map((gender, index) => (
+                                <option key={index} value={gender.value}>
+                                    {gender.label}
+                                </option>
+                            ))}
+                        </select>
+                        <br/>
+                        <input
+                            type="number"
+                            name="age"
+                            placeholder="Enter customer age"
+                            onChange={handleChange}
+                            value={values.age}
+                            maxLength={50}
+                            required
+                            size={100}
+                            min="18"
+                            max="120"
+                        />
+                        <input
+                            type="number"
+                            name="spending_score"
+                            placeholder="Enter customer spending_score"
+                            onChange={handleChange}
+                            value={values.spending_score}
+                            maxLength={50}
+                            required
+                            size={100}
+                            min="5"
+                            max="100"
+                        />
+                    </label>
+                    <br/>
+                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
+                </form>
+                <br/>
+                <br/>
+            </div>
+            <div className="section">
+                <h1>{("ML Classification Results: ")}</h1>
+                <div id="banner">
+                    <div className="inline-block">
+                        <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image"
+                             style={{height: 450, width: 450}}/>
+                    </div>
+                    <div className="inline-block">
+                        <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image"
+                             style={{height: 450, width: 450}}/>
                     </div>
                 </div>
-            </article>
-        </section>
+
+            </div>
+            <div className="section">
+                <div className="Item">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            Customer List
+                            <DataGrid
+                                rows={customers}
+                                columns={columns}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
 
     )
 }

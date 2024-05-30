@@ -268,8 +268,8 @@ export default function Index(this: any) {
     const columnsButton: GridColDef[] = [
         { field: "id", headerName: "ID", width: 50 },
         { field: "name", headerName: "Name", width: 105 },
-        { field: "price", headerName: "Price", width: 105 },
-        { field: "description", headerName: "Description", width: 105 },
+        { field: "price", headerName: "Price", width: 50 },
+        { field: "description", headerName: "Description", width: 250 },
         {
             field: "action",
             headerName: "Add to Cart",
@@ -282,69 +282,96 @@ export default function Index(this: any) {
     ];
 
     return (
-        <div className="flex w-full flex-col lg:h-[400px] lg:flex-row ">
-            <div className="flex-container">
-                <div className="section">
+        <div className="flex-container">
+            <div className="section">
+            <div className="items-center justify-center">
                 <h1>Create Item</h1>
-                    <form onSubmit={handleItemSubmit}>
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <th><label htmlFor="name">Item Name:</label></th>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            id="name"
-                                            placeholder="Enter item name"
-                                            onChange={handleChange}
-                                            value={values.name}
-                                            maxLength={20}
-                                            required
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th><label htmlFor="price">Price:</label></th>
-                                    <td>
-                                        <input
-                                            type="number"
-                                            name="price"
-                                            id="price"
-                                            placeholder="Enter price"
-                                            onChange={handleChange}
-                                            value={values.price}
-                                            maxLength={20}
-                                            required
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th><label htmlFor="description">Description:</label></th>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            name="description"
-                                            id="description"
-                                            placeholder="Enter description"
-                                            onChange={handleChange}
-                                            value={values.description}
-                                            maxLength={100}
-                                            required
-                                        />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <input className="submitbutton" type="submit" value="Submit"/>
-                    </form>
-                </div>
-                <div className="section">
-                    <h1>All Items</h1>
-                    {loading ? <div className="loading">Loading...</div> : (
+                <form onSubmit={handleItemSubmit}>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <th><label htmlFor="name">Item Name:</label></th>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    id="name"
+                                    placeholder="Enter item name"
+                                    onChange={handleChange}
+                                    value={values.name}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label htmlFor="price">Price:</label></th>
+                            <td>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    id="price"
+                                    placeholder="Enter price"
+                                    onChange={handleChange}
+                                    value={values.price}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label htmlFor="description">Description:</label></th>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="description"
+                                    id="description"
+                                    placeholder="Enter description"
+                                    onChange={handleChange}
+                                    value={values.description}
+                                    maxLength={100}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <input className="submitbutton" type="submit" value="Submit"/>
+                </form>
+            </div>
+            </div>
+            <div className="section">
+                <h1>All Items</h1>
+                {loading ? <div className="loading">Loading...</div> : (
+                    <DataGrid
+                        rows={items}
+                        columns={columnsButton}
+                        className="text-black dark:text-white h-auto"
+                        slotProps={{
+                            row: {
+                                className: "text-black dark:text-white"
+                            },
+                            cell: {
+                                className: "text-black dark:text-white",
+                            },
+                            pagination: {
+                                className: "text-black dark:text-white",
+                            },
+                        }}
+                    />
+                )}
+            </div>
+            <div className="section">
+                <h1>Cart Contents</h1>
+                {loading ? <div className="loading">Loading...</div> : (
+                    <>
+                        <div className="flex">
+                            <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
+                            <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
+                        </div>
                         <DataGrid
-                            rows={items}
-                            columns={columnsButton}
+                            rows={cart}
+                            columns={columns}
                             className="text-black dark:text-white h-auto"
                             slotProps={{
                                 row: {
@@ -358,78 +385,50 @@ export default function Index(this: any) {
                                 },
                             }}
                         />
-                    )}
-                </div>
-                <div className="section">
-                    <h1>Cart Contents</h1>
-                    {loading ? <div className="loading">Loading...</div> : (
-                        <>
-                            <div className="flex">
-                                <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
-                                <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
-                            </div>
-                            <DataGrid
-                                rows={cart}
-                                columns={columns}
-                                className="text-black dark:text-white h-auto"
-                                slotProps={{
-                                    row: {
-                                        className: "text-black dark:text-white"
-                                    },
-                                    cell: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                    pagination: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                }}
-                            />
-                        </>
-                    )}
-                </div>
-                <div className="section">
-                    <h1>Order History</h1>
-                    <>
-                        {cartHistory.map((cart, index) => (
+                    </>
+                )}
+            </div>
+            <div className="section">
+                <h1>Order History</h1>
+                <>
+                    {cartHistory.map((cart, index) => (
                             <table>
                                 <tbody>
-                                    <tr>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th> Order {index + 1} - Total price: {cart.total} </th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Description</th>
+                                </tr>
+                                {cart.items.map(item => (
+                                    <tr key={item.id}>
+                                        <td>{item.name}</td>
+                                        <td>{item.price}</td>
+                                        <td>{item.description}</td>
                                     </tr>
-                                    <tr>
-                                        <th> Order {index + 1} - Total price: {cart.total} </th>
-                                        <th></th>
-                                        <th></th>
-                                    </tr>
-                                    <tr>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                    </tr>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Price</th>
-                                        <th>Description</th>
-                                    </tr>
-                                    {cart.items.map(item => (
-                                        <tr key={item.id}>
-                                            <td>{item.name}</td>
-                                            <td>{item.price}</td>
-                                            <td>{item.description}</td>
-                                        </tr>
-                                    ))
-                                    }
+                                ))
+                                }
                                 </tbody>
                             </table>
 
-                            )
-                        )}
-                    </>
-                </div>
+                        )
+                    )}
+                </>
             </div>
         </div>
-
     )
 }

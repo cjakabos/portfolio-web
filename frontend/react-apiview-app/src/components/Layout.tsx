@@ -78,9 +78,9 @@ const Layout = ({
                 animate={{opacity: 1, y: 0}}
                 exit={{opacity: 0}}
                 transition={{duration: 0.5}}
-                className="min-h-[100vh] flex-col m-auto lg:flex"
+                className="min-h-[100vh] flex-col m-auto lg:flex "
             >
-                <aside className="z-[1001] px-4 pb-4 pt-2 gap-10  lg:sticky top-4 h-25 bg-white dark:bg-stone-800 centered">
+                <aside className="z-[1001] px-4 pb-4 pt-2 gap-10  lg:sticky top-0 bg-white dark:bg-black centered">
                     {(userToken === null || userToken === '') ? (
                             <>
                                 <Button className="menuButton" onClick={() => router.push("/register")}>
@@ -97,7 +97,7 @@ const Layout = ({
                     }
                     <SwitchTheme></SwitchTheme>
                 </aside>
-                <section className="px-4 pb-4 pt-6">
+                <section className="px-4 pb-4 pt-6 flex items-center justify-center flex-col">
                     {children}
                 </section>
             </motion.main>

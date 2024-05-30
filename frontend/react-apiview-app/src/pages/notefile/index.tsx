@@ -380,140 +380,111 @@ export default function Index(this: any) {
     if (loading) return <p>Loading...</p>
 
     return (
-        <div className="flex w-full flex-col lg:flex-row ">
-            <div className="flex-container">
-                {/* Customer creation and listing */}
-                <div className="section">
-                    {isNoteOpen ?
-                        <PopUp
-                        >
-                            <form onSubmit={() => updateNote(updates, selectedNote)}>
-                                <label>
-                                    Note info:
-                                    <p/>
-                                    <input
-                                        type="text"
-                                        name="title"
-                                        defaultValue={selectedNote.title}
-                                        //value={updates.title}
-                                        onChange={change}
-                                        maxLength={50}
-                                        required
-                                        size={50}
-                                    />
-                                    <input
-                                        type="text"
-                                        name="description"
-                                        defaultValue={selectedNote.description}
-                                        //value={updates.description}
-                                        onChange={change}
-                                        maxLength={50}
-                                        required
-                                        size={50}
-                                    />
-                                </label>
-                                <br/>
-                                <input className="submitbutton" id="submitButton" type="submit" value="Submit"/>
-                            </form>
-
-                            <form onSubmit={() => setNoteIsOpen(false)}>
-                                <input className="clearbutton" id="closeButton" type="submit" value="CLOSE"/>
-                            </form>
-                        </PopUp>
-                        : null}
-                    <div className="login-top">
-                        <h1>{("Create a note")}</h1>
-                    </div>
-                    <form onSubmit={handleSubmit}>
-                        <label>
-                            Note info:
-                            <p/>
-                            <input
-                                type="text"
-                                name="title"
-                                placeholder="Enter note title"
-                                onChange={handleChange}
-                                value={values.title}
-                                maxLength={50}
-                                required
-                                size={50}
-                                height={50}
-                            />
+        <div className="flex-container">
+            <div className="section">
+                {isNoteOpen ?
+                    <PopUp
+                    >
+                        <form onSubmit={() => updateNote(updates, selectedNote)}>
+                            <label>
+                                Note info:
+                                <p/>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    defaultValue={selectedNote.title}
+                                    //value={updates.title}
+                                    onChange={change}
+                                    maxLength={50}
+                                    required
+                                    size={50}
+                                />
+                                <input
+                                    type="text"
+                                    name="description"
+                                    defaultValue={selectedNote.description}
+                                    //value={updates.description}
+                                    onChange={change}
+                                    maxLength={50}
+                                    required
+                                    size={50}
+                                />
+                            </label>
                             <br/>
-                            <input
-                                type="text"
-                                name="description"
-                                placeholder="Enter note description"
-                                onChange={handleChange}
-                                value={values.description}
-                                maxLength={50}
-                                required
-                                size={50}
-                                height={50}
-                            />
-                        </label>
-                        <br/>
-                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                    </form>
+                            <input className="submitbutton" id="submitButton" type="submit" value="Submit"/>
+                        </form>
+
+                        <form onSubmit={() => setNoteIsOpen(false)}>
+                            <input className="clearbutton" id="closeButton" type="submit" value="CLOSE"/>
+                        </form>
+                    </PopUp>
+                    : null}
+                <div className="login-top">
+                    <h1>{("Create a note")}</h1>
                 </div>
-                <div className="section">
-                    <h1>{("Upload a file")}</h1>
-
-                    <div>
-                        {/* image preview */}
-                        {/*<img src={this.state.image_preview} alt="image preview"/>*/}
-
-                        {/* image input field */}
+                <form onSubmit={handleSubmit}>
+                    <label>
+                        Note info:
+                        <p/>
                         <input
-                            type="file"
-                            onChange={handleFilePreview}
+                            type="text"
+                            name="title"
+                            placeholder="Enter note title"
+                            onChange={handleChange}
+                            value={values.title}
+                            maxLength={50}
+                            required
+                            size={50}
+                            height={50}
                         />
-                        <label>Upload file</label>
-                        <input className="submitbutton" type="submit" onClick={handleSubmitFile} value="Submit"/>
-                    </div>
-                </div>
-                <div className="section">
-                    <div>
-                        <div className="login-top">
-                            <h1>{("All notes")}
-                            </h1>
-                        </div>
+                        <br/>
+                        <input
+                            type="text"
+                            name="description"
+                            placeholder="Enter note description"
+                            onChange={handleChange}
+                            value={values.description}
+                            maxLength={50}
+                            required
+                            size={50}
+                            height={50}
+                        />
+                    </label>
+                    <br/>
+                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
+                </form>
+            </div>
+            <div className="section">
+                <h1>{("Upload a file")}</h1>
 
-                        <div className="Item">
-                            {notes != null && loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    <DataGrid
-                                        rows={notes}
-                                        columns={columnsNotes}
-                                        className="text-black dark:text-white h-auto"
-                                        slotProps={{
-                                            row: {
-                                                className: "text-black dark:text-white"
-                                            },
-                                            cell: {
-                                                className: "text-black dark:text-white",
-                                            },
-                                            pagination: {
-                                                className: "text-black dark:text-white",
-                                            },
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </div>
-                    </div>
+                <div>
+                    {/* image preview */}
+                    {/*<img src={this.state.image_preview} alt="image preview"/>*/}
+
+                    {/* image input field */}
+                    <input
+                        type="file"
+                        onChange={handleFilePreview}
+                    />
+                    <label>Upload file</label>
+                    <input className="submitbutton" type="submit" onClick={handleSubmitFile} value="Submit"/>
                 </div>
-                <div className="section">
-                    <div className="Files">
+            </div>
+            <div className="section">
+                <div>
+                    <div className="login-top">
+                        <h1>{("All notes")}
+                        </h1>
+                    </div>
+
+                    <div className="Item">
                         {notes != null && loading ? (
                             <div>Loading...</div>
                         ) : (
                             <>
                                 <DataGrid
-                                    rows={files}
-                                    columns={columnsFiles}
+                                    rows={notes}
+                                    columns={columnsNotes}
                                     className="text-black dark:text-white h-auto"
                                     slotProps={{
                                         row: {
@@ -532,9 +503,33 @@ export default function Index(this: any) {
                     </div>
                 </div>
             </div>
+            <div className="section">
+                <div className="Files">
+                    {notes != null && loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            <DataGrid
+                                rows={files}
+                                columns={columnsFiles}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
-
-
     )
 }
 

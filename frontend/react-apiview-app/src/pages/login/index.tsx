@@ -4,6 +4,8 @@ import axios from "axios";
 //import {Store, STORE_KEY} from "@/Store";
 import {useRouter} from "next/navigation";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import Image from "next/image";
+import imgLogo from "../../../public/drawing.svg";
 
 
 
@@ -84,71 +86,71 @@ export default function Index() {
 
     return (
         <div>
-            <section>
-                <article>
-                    <div>
-                        <div className="login-top">
-                            <>
-                                <div className="flex items-center justify-center">
-                                    <img src='../../drawing.svg' className="App-logo" alt="logo"
-                                         style={{height: 200, width: 200}}/>
+            <div className="flex items-center justify-center">
+                <Image
+                    src={imgLogo}
+                    width={200}
+                    height={200}
+                    alt="Logo"
+                    className="dark:invert mb-6 transition ease-in-out duration-300 hover:transform hover:scale-105 cursor-pointer"
+                    quality={100}
+                />
+            </div>
+            <div className="flex items-center justify-center">
+                <form onSubmit={handleSubmit}>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <th>Username</th>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="username"
+                                    id="inputUsername"
+                                    placeholder="Enter Username"
+                                    onChange={handleChange}
+                                    value={values.username}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Password</th>
+                            <td>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="inputPassword"
+                                    placeholder="Enter Password"
+                                    onChange={handleChange}
+                                    value={values.password}
+                                    maxLength={20}
+                                    required
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <td>
+                                <input className="submitbutton" id="loginButton" type="submit"
+                                       value="Submit"/>
+                                <div>
+                                    <button className="menubutton"
+                                            onClick={() => router.push("/register")}>
+                                        <h1 style={{color: 'red'}}>{("New user?")} Signup </h1>
+                                    </button>
                                 </div>
-                                <form onSubmit={handleSubmit}>
-                                    <table>
-                                        <tr>
-                                            <th>Username</th>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="username"
-                                                    id="inputUsername"
-                                                    placeholder="Enter Username"
-                                                    onChange={handleChange}
-                                                    value={values.username}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Password</th>
-                                            <td>
-                                                <input
-                                                    type="password"
-                                                    name="password"
-                                                    id="inputPassword"
-                                                    placeholder="Enter Password"
-                                                    onChange={handleChange}
-                                                    value={values.password}
-                                                    maxLength={20}
-                                                    required
-                                                />
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th> </th>
-                                            <td>
-                                                <input className="submitbutton" id="loginButton" type="submit"
-                                                       value="Submit"/>
-                                                <div>
-                                                    <button className="menubutton"
-                                                            onClick={() => router.push("/register")}>
-                                                        <h1 style={{color: 'red'}}>{("New user?")} Signup </h1>
-                                                    </button>
-                                                </div>
-                                                <div className="login-error">
-                                                    {LoginFeedback === 'ERROR' &&
-                                                        <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </form>
-                            </>
-                        </div>
-                    </div>
-                </article>
-            </section>
+                                <div className="login-error">
+                                    {LoginFeedback === 'ERROR' &&
+                                        <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
         </div>
     )
 }

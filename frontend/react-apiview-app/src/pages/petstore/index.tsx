@@ -385,8 +385,8 @@ export default function Index(this: any) {
 
     const columnsCustomers: GridColDef[] = [
         {field: "id", headerName: "ID", width: 30},
-        {field: "name", headerName: "Name", width: 105},
-        {field: "phoneNumber", headerName: "phoneNumber", width: 105},
+        {field: "name", headerName: "Name", width: 200},
+        {field: "phoneNumber", headerName: "phoneNumber", width: 150},
         {
             field: "add",
             headerName: "Add pet",
@@ -410,8 +410,8 @@ export default function Index(this: any) {
     const columnsEmployees: GridColDef[] = [
         {field: "id", headerName: "ID", width: 30},
         {field: "name", headerName: "Name", width: 105},
-        {field: "skills", headerName: "skills", width: 105},
-        {field: "daysAvailable", headerName: "daysAvailable", width: 105},
+        {field: "skills", headerName: "Skills", width: 150},
+        {field: "daysAvailable", headerName: "Days Available", width: 150},
     ];
 
     const columnsSchedules: GridColDef[] = [
@@ -424,12 +424,11 @@ export default function Index(this: any) {
 
     const columnsAvailability: GridColDef[] = [
         {field: "id", headerName: "ID", width: 30},
-        {field: "name", headerName: "Name", width: 105},
-        {field: "skills", headerName: "skills", width: 105},
-        {field: "daysAvailable", headerName: "daysAvailable", width: 105},
+        {field: "name", headerName: "Name", width: 150},
         {
             field: "pet",
             headerName: "Pet",
+            width: 200,
             sortable: false,
             renderCell: ({row}) =>
                 <>
@@ -459,94 +458,148 @@ export default function Index(this: any) {
     ];
 
     return (
-        <div className="flex w-full flex-col lg:flex-row ">
-            <div className="flex-container">
-            {/* Customer creation and listing */}
-                <div className="section">
-                    <h1>Create a New Customer</h1>
-                    <form onSubmit={handleCustomerSubmit}>
-                        <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            placeholder="Enter customer name"
-                            onChange={handleChange}
-                            value={customer.name}
-                            maxLength={20}
-                            required
+        <div className="flex-container">
+            <div className="section">
+                <h1>Create a New Customer</h1>
+                <form onSubmit={handleCustomerSubmit}>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        placeholder="Enter customer name"
+                        onChange={handleChange}
+                        value={customer.name}
+                        maxLength={20}
+                        required
+                    />
+                    <input
+                        type="phone"
+                        name="phoneNumber"
+                        id="phoneNumber "
+                        placeholder="Enter phone number"
+                        onChange={handleChange}
+                        value={customer.phoneNumber}
+                        maxLength={20}
+                        required
+                    />
+                    <input className="submitbutton" type="submit" value="Submit"/>
+                </form>
+                <h1>All Customers</h1>
+                {loading ? <p>Loading...</p> : (
+                    <>
+                        <DataGrid
+                            rows={allCustomers}
+                            columns={columnsCustomers}
+                            className="text-black dark:text-white h-auto"
+                            slotProps={{
+                                row: {
+                                    className: "text-black dark:text-white"
+                                },
+                                cell: {
+                                    className: "text-black dark:text-white",
+                                },
+                                pagination: {
+                                    className: "text-black dark:text-white",
+                                },
+                            }}
                         />
-                        <input
-                            type="phone"
-                            name="phoneNumber"
-                            id="phoneNumber "
-                            placeholder="Enter phone number"
-                            onChange={handleChange}
-                            value={customer.phoneNumber}
-                            maxLength={20}
-                            required
+                    </>
+                )}
+            </div>
+            <div className="section">
+                <h1>All Pets</h1>
+                {loading ? <p>Loading...</p> : (
+                    <>
+                        <DataGrid
+                            rows={allPets}
+                            columns={columnsPets}
+                            className="text-black dark:text-white h-auto"
+                            slotProps={{
+                                row: {
+                                    className: "text-black dark:text-white"
+                                },
+                                cell: {
+                                    className: "text-black dark:text-white",
+                                },
+                                pagination: {
+                                    className: "text-black dark:text-white",
+                                },
+                            }}
                         />
-                        <input className="submitbutton" type="submit" value="Submit"/>
-                    </form>
-                    <h1>All Customers</h1>
-                    {loading ? <p>Loading...</p> : (
-                        <>
-                            <DataGrid
-                                rows={allCustomers}
-                                columns={columnsCustomers}
-                                className="text-black dark:text-white h-auto"
-                                slotProps={{
-                                    row: {
-                                        className: "text-black dark:text-white"
-                                    },
-                                    cell: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                    pagination: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                }}
-                            />
-                        </>
-                    )}
-                </div>
-                <div className="section">
-                    <h1>All Pets</h1>
-                    {loading ? <p>Loading...</p> : (
-                        <>
-                            <DataGrid
-                                rows={allPets}
-                                columns={columnsPets}
-                                className="text-black dark:text-white h-auto"
-                                slotProps={{
-                                    row: {
-                                        className: "text-black dark:text-white"
-                                    },
-                                    cell: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                    pagination: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                }}
-                            />
-                        </>
-                    )}
-                </div>
+                    </>
+                )}
+            </div>
 
-                {/* Employee creation and listing */}
-                <div className="section">
-                    <h1>Create a New Employee</h1>
-                    <form onSubmit={handleEmployeeSubmit}>
-                        <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            placeholder="Enter employee name"
-                            onChange={handleEmployeeChange}
-                            value={employee.name}
-                            maxLength={20}
-                            required
+            {/* Employee creation and listing */}
+            <div className="section">
+                <h1>Create a New Employee</h1>
+                <form onSubmit={handleEmployeeSubmit}>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        placeholder="Enter employee name"
+                        onChange={handleEmployeeChange}
+                        value={employee.name}
+                        maxLength={20}
+                        required
+                    />
+                    <select
+                        onChange={handleMultiSelect}
+                        id="dropdown"
+                        multiple
+                        size={options.length}
+                    >
+                        {options.map((option, index) => (
+                            <option key={index} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        onChange={handleDaysMultiSelect}
+                        id="dropdown2"
+                        multiple
+                        size={days.length}
+                    >
+                        {days.map((day, index) => (
+                            <option key={index} value={day.value}>
+                                {day.label}
+                            </option>
+                        ))}
+                    </select>
+                    <input className="submitbutton" type="submit" value="Submit"/>
+                </form>
+            </div>
+            <div className="section">
+                <h1>All Employees</h1>
+                {loading ? <p>Loading...</p> : (
+                    <>
+                        <DataGrid
+                            rows={allEmployees}
+                            columns={columnsEmployees}
+                            className="text-black dark:text-white h-auto"
+                            slotProps={{
+                                row: {
+                                    className: "text-black dark:text-white"
+                                },
+                                cell: {
+                                    className: "text-black dark:text-white",
+                                },
+                                pagination: {
+                                    className: "text-black dark:text-white",
+                                },
+                            }}
                         />
+                    </>
+                )}
+            </div>
+            <div className="section">
+                <h1>{("Availability")}</h1>
+                <form onSubmit={handleAvailabilityFetch}>
+                    <label>
+                        Skills
+                        <br/>
                         <select
                             onChange={handleMultiSelect}
                             id="dropdown"
@@ -559,28 +612,23 @@ export default function Index(this: any) {
                                 </option>
                             ))}
                         </select>
-                        <select
-                            onChange={handleDaysMultiSelect}
-                            id="dropdown2"
-                            multiple
-                            size={days.length}
-                        >
-                            {days.map((day, index) => (
-                                <option key={index} value={day.value}>
-                                    {day.label}
-                                </option>
-                            ))}
-                        </select>
-                        <input className="submitbutton" type="submit" value="Submit"/>
-                    </form>
-                </div>
-                <div className="section">
-                    <h1>All Employees</h1>
-                    {loading ? <p>Loading...</p> : (
+                    </label>
+                    <DatePicker
+                        dateFormat="yyyy-MM-dd"
+                        selected={date}
+                        onChange={date => setDate((date || new Date()))}
+                    />
+                    <br/>
+                    <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
+                </form>
+                <div className="Availability2">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
                         <>
                             <DataGrid
-                                rows={allEmployees}
-                                columns={columnsEmployees}
+                                rows={availableEmployees}
+                                columns={columnsAvailability}
                                 className="text-black dark:text-white h-auto"
                                 slotProps={{
                                     row: {
@@ -597,86 +645,34 @@ export default function Index(this: any) {
                         </>
                     )}
                 </div>
-                <div className="section">
-                    <h1>{("Availability")}</h1>
-                    <form onSubmit={handleAvailabilityFetch}>
-                        <label>
-                            Skills
-                            <br/>
-                            <select
-                                onChange={handleMultiSelect}
-                                id="dropdown"
-                                multiple
-                                size={options.length}
-                            >
-                                {options.map((option, index) => (
-                                    <option key={index} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <DatePicker
-                            dateFormat="yyyy-MM-dd"
-                            selected={date}
-                            onChange={date => setDate((date || new Date()))}
-                        />
-                        <br/>
-                        <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
-                    </form>
-                    <div className="Availability2">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <DataGrid
-                                    rows={availableEmployees}
-                                    columns={columnsAvailability}
-                                    className="text-black dark:text-white h-auto"
-                                    slotProps={{
-                                        row: {
-                                            className: "text-black dark:text-white"
-                                        },
-                                        cell: {
-                                            className: "text-black dark:text-white",
-                                        },
-                                        pagination: {
-                                            className: "text-black dark:text-white",
-                                        },
-                                    }}
-                                />
-                            </>
-                        )}
-                    </div>
+            </div>
+            <div className="section">
+                <h1>{("All planned schedules")}</h1>
+                <div className="Schedule">
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            <DataGrid
+                                rows={schedules}
+                                columns={columnsSchedules}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
+                        </>
+                    )}
                 </div>
-                <div className="section">
-                    <h1>{("All planned schedules")}</h1>
-                    <div className="Schedule">
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <>
-                                <DataGrid
-                                    rows={schedules}
-                                    columns={columnsSchedules}
-                                    className="text-black dark:text-white h-auto"
-                                    slotProps={{
-                                        row: {
-                                            className: "text-black dark:text-white"
-                                        },
-                                        cell: {
-                                            className: "text-black dark:text-white",
-                                        },
-                                        pagination: {
-                                            className: "text-black dark:text-white",
-                                        },
-                                    }}
-                                />
-                            </>
-                        )}
-                    </div>
-                </div>
+            </div>
         </div>
-</div>
-)
+    )
 }

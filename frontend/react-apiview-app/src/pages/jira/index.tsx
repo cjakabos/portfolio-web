@@ -262,7 +262,7 @@ export default function Index(this: any) {
     if (loading) return <p>Loading...</p>
 
     return (
-        <div className="flex w-full flex-col">
+        <>
             <div className="flex w-full flex-col items-center justify-center">
                 {isTicketOpen ?
                     <PopUp
@@ -332,10 +332,6 @@ export default function Index(this: any) {
                     <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
                 </form>
                 <div>
-                    <div className="login-top">
-                        <h1>{("All Jira tickets")}
-                        </h1>
-                    </div>
 
                     <div className="Item">
                         {tickets != null && loading ? (
@@ -363,7 +359,7 @@ export default function Index(this: any) {
                     </div>
                 </div>
         </div>
-        </div>
+        </>
 
 
     )
