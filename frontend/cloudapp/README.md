@@ -17,7 +17,7 @@
   docker-compose -f docker-compose-app.yml up -d
   ```
   
-  Install packages and start React front-end from root of react-apiview-app and remote/openmaps:
+  Install packages and start React front-end from root of cloudapp and remote/openmaps:
   
   ```bash
   npm install
@@ -26,7 +26,7 @@
 
 ### Option 2. Dev mode:
 
-Install packages and start React front-end from root of react-apiview-app and remote/openmaps:
+Install packages and start React front-end from root of cloudapp and remote/openmaps:
 
 ```bash
 npm install
@@ -136,14 +136,14 @@ A Kafka based chat service, the user is able to:
 If OpenAI and Jira functionality is to be used, follow the instructions below:
 
 ## OpenAI API key:
-To be stored in the .env file in the frontend/react-apiview-app root directory in this format:
+To be stored in the .env file in the frontend/cloudapp root directory in this format:
 
 ```bash
 NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Frontend: Add .env file at frontend/react-apiview-app root directory in this format:
+Frontend: Add .env file at frontend/cloudapp root directory in this format:
 ```bash
 NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
 NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)

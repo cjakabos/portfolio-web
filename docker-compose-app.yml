@@ -67,7 +67,7 @@ services:
       - DOCKER_HOST_IP=host.docker.internal
   next-frontend:
     build:
-      context: ./frontend/react-apiview-app
+      context: ./frontend/cloudapp
       dockerfile: Dockerfile
     container_name: next-frontend
     ports:

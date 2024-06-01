@@ -1,12 +1,12 @@
 # Web Development and Predictive Analytics Portfolio
 <p align="center">
-  <img src="./frontend/react-apiview-app/public/drawing.svg" style="background-color:white;" width="150px" height="150px" />
+  <img src="./frontend/cloudapp/public/drawing.svg" style="background-color:white;" width="150px" height="150px" />
 </p>
 Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web Development and Predictive Analytics Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces and robust data analytics models.
 
 ## What's Inside?
 
-- **CloudApp - Interactive Next.js 14 App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/react-apiview-app/README.md).
+- **CloudApp - Interactive Next.js 14 App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp/README.md).
     - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-micro-frontend-module-federation)
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
 - **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
@@ -138,14 +138,14 @@ A Kafka based chat service, the user is able to:
 If OpenAI and Jira functionality is to be used, follow the instructions below:
 
 ## OpenAI API key:
-To be stored in the .env file in the frontend/react-apiview-app root directory in this format:
+To be stored in the .env file in the frontend/cloudapp root directory in this format:
 
 ```bash
 NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Frontend: Add .env file at frontend/react-apiview-app root directory in this format:
+Frontend: Add .env file at frontend/cloudapp root directory in this format:
 ```bash
 NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
 NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
