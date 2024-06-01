@@ -6,7 +6,8 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
 - **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
-- **Interactive Next.js 14 Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services. [Explore the frontend](./frontend/react-apiview-app/README.md).
+- **Interactive Next.js 14 App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/react-apiview-app/README.md).   
+  - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-micro-frontend-module-federation)
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
 - **Integrated External APIs**: Enhance functionality with third-party services like OpenAI and Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#5-openai).
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
@@ -34,7 +35,7 @@ Open http://localhost:5001 to view it in your browser.
 
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
-![](examples/1.png)![](examples/2.png)
+![](examples/1.png)
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
 
@@ -74,7 +75,11 @@ The user is able to:
 - Plan a new schedule for an employee and assign it to a pet.
 
 
-## 4.  Maps
+## 4.  Maps with Micro Frontend Module federation
+Left side main CloudApp as App Shell using the Maps micro frontend:
+http://localhost:5001/maps  
+Right side module federated Maps micro frontend:   
+http://localhost:5002
 ![](examples/8.png)
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
 The user is able to:

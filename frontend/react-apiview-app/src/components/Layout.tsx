@@ -80,9 +80,6 @@ const Layout = ({
                                 <Button className="menuButton" onClick={() => router.push("/login")}>
                                     Login
                                 </Button>
-                                <Button className="menuButton" onClick={() => router.push("/maps")}>
-                                    Maps
-                                </Button>
                             </>
                         ) :
                         <>

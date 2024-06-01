@@ -24,7 +24,6 @@ const Home: React.FC = () => {
           <div className="flex items-center justify-center">
               <h1 className="text-4xl font-bold">
                   Portfolio webpage - CloudApp
-
               </h1>
           </div>
       </div>
