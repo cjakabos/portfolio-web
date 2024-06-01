@@ -20,6 +20,6 @@ export default function Index() {
         }
     }, []);
 
-    return <h1>Success</h1>;
+    return <h1>Successfuly logout</h1>;
 }
 

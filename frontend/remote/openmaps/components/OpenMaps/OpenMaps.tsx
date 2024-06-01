@@ -13,17 +13,13 @@ import {
 	Rectangle,
 } from 'react-leaflet';
 import L, { Icon, LatLng, LeafletMouseEvent } from 'leaflet'
-import * as R from "leaflet-responsive-popup";
-import { addressPoints } from './realworld'
 import 'leaflet/dist/leaflet.css'
 import MarkerClusterGroup from "react-leaflet-cluster";
 import axios from "axios";
-import {iconCultural, iconFood, iconTourism, iconSport, iconVoyager} from "@/components/Icons/Icons";
-import { GeometryCollection, Topology } from "topojson-specification";
 type AdressPoint = Array<[number, number, string]>
-import SwedenMapData from '../../../public/svenska-landskap.geo.json';
-import SwedenMuncipalityMapData from '../../../public/svenska-kommun.geo.json';
-import WorldMapData from '../../../public/world.geo.json';
+import SwedenMapData from '../../public/svenska-landskap.geo.json';
+import SwedenMuncipalityMapData from '../../public/svenska-kommun.geo.json';
+import WorldMapData from '../../public/world.geo.json';
 
 export default function OpenMaps() {
 
@@ -32,39 +28,25 @@ export default function OpenMaps() {
 	const effectRan = useRef(false);
 	if (!effectRan.current) {
 		if (typeof window !== "undefined") {
+			console.log(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN"))
 			setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
 			effectRan.current = true;
 		}
+		getVehicles();
 	}
+	console.log('ran2')
 
 
-	// Load all get methods once, when page renders
-	useEffect(() => {
-		(async () => {
-			const vehicles = await getVehicles();
-		})();
-	}, []);
+	var icon3 = L.icon({
+		iconUrl: 'http://localhost:5002/icons/tourism.png',
+		iconSize:     [40, 40]
+	});
 
-	const icon1 = useMemo(() => {
-		const icon: Icon = iconFood
-		return icon
-	}, [])
-	const icon2 = useMemo(() => {
-		const icon: Icon = iconCultural
-		return icon
-	}, [])
-	const icon3 = useMemo(() => {
-		const icon: Icon = iconTourism
-		return icon
-	}, [])
-	const icon4 = useMemo(() => {
-		const icon: Icon = iconSport
-		return icon
-	}, [])
-	const icon5 = useMemo(() => {
-		const icon: Icon = iconVoyager
-		return icon
-	}, [])
+
+	var icon5 = L.icon({
+		iconUrl: 'http://localhost:5002/icons/voyager.png',
+		iconSize:     [40, 40]
+	});
 
 	const mapRef = useRef();
 	const [center, setCenter] = useState<any>([59.328246, 18.053383]);
@@ -130,7 +112,7 @@ export default function OpenMaps() {
 
 	};
 
-	async function getVehicles() {
+	function getVehicles() {
 
 		let axiosConfig = {
 			headers: {
@@ -142,7 +124,7 @@ export default function OpenMaps() {
 		axios.get('http://localhost:80/vehicles/cars', axiosConfig)
 			.then((response) => {
 				// for each element received, put up a marker
-				response.data.forEach(function(option){
+				response.data.forEach(function (option) {
 					setMarkers((current) => [
 						...current,
 						{
@@ -317,7 +299,8 @@ export default function OpenMaps() {
 										vehicleSubmit(newLocation.lat, newLocation.lng);
 										setNewLocation({lat: center[0], lng: center[1]})
 
-									}}>📌 Pin this location!</button>
+									}}>📌 Pin this location!
+									</button>
 								</Popup>
 							</Marker>
 						)}
@@ -329,7 +312,8 @@ export default function OpenMaps() {
 									<button className="clearbutton" onClick={(e) => {
 										e.stopPropagation(); // Prevent triggering map click
 										handleRemoveMarker(idx, marker.id);
-									}}>Remove</button>
+									}}>Remove
+									</button>
 								</Popup>
 							</Marker>
 						))}

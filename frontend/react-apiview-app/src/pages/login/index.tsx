@@ -68,6 +68,7 @@ export default function Index() {
                         localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
 
                         setLoginFeedback("OK")
+                        router.push("/home")
                         window.location.reload()
                     }
                 } catch (error) {
@@ -79,8 +80,6 @@ export default function Index() {
                 console.log("AXIOS ERROR: ", error.response);
                 setLoginFeedback("ERROR")
             })
-
-        router.push("/home")
 
     };
 

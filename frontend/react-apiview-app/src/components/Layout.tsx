@@ -1,5 +1,3 @@
-import Image from 'next/image'
-import Link from 'next/link'
 import {useRouter} from "next/navigation";
 import React, {useEffect, useState} from 'react'
 import { motion } from "framer-motion";
@@ -28,13 +26,6 @@ const Layout = ({
         }
     }, []);
 
-    const handleClick=(e)=>{
-        e.preventDefault();
-        //e.target.style.background = 'red'
-        //console.log(e.target);
-        router.push("/home")
-    }
-
     const authedRoutes = (
         <>
             <Button className="menuButton" style={{ color: "green" }} onClick={() => router.push("/home")}>
@@ -46,7 +37,7 @@ const Layout = ({
             <Button className="menuButton" onClick={() => router.push("/petstore")}>
                 PetStore
             </Button>
-            <Button className="menuButton" onClick={() => router.push("/openmaps")}>
+            <Button className="menuButton" onClick={() => router.push("/maps")}>
                 Maps
             </Button>
             <Button className="menuButton" onClick={() => router.push("/openai")}>
@@ -88,6 +79,9 @@ const Layout = ({
                                 </Button>
                                 <Button className="menuButton" onClick={() => router.push("/login")}>
                                     Login
+                                </Button>
+                                <Button className="menuButton" onClick={() => router.push("/maps")}>
+                                    Maps
                                 </Button>
                             </>
                         ) :

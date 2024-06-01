@@ -361,7 +361,7 @@ export default function Index(this: any) {
             sortable: false,
             width: 120,
             renderCell: ({row}) =>
-                <button className="submitbutton" onClick={() => downloadFile(row)}>
+                <button className="submitbutton" onClick={() => downloadFile(row.id, row.name)}>
                     Download
                 </button>
         },

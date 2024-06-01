@@ -74,3 +74,12 @@ services:
       - 5001:5001
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+  next-openmaps:
+    build:
+      context: ./frontend/remote/openmaps
+      dockerfile: Dockerfile
+    container_name: next-openmaps
+    ports:
+      - 5002:5002
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal

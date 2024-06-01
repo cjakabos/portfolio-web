@@ -107,7 +107,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {userRooms.map((room, index) => (
+              {userRooms && userRooms.map((room, index) => (
                 <TableRow
                   key={room.code}
                   onClick={() => handleRoomClick(room)}

@@ -17,7 +17,7 @@ const Messages = ({ messages, currentUser }) => {
     }, [messages]);
 
     // Make sure messages are in order
-    messages.sort((a, b) => a.timestamp - b.timestamp)
+    if (messages) messages.sort((a, b) => a.timestamp - b.timestamp)
 
     let renderMessage = (message) => {
         const { sender, content, timestamp } = message;
@@ -41,7 +41,8 @@ const Messages = ({ messages, currentUser }) => {
 
     return (
         <ul className="messages-list">
-            {messages.map((msg) => renderMessage(msg))}
+            {messages &&
+                messages.map((msg) => renderMessage(msg))}
             <div ref={messagesEndRef} /> {/* Ref to the last message */}
         </ul>
     );
