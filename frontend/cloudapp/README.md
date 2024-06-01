@@ -1,4 +1,8 @@
-# React Apiview App for [API service integration](#required-api-services)
+# CloudApp for [API service integration](#required-api-services)
+
+<p align="center">
+  <img src="./public/drawing.svg" style="background-color:white;" width="150px" height="150px" />
+</p>
 
 ## REACT front-end
 

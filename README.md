@@ -1,25 +1,32 @@
 # Web Development and Predictive Analytics Portfolio
-
+<p align="center">
+  <img src="./frontend/react-apiview-app/public/drawing.svg" style="background-color:white;" width="150px" height="150px" />
+</p>
 Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web Development and Predictive Analytics Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces and robust data analytics models.
 
 ## What's Inside?
 
+- **CloudApp - Interactive Next.js 14 App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/react-apiview-app/README.md).
+    - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-micro-frontend-module-federation)
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
 - **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
-- **Interactive Next.js 14 App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/react-apiview-app/README.md).   
-  - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-micro-frontend-module-federation)
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
 - **Integrated External APIs**: Enhance functionality with third-party services like OpenAI and Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#5-openai).
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
 - **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
 
-Example view with ML pipeline and other tabs:
+Example view with ML customer segmentation pipeline and other tabs:
 ![](examples/11.png)
 
 
 ## Quick Start
 
 ### Setup with Docker
+Note: minimum 16 GB memory is needed to make sure all services can run.
+```bash
+brew install docker
+brew install docker-compose
+```
 
 Setup and start databases and esential services with docker-compose:
 ```bash
@@ -41,15 +48,16 @@ And you should be able to register and log in, [after starting the backend servi
 
 ## 1. Machine learning system for Customer Segmentation
 ![](examples/11.png)  
-MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to:
+
+MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
-- Sample reference database with predefined 10-20-50-100-200 amount of samples.
-   All these steps will retrigger the segmentation process and then the pictures and tables will update with the new results.
+- Sample reference database with predefined 10-20-50-100-200 amount of samples.  
+
 
 View results:
-- Pictures: correlation between parameters and the different segments
-- Table: current db from postgres.
+- Pictures: correlation between parameters and the different segments.
+- Table: current list of customers from postgres db.
 
 
 ## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md), 
