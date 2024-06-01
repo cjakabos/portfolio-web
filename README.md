@@ -1,6 +1,6 @@
 # Web Development and Predictive Analytics Portfolio
 <p align="center">
-  <img src="./frontend/cloudapp/public/drawing.svg" style="background-color:white;" width="150px" height="150px" />
+  <img src="./frontend/cloudapp/public/drawing_white.svg" width="150px" height="150px" />
 </p>
 Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web Development and Predictive Analytics Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces and robust data analytics models.
 
