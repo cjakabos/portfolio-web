@@ -20,6 +20,7 @@ const nextConfig = {
             extraOptions: {},
             remotes: {
               remote: `remote@http://localhost:5002/_next/static/${remoteDir}/remoteEntry.js`,
+                moduletemplate: `moduletemplate@http://localhost:5003/_next/static/${remoteDir}/remoteEntry.js`,
             },
             shared: {},
         }),

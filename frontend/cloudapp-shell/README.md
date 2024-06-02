@@ -17,7 +17,7 @@
   docker-compose -f docker-compose-app.yml up -d
   ```
   
-  Install packages and start React front-end from root of cloudapp and remote/openmaps:
+  Install packages and start React front-end from root of cloudapp-shell and remote/openmaps:
   
   ```bash
   npm install
@@ -26,7 +26,7 @@
 
 ### Option 2. Dev mode:
 
-Install packages and start React front-end from root of cloudapp and remote/openmaps:
+Install packages and start React front-end from root of cloudapp-shell and remote/openmaps:
 
 ```bash
 npm install
@@ -47,7 +47,7 @@ And you should be able to register and log in, [after starting the backend servi
 
 ## 1. Machine learning system for Customer Segmentation
 ![](../../examples/11.png)  
-MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to:
+MLOps interface for [Customer Segmentation API](../../backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
 - Sample reference database with predefined 10-20-50-100-200 amount of samples.
@@ -58,7 +58,7 @@ View results:
 - Table: current db from postgres.
 
 
-## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md),
+## 2. Shop interface for [Cloudapp web store REST API](../../backend/cloudapp/README.md),
 ![](../../examples/4.png)
 The user is able to:
 - Create new items.
@@ -71,7 +71,7 @@ Shop API documentation:
 - [Cart](http://localhost:8099/cloudapp/swagger-ui/index.html#/cart-controller)
 - [Order](http://localhost:8099/cloudapp/swagger-ui/index.html#/order-controller)
 
-## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
+## 3. Pet Store interface for the [Pet Store's REST API](../../backend/petstore/README.md)
 ![](../../examples/5.png)
 The user is able to:
 - Add new customer.
@@ -82,7 +82,7 @@ The user is able to:
 
 
 ## 4.  Maps with Micro Frontend Module federation
-Left side main CloudApp as App Shell using the Maps micro frontend:
+Left side main CloudApp-Shell as App Shell using the Maps micro frontend:
 http://localhost:5001/maps  
 Right side module federated Maps micro frontend:   
 http://localhost:5002
@@ -136,14 +136,14 @@ A Kafka based chat service, the user is able to:
 If OpenAI and Jira functionality is to be used, follow the instructions below:
 
 ## OpenAI API key:
-To be stored in the .env file in the frontend/cloudapp root directory in this format:
+To be stored in the .env file in the frontend/cloudapp-shell root directory in this format:
 
 ```bash
 NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Frontend: Add .env file at frontend/cloudapp root directory in this format:
+Frontend: Add .env file at frontend/cloudapp-shell root directory in this format:
 ```bash
 NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
 NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)

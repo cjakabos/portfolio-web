@@ -44,7 +44,7 @@ Open http://localhost:5001 to view it in your browser.
 If everything is correctly started, you should see a login page with optional Dark Mode:
 ![](examples/1.png)
 
-And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
+And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-shop-interface-for-cloudapp-web-store-rest-api-), and see the current front-end of the api integrations from the services above:
 
 ## 1. Machine learning system for Customer Segmentation
 ![](examples/11.png)  
@@ -84,7 +84,7 @@ The user is able to:
 
 
 ## 4.  Maps with Micro Frontend Module federation
-Left side main CloudApp as App Shell using the Maps micro frontend:
+Left side main CloudApp-Shell as App Shell using the Maps micro frontend:
 http://localhost:5001/maps  
 Right side module federated Maps micro frontend:   
 http://localhost:5002
@@ -138,14 +138,14 @@ A Kafka based chat service, the user is able to:
 If OpenAI and Jira functionality is to be used, follow the instructions below:
 
 ## OpenAI API key:
-To be stored in the .env file in the frontend/cloudapp root directory in this format:
+To be stored in the .env file in the frontend/cloudapp-shell root directory in this format:
 
 ```bash
 NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Frontend: Add .env file at frontend/cloudapp root directory in this format:
+Frontend: Add .env file at frontend/cloudapp-shell root directory in this format:
 ```bash
 NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
 NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
@@ -153,7 +153,8 @@ NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
 NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.
 
 ## Certificates
-[Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)
+[Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)  
+
 [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
 
 

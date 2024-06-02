@@ -1,20 +1,6 @@
 version: "3.8"
 
 services:
-  nginx-jwt:
-    container_name: nginx-jwt
-#    image: nginx-jwt:latest
-    ports:
-      - "80:80"
-    build:
-      context: ./frontend/nginx
-      dockerfile: Dockerfile
-#    volumes:
-#      - ./frontend/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
-#      - ./frontend/nginx/localhost+3-key.pub:/etc/nginx/localhost+3-key.pub
-    depends_on:
-        - petstore
-    restart: unless-stopped
   jiraproxy:
     image: jiraproxy:latest
     container_name: jiraproxy
@@ -65,19 +51,39 @@ services:
       - 8600:8600
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-  next-frontend:
+  next-nginx-jwt:
+    container_name: next-nginx-jwt
+    #    image: next-nginx-jwt:latest
+    ports:
+      - "80:80"
     build:
-      context: ./frontend/cloudapp
+      context: ./frontend/nginx
       dockerfile: Dockerfile
-    container_name: next-frontend
+    #    volumes:
+    #      - ./frontend/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+    #      - ./frontend/nginx/localhost+3-key.pub:/etc/nginx/localhost+3-key.pub
+    depends_on:
+      - petstore
+    restart: unless-stopped
+  next-cloudapp-shell:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/cloudapp-shell
+        SERVICE_PORT: 5001
+    container_name: next-cloudapp-shell
     ports:
       - 5001:5001
     environment:
       - DOCKER_HOST_IP=host.docker.internal
   next-openmaps:
     build:
-      context: ./frontend/remote/openmaps
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/openmaps
+        SERVICE_PORT: 5002
     container_name: next-openmaps
     ports:
       - 5002:5002
