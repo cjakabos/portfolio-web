@@ -2,10 +2,6 @@ const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    transpilePackages: ["react-leaflet", "react-leaflet-cluster"],
-    experimental: {
-        esmExternals: "loose",
-    },
     reactStrictMode: false,
     eslint: {
         ignoreDuringBuilds: true,
@@ -17,10 +13,10 @@ const nextConfig = {
 
       config.plugins.push(
         new NextFederationPlugin({
-          name: "openmaps",
+          name: "openai",
           filename: `static/${remoteDir}/remoteEntry.js`,
           exposes: {
-            "./openmaps": "./components/OpenMaps/OpenMaps",
+            "./openai": "./pages/index",
           },
           shared: {
             tailwindcss: {

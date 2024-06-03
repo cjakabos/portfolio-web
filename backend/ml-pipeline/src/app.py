@@ -21,7 +21,18 @@ from werkzeug.middleware.dispatcher import DispatcherMiddleware
 app = Flask(__name__)
 default_prefix = '/mlops-segmentation'
 host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
-CORS(app, resources={r"/*": {"origins": ["http://localhost:5001", "https://localhost:5001", "http://127.0.0.1:5001", "https://127.0.0.1:5001", "http://127.0.0.1:80", "https://127.0.0.1:443"]}})
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:5001",
+    "https://localhost:5001",
+    "http://127.0.0.1:5001",
+    "https://127.0.0.1:5001",
+    "http://localhost:5005",
+    "https://localhost:5005",
+    "http://127.0.0.1:5005",
+    "https://127.0.0.1:5005",
+    "http://127.0.0.1:80",
+    "https://127.0.0.1:443"
+]}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['APPLICATION_ROOT'] = default_prefix
 

@@ -21,6 +21,8 @@ import java.io.IOException;
 @CrossOrigin(origins = {
         "http://localhost:5001",
         "https://localhost:5001",
+        "http://localhost:5003",
+        "https://localhost:5003",
         "http://localhost:80",
         "https://localhost:80"
 })
@@ -30,7 +32,6 @@ public class WebController {
 
     public static final Logger log = LoggerFactory.getLogger(WebController.class);
 
-    @CrossOrigin(origins = "http://localhost:5001")
     @PostMapping("/get")
     public ResponseEntity<Object> getTicket(@RequestBody String json) throws IOException {
 
@@ -52,7 +53,6 @@ public class WebController {
         return new ResponseEntity<>(jsonResponse.toMap(), HttpStatus.OK);
     }
 
-    @CrossOrigin(origins = "http://localhost:5001")
     @PostMapping("/post")
     public String createTicket(@RequestBody String json) throws IOException {
         JSONObject jsonObject = new JSONObject(json);
@@ -73,7 +73,6 @@ public class WebController {
         return EntityUtils.toString(response.getEntity(), "UTF-8");
     }
 
-    @CrossOrigin(origins = "http://localhost:5001")
     @PutMapping("/put")
     public String updateTicket(@RequestBody String json) throws IOException {
         JSONObject jsonObject = new JSONObject(json);
@@ -94,7 +93,6 @@ public class WebController {
         return response.getStatusLine().toString();
     }
 
-    @CrossOrigin(origins = "http://localhost:5001")
     @PostMapping("/delete")
     public String deleteTicket(@RequestBody String json) throws IOException {
         JSONObject jsonObject = new JSONObject(json);

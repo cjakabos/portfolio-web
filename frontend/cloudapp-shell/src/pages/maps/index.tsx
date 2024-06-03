@@ -6,15 +6,9 @@ const Maps = dynamic(() => import("remote/openmaps"), {
   ssr: false,
 });
 
-const ModuleTemplate = dynamic(() => import("moduletemplate/moduletemplate"), {
-  ssr: false,
-});
-
-
 const Index: React.FC = () => {
   return (
       <>
-          <ModuleTemplate />
           <Maps />
       </>
   );

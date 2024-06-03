@@ -19,8 +19,11 @@ const nextConfig = {
             filename: `static/${remoteDir}/remoteEntry.js`,
             extraOptions: {},
             remotes: {
-              remote: `remote@http://localhost:5002/_next/static/${remoteDir}/remoteEntry.js`,
-                moduletemplate: `moduletemplate@http://localhost:5003/_next/static/${remoteDir}/remoteEntry.js`,
+              remote: `openmaps@http://localhost:5002/_next/static/${remoteDir}/remoteEntry.js`,
+              remote2: `jira@http://localhost:5003/_next/static/${remoteDir}/remoteEntry.js`,
+              remote3: `openai@http://localhost:5004/_next/static/${remoteDir}/remoteEntry.js`,
+              remote4: `mlops@http://localhost:5005/_next/static/${remoteDir}/remoteEntry.js`,
+              remote5: `petstore@http://localhost:5006/_next/static/${remoteDir}/remoteEntry.js`,
             },
             shared: {},
         }),

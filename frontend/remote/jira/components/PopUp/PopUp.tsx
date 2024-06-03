@@ -1,4 +1,5 @@
 import React, {useState} from "react";
+import {JiraTicket} from "../../data/dataJira";
 
 const initialTicketValues = {
     summary: "",
