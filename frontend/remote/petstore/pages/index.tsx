@@ -458,7 +458,7 @@ export default function Index(this: any) {
     ];
 
     return (
-        <div className="flex-container">
+        <div className="flex-container px-4 pb-4 pt-6 flex items-center justify-center">
             <div className="section">
                 <h1>Create a New Customer</h1>
                 <form onSubmit={handleCustomerSubmit}>

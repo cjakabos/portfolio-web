@@ -77,6 +77,7 @@ services:
       args:
         SERVICE_PATH: frontend/cloudapp-shell
         SERVICE_PORT: 5001
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
     container_name: next-cloudapp-shell
     ports:
       - 5001:5001
@@ -90,6 +91,7 @@ services:
       args:
         SERVICE_PATH: frontend/remote/openmaps
         SERVICE_PORT: 5002
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
     container_name: next-openmaps
     ports:
       - 5002:5002
@@ -103,6 +105,9 @@ services:
       args:
         SERVICE_PATH: frontend/remote/jira
         SERVICE_PORT: 5003
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+        #NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
+        #NEXT_PUBLIC_JIRA_KEY: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
     container_name: next-jira
     ports:
       - 5003:5003
@@ -116,6 +121,8 @@ services:
       args:
         SERVICE_PATH: frontend/remote/openai
         SERVICE_PORT: 5004
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+        #NEXT_PUBLIC_OPENAI_KEY: sk-za-------YOUR-API-KEY------8Ie
     container_name: next-openai
     ports:
       - 5004:5004
@@ -129,6 +136,7 @@ services:
       args:
         SERVICE_PATH: frontend/remote/mlops
         SERVICE_PORT: 5005
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
     container_name: next-mlops
     ports:
       - 5005:5005
@@ -142,6 +150,7 @@ services:
       args:
         SERVICE_PATH: frontend/remote/petstore
         SERVICE_PORT: 5006
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
     container_name: next-petstore
     ports:
       - 5006:5006

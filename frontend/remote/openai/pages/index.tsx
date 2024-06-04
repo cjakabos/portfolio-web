@@ -115,10 +115,10 @@ export default function Index(this: any) {
     };
 
     return (
-        <>
-                    <div className="login-top">
-                        <h1>{("Send a OpenAI Completition request")}</h1>
-                    </div>
+        <div className="flex w-full flex-col items-center justify-center">
+            <div className="login-top">
+                <h1>{("Send a OpenAI Completition request")}</h1>
+            </div>
             <form onSubmit={handleSubmit}>
                 <label>
                     Prompt:
@@ -142,27 +142,27 @@ export default function Index(this: any) {
                 <br/>
             </form>
             <div className="login-top">
-                        <h1>{("Send an DALL-E request")}</h1>
-                    </div>
-                    <form onSubmit={handleDalleSubmit}>
-                        <label>
-                            Prompt:
-                            <input
-                                type="text"
-                                name="prompt"
-                                placeholder="Enter DALL-E prompt"
-                                onChange={handleDalleChange}
-                                // value={values.prompt}
-                                maxLength={150}
-                                required
-                                size={50}
-                            />
-                        </label>
-                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                        <br/>
-                    </form>
-                {DalleFeedback && <img src={DalleFeedback.url}></img>}
-        </>
+                <h1>{("Send an DALL-E request")}</h1>
+            </div>
+            <form onSubmit={handleDalleSubmit}>
+                <label>
+                    Prompt:
+                    <input
+                        type="text"
+                        name="prompt"
+                        placeholder="Enter DALL-E prompt"
+                        onChange={handleDalleChange}
+                        // value={values.prompt}
+                        maxLength={150}
+                        required
+                        size={50}
+                    />
+                </label>
+                <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
+                <br/>
+            </form>
+            {DalleFeedback && <img src={DalleFeedback.url}></img>}
+        </div>
 
 
     )

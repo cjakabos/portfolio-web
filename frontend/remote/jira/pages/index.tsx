@@ -86,7 +86,7 @@ export default function Index(this: any) {
         console.log("postData: ", postData);
         axios.post(jiraProxy + "/get", postData, axiosConfig)
             .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data.issues);
+                console.log("RESPONSE RECEIVED: ", response);
                 setTickets(response.data.issues)
 
             })
@@ -217,11 +217,11 @@ export default function Index(this: any) {
     console.log('tickets', tickets)
 
     const columnsButton: GridColDef[] = [
-        {field: "key", headerName: "Key", minWidth: 50},
+        {field: "key", headerName: "Key", width: 80},
         {
             field: "summary",
             headerName: "Summary",
-            minWidth: 150,
+            width: 150,
             renderCell: (params) => {
                 return <div className="rowitem">{params.row.fields.summary}</div>;
             },
@@ -229,7 +229,7 @@ export default function Index(this: any) {
         {
             field: "description",
             headerName: "Description",
-            minWidth: 100,
+            width: 150, flex: 1,
             renderCell: (params) => {
                 return <div className="rowitem">{params.row.fields.description}</div>;
             },
@@ -238,7 +238,7 @@ export default function Index(this: any) {
             field: "edit",
             headerName: "Edit",
             sortable: false,
-            minWidth: 110,
+            width: 110,
             renderCell: ({row}) =>
                 <>
                     <button className="submitbutton"
@@ -251,7 +251,7 @@ export default function Index(this: any) {
             field: "delete",
             headerName: "Delete",
             sortable: false,
-            minWidth: 110,
+            width: 110,
             renderCell: ({row}) =>
                 <>
                     <button className="clearbutton"
