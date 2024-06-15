@@ -1,0 +1,20 @@
+FROM python:3.12
+ARG SERVICE_PORT
+ARG SERVICE_PATH
+
+RUN apt-get update
+
+COPY ./$SERVICE_PATH/requirements.txt /requirements.txt
+COPY ./$SERVICE_PATH/config.json /config.json
+COPY ./$SERVICE_PATH/src /src
+COPY ./$SERVICE_PATH/customers /customers
+
+RUN pip3 install --upgrade pip && pip3 install --no-cache-dir -r ./requirements.txt
+
+WORKDIR /src
+CMD [ "python3", "init_segmentationdb.py"]
+CMD [ "python3", "app.py"]
+
+ENV LISTEN_PORT $SERVICE_PORT
+
+EXPOSE $SERVICE_PORT

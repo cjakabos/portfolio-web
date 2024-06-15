@@ -5,8 +5,10 @@ services:
     image: jiraproxy:latest
     container_name: jiraproxy
     build:
-      context: ./backend/web-proxy
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/web-proxy
     ports:
       - 8501:8501
     restart: unless-stopped
@@ -14,8 +16,10 @@ services:
     image: vehicles-api:latest
     container_name: vehicles-api
     build:
-      context: ./backend/vehicles-api
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/vehicles-api
     ports:
       - 8880:8880
     restart: unless-stopped
@@ -23,8 +27,10 @@ services:
     image: petstore:latest
     container_name: petstore
     build:
-      context: ./backend/petstore
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/petstore
     ports:
       - 8083:8083
     environment:
@@ -34,8 +40,10 @@ services:
     image: cloudapp:latest
     container_name: cloudapp
     build:
-      context: ./backend/cloudapp
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/cloudapp
     ports:
       - 8099:8099
     environment:
@@ -44,8 +52,11 @@ services:
     restart: unless-stopped
   mlops-segmentation:
     build:
-      context: ./backend/ml-pipeline
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: Dockerfile_PY
+      args:
+        SERVICE_PATH: backend/ml-pipeline
+        SERVICE_PORT: 8600
     container_name: mlops-segmentation
     ports:
       - 8600:8600
