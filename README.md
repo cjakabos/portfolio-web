@@ -38,7 +38,7 @@ docker-compose -f docker-compose-app.yml up -d
 ```
 
 Runs the app in the production mode.\
-Open http://localhost:5001 to view it in your browser.
+Open http://localhost:5001 to view it in your browser. For development mode check [instructions here](./frontend/cloudapp-shell/README.md#option-2-dev-mode).
 
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
@@ -60,9 +60,9 @@ View results:
 - Table: current list of customers from postgres db.
 
 The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the Maps micro frontend:  
+1. Left side main CloudApp-Shell as App Shell using the MLOps micro frontend:  
 http://localhost:5001/mlops  
-2. Right side module federated Maps micro frontend:   
+2. Right side module federated MLOps micro frontend:   
 http://localhost:5005  
 
 ![](examples/11a.png)
@@ -83,9 +83,9 @@ Shop API documentation:
 
 ## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
 The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the Maps micro frontend:  
+1. Left side main CloudApp-Shell as App Shell using the Petstore micro frontend:  
 http://localhost:5001/petstore  
-2. Right side module federated Maps micro frontend:   
+2. Right side module federated Petstore micro frontend:   
 http://localhost:5006
 
 ![](examples/5.png)
@@ -120,9 +120,9 @@ the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is ab
 - Send a prompt to DallE and receive an image response.
 
 The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the Maps micro frontend:  
+1. Left side main CloudApp-Shell as App Shell using the OpenAI micro frontend:  
 http://localhost:5001/openai
-2. Right side module federated Maps micro frontend:   
+2. Right side module federated OpenAI micro frontend:   
 http://localhost:5004
 
 ![](examples/9a.png)
@@ -138,7 +138,10 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 The user is able to:
 
 - Create/list/update/delete Jira ticket  
-
+1. Left side main CloudApp-Shell as App Shell using the Jira micro frontend:  
+   http://localhost:5001/jira
+2. Right side module federated Jira micro frontend:   
+   http://localhost:5003
 ![](examples/10.png)
 
 ## 7. Notes and Files

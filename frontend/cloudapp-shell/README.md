@@ -16,13 +16,14 @@
   ```bash
   docker-compose -f docker-compose-app.yml up -d
   ```
-  
-  Install packages and start React front-end from root of cloudapp-shell and remote/openmaps:
-  
-  ```bash
-  npm install
-  npm run dev
-  ```
+
+If everything is working as expected, you should be able to:
+- Open [http://localhost:5001](http://localhost:5001) for the main Cludapp app-shell to view micro-frontends.
+- Open [http://localhost:5002](http://localhost:5002) for the OpenMaps micro-frontend.
+- Open [http://localhost:5003](http://localhost:5003) for the Jira micro-frontend.
+- Open [http://localhost:5004](http://localhost:5004) for the OpenAI micro-frontend.
+- Open [http://localhost:5005](http://localhost:5005) for the MLOps micro-frontend.
+- Open [http://localhost:5006](http://localhost:5006) for the Petstore micro-frontend.
 
 ### Option 2. Dev mode:
 
@@ -33,9 +34,7 @@ npm install
 npm run dev
 ```
 
-Runs the app in the development mode.\
-Open [http://localhost:5001](http://localhost:5001) to view the main App Shell in your browser.  
-Open [http://localhost:5002](http://localhost:5002) to view the Module Federated OpenMaps micro frontend in your browser.
+Runs the app in the development mode.
 
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
@@ -72,7 +71,14 @@ Shop API documentation:
 - [Order](http://localhost:8099/cloudapp/swagger-ui/index.html#/order-controller)
 
 ## 3. Pet Store interface for the [Pet Store's REST API](../../backend/petstore/README.md)
-![](../../examples/5.png)
+The module is built as Micro Frontend:
+1. Left side main CloudApp-Shell as App Shell using the Petstore micro frontend:  
+   http://localhost:5001/petstore
+2. Right side module federated Petstore micro frontend:   
+   http://localhost:5006  
+
+![](../../examples/5.png)  
+
 The user is able to:
 - Add new customer.
 - Add a new Pet to existing customers.
@@ -82,10 +88,11 @@ The user is able to:
 
 
 ## 4.  Maps with Micro Frontend Module federation
-Left side main CloudApp-Shell as App Shell using the Maps micro frontend:
+1. Left side main CloudApp-Shell as App Shell using the Maps micro frontend:
 http://localhost:5001/maps  
-Right side module federated Maps micro frontend:   
-http://localhost:5002
+2. Right side module federated Maps micro frontend:   
+http://localhost:5002  
+
 ![](../../examples/8.png)
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
 The user is able to:
@@ -101,6 +108,13 @@ the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is ab
 - Send a prompt to ChatGPT and receive a response..
 - Send a prompt to DallE and receive an image response.
 
+The module is built as Micro Frontend:
+1. Left side main CloudApp-Shell as App Shell using the OpenAI micro frontend:  
+   http://localhost:5001/openai
+2. Right side module federated OpenAI micro frontend:   
+   http://localhost:5004
+
+![](../../examples/9a.png)
 
 ## 6. Jira
 Jira interface for communicating with
@@ -112,7 +126,10 @@ the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
 The user is able to:
 
 - Create/list/update/delete Jira ticket
-
+1. Left side main CloudApp-Shell as App Shell using the Jira micro frontend:  
+   http://localhost:5001/jira
+2. Right side module federated Jira micro frontend:   
+   http://localhost:5003
 ![](../../examples/10.png)
 
 ## 7. Notes and Files
