@@ -26,13 +26,12 @@ const initialGetTicketValues = {
         description: ""
     }
 };
-const jiraProxy = "http://localhost:8501/jiraproxy/webDomain";
+const jiraProxy = "http://localhost:80/jiraproxy/webDomain";
 
 export default function Index(this: any) {
 
     const [loading, setLoading] = useState(false)
     const [values, setValues] = useState(initialTicketValues);
-    const [table, setTable] = useState('')
     const [tickets, setTickets] = useState([initialGetTicketValues])
     const [selectedTicket, setSelectedTicket] = useState(initialGetTicketValues)
     const [isOpen, setIsOpen] = useState(false)
@@ -72,8 +71,8 @@ export default function Index(this: any) {
 
     function getTickets() {
         const postData = {
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/search?jql=project=PW&maxResults=1000&fields=key,summary,description",
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/search?jql=project=PW&maxResults=1000&fields=key,summary,description",
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
         };
 
         let axiosConfig = {
@@ -111,8 +110,8 @@ export default function Index(this: any) {
                     }
                 ]
             },
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue/" + reference.id,
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/issue/" + reference.id,
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
         };
 
 
@@ -142,8 +141,8 @@ export default function Index(this: any) {
 
     function deleteTicket(ticketKey: string) {
         const postData = {
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue/" + ticketKey,
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/issue/" + ticketKey,
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
         };
 
         let axiosConfig = {
@@ -183,8 +182,8 @@ export default function Index(this: any) {
                     name: "Task"
                 },
             },
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || 'test') + "/rest/api/latest/issue",
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || 'test')
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/issue",
+            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
         };
 
         let axiosConfig = {

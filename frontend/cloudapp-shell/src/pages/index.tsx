@@ -4,8 +4,9 @@ import Image from "next/image";
 import imgLogo from "../../public/drawing.svg";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import type { NextPageWithLayout } from './_app'
 
-const Home: React.FC = () => {
+const Home: NextPageWithLayout = () => {
 
   return (
       <div>

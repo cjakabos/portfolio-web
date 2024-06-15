@@ -26,7 +26,7 @@
 
 ### Option 2. Dev mode:
 
-Install packages and start React front-end from root of cloudapp-shell and remote/openmaps:
+Install packages and start React front-end from root of cloudapp-shell and /remote microfrontends:
 
 ```bash
 npm install
@@ -136,16 +136,27 @@ A Kafka based chat service, the user is able to:
 If OpenAI and Jira functionality is to be used, follow the instructions below:
 
 ## OpenAI API key:
-To be stored in the .env file in the frontend/cloudapp-shell root directory in this format:
+
+1. Out of the box: edit this in docker-compose-app.yml:  
+```
+#NEXT_PUBLIC_OPENAI_KEY: sk-za-------YOUR-API-KEY------8Ie
+```
+2. Local run: Add .env file at frontend/remote/openapi directory in this format:
 
 ```bash
-NEXT_PUBLIC_OPENAI_KEY==xxxxxxxxxxxxxx
+NEXT_PUBLIC_OPENAI_KEY_LOCAL==xxxxxxxxxxxxxx
 ```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Frontend: Add .env file at frontend/cloudapp-shell root directory in this format:
+Two options:
+1. Out of the box: edit this in docker-compose-app.yml:
+```
+#NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
+#NEXT_PUBLIC_JIRA_KEY: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
+```
+2. Local run: Add .env file at frontend/remote/jira directory in this format:
 ```bash
-NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
-NEXT_PUBLIC_JIRA_KEY = Y3......2edd (note: no single quotation)
+NEXT_PUBLIC_JIRA_DOMAIN_LOCAL = 'https://xxxx.atlassian.net'
+NEXT_PUBLIC_JIRA_KEY_LOCAL = Y3......2edd (note: no single quotation)
 ```
 NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.

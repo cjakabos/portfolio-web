@@ -15,7 +15,7 @@ const initialDalleFeedback = {
 
 export default function Index(this: any) {
 
-    const openAIKey = (process.env.NEXT_PUBLIC_OPENAI_KEY || 'test')
+    const openAIKey = (process.env.NEXT_PUBLIC_OPENAI_KEY || process.env.NEXT_PUBLIC_OPENAI_KEY_LOCAL)
     const openAiUrl = "https://api.openai.com/v1";
 
     const [values, setValues] = useState(initialValues);
