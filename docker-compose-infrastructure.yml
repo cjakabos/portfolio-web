@@ -72,5 +72,14 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     restart: unless-stopped
+  ollama:
+    container_name: ollama
+    build:
+      context: ./
+      dockerfile: Dockerfile_OLLAMA
+      args:
+        LLM_MODEL: 'deepseek-r1:1.5b'
+    ports:
+      - 11434:11434
 volumes:
   petstore:

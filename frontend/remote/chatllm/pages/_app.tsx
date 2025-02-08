@@ -6,8 +6,8 @@ function CustomApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>PetStore Module - Remote</title>
-        <meta name="description" content="PetStore App" />
+        <title>Chat with LLM- Remote</title>
+        <meta name="description" content="ChatLLM App" />
       </Head>
       <main className="app">
         <Component {...pageProps} />

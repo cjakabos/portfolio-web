@@ -6,8 +6,8 @@ function CustomApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>OpenMaps Module - Remote</title>
-        <meta name="description" content="OpenMaps App" />
+        <title>MLOps - Remote</title>
+        <meta name="description" content="MLOps App" />
       </Head>
       <main className="app">
         <Component {...pageProps} />
