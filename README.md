@@ -162,14 +162,8 @@ A Kafka based chat service, the user is able to:
 
 # Optional API services
 
-If OpenAI and Jira functionality is to be used, follow the instructions below:
+If Jira functionality is to be used, follow the instructions below:
 
-## OpenAI API key:
-Comment out this in the [docker-compose-app.yml](./docker-compose-app.yml) file in root directory:
-
-```bash
-NEXT_PUBLIC_OPENAI_KEY: sk-za-------YOUR-API-KEY------8Ie
-```
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
 Comment out these in the [docker-compose-app.yml](./docker-compose-app.yml) file in root directory:

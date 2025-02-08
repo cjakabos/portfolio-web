@@ -123,21 +123,6 @@ services:
     environment:
       - DOCKER_HOST_IP=host.docker.internal
     restart: unless-stopped
-  next-openai:
-    build:
-      context: ./
-      dockerfile: Dockerfile_FE
-      args:
-        SERVICE_PATH: frontend/remote/openai
-        SERVICE_PORT: 5004
-        NEXT_PRIVATE_LOCAL_WEBPACK: true
-        #NEXT_PUBLIC_OPENAI_KEY: sk-za-------YOUR-API-KEY------8Ie
-    container_name: next-openai
-    ports:
-      - 5004:5004
-    environment:
-      - DOCKER_HOST_IP=host.docker.internal
-    restart: unless-stopped
   next-mlops:
     build:
       context: ./
