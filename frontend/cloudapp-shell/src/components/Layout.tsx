@@ -40,6 +40,9 @@ const Layout = ({
             <Button className="menuButton" onClick={() => router.push("/maps")}>
                 Maps
             </Button>
+            <Button className="menuButton" onClick={() => router.push("/chatllm")}>
+                Private AI
+            </Button>
             <Button className="menuButton" onClick={() => router.push("/jira")}>
                 Jira
             </Button>

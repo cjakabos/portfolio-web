@@ -172,7 +172,6 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   flex-direction: column;
   justify-content: space-between;
   height: 90vh;
-  text-align: center;
 }
 
 .Chat-header {
@@ -192,6 +191,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   padding-left: 0;
   flex-grow: 1;
   overflow: auto;
+  overflow-y: auto;
 }
 
 .Messages-message {

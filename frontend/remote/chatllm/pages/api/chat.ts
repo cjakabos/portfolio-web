@@ -8,6 +8,15 @@ const chat = createOllama({
 export const runtime = "edge";
 
 export default async function POST(req: Request) {
+    //  CORS
+    if (req.method === 'OPTIONS') {
+        const headers = new Headers({
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        });
+        return new Response(null, { headers });
+    }
     const { messages } = await req.json();
     console.log(messages);
 

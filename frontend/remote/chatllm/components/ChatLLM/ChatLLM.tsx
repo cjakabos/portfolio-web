@@ -7,7 +7,7 @@ export default function ChatLLM() {
 	const [selectedOption, setSelectedOption] = useState("")
 	const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-	const { messages, input, handleInputChange, handleSubmit: aiHandleSubmit } = useChat()
+	const { messages, input, handleInputChange, handleSubmit: aiHandleSubmit } = useChat({api: "http://localhost:5333/api/chat"})
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
@@ -34,7 +34,7 @@ export default function ChatLLM() {
 					{messages.length <= 1 ? (
 						<div className="flex flex-col items-center justify-left h-full text-left p-4">
 							<div className="w-16 h-16 mb-4 text-primary" />
-							<h1 className="text-2xl font-bold mb-2">Welcome to Local AII Chatbot - For full privacy</h1>
+							<h1 className="text-2xl font-bold mb-2">Welcome to Local AI Chatbot - For full privacy</h1>
 							<p className="text-muted-foreground mb-4">
 								You can start to discuss below.
 							</p>
