@@ -1,8 +1,8 @@
 import { createOllama } from "ollama-ai-provider";
-import { streamText, StreamData } from "ai";
+import { streamText } from "ai";
 
 const chat = createOllama({
-    baseURL: "http://127.0.0.1:11434/api", //NOTE: Use a different URL prefix for API calls, e.g., to use proxy servers.
+    baseURL: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":11434/api", //NOTE: Use a different URL prefix for API calls, e.g., to use proxy servers.
 });
 
 export const runtime = "edge";

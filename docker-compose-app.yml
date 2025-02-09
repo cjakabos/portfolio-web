@@ -151,3 +151,17 @@ services:
     environment:
       - DOCKER_HOST_IP=host.docker.internal
     restart: unless-stopped
+  next-chatllm:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/chatllm
+        SERVICE_PORT: 5333
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    container_name: next-chatllm
+    ports:
+      - 5333:5333
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal
+    restart: unless-stopped

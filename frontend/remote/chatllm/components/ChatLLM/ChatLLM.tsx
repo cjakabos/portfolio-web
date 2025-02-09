@@ -8,7 +8,7 @@ export default function ChatLLM() {
 	const [selectedOption, setSelectedOption] = useState("")
 	const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-	const { messages, input, handleInputChange, handleSubmit: aiHandleSubmit } = useChat({api: "http://localhost:5333/api/chat"})
+	const { messages, input, handleInputChange, handleSubmit: aiHandleSubmit } = useChat({api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"})
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
@@ -74,7 +74,7 @@ export default function ChatLLM() {
 						placeholder="Type your message..."
 						className="flex-grow"
 					/>
-					<button className="submitbutton" type="submit" size="icon">
+					<button className="submitbutton" type="submit">
 						Send message
 					</button>
 				</form>
