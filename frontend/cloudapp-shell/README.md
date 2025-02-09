@@ -12,6 +12,18 @@
   ```bash
   docker-compose -f docker-compose-infrastructure.yml up -d
   ```
+Note: configure Ollama model to use with LLM_MODEL, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
+```dockerfile
+  ollama:
+    container_name: ollama
+    build:
+      context: ./
+      dockerfile: Dockerfile_OLLAMA
+      args:
+        LLM_MODEL: 'deepseek-r1:1.5b'
+    ports:
+      - 11434:11434
+```
   Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
   ```bash
   docker-compose -f docker-compose-app.yml up -d
@@ -21,7 +33,7 @@ If everything is working as expected, you should be able to:
 - Open [http://localhost:5001](http://localhost:5001) for the main Cludapp app-shell to view micro-frontends.
 - Open [http://localhost:5002](http://localhost:5002) for the OpenMaps micro-frontend.
 - Open [http://localhost:5003](http://localhost:5003) for the Jira micro-frontend.
-- Open [http://localhost:5004](http://localhost:5004) for the OpenAI micro-frontend.
+- Open [http://localhost:5004](http://localhost:5333) for the Local LLM AI micro-frontend.
 - Open [http://localhost:5005](http://localhost:5005) for the MLOps micro-frontend.
 - Open [http://localhost:5006](http://localhost:5006) for the Petstore micro-frontend.
 
@@ -101,19 +113,18 @@ The user is able to:
 
 Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 
-## 5. OpenAI
-![](../../examples/9.png)
-OpenAI interface for communicating with
-the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is able to:
-- Send a prompt to ChatGPT and receive a response..
-- Send a prompt to DallE and receive an image response.
+## 5. Private Local LLM AI
+Chat  interface for communicating with
+a locally hosted Ollama model, the user is able to:
+- Chat with a local LLM
 
 The module is built as Micro Frontend:
-1. Left side main CloudApp-Shell as App Shell using the OpenAI micro frontend:  
-   http://localhost:5001/openai
-2. Right side module federated OpenAI micro frontend:   
-   http://localhost:5004
+1. Left side main CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
+   http://localhost:5001/chatllm
+2. Right side module federated Local LLM AI micro frontend:   
+   http://localhost:5333
 
+![](../../examples/9.png)
 ![](../../examples/9a.png)
 
 ## 6. Jira

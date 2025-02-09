@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useChat } from 'ai/react'
+import Markdown from "react-markdown";
 
 export default function ChatLLM() {
 	const [selectedOption, setSelectedOption] = useState("")
@@ -41,26 +42,26 @@ export default function ChatLLM() {
 						</div>
 					) : (
 						<div className="flex flex-col gap-4 p-4">
-							{messages.map((message, index) => (
-								message.role !== 'system' && (
-									<div
-										key={message.id}
-										className={`flex ${
-											message.role === "user" ? "justify-end" : "justify-start"
-										}`}
-									>
+								{messages.map((message, index) => (
+									message.role !== 'system' && (
 										<div
-											className={`rounded-lg p-4 max-w-[80%] ${
-												message.role === "user"
-													? "bg-primary text-primary-foreground"
-													: "bg-muted"
+											key={message.id}
+											className={`flex ${
+												message.role === "user" ? "justify-end" : "justify-start"
 											}`}
 										>
-											{message.content}
+											<div
+												className={`rounded-lg p-4 max-w-[80%] ${
+													message.role === "user"
+														? "bg-primary text-primary-foreground"
+														: "bg-muted"
+												}`}
+											>
+												<Markdown>{message.content}</Markdown>
+											</div>
 										</div>
-									</div>
-								)
-							))}
+									)
+								))}
 						</div>
 					)}
 			</div>

@@ -11,7 +11,8 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
 - **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
-- **Integrated External APIs**: Enhance functionality with third-party services like OpenAI and Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#5-openai).
+- **Locally hosted LLM**: . [Details on API integration](#5-local-llm-ai).
+- **Integrated External APIs**: Enhance functionality with third-party services like Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#6-jira).
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
 - **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
 
@@ -32,6 +33,19 @@ Setup and start databases and esential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```
+Note: configure Ollama model to use with LLM_MODEL, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
+```dockerfile
+  ollama:
+    container_name: ollama
+    build:
+      context: ./
+      dockerfile: Dockerfile_OLLAMA
+      args:
+        LLM_MODEL: 'deepseek-r1:1.5b'
+    ports:
+      - 11434:11434
+```
+
 Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
 ```bash
 docker-compose -f docker-compose-app.yml up -d
@@ -112,19 +126,20 @@ The user is able to:
 
 Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 
-## 5. OpenAI
+## 5. Private Local LLM AI
+Chat  interface for communicating with
+a locally hosted Ollama model, the user is able to:
+- Chat with a local LLM
+
+The module is built as Micro Frontend:
+1. Left side main CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
+   http://localhost:5001/chatllm
+2. Right side module federated Local LLM AI micro frontend:   
+   http://localhost:5333
+
+
+
 ![](examples/9.png)
-OpenAI interface for communicating with
-the [OpenAI API](https://platform.openai.com/docs/api-reference), the user is able to:
-- Send a prompt to ChatGPT and receive a response.
-- Send a prompt to DallE and receive an image response.
-
-The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the OpenAI micro frontend:  
-http://localhost:5001/openai
-2. Right side module federated OpenAI micro frontend:   
-http://localhost:5004
-
 ![](examples/9a.png)
   
 
