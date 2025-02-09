@@ -33,7 +33,7 @@ If everything is working as expected, you should be able to:
 - Open [http://localhost:5001](http://localhost:5001) for the main Cludapp app-shell to view micro-frontends.
 - Open [http://localhost:5002](http://localhost:5002) for the OpenMaps micro-frontend.
 - Open [http://localhost:5003](http://localhost:5003) for the Jira micro-frontend.
-- Open [http://localhost:5004](http://localhost:5333) for the Local LLM AI micro-frontend.
+- Open [http://localhost:5333](http://localhost:5333) for the Local LLM AI micro-frontend.
 - Open [http://localhost:5005](http://localhost:5005) for the MLOps micro-frontend.
 - Open [http://localhost:5006](http://localhost:5006) for the Petstore micro-frontend.
 
@@ -126,6 +126,14 @@ The module is built as Micro Frontend:
 
 ![](../../examples/9.png)
 ![](../../examples/9a.png)
+
+3. Optionally one can also use command line:
+```bash
+curl http://localhost:11434/api/generate -d '{                              
+  "model": "deepseek-r1:1.5b",
+  "prompt": "Why is the sky blue?"
+}'
+```
 
 ## 6. Jira
 Jira interface for communicating with
