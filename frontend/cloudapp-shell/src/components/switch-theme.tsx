@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useTheme } from "next-themes";
-import { TbMoonStars, TbSun } from "react-icons/tb";
-import {Button} from "@mui/material";
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 interface SwitchThemeProps {
   clases?: string;
@@ -26,20 +26,20 @@ const SwitchTheme: React.FC<SwitchThemeProps> = ({ ...props }) => {
   }, [theme]);
 
   return (
-    <>
-      <Button className="styleButton">
-        <TbMoonStars
-            id="moonStars"
-            onClick={() => setTheme("light")}
-            className="w-6 h-6 cursor-pointer center"
-        />
-        <TbSun
-            id="sun"
-            onClick={() => setTheme("dark")}
-            className="w-6 h-6 hidden cursor-pointer center"
-        />
-      </Button>
-    </>
+      <div className="order-1 flex lg:order-none w-[100px]">
+        <button className="ml-10 self-center  opacity-70 hover:opacity-100 lg:block">
+            <LightModeIcon
+                id="moonStars"
+                onClick={() => setTheme("light")}
+                fontSize="medium"
+            />
+            <DarkModeIcon
+                id="sun"
+                onClick={() => setTheme("dark")}
+                fontSize="medium"
+            />
+        </button>
+      </div>
   );
 };
 

@@ -16,6 +16,7 @@
     "@module-federation/nextjs-mf": "^8.3.16",
     "@module-federation/enhanced": "^0.1.15",
     "@module-federation/runtime": "0.1.15",
+    "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.15.5",
     "@mui/x-data-grid": "^6.18.7",
     "axios": "^1.2.6",
