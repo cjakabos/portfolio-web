@@ -133,7 +133,7 @@ const Layout = ({
                 transition={{duration: 0.5}}
                 className="min-h-[100vh] flex-col m-auto lg:flex"
             >
-                <aside className="top-0 z-40 flex h-[80px] text-2xl lg:sticky centered">
+                <aside className="top-0 z-40 flex h-[80px] text-2xl lg:sticky bg-white dark:bg-black centered">
                     {(userToken === null || userToken === '') ? (
                             <>
                                 <Link className="order-1 flex lg:order-none w-[100px]" href="/register">

@@ -9,6 +9,7 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
   const [showCreate, setShowCreate] = useState(false);
@@ -48,6 +49,37 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
       toggleEnter();
     }
   };
+
+  const columnsCustomers: GridColDef[] = [
+    {field: "name", headerName: "Name", width: 320},
+    {
+      field: "enter",
+      headerName: "Enter Room",
+        width: 100,
+      sortable: false,
+      renderCell: ({row}) =>
+          <>
+            <button className="submitbutton"
+                    onClick={() => onEnterRoom(row.code)}
+            > Enter
+            </button>
+          </>
+    },
+    {
+      field: "copy",
+      headerName: "Copy Room Code",
+      sortable: false,
+      renderCell: ({row}) =>
+          <>
+            <button className="submitbutton"
+                    onClick={() => {
+                        navigator.clipboard.writeText(row.code);
+                    }}
+            > Copy
+            </button>
+          </>
+    }
+  ];
 
   return (
     <Container maxWidth="sm">
@@ -95,57 +127,25 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
       </Box>
       <br/>
       <h2>Your Rooms:</h2>
-        <TableContainer style={{ width: 600 }} component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>No.</TableCell>
-                <TableCell>Room Name</TableCell>
-                <TableCell>Room Code</TableCell>
-                <TableCell>Enter room</TableCell>
-                <TableCell>Copy room code</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {userRooms && userRooms.map((room, index) => (
-                <TableRow
-                  key={room.code}
-                  onClick={() => handleRoomClick(room)}
-                  sx={{
-                    backgroundColor:
-                      selectedRoom && selectedRoom.code === room.code
-                        ? '#e0e0e0'
-                        : 'transparent',
-                  }}
-                >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{room.name}</TableCell>
-                  <TableCell>{room.code}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      onClick={() => onEnterRoom(room.code)}
-                      style={{ width: 100 }}
-                    >
-                      Enter
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        navigator.clipboard.writeText(room.code);
-                      }}
-                      style={{ width: 100 }}
-                    >
-                      Copy
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      <>
+        <DataGrid
+            rows={userRooms}
+            columns={columnsCustomers}
+            getRowId={(row: any) =>  row.code}
+            className="text-black dark:text-white h-auto"
+            slotProps={{
+              row: {
+                className: "text-black dark:text-white"
+              },
+              cell: {
+                className: "text-black dark:text-white",
+              },
+              pagination: {
+                className: "text-black dark:text-white",
+              },
+            }}
+        />
+      </>
     </Container>
   );
 };
