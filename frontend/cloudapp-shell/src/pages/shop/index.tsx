@@ -2,6 +2,13 @@
 import React, {FC, useRef, useEffect, useState} from "react";
 import axios from "axios";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import TextField from "@mui/material/TextField";
+import DialogActions from "@mui/material/DialogActions";
 
 const initialValues = {
     id: "",
@@ -281,65 +288,183 @@ export default function Index(this: any) {
         },
     ];
 
+    const [isModal1Open, setModal1Open] = useState(false)
+    const [isModal2Open, setModal2Open] = useState(false)
+    const [isModal3Open, setModal3Open] = useState(false)
+
     return (
-        <div className="flex-container">
-            <div className="section">
-            <div className="items-center justify-center">
-                <h1>Create Item</h1>
-                <form onSubmit={handleItemSubmit}>
-                    <table>
-                        <tbody>
-                        <tr>
-                            <th><label htmlFor="name">Item Name:</label></th>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    placeholder="Enter item name"
-                                    onChange={handleChange}
-                                    value={values.name}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th><label htmlFor="price">Price:</label></th>
-                            <td>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    id="price"
-                                    placeholder="Enter price"
-                                    onChange={handleChange}
-                                    value={values.price}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th><label htmlFor="description">Description:</label></th>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    id="description"
-                                    placeholder="Enter description"
-                                    onChange={handleChange}
-                                    value={values.description}
-                                    maxLength={100}
-                                    required
-                                />
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <input className="submitbutton" type="submit" value="Submit"/>
-                </form>
+        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
+            <div className="">
+                <Button variant="outlined" onClick={() => setModal1Open(true)}>
+                    Items
+                </Button>
+                <Button variant="outlined" onClick={() => setModal3Open(true)}>
+                    Order history
+                </Button>
+                <Dialog
+                    open={isModal1Open}
+                    onClose={() => setModal1Open(false)}
+                >
+                    <DialogTitle>Note Creator</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Create a Note by providing title (summary) and description.
+                        </DialogContentText>
+                        <TextField
+                            value={values.name}
+                            autoFocus
+                            margin="dense"
+                            id="name"
+                            name="name"
+                            label="Name"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                        <TextField
+                            value={values.price}
+                            autoFocus
+                            margin="dense"
+                            id="price"
+                            name="price"
+                            label="Price"
+                            type="number"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                        <TextField
+                            value={values.description}
+                            autoFocus
+                            margin="dense"
+                            id="description"
+                            name="description"
+                            label="Description"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setModal1Open(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleItemSubmit}>Submit</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal1Open}
+                    onClose={() => setModal1Open(false)}
+                >
+                    <DialogTitle>Note Creator</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Create a Note by providing title (summary) and description.
+                        </DialogContentText>
+                        <TextField
+                            value={values.name}
+                            autoFocus
+                            margin="dense"
+                            id="name"
+                            name="name"
+                            label="Name"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                        <TextField
+                            value={values.price}
+                            autoFocus
+                            margin="dense"
+                            id="price"
+                            name="price"
+                            label="Price"
+                            type="number"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                        <TextField
+                            value={values.description}
+                            autoFocus
+                            margin="dense"
+                            id="description"
+                            name="description"
+                            label="Description"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setModal1Open(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleItemSubmit}>Submit</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal3Open}
+                    onClose={() => setModal3Open(false)}
+                >
+                    <DialogTitle>Order history</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            List of previous orders.
+                        </DialogContentText>
+                        <h1>Order History</h1>
+                        <>
+                            {cartHistory.map((cart, index) => (
+                                    <table>
+                                        <tbody>
+                                        <tr>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th> Order {index + 1} - Total price: {cart.total} </th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Price</th>
+                                            <th>Description</th>
+                                        </tr>
+                                        {cart.items.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{item.name}</td>
+                                                <td>{item.price}</td>
+                                                <td>{item.description}</td>
+                                            </tr>
+                                        ))
+                                        }
+                                        </tbody>
+                                    </table>
+
+                                )
+                            )}
+                        </>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setModal3Open(false)}>Cancel</Button>
+                    </DialogActions>
+                </Dialog>
+
             </div>
-            </div>
+            <div className="flex">
             <div className="section">
                 <h1>All Items</h1>
                 {loading ? <div className="loading">Loading...</div> : (
@@ -388,46 +513,6 @@ export default function Index(this: any) {
                     </>
                 )}
             </div>
-            <div className="section">
-                <h1>Order History</h1>
-                <>
-                    {cartHistory.map((cart, index) => (
-                            <table>
-                                <tbody>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th> Order {index + 1} - Total price: {cart.total} </th>
-                                    <th></th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Price</th>
-                                    <th>Description</th>
-                                </tr>
-                                {cart.items.map(item => (
-                                    <tr key={item.id}>
-                                        <td>{item.name}</td>
-                                        <td>{item.price}</td>
-                                        <td>{item.description}</td>
-                                    </tr>
-                                ))
-                                }
-                                </tbody>
-                            </table>
-
-                        )
-                    )}
-                </>
             </div>
         </div>
     )

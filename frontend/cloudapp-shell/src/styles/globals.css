@@ -24,6 +24,8 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.3rem;
+    --dialog-bg: #ffffff;
+    --dialog-text: #000000;
   }
 
   .dark {
@@ -47,12 +49,19 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+    --dialog-bg: #121212;
+    --dialog-text: #ffffff;
   }
 
   body {
     font-family: "Inter", sans-serif;
     background-color: hsl(var(--background));
   }
+}
+
+.MuiPaper-root.MuiDialog-paper {
+  background-color: var(--dialog-bg);
+  color: var(--dialog-text);
 }
 
 .centered {
@@ -82,7 +91,21 @@
 }
 
 
+.section2 {
+  flex: 1 1 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 10px;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+
 .section h1 {
+  margin-top: 0;
+}
+
+.section2 h1 {
   margin-top: 0;
 }
 
@@ -137,6 +160,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   font-size: 16px;
   cursor: pointer;
   border-radius: 5px;
+  width: 150px;
 }
 
 .clearbutton {
@@ -153,7 +177,6 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 }
 
 .popup-box {
-  width: 750px;
   background-color: white;
   position: fixed;
   top: 100px;

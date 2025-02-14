@@ -1,16 +1,17 @@
 'use client';
-import React, {useState, useEffect, useRef} from "react";
+import React, {useState, useEffect, useRef, ReactElement} from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-
-
-const initialCustomer = {
-    id: "",
-    name: "",
-    phoneNumber: "",
-};
+import Owners from "./owners";
+import Pets from "./pets";
+import Employees from "./employees";
 
 const initialEmployee = {
     id: "",
@@ -50,29 +51,14 @@ const options = [
     {value: "SHAVING", label: "Shaving"}
 ];
 
-const days = [
-    {value: "MONDAY", label: "Monday"},
-    {value: "TUESDAY", label: "Tuesday"},
-    {value: "WEDNESDAY", label: "Wednesday"},
-    {value: "THURSDAY", label: "Thursday"},
-    {value: "FRIDAY", label: "Friday"},
-    {value: "SATURDAY", label: "Saturday"},
-    {value: "SUNDAY", label: "Sunday"}
-];
-
 export default function Index(this: any) {
 
-    const [customer, setCustomer] = useState(initialCustomer);
-    const [employee, setEmployee] = useState(initialEmployee);
-    const [allCustomers, setAllCustomers] = useState([initialCustomer]);
-    const [allEmployees, setAllEmployees] = useState([initialEmployee]);
     const [availableEmployees, setAvailableEmployees] = useState([initialEmployee]);
     const [allPets, setAllPets] = useState([initialPet]);
     const [schedules, setSchedules] = useState([initialSchedule]);
     const [loading, setLoading] = useState(false)
     const [selectedOption, setSelectedOption] = useState(1);
     const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
-    const [selectedDayOption, setSelectedDayOption] = useState(["MONDAY", "TUESDAY", "FRIDAY"]);
     const [date, setDate] = useState(new Date());
 
     const [userToken, setUserToken] = useState('');
@@ -87,27 +73,9 @@ export default function Index(this: any) {
 
     // Load all get methods once, when page renders
     useEffect(() => {
-        getCustomers()
         getPets()
-        getEmployees()
         getSchedules()
     }, []);
-
-    const handleChange = (event: { target: { name: any; value: any; }; }) => {
-        const {name, value} = event.target;
-        setCustomer({
-            ...customer,
-            [name]: value,
-        });
-    };
-
-    const handleEmployeeChange = (event: { target: { name: any; value: any; }; }) => {
-        const {name, value} = event.target;
-        setEmployee({
-            ...employee,
-            [name]: value,
-        });
-    };
 
     const handleOptionSelect = (event: { target: { options: any; }; }) => {
         for (var i = 0, l = event.target.options.length; i < l; i++) {
@@ -116,146 +84,6 @@ export default function Index(this: any) {
             }
         }
     };
-
-    const handleCustomerSubmit = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-
-        const postData = {
-            name: customer.name,
-            phoneNumber: customer.phoneNumber,
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/petstore/user/customer', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", customer.phoneNumber);
-                getCustomers()
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", postData);
-            })
-
-
-    };
-
-
-    const handleCustomerFetch = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        getCustomers()
-    }
-
-    function getCustomers() {
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.get('http://localhost:80/petstore/user/customer', axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data);
-                setAllCustomers(response.data);
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", axiosConfig);
-                //setName(error.response);
-            })
-    };
-
-    const handleEmployeeSubmit = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-
-        const postData = {
-            name: employee.name,
-            skills: selectedMultiOptions,
-            daysAvailable: selectedDayOption,
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/petstore/user/employee', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data);
-                getEmployees()
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", error.response);
-            })
-
-
-    };
-
-
-    const handleEmployeeFetch = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        getEmployees()
-    }
-
-    function getEmployees() {
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.get('http://localhost:80/petstore/user/employee', axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data);
-                setAllEmployees(response.data);
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", axiosConfig);
-                //setName(error.response);
-            })
-    };
-
-
-    const petSubmit = (owner: string) => {
-
-        const postData = {
-            type: "CAT",
-            name: "Kilo",
-            ownerId: owner.toString(),
-            birthDate: "2019-12-16T04:43:57.995Z",
-            notes: "HI KILO"
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        console.log(JSON.stringify(postData));
-        axios.post('http://localhost:80/petstore/pet', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", postData);
-                getPets()
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", postData);
-            })
-
-
-    };
-
-    const handlePetFetch = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        getPets()
-    }
 
     function getPets() {
         let axiosConfig = {
@@ -275,7 +103,6 @@ export default function Index(this: any) {
                 //setName(error.response);
             })
     };
-
 
     const handleAvailabilityFetch = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
@@ -320,20 +147,6 @@ export default function Index(this: any) {
             }
         }
         setSelectedMultiOptions(valueTemp)
-
-    };
-
-    const handleDaysMultiSelect = (event: { target: { options: any; }; }) => {
-
-        var options = event.target.options;
-        var valueTemp = [];
-        for (var i = 0, l = options.length; i < l; i++) {
-            if (options[i].selected) {
-                // @ts-ignore
-                valueTemp.push(options[i].value);
-            }
-        }
-        setSelectedDayOption(valueTemp)
 
     };
 
@@ -383,37 +196,6 @@ export default function Index(this: any) {
             })
     };
 
-    const columnsCustomers: GridColDef[] = [
-        {field: "id", headerName: "ID", width: 30},
-        {field: "name", headerName: "Name", width: 200},
-        {field: "phoneNumber", headerName: "phoneNumber", width: 150},
-        {
-            field: "add",
-            headerName: "Add pet",
-            sortable: false,
-            renderCell: ({row}) =>
-                <>
-                    <button className="submitbutton"
-                            onClick={() => petSubmit(row.id)}
-                    > Add
-                    </button>
-                </>
-        }
-    ];
-
-    const columnsPets: GridColDef[] = [
-        {field: "id", headerName: "ID", width: 30},
-        {field: "name", headerName: "Name", width: 105},
-        {field: "ownerId", headerName: "ownerId", width: 105},
-    ];
-
-    const columnsEmployees: GridColDef[] = [
-        {field: "id", headerName: "ID", width: 30},
-        {field: "name", headerName: "Name", width: 105},
-        {field: "skills", headerName: "Skills", width: 150},
-        {field: "daysAvailable", headerName: "Days Available", width: 150},
-    ];
-
     const columnsSchedules: GridColDef[] = [
         {field: "id", headerName: "ID", width: 30},
         {field: "employeeIds", headerName: "employeeIds", width: 105},
@@ -457,222 +239,152 @@ export default function Index(this: any) {
         }
     ];
 
-    return (
-        <div className="flex-container px-4 pb-4 pt-6 flex items-center justify-center">
-            <div className="section">
-                <h1>Create a New Customer</h1>
-                <form onSubmit={handleCustomerSubmit}>
-                    <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        placeholder="Enter customer name"
-                        onChange={handleChange}
-                        value={customer.name}
-                        maxLength={20}
-                        required
-                    />
-                    <input
-                        type="phone"
-                        name="phoneNumber"
-                        id="phoneNumber "
-                        placeholder="Enter phone number"
-                        onChange={handleChange}
-                        value={customer.phoneNumber}
-                        maxLength={20}
-                        required
-                    />
-                    <input className="submitbutton" type="submit" value="Submit"/>
-                </form>
-                <h1>All Customers</h1>
-                {loading ? <p>Loading...</p> : (
-                    <>
-                        <DataGrid
-                            rows={allCustomers}
-                            columns={columnsCustomers}
-                            className="text-black dark:text-white h-auto"
-                            slotProps={{
-                                row: {
-                                    className: "text-black dark:text-white"
-                                },
-                                cell: {
-                                    className: "text-black dark:text-white",
-                                },
-                                pagination: {
-                                    className: "text-black dark:text-white",
-                                },
-                            }}
-                        />
-                    </>
-                )}
-            </div>
-            <div className="section">
-                <h1>All Pets</h1>
-                {loading ? <p>Loading...</p> : (
-                    <>
-                        <DataGrid
-                            rows={allPets}
-                            columns={columnsPets}
-                            className="text-black dark:text-white h-auto"
-                            slotProps={{
-                                row: {
-                                    className: "text-black dark:text-white"
-                                },
-                                cell: {
-                                    className: "text-black dark:text-white",
-                                },
-                                pagination: {
-                                    className: "text-black dark:text-white",
-                                },
-                            }}
-                        />
-                    </>
-                )}
-            </div>
+    const [isModal1Open, setModal1Open] = useState(false)
+    const [isModal2Open, setModal2Open] = useState(false)
+    const [isModal3Open, setModal3Open] = useState(false)
 
-            {/* Employee creation and listing */}
-            <div className="section">
-                <h1>Create a New Employee</h1>
-                <form onSubmit={handleEmployeeSubmit}>
-                    <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        placeholder="Enter employee name"
-                        onChange={handleEmployeeChange}
-                        value={employee.name}
-                        maxLength={20}
-                        required
-                    />
-                    <select
-                        onChange={handleMultiSelect}
-                        id="dropdown"
-                        multiple
-                        size={options.length}
-                    >
-                        {options.map((option, index) => (
-                            <option key={index} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        onChange={handleDaysMultiSelect}
-                        id="dropdown2"
-                        multiple
-                        size={days.length}
-                    >
-                        {days.map((day, index) => (
-                            <option key={index} value={day.value}>
-                                {day.label}
-                            </option>
-                        ))}
-                    </select>
-                    <input className="submitbutton" type="submit" value="Submit"/>
-                </form>
+
+    return (
+        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
+            <div className="">
+
+                <Button variant="outlined" onClick={() => setModal1Open(true)}>
+                    Owners
+                </Button>
+                <Button variant="outlined" onClick={() => setModal2Open(true)}>
+                    Pets
+                </Button>
+                <Button variant="outlined" onClick={() => setModal3Open(true)}>
+                    Employees
+                </Button>
+                <Dialog
+                    open={isModal1Open}
+                    onClose={() => setModal1Open(false)}
+                    maxWidth="xl"
+                    className="dialog"
+                >
+                    <DialogTitle className="dialog">Owners</DialogTitle>
+                    <DialogContent className="dialog">
+                        <Owners/>
+                    </DialogContent>
+                    <DialogActions className="dialog">
+                        <Button onClick={() => setModal1Open(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal2Open}
+                    onClose={() => setModal2Open(false)}
+                    maxWidth="xl"
+                    className="dialog"
+                >
+                    <DialogTitle className="dialog">Pets</DialogTitle>
+                    <DialogContent className="dialog">
+                        <Pets/>
+                    </DialogContent>
+                    <DialogActions className="dialog">
+                        <Button onClick={() => setModal2Open(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal3Open}
+                    onClose={() => setModal3Open(false)}
+                    maxWidth="xl"
+                    className="dialog"
+                >
+                    <DialogTitle className="dialog">Employees</DialogTitle>
+                    <DialogContent className="dialog">
+                        <Employees/>
+                    </DialogContent>
+                    <DialogActions className="dialog">
+                        <Button onClick={() => setModal3Open(false)}>Close</Button>
+                    </DialogActions>
+                </Dialog>
             </div>
-            <div className="section">
-                <h1>All Employees</h1>
-                {loading ? <p>Loading...</p> : (
-                    <>
-                        <DataGrid
-                            rows={allEmployees}
-                            columns={columnsEmployees}
-                            className="text-black dark:text-white h-auto"
-                            slotProps={{
-                                row: {
-                                    className: "text-black dark:text-white"
-                                },
-                                cell: {
-                                    className: "text-black dark:text-white",
-                                },
-                                pagination: {
-                                    className: "text-black dark:text-white",
-                                },
-                            }}
-                        />
-                    </>
-                )}
-            </div>
-            <div className="section">
-                <h1>{("Availability")}</h1>
-                <form onSubmit={handleAvailabilityFetch}>
-                    <label>
-                        Skills
-                        <br/>
-                        <select
-                            onChange={handleMultiSelect}
-                            id="dropdown"
-                            multiple
-                            size={options.length}
-                        >
-                            {options.map((option, index) => (
-                                <option key={index} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <DatePicker
-                        dateFormat="yyyy-MM-dd"
-                        selected={date}
-                        onChange={date => setDate((date || new Date()))}
-                    />
-                    <br/>
-                    <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
-                </form>
-                <div className="Availability2">
-                    {loading ? (
-                        <div>Loading...</div>
-                    ) : (
-                        <>
-                            <DataGrid
-                                rows={availableEmployees}
-                                columns={columnsAvailability}
-                                className="text-black dark:text-white h-auto"
-                                slotProps={{
-                                    row: {
-                                        className: "text-black dark:text-white"
-                                    },
-                                    cell: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                    pagination: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                }}
+        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
+                    <div className="flex-container flex">
+                        <div className="section2">
+                        <h1>{("Availability")}</h1>
+                        <form onSubmit={handleAvailabilityFetch}>
+                            <label>
+                                Skills
+                                <br/>
+                                <select
+                                    onChange={handleMultiSelect}
+                                    id="dropdown"
+                                    multiple
+                                    size={options.length}
+                                >
+                                    {options.map((option, index) => (
+                                        <option key={index} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <DatePicker
+                                dateFormat="yyyy-MM-dd"
+                                selected={date}
+                                onChange={date => setDate((date || new Date()))}
                             />
-                        </>
-                    )}
-                </div>
-            </div>
-            <div className="section">
-                <h1>{("All planned schedules")}</h1>
-                <div className="Schedule">
-                    {loading ? (
-                        <div>Loading...</div>
-                    ) : (
-                        <>
-                            <DataGrid
-                                rows={schedules}
-                                columns={columnsSchedules}
-                                className="text-black dark:text-white h-auto"
-                                slotProps={{
-                                    row: {
-                                        className: "text-black dark:text-white"
-                                    },
-                                    cell: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                    pagination: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                }}
-                            />
-                        </>
-                    )}
-                </div>
-            </div>
+                            <br/>
+                            <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
+                        </form>
+                    </div>
+                    <div className="section">
+                        <div className="Availability2">
+                            {loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    <DataGrid
+                                        rows={availableEmployees}
+                                        columns={columnsAvailability}
+                                        className="text-black dark:text-white"
+                                        slotProps={{
+                                            row: {
+                                                className: "text-black dark:text-white"
+                                            },
+                                            cell: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                            pagination: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                        }}
+                                    />
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    </div>
+                    <div className="section">
+                        <h1>{("All planned schedules")}</h1>
+                        <div className="Schedule">
+                            {loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    <DataGrid
+                                        rows={schedules}
+                                        columns={columnsSchedules}
+                                        className="text-black dark:text-white h-auto"
+                                        slotProps={{
+                                            row: {
+                                                className: "text-black dark:text-white"
+                                            },
+                                            cell: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                            pagination: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                        }}
+                                    />
+                                </>
+                            )}
+                        </div>
+                    </div>
+        </div>
         </div>
     )
 }

@@ -128,23 +128,25 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
       <br/>
       <h2>Your Rooms:</h2>
       <>
-        <DataGrid
-            rows={userRooms}
-            columns={columnsCustomers}
-            getRowId={(row: any) =>  row.code}
-            className="text-black dark:text-white h-auto"
-            slotProps={{
-              row: {
-                className: "text-black dark:text-white"
-              },
-              cell: {
-                className: "text-black dark:text-white",
-              },
-              pagination: {
-                className: "text-black dark:text-white",
-              },
-            }}
-        />
+          {userRooms ?
+              <DataGrid
+                  rows={userRooms}
+                  columns={columnsCustomers}
+                  getRowId={(row: any) =>  row.code}
+                  className="text-black dark:text-white h-auto"
+                  slotProps={{
+                      row: {
+                          className: "text-black dark:text-white"
+                      },
+                      cell: {
+                          className: "text-black dark:text-white",
+                      },
+                      pagination: {
+                          className: "text-black dark:text-white",
+                      },
+                  }}
+              />
+              : null}
       </>
     </Container>
   );

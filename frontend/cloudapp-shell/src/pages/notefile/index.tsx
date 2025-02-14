@@ -1,13 +1,21 @@
 'use client';
 import React, {ReactElement, useEffect, useRef, useState} from "react";
 import axios from "axios";
-import {PopUp} from "@/components/PopUp/PopUp";
 import {NoteTicket} from "@/data/dataNote";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import {ThemeProvider as NextThemesProvider} from "next-themes";
-import Layout from "@/components/Layout";
-import DashboardLayout from "@/components/DashboardLayout";
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
+const initialFileValues = {
+    id: 0,
+    name: "",
+    fileSize: "",
+};
 
 const initialNoteValues = {
     user: "",
@@ -34,6 +42,8 @@ export default function Index(this: any) {
     const [values, setValues] = useState(initialNoteValues);
     const [notes, setNotes] = useState([initialUpdateNoteValues])
     const [selectedNote, setSelectedNote] = useState(initialGetNoteValues)
+    const [files, setFiles] = useState([initialFileValues])
+    const [currentFile, setCurrentFile] = useState(null)
     const [isOpen, setIsOpen] = useState(false)
     const [isNoteOpen, setNoteIsOpen] = useState(false)
 
@@ -52,6 +62,7 @@ export default function Index(this: any) {
     }
     useEffect(() => {
         getNotes()
+        getFiles()
     }, []);
 
 
@@ -119,7 +130,7 @@ export default function Index(this: any) {
     function initiateUpdateNote(note: NoteTicket) {
         console.log("note: ", note);
         setSelectedNote(note)
-        setNoteIsOpen(!isNoteOpen)
+        setModal3Open(!isModal3Open)
         setUpdates(note)
     }
 
@@ -146,6 +157,7 @@ export default function Index(this: any) {
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         newNote(values)
+        setModal1Open(false)
     };
 
     function newNote(input: any) {
@@ -211,83 +223,307 @@ export default function Index(this: any) {
         },
     ];
 
+    function getFiles() {
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
+            }
+        };
+
+        axios.get("http://localhost:80/cloudapp" + "/file/user/" + username, axiosConfig)
+            .then((response) => {
+                console.log("RESPONSE RECEIVED: ", response.data);
+                setFiles(response.data)
+
+            })
+            .catch((error) => {
+                //console.log("AXIOS ERROR: ", postData);
+            })
+    }
+
+    async function downloadFile(fileKey: number, fileName: string) {
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
+            }
+        };
+
+        console.log('filekey', fileKey)
+
+        var options = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': (userToken || 'test')
+            }
+        }
+
+        try {
+            fetch("http://localhost:80/cloudapp" + "/file/get-file/" + fileKey, options)
+                .then((response) => {
+                    console.log('response.headers.get(\'Content-Type\')', response.headers.get('Content-Type'))
+                    response.blob().then((blob) => {
+                        if (typeof window !== "undefined") {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            setTimeout(function () {
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(url);
+                            }, 100);
+                        }
+                    });
+                })
+                .catch((rejected) => {
+                    console.log(rejected);
+                });
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    function deleteFile(fileKey: number) {
+
+        let axiosConfig = {
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8',
+                'Authorization': userToken
+            }
+        };
+
+        axios.get("http://localhost:80/cloudapp" + "/file/delete-file/" + fileKey, axiosConfig)
+            .then((response) => {
+                //console.log("RESPONSE RECEIVED: ", response.data.issues);
+                getFiles()
+
+            })
+            .catch((error) => {
+                //console.log("AXIOS ERROR: ", postData);
+            })
+    }
+
+    // Image Preview Handler
+    const handleFilePreview = (e) => {
+        let image_as_base64 = URL.createObjectURL(e.target.files[0])
+        let image_as_files = e.target.files[0];
+
+        setCurrentFile(image_as_files)
+    }
+
+    // Image/File Submit Handler
+    const handleSubmitFile = () => {
+
+        if (currentFile !== null) {
+
+            let formData = new FormData();
+            formData.append('fileUpload', (currentFile || 'test'));
+            formData.append('username', (username || 'test'));
+
+
+            axios.post(
+                'http://localhost:80/cloudapp' + '/file/upload',
+                formData,
+                {
+                    headers: {
+                        "Authorization": userToken,
+                        "Content-type": "multipart/form-data",
+                    },
+                }
+            )
+                .then(res => {
+                    console.log(`Success` + res.data);
+                    getFiles();
+                    setModal2Open(false);
+                })
+                .catch(err => {
+                    console.log(err);
+                })
+        }
+    }
+
+    const columnsFiles: GridColDef[] = [
+        { field: "id", headerName: "ID", width: 50 },
+        { field: "name", headerName: "Name", width: 200 },
+        { field: "fileSize", headerName: "Size", width: 80 },
+        {
+            field: "download",
+            headerName: "Download",
+            sortable: false,
+            width: 120,
+            renderCell: ({row}) =>
+                <button className="submitbutton" onClick={() => downloadFile(row.id, row.name)}>
+                    Download
+                </button>
+        },
+        {
+            field: "delete",
+            headerName: "Delete",
+            sortable: false,
+            width: 100,
+            renderCell: ({row}) =>
+                <button className="clearbutton" onClick={() => deleteFile(row)}>
+                    Delete
+                </button>
+        },
+    ];
+
+    const [isModal1Open, setModal1Open] = useState(false)
+    const [isModal2Open, setModal2Open] = useState(false)
+    const [isModal3Open, setModal3Open] = useState(false)
 
     if (loading) return <p>Loading...</p>
 
     return (
-        <div className="flex-container">
-            <div className="section">
-                {isNoteOpen ?
-                    <PopUp
-                    >
-                        <form onSubmit={() => updateNote(updates, selectedNote)}>
-                            <label>
-                                Note info:
-                                <p/>
-                                <input
-                                    type="text"
-                                    name="title"
-                                    defaultValue={selectedNote.title}
-                                    //value={updates.title}
-                                    onChange={change}
-                                    maxLength={50}
-                                    required
-                                    size={50}
-                                />
-                                <input
-                                    type="text"
-                                    name="description"
-                                    defaultValue={selectedNote.description}
-                                    //value={updates.description}
-                                    onChange={change}
-                                    maxLength={50}
-                                    required
-                                    size={50}
-                                />
-                            </label>
-                            <br/>
-                            <input className="submitbutton" id="submitButton" type="submit" value="Submit"/>
-                        </form>
-
-                        <form onSubmit={() => setNoteIsOpen(false)}>
-                            <input className="clearbutton" id="closeButton" type="submit" value="CLOSE"/>
-                        </form>
-                    </PopUp>
-                    : null}
-                <div className="login-top">
-                    <h1>{("Create a note")}</h1>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        Note info:
-                        <p/>
-                        <input
-                            type="text"
-                            name="title"
-                            placeholder="Enter note title"
-                            onChange={handleChange}
+        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
+            <div className="">
+                <Button variant="outlined" onClick={() => setModal1Open(true)}>
+                    Notes
+                </Button>
+                <Button variant="outlined" onClick={() => setModal2Open(true)}>
+                    Files
+                </Button>
+                <Dialog
+                    open={isModal1Open}
+                    onClose={() => setModal1Open(false)}
+                >
+                    <DialogTitle>Note Creator</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Create a Note by providing title (summary) and description.
+                        </DialogContentText>
+                        <TextField
                             value={values.title}
-                            maxLength={50}
-                            required
-                            size={50}
-                            height={50}
-                        />
-                        <br/>
-                        <input
+                            autoFocus
+                            margin="dense"
+                            id="title"
+                            name="title"
+                            label="Title"
                             type="text"
-                            name="description"
-                            placeholder="Enter note description"
+                            fullWidth
+                            variant="standard"
                             onChange={handleChange}
-                            value={values.description}
-                            maxLength={50}
                             required
-                            size={50}
-                            height={50}
                         />
-                    </label>
-                    <br/>
-                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
-                </form>
+                        <TextField
+                            value={values.description}
+                            autoFocus
+                            margin="dense"
+                            id="description"
+                            name="description"
+                            label="Description"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setModal1Open(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleSubmit}>Submit</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal3Open}
+                    onClose={() => setModal3Open(false)}
+                >
+                    <DialogTitle>Note Creator</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Update a Note
+                        </DialogContentText>
+                        <TextField
+                            defaultValue={selectedNote.title}
+                            autoFocus
+                            margin="dense"
+                            id="summary"
+                            name="summary"
+                            label="Summary"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                        <TextField
+                            defaultValue={selectedNote.description}
+                            autoFocus
+                            margin="dense"
+                            id="description"
+                            name="description"
+                            label="Description"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={handleChange}
+                            required
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setModal3Open(false)}>Cancel</Button>
+                        <Button type="submit" onClick={() => {
+                            updateNote(updates, selectedNote);
+                            setModal3Open(false)
+                        }}>Submit</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal2Open}
+                    onClose={() => setModal2Open(false)}
+                    maxWidth="xl"
+                    className="dialog"
+                >
+                    <DialogTitle className="dialog">Pets</DialogTitle>
+                    <DialogContent className="dialog">
+                        <input
+                            type="file"
+                            onChange={handleFilePreview}
+                        />
+                    </DialogContent>
+                    <DialogActions className="dialog">
+                        <Button onClick={() => setModal2Open(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleSubmitFile}>Submit</Button>
+                    </DialogActions>
+                </Dialog>
+            </div>
+            <div className="flex">
+            <div className="section">
+                <div className="login-top">
+                    <h1>{("All files")}
+                    </h1>
+                </div>
+                <div className="Files">
+                    {files != null && loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <>
+                            <DataGrid
+                                rows={files}
+                                columns={columnsFiles}
+                                className="text-black dark:text-white h-auto"
+                                slotProps={{
+                                    row: {
+                                        className: "text-black dark:text-white"
+                                    },
+                                    cell: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                    pagination: {
+                                        className: "text-black dark:text-white",
+                                    },
+                                }}
+                            />
+                        </>
+                    )}
+                </div>
             </div>
             <div className="section">
                 <div>
@@ -322,21 +558,7 @@ export default function Index(this: any) {
                     </div>
                 </div>
             </div>
+            </div>
         </div>
-    )
-}
-
-Index.getLayout = function getLayout(page: ReactElement) {
-    let menuVariant = [
-        {url: '/notefile', caption: 'Notes'},
-        {url: '/notefile/files', caption: 'Files'}
-    ]
-
-    return (
-        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-            <Layout>
-                <DashboardLayout menuVariant={menuVariant}>{page}</DashboardLayout>
-            </Layout>
-        </NextThemesProvider>
     )
 }

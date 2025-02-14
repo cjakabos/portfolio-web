@@ -1,10 +1,14 @@
 'use client';
 import React, {useEffect, useRef, useState} from "react";
 import axios from "axios";
-import {PopUp} from "../components/PopUp/PopUp";
-import {JiraTicket} from "../data/dataJira";
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { HTMLToJSON } from 'html-to-json-parser';
 
 
 const initialValues = {
@@ -267,39 +271,50 @@ export default function Index(this: any) {
         <>
             <div className="flex w-full flex-col items-center justify-center">
                 {isTicketOpen ?
-                    <PopUp
+                    <Dialog
+                        open={isTicketOpen}
+                        onClose={() => setTicketIsOpen(false)}
                     >
-                        <form onSubmit={() => updateTicket(updates, selectedTicket)}>
-                            <label>
-                                <input
-                                    type="text"
-                                    name="summary"
-                                    defaultValue={selectedTicket.fields.summary}
-                                    //value={updates.summary}
-                                    onChange={change}
-                                    maxLength={50}
-                                    required
-                                    size={50}
-                                />
-                                <input
-                                    type="text"
-                                    name="description"
-                                    defaultValue={selectedTicket.fields.description}
-                                    //value={updates.description}
-                                    onChange={change}
-                                    maxLength={50}
-                                    required
-                                    size={50}
-                                />
-                            </label>
-                            <br/>
-                            <input className="submitbutton" id="submitButton" type="submit" value="Submit"/>
-                        </form>
-
-                        <form onSubmit={() => setTicketIsOpen(false)}>
-                            <input className="clearbutton" id="clearButton" type="submit" value="CLOSE"/>
-                        </form>
-                    </PopUp>
+                        <DialogTitle>Jira Issue Creator</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                Create a Jira ticket by providing title (summary) and description.
+                            </DialogContentText>
+                            <TextField
+                                defaultValue={selectedTicket.fields.summary}
+                                autoFocus
+                                margin="dense"
+                                id="summary"
+                                name="summary"
+                                label="Summary"
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                onChange={change}
+                                required
+                            />
+                            <TextField
+                                defaultValue={selectedTicket.fields.description}
+                                autoFocus
+                                margin="dense"
+                                id="description"
+                                name="description"
+                                label="Description"
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                onChange={change}
+                                required
+                            />
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setTicketIsOpen(false)}>Cancel</Button>
+                            <Button type="submit" onClick={() => {
+                                updateTicket(updates, selectedTicket);
+                                setTicketIsOpen(false)
+                                }}>Submit</Button>
+                        </DialogActions>
+                    </Dialog>
                     : null}
                 <div className="login-top">
                     <h1>{("Create a Jira ticket")}</h1>

@@ -85,6 +85,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   font-size: 16px;
   cursor: pointer;
   border-radius: 5px;
+  width: 150px;
 }
 
 .clearbutton {

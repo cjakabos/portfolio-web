@@ -198,54 +198,15 @@ export default function Index(this: any) {
 
 
     return (
-        <div className="flex-container">
-            <div className="section">
+        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
+            <div className="">
+                <div className="">
                 <h1>{("Dataset creation with sampling from predefined DB or new data - choose one option")}</h1>
-                <form onSubmit={handleMLSubmit}>
-                    <label>
-                        1. Test a sample size from predefined DB:<br/>
-                        <input
-                            type="number"
-                            name="sampleSize"
-                            placeholder="Enter sampleSize"
-                            onChange={handleChange2}
-                            value={values2.sampleSize}
-                            maxLength={50}
-                            required
-                            size={100}
-                            min="10"
-                            max="200"
-                        />
-                    </label>
-                    <input className="submitbutton" id="loginButton" type="submit" value="Get MLInfo"/>
-                </form>
-                <br/>
-                2. Test a sample size from predefined DB:
-                <br/>
-                <button className="ml-update-button"
-                        onClick={() => getMLInfo(10)}
-                > Simulate 10 customers
-                </button>
-                <button className="ml-update-button"
-                        onClick={() => getMLInfo(20)}
-                > Simulate 20 customers
-                </button>
-                <button className="ml-update-button"
-                        onClick={() => getMLInfo(50)}
-                > Simulate 50 customers
-                </button>
-                <button className="ml-update-button"
-                        onClick={() => getMLInfo(100)}
-                > Simulate 100 customers
-                </button>
-                <button className="ml-update-button"
-                        onClick={() => getMLInfo(200)}
-                > Simulate 200 customers
-                </button>
-
-                <br/>
-                <br/>
                 <form onSubmit={handleSubmit}>
+                    <div>
+                        1. Manual data input
+                    </div>
+
                     <label>
                         <select onChange={handleOptionSelect}>
                             {genders.map((gender, index) => (
@@ -254,7 +215,8 @@ export default function Index(this: any) {
                                 </option>
                             ))}
                         </select>
-                        <br/>
+                        <div>
+                        Customer age:
                         <input
                             type="number"
                             name="age"
@@ -263,10 +225,12 @@ export default function Index(this: any) {
                             value={values.age}
                             maxLength={50}
                             required
-                            size={100}
                             min="18"
                             max="120"
                         />
+                        </div>
+                        <div>
+                        Spending score:
                         <input
                             type="number"
                             name="spending_score"
@@ -275,27 +239,49 @@ export default function Index(this: any) {
                             value={values.spending_score}
                             maxLength={50}
                             required
-                            size={100}
                             min="5"
                             max="100"
                         />
+                        <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
+                        </div>
                     </label>
                     <br/>
-                    <input className="submitbutton" id="loginButton" type="submit" value="Submit"/>
+
                 </form>
+                </div>
+                2. Test a sample size from predefined DB with specific amount of customer:
                 <br/>
-                <br/>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(10)}
+                > 10
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(20)}
+                > 20
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(50)}
+                > 50
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(100)}
+                > 100
+                </button>
+                <button className="ml-update-button"
+                        onClick={() => getMLInfo(200)}
+                > 200
+                </button>
             </div>
-            <div className="section">
+            <div className="flex-row">
                 <h1>{("ML Classification Results: ")}</h1>
                 <div id="banner">
                     <div className="inline-block">
                         <img src={'data:image/png;base64,' + images.image3} alt="Base64 Image"
-                             style={{height: 450, width: 450}}/>
+                             style={{height: 450, width: 550}}/>
                     </div>
                     <div className="inline-block">
                         <img src={'data:image/png;base64,' + images.image4} alt="Base64 Image"
-                             style={{height: 450, width: 450}}/>
+                             style={{height: 450, width: 550}}/>
                     </div>
                 </div>
 
