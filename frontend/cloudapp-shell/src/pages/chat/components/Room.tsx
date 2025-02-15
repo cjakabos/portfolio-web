@@ -126,9 +126,9 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
         )}
       </Box>
       <br/>
-      <h2>Your Rooms:</h2>
-      <>
-          {userRooms ?
+          {userRooms.length > 0 ?
+              <>
+              <h2>Your Rooms:</h2>
               <DataGrid
                   rows={userRooms}
                   columns={columnsCustomers}
@@ -146,8 +146,8 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
                       },
                   }}
               />
-              : null}
-      </>
+              </>
+           : null}
     </Container>
   );
 };

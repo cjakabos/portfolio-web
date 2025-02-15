@@ -9,6 +9,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
+import { Input } from "@mui/material";
 
 const initialValues = {
     id: "",
@@ -93,6 +94,8 @@ export default function Index(this: any) {
                 //setName(error.response);
             })
 
+        setModal1Open(false);
+        setValues(initialValues)
 
     };
 
@@ -186,6 +189,8 @@ export default function Index(this: any) {
             .catch((error) => {
                 console.log("AXIOS ERROR: ", postData);
             })
+
+        setModal3Open(false);
     };
 
     function addToCart(arg0: { id: string; name: string; price: string; description: string; }) {
@@ -236,7 +241,7 @@ export default function Index(this: any) {
                 console.log("AXIOS ERROR: ", 'http://localhost:80/cloudapp/order/submit/' + username);
                 //setName(error.response);
             })
-
+        setModal3Open(false);
         clearCart()
 
     };
@@ -298,124 +303,85 @@ export default function Index(this: any) {
                 <Button variant="outlined" onClick={() => setModal1Open(true)}>
                     Items
                 </Button>
-                <Button variant="outlined" onClick={() => setModal3Open(true)}>
+                <Button variant="outlined" onClick={() => setModal2Open(true)}>
                     Order history
                 </Button>
+                {cart.length > 0 ?
+                        <Button variant="contained" onClick={() => setModal3Open(true)}>
+                            Check Cart
+                        </Button>
+                    :
+                        <Button variant="outlined" onClick={() => setModal3Open(true)}>
+                            Check Cart
+                        </Button>
+                }
                 <Dialog
                     open={isModal1Open}
                     onClose={() => setModal1Open(false)}
+                    className="dialog"
                 >
-                    <DialogTitle>Note Creator</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Create a Note by providing title (summary) and description.
+                    <DialogTitle className="dialog">Item Creator</DialogTitle>
+                    <DialogContent className="dialog">
+                        <DialogContentText className="dialog">
+                            Create an Item by providing name, price and description
                         </DialogContentText>
-                        <TextField
+                        <Input
                             value={values.name}
                             autoFocus
                             margin="dense"
                             id="name"
                             name="name"
-                            label="Name"
+                            placeholder="Name"
                             type="text"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
+                            color="primary"
                         />
-                        <TextField
+                        <Input
                             value={values.price}
                             autoFocus
                             margin="dense"
                             id="price"
                             name="price"
-                            label="Price"
+                            placeholder="Price"
                             type="number"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
                         />
-                        <TextField
+                        <Input
                             value={values.description}
                             autoFocus
                             margin="dense"
                             id="description"
                             name="description"
-                            label="Description"
+                            placeholder="Description"
                             type="text"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
                         />
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions className="dialog">
                         <Button onClick={() => setModal1Open(false)}>Cancel</Button>
                         <Button type="submit" onClick={handleItemSubmit}>Submit</Button>
                     </DialogActions>
                 </Dialog>
                 <Dialog
-                    open={isModal1Open}
-                    onClose={() => setModal1Open(false)}
+                    open={isModal2Open}
+                    onClose={() => setModal2Open(false)}
+                    className="dialog"
                 >
-                    <DialogTitle>Note Creator</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Create a Note by providing title (summary) and description.
-                        </DialogContentText>
-                        <TextField
-                            value={values.name}
-                            autoFocus
-                            margin="dense"
-                            id="name"
-                            name="name"
-                            label="Name"
-                            type="text"
-                            fullWidth
-                            variant="standard"
-                            onChange={handleChange}
-                            required
-                        />
-                        <TextField
-                            value={values.price}
-                            autoFocus
-                            margin="dense"
-                            id="price"
-                            name="price"
-                            label="Price"
-                            type="number"
-                            fullWidth
-                            variant="standard"
-                            onChange={handleChange}
-                            required
-                        />
-                        <TextField
-                            value={values.description}
-                            autoFocus
-                            margin="dense"
-                            id="description"
-                            name="description"
-                            label="Description"
-                            type="text"
-                            fullWidth
-                            variant="standard"
-                            onChange={handleChange}
-                            required
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setModal1Open(false)}>Cancel</Button>
-                        <Button type="submit" onClick={handleItemSubmit}>Submit</Button>
-                    </DialogActions>
-                </Dialog>
-                <Dialog
-                    open={isModal3Open}
-                    onClose={() => setModal3Open(false)}
-                >
-                    <DialogTitle>Order history</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
+                    <DialogTitle className="dialog">Order history</DialogTitle>
+                    <DialogContent className="dialog">
+                        <DialogContentText className="dialog">
                             List of previous orders.
                         </DialogContentText>
                         <h1>Order History</h1>
@@ -458,61 +424,99 @@ export default function Index(this: any) {
                             )}
                         </>
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions className="dialog">
+                        <Button onClick={() => setModal2Open(false)}>Cancel</Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={isModal3Open}
+                    onClose={() => setModal3Open(false)}
+                    className="dialog"
+                >
+                    <DialogTitle className="dialog">Cart contents</DialogTitle>
+                    <DialogContent className="dialog">
+                        <DialogContentText className="dialog">
+                            List of items in Cart.
+                        </DialogContentText>
+                        <div className="Files">
+                            {cart != null && loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    {cart.length > 0 ?
+                                        <>
+                                            <div className="login-top">
+                                                <h1>{("Cart")}
+                                                </h1>
+                                                <div className="flex">
+                                                    <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
+                                                    <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
+                                                </div>
+                                            </div>
+                                            <DataGrid
+                                                rows={cart}
+                                                columns={columns}
+                                                className="text-black dark:text-white h-auto"
+                                                slotProps={{
+                                                    row: {
+                                                        className: "text-black dark:text-white"
+                                                    },
+                                                    cell: {
+                                                        className: "text-black dark:text-white",
+                                                    },
+                                                    pagination: {
+                                                        className: "text-black dark:text-white",
+                                                    },
+                                                }}
+                                            />
+                                        </>
+                                        : <>Your cart is empty</>}
+                                </>
+                            )}
+                        </div>
+                    </DialogContent>
+                    <DialogActions className="dialog">
                         <Button onClick={() => setModal3Open(false)}>Cancel</Button>
                     </DialogActions>
                 </Dialog>
-
             </div>
-            <div className="flex">
-            <div className="section">
-                <h1>All Items</h1>
-                {loading ? <div className="loading">Loading...</div> : (
-                    <DataGrid
-                        rows={items}
-                        columns={columnsButton}
-                        className="text-black dark:text-white h-auto"
-                        slotProps={{
-                            row: {
-                                className: "text-black dark:text-white"
-                            },
-                            cell: {
-                                className: "text-black dark:text-white",
-                            },
-                            pagination: {
-                                className: "text-black dark:text-white",
-                            },
-                        }}
-                    />
-                )}
-            </div>
-            <div className="section">
-                <h1>Cart Contents</h1>
-                {loading ? <div className="loading">Loading...</div> : (
-                    <>
-                        <div className="flex">
-                            <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
-                            <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
+            <div className="flex-row">
+                <div className="section">
+                    <div>
+                        <div className="Item">
+                            {items != null && loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    {items.length > 0 ?
+                                        <>
+                                            <div className="login-top">
+                                                <h1>{("All items")}
+                                                </h1>
+                                            </div>
+                                            <DataGrid
+                                                rows={items}
+                                                columns={columnsButton}
+                                                className="text-black dark:text-white h-auto w-full"
+                                                slotProps={{
+                                                    row: {
+                                                        className: "text-black dark:text-white"
+                                                    },
+                                                    cell: {
+                                                        className: "text-black dark:text-white",
+                                                    },
+                                                    pagination: {
+                                                        className: "text-black dark:text-white",
+                                                    },
+                                                }}
+                                            />
+                                        </>
+                                        : null}
+                                </>
+                            )}
                         </div>
-                        <DataGrid
-                            rows={cart}
-                            columns={columns}
-                            className="text-black dark:text-white h-auto"
-                            slotProps={{
-                                row: {
-                                    className: "text-black dark:text-white"
-                                },
-                                cell: {
-                                    className: "text-black dark:text-white",
-                                },
-                                pagination: {
-                                    className: "text-black dark:text-white",
-                                },
-                            }}
-                        />
-                    </>
-                )}
-            </div>
+                    </div>
+                </div>
             </div>
         </div>
     )

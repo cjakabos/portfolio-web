@@ -53,7 +53,7 @@ const options = [
 
 export default function Index(this: any) {
 
-    const [availableEmployees, setAvailableEmployees] = useState([initialEmployee]);
+    const [availableEmployees, setAvailableEmployees] = useState([]);
     const [allPets, setAllPets] = useState([initialPet]);
     const [schedules, setSchedules] = useState([initialSchedule]);
     const [loading, setLoading] = useState(false)
@@ -246,7 +246,7 @@ export default function Index(this: any) {
 
     return (
         <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
-            <div className="">
+            <div>
 
                 <Button variant="outlined" onClick={() => setModal1Open(true)}>
                     Owners
@@ -301,7 +301,7 @@ export default function Index(this: any) {
                 </Dialog>
             </div>
         <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
-                    <div className="flex-container flex">
+                    <div className="flex">
                         <div className="section2">
                         <h1>{("Availability")}</h1>
                         <form onSubmit={handleAvailabilityFetch}>
@@ -331,33 +331,36 @@ export default function Index(this: any) {
                         </form>
                     </div>
                     <div className="section">
+                        Available employees
                         <div className="Availability2">
                             {loading ? (
                                 <div>Loading...</div>
                             ) : (
                                 <>
-                                    <DataGrid
-                                        rows={availableEmployees}
-                                        columns={columnsAvailability}
-                                        className="text-black dark:text-white"
-                                        slotProps={{
-                                            row: {
-                                                className: "text-black dark:text-white"
-                                            },
-                                            cell: {
-                                                className: "text-black dark:text-white",
-                                            },
-                                            pagination: {
-                                                className: "text-black dark:text-white",
-                                            },
-                                        }}
-                                    />
+                                    {availableEmployees.length > 0 ?
+                                        <DataGrid
+                                            rows={availableEmployees}
+                                            columns={columnsAvailability}
+                                            className="text-black dark:text-white"
+                                            slotProps={{
+                                                row: {
+                                                    className: "text-black dark:text-white"
+                                                },
+                                                cell: {
+                                                    className: "text-black dark:text-white",
+                                                },
+                                                pagination: {
+                                                    className: "text-black dark:text-white",
+                                                },
+                                            }}
+                                        />
+                                        : null}
                                 </>
                             )}
                         </div>
                     </div>
                     </div>
-                    <div className="section">
+                    <div>
                         <h1>{("All planned schedules")}</h1>
                         <div className="Schedule">
                             {loading ? (

@@ -9,6 +9,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { Input } from "@mui/material";
 
 
 const initialValues = {
@@ -207,15 +208,6 @@ export default function Index(this: any) {
                 //console.log("AXIOS ERROR: ", error.response);
             })
     }
-    const [updates, setUpdates] = useState(initialTicketValues);
-    const change = (event: { target: { name: any; value: any; }; }) => {
-        console.log(updates);
-        const {name, value} = event.target;
-        setUpdates({
-            ...updates,
-            [name]: value,
-        });
-    };
 
     console.log('tickets', tickets)
 
@@ -274,43 +266,46 @@ export default function Index(this: any) {
                     <Dialog
                         open={isTicketOpen}
                         onClose={() => setTicketIsOpen(false)}
+                        className="dialog"
                     >
-                        <DialogTitle>Jira Issue Creator</DialogTitle>
-                        <DialogContent>
-                            <DialogContentText>
-                                Create a Jira ticket by providing title (summary) and description.
+                        <DialogTitle className="dialog">Update a Jira ticket</DialogTitle>
+                        <DialogContent className="dialog">
+                            <DialogContentText className="dialog">
+                                Update a Jira ticket by providing title (summary) and description.
                             </DialogContentText>
-                            <TextField
+                            <Input
                                 defaultValue={selectedTicket.fields.summary}
                                 autoFocus
                                 margin="dense"
                                 id="summary"
                                 name="summary"
-                                label="Summary"
+                                placeholder="Summary"
                                 type="text"
                                 fullWidth
                                 variant="standard"
-                                onChange={change}
+                                onChange={handleChange}
                                 required
+                                className="dialog"
                             />
-                            <TextField
+                            <Input
                                 defaultValue={selectedTicket.fields.description}
                                 autoFocus
                                 margin="dense"
                                 id="description"
                                 name="description"
-                                label="Description"
+                                placeholder="Description"
                                 type="text"
                                 fullWidth
                                 variant="standard"
-                                onChange={change}
+                                onChange={handleChange}
                                 required
+                                className="dialog"
                             />
                         </DialogContent>
-                        <DialogActions>
+                        <DialogActions className="dialog">
                             <Button onClick={() => setTicketIsOpen(false)}>Cancel</Button>
                             <Button type="submit" onClick={() => {
-                                updateTicket(updates, selectedTicket);
+                                updateTicket(values, selectedTicket);
                                 setTicketIsOpen(false)
                                 }}>Submit</Button>
                         </DialogActions>

@@ -27,14 +27,14 @@ const Popup = ({ message }) => {
   }, [message]);
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>Message</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
+    <Dialog open={open} onClose={handleClose} className="dialog">
+      <DialogTitle className="dialog">Message</DialogTitle>
+      <DialogContent className="dialog">
+        <DialogContentText className="dialog">
           {message}
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
+      <DialogActions className="dialog">
         <Button onClick={handleClose} color="primary">
           Close
         </Button>

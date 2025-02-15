@@ -10,6 +10,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import { Input } from "@mui/material";
 
 const initialFileValues = {
     id: 0,
@@ -131,7 +132,7 @@ export default function Index(this: any) {
         console.log("note: ", note);
         setSelectedNote(note)
         setModal3Open(!isModal3Open)
-        setUpdates(note)
+        setValues(note)
     }
 
     function deleteNote(noteKey: number) {
@@ -186,17 +187,6 @@ export default function Index(this: any) {
             })
     }
 
-    const [updates, setUpdates] = useState(initialNoteValues);
-    const change = (event: { target: { name: any; value: any; }; }) => {
-        const {name, value} = event.target;
-        setUpdates({
-            ...updates,
-            [name]: value,
-        });
-        console.log(updates);
-    };
-
-
     const columnsNotes: GridColDef[] = [
         { field: "id", headerName: "ID", width: 50 },
         { field: "title", headerName: "Title", width: 105 },
@@ -217,7 +207,7 @@ export default function Index(this: any) {
             sortable: false,
             width: 100,
             renderCell: ({row}) =>
-                <button className="clearbutton" onClick={() => deleteNote(row)}>
+                <button className="clearbutton" onClick={() => deleteNote(row.id)}>
                     Delete
                 </button>
         },
@@ -369,7 +359,7 @@ export default function Index(this: any) {
             sortable: false,
             width: 100,
             renderCell: ({row}) =>
-                <button className="clearbutton" onClick={() => deleteFile(row)}>
+                <button className="clearbutton" onClick={() => deleteFile(row.id)}>
                     Delete
                 </button>
         },
@@ -393,40 +383,43 @@ export default function Index(this: any) {
                 <Dialog
                     open={isModal1Open}
                     onClose={() => setModal1Open(false)}
+                    className="dialog"
                 >
-                    <DialogTitle>Note Creator</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
+                    <DialogTitle className="dialog">Note Creator</DialogTitle>
+                    <DialogContent className="dialog">
+                        <DialogContentText className="dialog">
                             Create a Note by providing title (summary) and description.
                         </DialogContentText>
-                        <TextField
+                        <Input
                             value={values.title}
                             autoFocus
                             margin="dense"
                             id="title"
                             name="title"
-                            label="Title"
+                            placeholder="Title"
                             type="text"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
                         />
-                        <TextField
+                        <Input
                             value={values.description}
                             autoFocus
                             margin="dense"
                             id="description"
                             name="description"
-                            label="Description"
+                            placeholder="Description"
                             type="text"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
                         />
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions className="dialog">
                         <Button onClick={() => setModal1Open(false)}>Cancel</Button>
                         <Button type="submit" onClick={handleSubmit}>Submit</Button>
                     </DialogActions>
@@ -434,43 +427,46 @@ export default function Index(this: any) {
                 <Dialog
                     open={isModal3Open}
                     onClose={() => setModal3Open(false)}
+                    className="dialog"
                 >
-                    <DialogTitle>Note Creator</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Update a Note
+                    <DialogTitle className="dialog">Update a Note</DialogTitle>
+                    <DialogContent className="dialog">
+                        <DialogContentText className="dialog">
+                            Update a Note with title and description
                         </DialogContentText>
-                        <TextField
+                        <Input
                             defaultValue={selectedNote.title}
                             autoFocus
                             margin="dense"
-                            id="summary"
-                            name="summary"
-                            label="Summary"
+                            id="title"
+                            name="title"
+                            placeholder="Title"
                             type="text"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
                         />
-                        <TextField
+                        <Input
                             defaultValue={selectedNote.description}
                             autoFocus
                             margin="dense"
                             id="description"
                             name="description"
-                            label="Description"
+                            placeholder="Description"
                             type="text"
                             fullWidth
                             variant="standard"
                             onChange={handleChange}
                             required
+                            className="dialog"
                         />
                     </DialogContent>
-                    <DialogActions>
+                    <DialogActions className="dialog">
                         <Button onClick={() => setModal3Open(false)}>Cancel</Button>
                         <Button type="submit" onClick={() => {
-                            updateNote(updates, selectedNote);
+                            updateNote(values, selectedNote);
                             setModal3Open(false)
                         }}>Submit</Button>
                     </DialogActions>
@@ -481,7 +477,7 @@ export default function Index(this: any) {
                     maxWidth="xl"
                     className="dialog"
                 >
-                    <DialogTitle className="dialog">Pets</DialogTitle>
+                    <DialogTitle className="dialog">Files upload</DialogTitle>
                     <DialogContent className="dialog">
                         <input
                             type="file"
@@ -494,70 +490,75 @@ export default function Index(this: any) {
                     </DialogActions>
                 </Dialog>
             </div>
-            <div className="flex">
+            <div className="flex-row">
             <div className="section">
                 <div className="login-top">
-                    <h1>{("All files")}
+                    <h1>{("All notes")}
                     </h1>
                 </div>
-                <div className="Files">
-                    {files != null && loading ? (
-                        <div>Loading...</div>
-                    ) : (
-                        <>
-                            <DataGrid
-                                rows={files}
-                                columns={columnsFiles}
-                                className="text-black dark:text-white h-auto"
-                                slotProps={{
-                                    row: {
-                                        className: "text-black dark:text-white"
-                                    },
-                                    cell: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                    pagination: {
-                                        className: "text-black dark:text-white",
-                                    },
-                                }}
-                            />
-                        </>
-                    )}
-                </div>
-            </div>
-            <div className="section">
                 <div>
-                    <div className="login-top">
-                        <h1>{("All notes")}
-                        </h1>
-                    </div>
-
                     <div className="Item">
                         {notes != null && loading ? (
                             <div>Loading...</div>
                         ) : (
                             <>
-                                <DataGrid
-                                    rows={notes}
-                                    columns={columnsNotes}
-                                    className="text-black dark:text-white h-auto"
-                                    slotProps={{
-                                        row: {
-                                            className: "text-black dark:text-white"
-                                        },
-                                        cell: {
-                                            className: "text-black dark:text-white",
-                                        },
-                                        pagination: {
-                                            className: "text-black dark:text-white",
-                                        },
-                                    }}
-                                />
+                                {notes.length > 0 ?
+                                    <>
+                                    <DataGrid
+                                        rows={notes}
+                                        columns={columnsNotes}
+                                        className="text-black dark:text-white h-auto"
+                                        slotProps={{
+                                            row: {
+                                                className: "text-black dark:text-white"
+                                            },
+                                            cell: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                            pagination: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                        }}
+                                    />
+                                    </>
+                                    : null}
                             </>
                         )}
                     </div>
                 </div>
             </div>
+                <div className="section">
+                    <div className="login-top">
+                        <h1>{("All files")}
+                        </h1>
+                    </div>
+                    <div className="Files">
+                        {files != null && loading ? (
+                            <div>Loading...</div>
+                        ) : (
+                            <>
+                                {files.length > 0 ?
+                                    <DataGrid
+                                        rows={files}
+                                        columns={columnsFiles}
+                                        className="text-black dark:text-white h-auto"
+                                        slotProps={{
+                                            row: {
+                                                className: "text-black dark:text-white"
+                                            },
+                                            cell: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                            pagination: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                        }}
+                                    />
+                                    : null}
+                            </>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     )

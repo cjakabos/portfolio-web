@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 
-const Input = ({ onSendMessage }) => {
+const Input = ({ onSendMessage, messages, connected }) => {
     const [text, setText] = useState("")
 
     let onChange = (e) => {
@@ -12,6 +12,11 @@ const Input = ({ onSendMessage }) => {
     let onSubmit = () => {
         setText("")
         onSendMessage(text);
+    }
+
+    // Make sure STOMP is connected and messages are loaded
+    if (connected == true && messages == 0) {
+        onSendMessage("This is an automatic message, the room was created.")
     }
 
     return (

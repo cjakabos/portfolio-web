@@ -30,6 +30,7 @@ export default function Chat() {
 
     const [messages, setMessages] = useState([])
     const [connectedUsers, setConnectedUsers] = useState([]);
+    const [connected, setConnected] = useState(false);
     const [showErrorPopup, setShowErrorPopup] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [enteredRoom, setEnteredRoom] = useState(false);
@@ -58,6 +59,7 @@ export default function Chat() {
                 setPopupKey((prevKey) => prevKey + 1);
             }
         });
+        setConnected(true)
     }
 
     let onDisconnected = () => {
@@ -102,7 +104,7 @@ export default function Chat() {
         client.debug = () => { };
         client.connect({}, () => onConnected(username, roomCode), onError);
         client.disconnect = onDisconnected;
-        console.log(`Sucribe /topic/group/${roomCode}`);
+        console.log(`Subscribe /topic/group/${roomCode}`);
     }
 
     let sendNewUser = (username, roomCode) => {
@@ -166,7 +168,6 @@ export default function Chat() {
         console.log('connectedUsers', connectedUsers);
     }, [connectedUsers]);
 
-
     if (effectRan.current) {
         return (
             <div className="Chat">
@@ -177,7 +178,7 @@ export default function Chat() {
                 {!!username && enteredRoom ? (
                     <>
                         <Messages messages={messages} currentUser={username}/>
-                        <Input onSendMessage={onSendMessage}/>
+                        <Input onSendMessage={onSendMessage} messages={messages.length} connected={connected}/>
                     </>
                 ) : null}
 
