@@ -126,7 +126,7 @@ const Room = ({ onCreateRoom, onEnterRoom, userRooms }) => {
         )}
       </Box>
       <br/>
-          {userRooms.length > 0 ?
+          {userRooms?.length > 0 ?
               <>
               <h2>Your Rooms:</h2>
               <DataGrid

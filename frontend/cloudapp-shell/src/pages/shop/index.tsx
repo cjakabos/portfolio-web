@@ -334,7 +334,6 @@ export default function Index(this: any) {
                             placeholder="Name"
                             type="text"
                             fullWidth
-                            variant="standard"
                             onChange={handleChange}
                             required
                             className="dialog"
@@ -349,7 +348,6 @@ export default function Index(this: any) {
                             placeholder="Price"
                             type="number"
                             fullWidth
-                            variant="standard"
                             onChange={handleChange}
                             required
                             className="dialog"
@@ -363,7 +361,6 @@ export default function Index(this: any) {
                             placeholder="Description"
                             type="text"
                             fullWidth
-                            variant="standard"
                             onChange={handleChange}
                             required
                             className="dialog"

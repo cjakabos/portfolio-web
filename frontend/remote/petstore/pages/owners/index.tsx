@@ -107,7 +107,6 @@ export default function Index(this: any) {
         axios.post('http://localhost:80/petstore/pet', postData, axiosConfig)
             .then((response) => {
                 console.log("RESPONSE RECEIVED: ", postData);
-                getPets()
             })
             .catch((error) => {
                 console.log("AXIOS ERROR: ", postData);

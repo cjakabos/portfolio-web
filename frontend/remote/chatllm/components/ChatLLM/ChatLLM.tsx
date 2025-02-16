@@ -32,6 +32,7 @@ export default function ChatLLM() {
 	}, [messages])
 
 	return (
+		<div className="flex items-center justify-center w-[80%] m-auto py-10 gap-10">
 		<div className="Chat">
 				<div ref={scrollAreaRef} className="messages-list">
 					{messages.length <= 1 ? (
@@ -73,13 +74,14 @@ export default function ChatLLM() {
 						style={{ height: "40px", width: "600px", marginRight: '10px'}}
 					/>
 
-					<Button
+					<button
 						onClick={handleSubmit}
-						style={{ width: "30px", marginTop: '15px', padding: '10px', color: 'white', backgroundColor:'green' }}>
+						className="chatButton">
 						Send
-					</Button>
+					</button>
 				</div>
 			</div>
+		</div>
 		</div>
 	)
 }

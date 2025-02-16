@@ -118,6 +118,18 @@
   margin-top: 0;
 }
 
+.layoutLinksFormat {
+  @apply order-1 flex lg:order-none w-[100px]
+}
+
+.layoutLinksButtonFormat {
+  @apply ml-10 hidden opacity-70 hover:opacity-100 lg:block
+}
+
+.layoutLinksButtonOnlyFormat {
+  @apply ml-4 self-center hover:text-teal-500 lg:hidden
+}
+
 input[type="text"], input[type="number"], input[type="phone"], select, input[type="submit"], input[type="password"], button {
   width: 300px;
   padding: 8px;
@@ -200,11 +212,26 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   display: inline-block;
 }
 
+.chatButton {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  justify-content: space-between;
+  margin-top: 17px;
+}
+
+
 .Chat {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   height: 90vh;
+  width: 800px;
 }
 
 .Chat-header {
@@ -277,9 +304,9 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 
 .message-input {
   display: flex;
-  width: 100%;
+  width: 500px;
   justify-content: space-between;
-  max-width: 900px;
+  max-width: 500px;
   margin: 0 auto 60px;
   margin-bottom: 38px;
 }
@@ -290,6 +317,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   font-size: 16px;
   border-radius: 0px;
   flex-grow: 1;
+  width: 300px;
 }
 
 .inputFieldContainer {
@@ -297,15 +325,15 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 }
 
 .inputFieldFormat {
-  @apply italic text-gray-500 bg-green-300 p-2 rounded-md mb-2
+  @apply italic text-black bg-green-300 p-2 rounded-md mb-2
 }
 
 .outputFieldFormat {
-  @apply italic text-gray-500 bg-gray-300 p-2 rounded-md mb-2
+  @apply italic text-black bg-gray-300 p-2 rounded-md mb-2
 }
 
 .outputFieldThinkingFormat {
-  @apply italic text-gray-500 bg-blue-300 p-2 rounded-md mb-2
+  @apply italic text-black bg-blue-300 p-2 rounded-md mb-2
 }
 
 .Message-content>.timestamp {

@@ -33,11 +33,11 @@ const Input = ({ onSendMessage, messages, connected }) => {
                 style={{ height: "40px", width: "600px", marginRight: '10px'}}
             />
 
-            <Button
+            <button
                 onClick={onSubmit}
-                style={{ width: "30px", marginTop: '15px', padding: '10px', color: 'white', backgroundColor:'green' }}>
+                className="chatButton">
                 Send
-            </Button>
+            </button>
         </div>
     );
 }

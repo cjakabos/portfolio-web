@@ -26,7 +26,7 @@ const SwitchTheme: React.FC<SwitchThemeProps> = ({ ...props }) => {
   }, [theme]);
 
   return (
-      <div className="order-1 flex lg:order-none w-[100px]">
+      <div className="layoutLinksFormat">
         <button className="ml-10 self-center  opacity-70 hover:opacity-100 lg:block">
             <LightModeIcon
                 id="moonStars"

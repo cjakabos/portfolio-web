@@ -7,7 +7,7 @@ const ChatLLM = dynamic(() => import("../components/ChatLLM/ChatLLM"), {
 
 const Index = () => {
     return (
-        <section className="flex items-center justify-center w-[80%] m-auto py-10 gap-10">
+        <section className="">
             <ChatLLM />
         </section>
     );
