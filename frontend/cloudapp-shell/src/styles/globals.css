@@ -292,6 +292,22 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   flex-grow: 1;
 }
 
+.inputFieldContainer {
+  @apply flex justify-end
+}
+
+.inputFieldFormat {
+  @apply italic text-gray-500 bg-green-300 p-2 rounded-md mb-2
+}
+
+.outputFieldFormat {
+  @apply italic text-gray-500 bg-gray-300 p-2 rounded-md mb-2
+}
+
+.outputFieldThinkingFormat {
+  @apply italic text-gray-500 bg-blue-300 p-2 rounded-md mb-2
+}
+
 .Message-content>.timestamp {
   font-size: 12px;
   color: gray;

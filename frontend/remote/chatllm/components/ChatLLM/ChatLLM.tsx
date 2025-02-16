@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import {useState, useRef, useEffect, useMemo} from "react"
 import { useChat } from 'ai/react'
-import Markdown from "react-markdown";
+import ChatMessage from "./ChatMessage";
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 export default function ChatLLM() {
 	const [selectedOption, setSelectedOption] = useState("")
@@ -33,7 +35,7 @@ export default function ChatLLM() {
 		<div className="Chat">
 				<div ref={scrollAreaRef} className="messages-list">
 					{messages.length <= 1 ? (
-						<div className="flex flex-col items-center justify-left h-full text-left p-4">
+						<div className="flex flex-col items-center h-full text-left p-4">
 							<div className="w-16 h-16 mb-4 text-primary" />
 							<h1 className="text-2xl font-bold mb-2">Welcome to Local AI Chatbot - For full privacy</h1>
 							<p className="text-muted-foreground mb-4">
@@ -41,43 +43,42 @@ export default function ChatLLM() {
 							</p>
 						</div>
 					) : (
-						<div className="flex flex-col gap-4 p-4">
-								{messages.map((message, index) => (
-									message.role !== 'system' && (
-										<div
-											key={message.id}
-											className={`flex ${
-												message.role === "user" ? "justify-end" : "justify-start"
-											}`}
-										>
-											<div
-												className={`rounded-lg p-4 max-w-[80%] ${
-													message.role === "user"
-														? "bg-primary text-primary-foreground"
-														: "bg-muted"
-												}`}
-											>
-												<Markdown>{message.content}</Markdown>
-											</div>
-										</div>
-									)
-								))}
-						</div>
+						<>
+							{messages.map((message, index) => (
+								<ChatMessage
+									key={message.id || index}
+									message={message}
+									isLast={index === messages.length - 1}
+								/>
+							))}
+						</>
 					)}
 			</div>
 			<div className="border-t">
-				<form onSubmit={handleSubmit} className="flex gap-2 p-4 mb-10">
-					<input
-						type="text"
-						value={input}
+				<div className="message-input text-black dark:text-white">
+					<TextField
+						className="inputField text-black dark:text-white"
+						label="Type your message here..."
+						placeholder="Enter your message and press ENTER"
 						onChange={handleInputChange}
-						placeholder="Type your message..."
-						className="flex-grow"
+						margin="normal"
+						value={input}
+						onKeyPress={event => {
+							if (event.key === 'Enter') {
+								aiHandleSubmit();
+							}
+						}}
+						inputProps={{ style: { color: 'blue' } }}
+						InputLabelProps={{ style: { color: 'black' } }}
+						style={{ height: "40px", width: "600px", marginRight: '10px'}}
 					/>
-					<button className="submitbutton" type="submit">
-						Send message
-					</button>
-				</form>
+
+					<Button
+						onClick={handleSubmit}
+						style={{ width: "30px", marginTop: '15px', padding: '10px', color: 'white', backgroundColor:'green' }}>
+						Send
+					</Button>
+				</div>
 			</div>
 		</div>
 	)

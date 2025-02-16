@@ -39,7 +39,7 @@ export default function Chat() {
     const [userRooms, setUserRooms] = useState([]);
 
 
-    let onConnected = (username, roomCode) => {
+    let onConnected = (username, roomCode, createRoom?) => {
         console.log("Connected!!")
 
         client.subscribe(`/user/queue/load-history`, (message) => {
@@ -51,6 +51,14 @@ export default function Chat() {
         });
 
         sendNewUser(username, roomCode);
+
+        if (createRoom) {
+            const msg = {
+                sender: username,
+                content: 'This is an automatic message, the room was created.',
+            };
+            client.send(`/app/sendMessage/${roomCode}`, JSON.stringify(msg));
+        }
 
         client.subscribe(`/topic/newUser/${roomCode}`, (message) => {
             const msg = JSON.parse(message.body);
@@ -70,6 +78,7 @@ export default function Chat() {
         if (msg.content === 'newUser') {
             // @ts-ignore
             setConnectedUsers((users) => [...users, msg.sender]);
+            console.log("this is a new user", msg.content)
         } else {
             setMessages((messages) => [...messages, msg]);
         }
@@ -98,11 +107,16 @@ export default function Chat() {
         }
     }
 
-    let connectSocket = (roomCode) => {
+    let connectSocket = (roomCode, createRoom?) => {
         const socket = new SockJS(SOCKET_URL);
         client = Stomp.over(socket);
         client.debug = () => { };
-        client.connect({}, () => onConnected(username, roomCode), onError);
+        if (!createRoom) {
+            client.connect({}, () => onConnected(username, roomCode), onError);
+        } else {
+            client.connect({}, () => onConnected(username, roomCode, createRoom), onError);
+        }
+
         client.disconnect = onDisconnected;
         console.log(`Subscribe /topic/group/${roomCode}`);
     }
@@ -127,7 +141,7 @@ export default function Chat() {
             setShowErrorPopup(true);
             setEnteredRoom(true);
             setRoomCode(res.data.data.code);
-            connectSocket(res.data.data.code);
+            connectSocket(res.data.data.code, "createRoom");
         });
         setShowErrorPopup(false);
     };

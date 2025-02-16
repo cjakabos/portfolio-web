@@ -10,9 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
     "@module-federation/nextjs-mf": "^8.3.16",
     "@module-federation/enhanced": "^0.1.15",
     "@module-federation/runtime": "0.1.15",
+    "@mui/material": "^5.15.5",
     "ai": "^4.1.28",
     "next": "^14.2.3",
     "ollama-ai-provider": "^1.2.0",

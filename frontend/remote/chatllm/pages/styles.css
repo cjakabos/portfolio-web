@@ -105,7 +105,6 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   flex-direction: column;
   justify-content: space-between;
   height: 90vh;
-  text-align: left;
 }
 
 .messages-list {
@@ -122,4 +121,29 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 .Messages-message {
   display: flex;
   margin-top: 10px;
+}
+
+.message-input {
+  display: flex;
+  width: 800px;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 0 auto 60px;
+  margin-bottom: 38px;
+}
+
+.inputFieldContainer {
+  @apply flex justify-end w-full
+}
+
+.inputFieldFormat {
+  @apply italic text-gray-500 bg-green-300 p-2 rounded-md mb-2
+}
+
+.outputFieldFormat {
+  @apply italic text-gray-500 bg-gray-300 p-2 rounded-md mb-2
+}
+
+.outputFieldThinkingFormat {
+  @apply italic text-gray-500 bg-blue-300 p-2 rounded-md mb-2
 }
