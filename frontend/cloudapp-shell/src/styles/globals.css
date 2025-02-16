@@ -102,7 +102,7 @@
 
 .section2 {
   flex: 1 1 100%;
-  max-width: 300px;
+  max-width: 200px;
   height: auto;
   margin: 10px;
   padding: 20px;
@@ -224,6 +224,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   border-radius: 5px;
   justify-content: space-between;
   margin-top: 17px;
+  width: 60px;
 }
 
 
@@ -304,7 +305,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 
 .message-input {
   display: flex;
-  width: 500px;
+  width: 600px;
   justify-content: space-between;
   max-width: 500px;
   margin: 0 auto 60px;
@@ -317,7 +318,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   font-size: 16px;
   border-radius: 0px;
   flex-grow: 1;
-  width: 300px;
+  width: 500px;
 }
 
 .inputFieldContainer {

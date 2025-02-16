@@ -199,18 +199,17 @@ export default function Index(this: any) {
     const columnsSchedules: GridColDef[] = [
         {field: "id", headerName: "ID", width: 30},
         {field: "employeeIds", headerName: "employeeIds", width: 105},
-        {field: "petIds", headerName: "petIds", width: 105},
-        {field: "date", headerName: "date", width: 105},
-        {field: "activities", headerName: "activities", width: 105},
+        {field: "petIds", headerName: "petIds"},
+        {field: "date", headerName: "date"},
+        {field: "activities", headerName: "activities"},
     ];
 
     const columnsAvailability: GridColDef[] = [
         {field: "id", headerName: "ID", width: 30},
-        {field: "name", headerName: "Name", width: 150},
+        {field: "name", headerName: "Name", width: 105},
         {
             field: "pet",
             headerName: "Pet",
-            width: 200,
             sortable: false,
             renderCell: ({row}) =>
                 <>
@@ -246,8 +245,7 @@ export default function Index(this: any) {
 
     return (
         <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
-            <div>
-
+            <div className="">
                 <Button variant="outlined" onClick={() => setModal1Open(true)}>
                     Owners
                 </Button>
@@ -300,77 +298,50 @@ export default function Index(this: any) {
                     </DialogActions>
                 </Dialog>
             </div>
-        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
-                    <div className="flex">
-                        <div className="section2">
-                        <h1>{("Availability")}</h1>
-                        <form onSubmit={handleAvailabilityFetch}>
-                            <label>
-                                Skills
-                                <br/>
-                                <select
-                                    onChange={handleMultiSelect}
-                                    id="dropdown"
-                                    multiple
-                                    size={options.length}
-                                >
-                                    {options.map((option, index) => (
-                                        <option key={index} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <DatePicker
-                                dateFormat="yyyy-MM-dd"
-                                selected={date}
-                                onChange={date => setDate((date || new Date()))}
-                            />
+            <div className="">
+                <div className="flex-row">
+                    <h1>{("Availability")}</h1>
+                    Pick day:
+                    <DatePicker
+                        dateFormat="yyyy-MM-dd"
+                        selected={date}
+                        onChange={date => setDate((date || new Date()))}
+                    />
+                    <form onSubmit={handleAvailabilityFetch}>
+                        <br/>
+                        <label>
+                            Pick skills:
                             <br/>
-                            <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
-                        </form>
-                    </div>
+                            <select
+                                onChange={handleMultiSelect}
+                                id="dropdown"
+                                multiple
+                                size={options.length}
+                            >
+                                {options.map((option, index) => (
+                                    <option key={index} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+
+                    </form>
+                    <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
+                </div>
+                <div className="flex-row">
                     <div className="section">
-                        Available employees
-                        <div className="Availability2">
-                            {loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    {availableEmployees.length > 0 ?
-                                        <DataGrid
-                                            rows={availableEmployees}
-                                            columns={columnsAvailability}
-                                            className="text-black dark:text-white"
-                                            slotProps={{
-                                                row: {
-                                                    className: "text-black dark:text-white"
-                                                },
-                                                cell: {
-                                                    className: "text-black dark:text-white",
-                                                },
-                                                pagination: {
-                                                    className: "text-black dark:text-white",
-                                                },
-                                            }}
-                                        />
-                                        : null}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                    </div>
-                    <div>
-                        <h1>{("All planned schedules")}</h1>
+                        <h1>{("Available employees")}</h1>
                         <div className="Schedule">
                             {loading ? (
                                 <div>Loading...</div>
                             ) : (
                                 <>
                                     <DataGrid
-                                        rows={schedules}
-                                        columns={columnsSchedules}
-                                        className="text-black dark:text-white h-auto"
+                                        rows={availableEmployees}
+                                        columns={columnsAvailability}
+                                        className="text-black dark:text-white h-auto w-auto"
                                         slotProps={{
                                             row: {
                                                 className: "text-black dark:text-white"
@@ -387,7 +358,38 @@ export default function Index(this: any) {
                             )}
                         </div>
                     </div>
-        </div>
+                </div>
+
+                <div className="flex-row">
+                    <div className="section">
+                        <h1>{("All planned schedules")}</h1>
+                        <div className="Schedule">
+                            {loading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                <>
+                                    <DataGrid
+                                        rows={schedules}
+                                        columns={columnsSchedules}
+                                        className="text-black dark:text-white h-auto w-auto"
+                                        slotProps={{
+                                            row: {
+                                                className: "text-black dark:text-white"
+                                            },
+                                            cell: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                            pagination: {
+                                                className: "text-black dark:text-white",
+                                            },
+                                        }}
+                                    />
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

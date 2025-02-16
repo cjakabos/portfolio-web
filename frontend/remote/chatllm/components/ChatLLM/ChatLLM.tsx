@@ -71,7 +71,6 @@ export default function ChatLLM() {
 						}}
 						inputProps={{ style: { color: 'blue' } }}
 						InputLabelProps={{ style: { color: 'black' } }}
-						style={{ height: "40px", width: "600px", marginRight: '10px'}}
 					/>
 
 					<button

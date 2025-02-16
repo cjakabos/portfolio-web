@@ -112,6 +112,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   border-radius: 5px;
   justify-content: space-between;
   margin-top: 17px;
+  width: 60px;
 }
 
 .Chat {
@@ -139,7 +140,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 
 .message-input {
   display: flex;
-  width: 500px;
+  width: 600px;
   justify-content: space-between;
   max-width: 500px;
   margin: 0 auto 60px;
@@ -147,12 +148,12 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 }
 
 .inputField {
-  flex: auto;
   background-color: white;
   padding: 0px;
-  font-size: 2px;
+  font-size: 16px;
   border-radius: 0px;
   flex-grow: 1;
+  width: 500px;
 }
 
 .inputFieldContainer {

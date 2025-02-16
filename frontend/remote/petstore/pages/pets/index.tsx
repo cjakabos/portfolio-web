@@ -57,6 +57,8 @@ export default function Index(this: any) {
         {field: "id", headerName: "ID", width: 30},
         {field: "name", headerName: "Name", width: 105},
         {field: "ownerId", headerName: "ownerId", width: 105},
+        {field: "type", headerName: "type", width: 105},
+        {field: "notes", headerName: "notes", width: 105},
     ];
 
     return (

@@ -5,7 +5,7 @@ export default function Document() {
     return (
         <Html>
             <Head/>
-            <title>This is the title</title>
+            <title>CloudApp</title>
             <meta
                 name="description"
                 content=" Main content area - Using Next.js + Typescript + TailwindCSS"
