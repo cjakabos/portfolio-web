@@ -32,7 +32,7 @@ export default function ChatLLM() {
 	}, [messages])
 
 	return (
-		<div className="flex items-center justify-center w-[80%] m-auto py-10 gap-10">
+		<div className="flex items-center justify-center h-[90%] w-[70%] m-auto py-10 gap-10">
 		<div className="Chat">
 				<div ref={scrollAreaRef} className="messages-list">
 					{messages.length <= 1 ? (

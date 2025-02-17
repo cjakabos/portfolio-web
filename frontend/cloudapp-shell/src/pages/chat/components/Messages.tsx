@@ -22,7 +22,7 @@ const Messages = ({ messages, currentUser }) => {
     let renderMessage = (message) => {
         const { sender, content, timestamp } = message;
         const messageFromMe = currentUser === message.sender;
-        const className = messageFromMe ? "Messages-message currentUser" : "Messages-message";
+        const className = messageFromMe ? "Messages-message currentUser" : "Messages-message otherUser";
 
         // Convert the timestamp to a human-readable format
         const timestampString = new Date(timestamp).toLocaleString();

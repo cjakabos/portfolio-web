@@ -325,10 +325,8 @@ export default function Index(this: any) {
                                 ))}
                             </select>
                         </label>
-
-
+                        <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
                     </form>
-                    <input className="submitbutton" id="fetchButton" type="submit" value="Get availability"/>
                 </div>
                 <div className="flex-row">
                     <div className="section">

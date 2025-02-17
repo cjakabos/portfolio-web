@@ -16,8 +16,8 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
 - **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
 
-Example view with ML customer segmentation pipeline and other tabs:
-![](examples/11.png)
+Example view:
+![](examples/2.png)
 
 
 ## Quick Start
@@ -56,7 +56,7 @@ Open http://localhost:5001 to view it in your browser. For development mode chec
 
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
-![](examples/1.png)
+![](examples/1a.png)
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-shop-interface-for-cloudapp-web-store-rest-api-), and see the current front-end of the api integrations from the services above:
 
@@ -140,7 +140,6 @@ The module is built as Micro Frontend:
 
 
 ![](examples/9.png)
-![](examples/9a.png)
 
 3. Optionally one can also use command line:
 ```bash
@@ -162,6 +161,7 @@ The user is able to:
 
 - Create/list/update/delete Jira ticket  
 1. Left side main CloudApp-Shell as App Shell using the Jira micro frontend:  
+   http://localhost:5001/jira
    http://localhost:5001/jira
 2. Right side module federated Jira micro frontend:   
    http://localhost:5003

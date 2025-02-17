@@ -303,12 +303,16 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   background-color: rgb(143, 255, 152);
 }
 
+.otherUser>.Message-content .text {
+  background-color: rgba(78, 214, 255, 0.71);
+}
+
 .message-input {
   display: flex;
   width: 600px;
   justify-content: space-between;
   max-width: 500px;
-  margin: 0 auto 60px;
+  margin: 100px;
   margin-bottom: 38px;
 }
 
