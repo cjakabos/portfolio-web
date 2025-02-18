@@ -12,7 +12,11 @@
   ```bash
   docker-compose -f docker-compose-infrastructure.yml up -d
   ```
-Note: configure Ollama model to use with LLM_MODEL, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
+  Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
+  ```bash
+  docker-compose -f docker-compose-app.yml up -d
+  ```
+Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastructure.yml, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama
@@ -24,10 +28,6 @@ Note: configure Ollama model to use with LLM_MODEL, in this example it was deeps
     ports:
       - 11434:11434
 ```
-  Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
-  ```bash
-  docker-compose -f docker-compose-app.yml up -d
-  ```
 
 If everything is working as expected, you should be able to:
 - Open [http://localhost:5001](http://localhost:5001) for the main Cludapp app-shell to view micro-frontends.
@@ -52,7 +52,9 @@ The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
-![](../../examples/1.png)
+<p align="center">
+  <img src="../../examples/1a.png" width="210px" height="150px" />
+</p>
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
 
@@ -116,7 +118,7 @@ Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 ## 5. Private Local LLM AI
 Chat  interface for communicating with
 a locally hosted Ollama model, the user is able to:
-- Chat with a local LLM
+- Chat with a local LLM (and see model reasoning process, in models where it is applicable - can be toggled)
 
 The module is built as Micro Frontend:
 1. Left side main CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
@@ -125,7 +127,6 @@ The module is built as Micro Frontend:
    http://localhost:5333
 
 ![](../../examples/9.png)
-![](../../examples/9a.png)
 
 3. Optionally one can also use command line:
 ```bash

@@ -16,14 +16,14 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
 - **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
 
-Example view:
+Example view with regular and compact view:
 ![](examples/2.png)
 
 
 ## Quick Start
 
 ### Setup with Docker
-Note: minimum 16 GB memory is needed to make sure all services can run.
+Note: minimum 16 GB RAM and 35 GB disk space is needed to make sure all services can run.
 ```bash
 brew install docker
 brew install docker-compose
@@ -33,7 +33,11 @@ Setup and start databases and esential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```
-Note: configure Ollama model to use with LLM_MODEL, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
+Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
+```bash
+docker-compose -f docker-compose-app.yml up -d
+```
+Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastructure.yml, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama
@@ -46,17 +50,14 @@ Note: configure Ollama model to use with LLM_MODEL, in this example it was deeps
       - 11434:11434
 ```
 
-Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
-```bash
-docker-compose -f docker-compose-app.yml up -d
-```
-
 Runs the app in the production mode.\
 Open http://localhost:5001 to view it in your browser. For development mode check [instructions here](./frontend/cloudapp-shell/README.md#option-2-dev-mode).
 
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
-![](examples/1a.png)
+<p align="center">
+  <img src="./examples/1a.png" width="210px" height="150px" />
+</p>
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-shop-interface-for-cloudapp-web-store-rest-api-), and see the current front-end of the api integrations from the services above:
 
@@ -65,7 +66,6 @@ And you should be able to register and log in, [after starting the backend servi
 
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
 - Add new customer data point to the database.
-- Sample reference database with user specified samples.
 - Sample reference database with predefined 10-20-50-100-200 amount of samples.  
 
 
@@ -129,7 +129,7 @@ Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 ## 5. Private Local LLM AI
 Chat  interface for communicating with
 a locally hosted Ollama model, the user is able to:
-- Chat with a local LLM
+- Chat with a local LLM (and see model reasoning process, in models where it is applicable - can be toggled)
 
 The module is built as Micro Frontend:
 1. Left side main CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
