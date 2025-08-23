@@ -76,8 +76,8 @@ export default function Index(this: any) {
 
     function getTickets() {
         const postData = {
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/search?jql=project=PW&maxResults=1000&fields=key,summary,description",
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/search?jql=project=" + process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY + "&maxResults=1000&fields=key,summary,description",
+            webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${(process.env.NEXT_PUBLIC_JIRA_API_TOKEN || process.env.NEXT_PUBLIC_JIRA_API_TOKEN_LOCAL)}`).toString("base64")
         };
 
         let axiosConfig = {
@@ -115,8 +115,8 @@ export default function Index(this: any) {
                     }
                 ]
             },
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/issue/" + reference.id,
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/issue/" + reference.id,
+            webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN}`).toString("base64")
         };
 
 
@@ -146,8 +146,8 @@ export default function Index(this: any) {
 
     function deleteTicket(ticketKey: string) {
         const postData = {
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/issue/" + ticketKey,
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/issue/" + ticketKey,
+            webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN}`).toString("base64")
         };
 
         let axiosConfig = {
@@ -179,7 +179,7 @@ export default function Index(this: any) {
             fields: {
                 project:
                     {
-                        key: "PW"
+                        key: process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY
                     },
                 summary: input.summary,
                 description: input.description,
@@ -187,8 +187,8 @@ export default function Index(this: any) {
                     name: "Task"
                 },
             },
-            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN || process.env.NEXT_PUBLIC_JIRA_DOMAIN_LOCAL) + "/rest/api/latest/issue",
-            webApiKey: "Basic " + (process.env.NEXT_PUBLIC_JIRA_KEY || process.env.NEXT_PUBLIC_JIRA_KEY_LOCAL)
+            webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/issue",
+            webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN}`).toString("base64")
         };
 
         let axiosConfig = {

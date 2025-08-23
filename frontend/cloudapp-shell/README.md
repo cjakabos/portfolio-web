@@ -178,11 +178,15 @@ Two options:
 1. Out of the box: edit this in docker-compose-app.yml:
 ```
 #NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
-#NEXT_PUBLIC_JIRA_KEY: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
+#NEXT_PUBLIC_JIRA_API_TOKEN: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
+#NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
+#NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
 ```
 2. Local run: Add .env file at frontend/remote/jira directory in this format:
 ```bash
-NEXT_PUBLIC_JIRA_DOMAIN_LOCAL = 'https://xxxx.atlassian.net'
-NEXT_PUBLIC_JIRA_KEY_LOCAL = Y3......2edd (note: no single quotation)
+NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
+NEXT_PUBLIC_JIRA_API_TOKEN = Y3......2edd (note: no single quotation)
+NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
+NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
 ```
 NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.

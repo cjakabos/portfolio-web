@@ -20,7 +20,7 @@ More details: [Web Proxy API](../../frontend/cloudapp/README.md#web-proxy)
   "fields": {
     "project":
     {
-      "key": "PW"
+      "key": "YOURJIRAPROJECTKEY"
     },
     "summary": "Example summary",
     "description": "Example description",

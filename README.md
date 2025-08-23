@@ -193,7 +193,9 @@ Comment out these in the [docker-compose-app.yml](./docker-compose-app.yml) file
 
 ```bash
 NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
-NEXT_PUBLIC_JIRA_KEY: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
+NEXT_PUBLIC_JIRA_API_TOKEN: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
+NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
+NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
 ```
 NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.
 
