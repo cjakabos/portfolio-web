@@ -1,7 +1,7 @@
 "use client"
 
 import {useState, useRef, useEffect, useMemo} from "react"
-import { useChat } from 'ai/react'
+import { useChat } from '@ai-sdk/react';
 import ChatMessage from "./ChatMessage";
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';

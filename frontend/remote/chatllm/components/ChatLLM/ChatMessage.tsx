@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from "react";
 import Markdown from "react-markdown";
-import { Message } from "ai/react";
+import type { Message } from "ai";
 
 export type ChatMessageProps = {
     message: Message;
