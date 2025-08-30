@@ -3,7 +3,6 @@
 import {useState, useRef, useEffect, useMemo} from "react"
 import { useChat } from '@ai-sdk/react';
 import ChatMessage from "./ChatMessage";
-import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 
 export default function ChatLLM() {
@@ -35,7 +34,7 @@ export default function ChatLLM() {
 		<div className="flex items-center justify-center h-[90%] w-[70%] m-auto py-10 gap-10">
 		<div className="Chat">
 				<div ref={scrollAreaRef} className="messages-list">
-					{messages.length <= 1 ? (
+					{messages.length <= 0 ? (
 						<div className="flex flex-col items-center h-full text-left p-4">
 							<div className="w-16 h-16 mb-4 text-primary" />
 							<h1 className="text-2xl font-bold mb-2">Welcome to Local AI Chatbot - For full privacy</h1>

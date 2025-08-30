@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +49,18 @@ public class WebController {
         response = httpClient.execute(request);
         HttpEntity entity = response.getEntity();
         String responseString = EntityUtils.toString(entity, "UTF-8");
-        JSONObject jsonResponse = new JSONObject(responseString);
 
-        return new ResponseEntity<>(jsonResponse.toMap(), HttpStatus.OK);
+        // Try to parse as JSONObject, if it fails, parse as JSONArray, as some Json APIs reply in different format
+        Object jsonResponse;
+        if (responseString.trim().startsWith("[")) {
+            JSONArray jsonArray = new JSONArray(responseString);
+            jsonResponse = jsonArray.toList();  // Convert JSONArray to List
+        } else {
+            JSONObject jsonObjectTemp = new JSONObject(responseString);
+            jsonResponse = jsonObjectTemp.toMap();  // Convert JSONObject to Map
+        }
+
+        return new ResponseEntity<>(jsonResponse, HttpStatus.OK);
     }
 
     @PostMapping("/post")

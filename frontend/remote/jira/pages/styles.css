@@ -99,3 +99,75 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   cursor: pointer;
   border-radius: 5px;
 }
+
+.chatButton {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    justify-content: space-between;
+    margin-top: 17px;
+    width: 60px;
+}
+
+.Chat {
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    width: 800px;
+}
+
+.messages-list {
+    padding: 20px 0;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    list-style: none;
+    padding-left: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.Messages-message {
+    display: flex;
+    margin-top: 10px;
+}
+
+.message-input {
+    display: flex;
+    width: 600px;
+    justify-content: space-between;
+    max-width: 500px;
+    margin: 100px;
+    margin-bottom: 38px;
+}
+
+.inputField {
+    background-color: white;
+    padding: 0px;
+    font-size: 16px;
+    border-radius: 0px;
+    flex-grow: 1;
+    width: 500px;
+}
+
+.inputFieldContainer {
+    @apply flex justify-end w-full
+}
+
+.inputFieldFormat {
+    @apply italic text-black bg-green-300 p-2 rounded-md mb-2
+}
+
+.outputFieldFormat {
+    @apply italic text-black bg-gray-300 p-2 rounded-md mb-2
+}
+
+.outputFieldThinkingFormat {
+    @apply italic text-black bg-blue-300 p-2 rounded-md mb-2
+}
