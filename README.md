@@ -29,7 +29,7 @@ brew install docker
 brew install docker-compose
 ```
 
-Setup and start databases and esential services with docker-compose:
+Setup and start databases and essential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```

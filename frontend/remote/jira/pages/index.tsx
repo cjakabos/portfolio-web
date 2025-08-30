@@ -63,7 +63,7 @@ export default function Index(this: any) {
         stop,
         status
     } = useChat({
-        api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat",
+        api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5003/api/chat",
     });
 
     useEffect(() => {
@@ -276,7 +276,7 @@ export default function Index(this: any) {
     function requestBatchFromAI(count: number, parent?: any) {
         const prompt =
             `Give ${count} ticket proposal for ${parent?.fields.summary} with ${parent?.fields.description}, answer in Json array format [{summary: string for the short name of the ticket, description: string for the detailed description}]. ` +
-            `Skip reasoning process and your answer should only contain json response, no other text.`;
+            `Your answer should only contain json response, no other text.`;
 
         setMessages([])
         setNewTicketData({...newTicketData, parentKey: parent?.fields.key})
@@ -285,7 +285,7 @@ export default function Index(this: any) {
         setBatchModal({
             parent: parent,
             open: true,
-            count: 0,
+            count: count,
             suggestions: [],
             loading: true,
             error: undefined,

@@ -6,8 +6,8 @@ function CustomApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>Jira Module - Remote</title>
-        <meta name="description" content="Jira App" />
+        <title>Jira Module with LLM chat - Remote</title>
+        <meta name="description" content="JiraLLM App" />
       </Head>
       <main className="app">
         <Component {...pageProps} />
