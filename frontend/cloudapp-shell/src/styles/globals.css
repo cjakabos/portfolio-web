@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -119,15 +117,15 @@
 }
 
 .layoutLinksFormat {
-  @apply order-1 flex lg:order-none w-[100px]
+    @apply order-1 flex lg:order-none w-[100px]
 }
 
 .layoutLinksButtonFormat {
-  @apply ml-10 hidden opacity-70 hover:opacity-100 lg:block
+    @apply ml-10 hidden opacity-70 hover:opacity-100 lg:block cursor-pointer transition-opacity duration-200 text-black dark:text-white
 }
 
 .layoutLinksButtonOnlyFormat {
-  @apply ml-4 self-center hover:text-teal-500 lg:hidden
+    @apply ml-4 self-center hover:text-teal-500 lg:hidden cursor-pointer transition-colors duration-200
 }
 
 input[type="text"], input[type="number"], input[type="phone"], select, input[type="submit"], input[type="password"], button {
@@ -168,6 +166,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   font-size: 16px;
   cursor: pointer;
   border-radius: 5px;
+  width: 100px;
 }
 
 .ml-update-button {
@@ -195,6 +194,7 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   font-size: 16px;
   cursor: pointer;
   border-radius: 5px;
+  width: 100px;
 }
 
 .popup-box {

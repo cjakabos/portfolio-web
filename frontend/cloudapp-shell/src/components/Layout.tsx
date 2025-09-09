@@ -1,20 +1,22 @@
+"use client"
 import {useRouter} from "next/navigation";
-import Link from "next/link";
 import React, {useEffect, useState} from 'react'
 import { motion } from "framer-motion";
 import SwitchTheme from "@/components/switch-theme";
-import HowToRegIcon from '@mui/icons-material/HowToReg';
-import LoginIcon from '@mui/icons-material/Login';
-import HomeIcon from '@mui/icons-material/Home';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import PetsIcon from '@mui/icons-material/Pets';
-import MapIcon from '@mui/icons-material/Map';
-import AssistantIcon from '@mui/icons-material/Assistant';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ChecklistIcon from '@mui/icons-material/Checklist';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import MarkUnreadChatAltIcon from '@mui/icons-material/MarkUnreadChatAlt';
-import LogoutIcon from '@mui/icons-material/Logout';
+import {
+    HowToReg,
+    Login,
+    Home,
+    ShoppingCart,
+    Pets,
+    Map,
+    Assistant,
+    TrendingUp,
+    Checklist,
+    AttachFile,
+    MarkUnreadChatAlt,
+    Logout,
+} from '@mui/icons-material';
 
 const Layout = ({
                     children,
@@ -40,86 +42,86 @@ const Layout = ({
 
     const authedRoutes = (
         <>
-            <Link className="layoutLinksFormat" href="/home">
-                <button className="layoutLinksButtonFormat">
-                    <HomeIcon fontSize="medium" /> Home
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/home")}>
+                    <Home fontSize="medium" style={{ color: 'white' }} />  Home
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <HomeIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/home")}>
+                    <Home fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/shop">
-                <button className="layoutLinksButtonFormat">
-                    <ShoppingCartIcon fontSize="medium" /> Shop
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/shop")}>
+                    <ShoppingCart fontSize="medium" style={{ color: 'white' }} />  Shop
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <ShoppingCartIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/shop")}>
+                    <ShoppingCart fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/petstore">
-                <button className="layoutLinksButtonFormat">
-                    <PetsIcon fontSize="medium" /> Pets
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/petstore")}>
+                    <Pets fontSize="medium" style={{ color: 'white' }} />  Pets
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <PetsIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/petstore")}>
+                    <Pets fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/maps">
-                <button className="layoutLinksButtonFormat">
-                    <MapIcon fontSize="medium" /> Maps
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/maps")}>
+                    <Map fontSize="medium" style={{ color: 'white' }} />  Maps
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <MapIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/maps")}>
+                    <Map fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/chatllm">
-                <button className="layoutLinksButtonFormat">
-                    <AssistantIcon fontSize="medium" /> GPT
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/chatllm")}>
+                    <Assistant fontSize="medium" style={{ color: 'white' }} />  GPT
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <AssistantIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/chatllm")}>
+                    <Assistant fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/jira">
-                <button className="layoutLinksButtonFormat">
-                    <ChecklistIcon fontSize="medium" /> Jira
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/jira")}>
+                    <Checklist fontSize="medium" style={{ color: 'white' }} />  Jira
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <ChecklistIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/jira")}>
+                    <Checklist fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/mlops">
-                <button className="layoutLinksButtonFormat">
-                    <TrendingUpIcon fontSize="medium" /> MLOps
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/mlops")}>
+                    <TrendingUp fontSize="medium" style={{ color: 'white' }} />  MLOps
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <TrendingUpIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/mlops")}>
+                    <TrendingUp fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/notefile">
-                <button className="layoutLinksButtonFormat">
-                    <AttachFileIcon fontSize="medium" /> Files
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/notefile")}>
+                    <AttachFile fontSize="medium" style={{ color: 'white' }} />  Files
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <AttachFileIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/notefile")}>
+                    <AttachFile fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/chat">
-                <button className="layoutLinksButtonFormat">
-                    <MarkUnreadChatAltIcon fontSize="medium" /> Chat
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/chat")}>
+                    <MarkUnreadChatAlt fontSize="medium" style={{ color: 'white' }} />  Chat
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <MarkUnreadChatAltIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/chat")}>
+                    <MarkUnreadChatAlt fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
-            <Link className="layoutLinksFormat" href="/logout">
-                <button className="layoutLinksButtonFormat">
-                    <LogoutIcon fontSize="medium" /> Logout
+            </div>
+            <div className="layoutLinksFormat">
+                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/logout")}>
+                    <Logout fontSize="medium" style={{ color: 'white' }} />  Logout
                 </button>
-                <div className="layoutLinksButtonOnlyFormat">
-                    <LogoutIcon fontSize="medium" />
+                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/logout")}>
+                    <Logout fontSize="medium" style={{ color: 'white' }} /> 
                 </div>
-            </Link>
+            </div>
         </>
     );
     //<aside className="z-[1001] px-4 pb-4 pt-2 gap-10">
@@ -133,25 +135,25 @@ const Layout = ({
                 transition={{duration: 0.5}}
                 className="min-h-[100vh] flex-col m-auto lg:flex"
             >
-                <aside className="sticky top-0 z-40 flex justify-center h-[80px] w-full text-2xl lg:sticky bg-white dark:bg-black">
+                <aside className="sticky top-0 z-40 flex justify-center h-[80px] w-full text-2xl lg:sticky bg-black dark:bg-black">
                     {(userToken === null || userToken === '') ? (
                             <>
-                                <Link className="layoutLinksFormat" href="/register">
-                                    <button className="layoutLinksButtonFormat">
-                                        <HowToRegIcon fontSize="medium" /> Register
+                                <div className="layoutLinksFormat">
+                                    <button className="layoutLinksButtonFormat" onClick={()=> router.push("/register")}>
+                                        <HowToReg fontSize="medium" style={{ color: 'white' }} />  Register
                                     </button>
-                                    <div className="layoutLinksButtonOnlyFormat">
-                                        <HowToRegIcon fontSize="medium" />
+                                    <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/register")}>
+                                        <HowToReg fontSize="medium" style={{ color: 'white' }} /> 
                                     </div>
-                                </Link>
-                                <Link className="layoutLinksFormat" href="/login">
-                                    <button className="layoutLinksButtonFormat">
-                                        <LoginIcon fontSize="medium" /> Login
+                                </div>
+                                <div className="layoutLinksFormat">
+                                    <button className="layoutLinksButtonFormat" onClick={()=> router.push("/login")}>
+                                        <Login fontSize="medium" style={{ color: 'white' }} />  Login
                                     </button>
-                                    <div className="layoutLinksButtonOnlyFormat">
-                                        <LoginIcon fontSize="medium" />
+                                    <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/login")}>
+                                        <Login fontSize="medium" style={{ color: 'white' }} /> 
                                     </div>
-                                </Link>
+                                </div>
                             </>
                         ) :
                         <>

@@ -4,9 +4,13 @@ const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: false,
+    images: {
+        qualities: [25, 50, 75, 100],
+    },
     eslint: {
         ignoreDuringBuilds: true,
     },
+    transpilePackages: ['@mui/x-data-grid'],
     output: 'standalone',
     webpack(config, options) {
     const { isServer } = options;
