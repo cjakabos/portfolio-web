@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+.centered {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+}
+
+.flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+}
+
+.section {
+    flex: 1 1 100%;
+    max-width: 600px;
+    height: auto;
+    margin: 10px;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+
+.section h1 {
+    margin-top: 0;
+}
+
+input[type="text"], input[type="number"], input[type="phone"], select, input[type="submit"], input[type="password"], button {
+    width: 300px;
+    padding: 8px;
+    margin: 10px 0;
+    box-sizing: border-box;
+}
+
+.menuButton {
+    width: 100px;
+    border: 2px solid #4CAF50;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+.styleButton {
+    width: 10px;
+    border: 2px solid #4CAF50;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+.submitbutton {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.ml-update-button {
+    background-color: blue;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.clearbutton {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.chatButton {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    justify-content: space-between;
+    margin-top: 17px;
+    width: 60px;
+}
+
+.Chat {
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    width: 800px;
+}
+
+.messages-list {
+    padding: 20px 0;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    list-style: none;
+    padding-left: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.Messages-message {
+    display: flex;
+    margin-top: 10px;
+}
+
+.message-input {
+    display: flex;
+    width: 600px;
+    justify-content: space-between;
+    max-width: 500px;
+    margin: 100px;
+    margin-bottom: 38px;
+}
+
+.inputField {
+    background-color: white;
+    padding: 0px;
+    font-size: 16px;
+    border-radius: 0px;
+    flex-grow: 1;
+    width: 500px;
+}
+
+.inputFieldContainer {
+    @apply flex justify-end
+}
+
+.inputFieldFormat {
+    @apply italic text-black bg-green-300 p-2 rounded-md mb-2
+}
+
+.outputFieldFormat {
+    @apply italic text-black bg-gray-300 p-2 rounded-md mb-2
+}
+
+.outputFieldThinkingFormat {
+    @apply italic text-black bg-blue-300 p-2 rounded-md mb-2
+}
+
+.Message-content>.timestamp {
+    font-size: 12px;
+    color: gray;
+    margin-top: 4px;
+}
+

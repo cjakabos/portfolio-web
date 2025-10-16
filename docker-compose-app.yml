@@ -115,6 +115,7 @@ services:
         SERVICE_PATH: frontend/remote/jira
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_LLM_MODEL: 'deepseek-r1:1.5b'
         #NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
         #NEXT_PUBLIC_JIRA_API_TOKEN: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
         #NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'

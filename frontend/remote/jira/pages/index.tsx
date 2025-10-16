@@ -9,6 +9,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import {Checkbox, Input} from "@mui/material";
 import {useChat} from "@ai-sdk/react";
+import { DefaultChatTransport } from 'ai';
 import ChatMessage from "../components/ChatLLM/ChatMessage";
 import {SimpleTreeView, TreeItem} from "@mui/x-tree-view";
 import Markdown from "react-markdown";
@@ -30,7 +31,7 @@ export default function Index(this: any) {
             effectRan.current = true;
         }
     }
-
+    const [input, setInput] = useState('');
     const [compareModal, setCompareModal] = useState({open: false, original: null, proposed: null});
     const [newTicketModal, setNewTicketModal] = useState({open: false});
     const [editModal, setEditModal] = useState<{ open: boolean; ticket?: any }>({open: false});
@@ -56,14 +57,13 @@ export default function Index(this: any) {
     const {
         messages,
         setMessages,
-        input,
-        handleInputChange,
-        handleSubmit: aiHandleSubmit,
-        append,
+        sendMessage,
         stop,
         status
     } = useChat({
-        api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5003/api/chat",
+        transport: new DefaultChatTransport({
+            api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5003/api/chat"
+        }),
     });
 
     useEffect(() => {
@@ -84,13 +84,11 @@ export default function Index(this: any) {
         const lastAssistantMsg = [...messages].reverse().find((m) => m.role === "assistant");
         if (!lastAssistantMsg) return;
 
-        const cleaned = String((lastAssistantMsg as any).content || "")
-            .replace(/<think>[\s\S]*?(?:<\/think>|$)/g, "")
-            .trim();
+        const messageText = getMessageText(lastAssistantMsg);
 
         try {
-            const data = parseLLMJson(cleaned);
-            let items: any[] = [];
+            const data = parseLLMJson(messageText);
+            let items = [];
             if (Array.isArray(data)) items = data;
             else if (data?.items) items = data.items;
             else if (data?.proposals) items = data.proposals;
@@ -114,7 +112,7 @@ export default function Index(this: any) {
 
     function getTickets() {
         const postData = {
-            webDomain: process.env.NEXT_PUBLIC_JIRA_DOMAIN + "/rest/api/latest/search?jql=project=" + process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY,
+            webDomain: process.env.NEXT_PUBLIC_JIRA_DOMAIN + "/rest/api/latest/search/jql?jql=project=" + process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY + "&maxResults=1000&fields=key,summary,description,issuetype,parent",
             webApiKey: "Basic " + Buffer.from(`${process.env.NEXT_PUBLIC_JIRA_EMAIL}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN || process.env.NEXT_PUBLIC_JIRA_API_TOKEN_LOCAL}`).toString("base64"),
         };
 
@@ -261,6 +259,23 @@ export default function Index(this: any) {
         return undefined; // fallback handled later
     }
 
+    function getMessageText(message) {
+        if (!message) return '';
+
+        if (Array.isArray(message.parts)) {
+            return message.parts
+                .filter(part => part.type === "text")
+                .map(part => {
+                    console.log("part.text", part.text);
+                    return part.text || "";
+                })
+                .join(" ")
+                .trim();
+        }
+
+        return '';
+    }
+
     // Batch create suggestions (mock with AI integration placeholder)
     function openBatchCreate(parent: any) {
         setBatchModal({
@@ -292,7 +307,7 @@ export default function Index(this: any) {
         });
 
         setAwaitingBatch(true);
-        append({role: "user", content: prompt}); // useChat()
+        sendMessage({ text: prompt });
     }
 
     function parseLLMJson(text: string): any {
@@ -317,7 +332,7 @@ export default function Index(this: any) {
         setMessages([]);
         const scope = includeChildren ? collectChildren(ticket) : [ticket];
         const scopeText = scope.map((t) => `${t.key}: ${t.fields.summary}\n${t.fields.description}`).join("\n\n");
-        append({role: "user", content: `Please review and improve the following tickets:\n\n${scopeText}`});
+        sendMessage({ text: `Please review and improve the following tickets:\n\n${scopeText}` });
         setSelectedTicket(ticket);
         setChatOpen(true); // 👈 open right chat
     }
@@ -365,17 +380,11 @@ export default function Index(this: any) {
     const [selectedOption, setSelectedOption] = useState("")
 
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (input.trim()) {
-            aiHandleSubmit(e)
-            setSelectedOption("")
-        }
-    }
-
-    useEffect(() => {
-        aiHandleSubmit();
-    }, [selectedOption]);
+    const handleSubmit = e => {
+        e.preventDefault();
+        sendMessage({ text: input });
+        setInput('');
+    };
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -546,17 +555,18 @@ export default function Index(this: any) {
                                                     {(status === 'ready') && (
                                                         <Button className="animate-pulse text-purple-500" variant="contained"
                                                                 size="small"
-                                                                onClick={() => openCompare(
-                                                                    {
-                                                                        summary: selectedTicket.fields.summary,
-                                                                        description: selectedTicket.fields.description
-                                                                    },
-                                                                    {
-                                                                        summary: "Improved " + selectedTicket.fields.summary,
-                                                                        description: message.content.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, "")
-                                                                            .trim()
-                                                                    }
-                                                                )}>
+                                                                onClick={() => {
+                                                                    openCompare(
+                                                                        {
+                                                                            summary: selectedTicket.fields.summary,
+                                                                            description: selectedTicket.fields.description
+                                                                        },
+                                                                        {
+                                                                            summary: "Improved " + selectedTicket.fields.summary,
+                                                                            description: getMessageText(message)
+                                                                        }
+                                                                    );
+                                                                }}>
                                                             Approve
                                                         </Button>
                                                     )}
@@ -584,12 +594,12 @@ export default function Index(this: any) {
                                     className="inputField text-black dark:text-white"
                                     label="Type your message here..."
                                     placeholder="Enter your message and press ENTER"
-                                    onChange={handleInputChange}
+                                    onChange={e => setInput(e.target.value)}
                                     margin="normal"
                                     value={input}
-                                    onKeyPress={event => {
+                                    onKeyDown={event => {
                                         if (event.key === 'Enter') {
-                                            aiHandleSubmit();
+                                            handleSubmit(event);
                                         }
                                     }}
                                     inputProps={{ style: { color: 'blue' } }}
