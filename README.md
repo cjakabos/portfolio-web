@@ -37,7 +37,7 @@ Build and start the Java based services, the Python based ml-pipeline and the Ne
 ```bash
 docker-compose -f docker-compose-app.yml up -d
 ```
-Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastructure.yml, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
+Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama
@@ -45,7 +45,7 @@ Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastruct
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        LLM_MODEL: 'deepseek-r1:1.5b'
+        NEXT_PUBLIC_LLM_MODEL: 'deepseek-r1:1.5b'
     ports:
       - 11434:11434
 ```

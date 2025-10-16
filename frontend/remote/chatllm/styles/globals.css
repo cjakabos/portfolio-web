@@ -1,7 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import "tailwindcss";
 
 .centered {
   margin-left: auto;
@@ -170,4 +167,10 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
 
 .outputFieldThinkingFormat {
   @apply italic text-black bg-blue-300 p-2 rounded-md mb-2
+}
+
+.Message-content>.timestamp {
+    font-size: 12px;
+    color: gray;
+    margin-top: 4px;
 }

@@ -2,6 +2,7 @@
 
 import {useState, useRef, useEffect, useMemo} from "react"
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import ChatMessage from "./ChatMessage";
 import TextField from '@mui/material/TextField';
 
@@ -9,19 +10,29 @@ export default function ChatLLM() {
 	const [selectedOption, setSelectedOption] = useState("")
 	const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-	const { messages, input, handleInputChange, handleSubmit: aiHandleSubmit } = useChat({api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"})
+    // Chat state
+    const {
+        messages,
+        setMessages,
+        sendMessage,
+        stop,
+        status
+    } = useChat({
+        transport: new DefaultChatTransport({
+            api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"
+        }),
+    });
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		if (input.trim()) {
-			aiHandleSubmit(e)
-			setSelectedOption("")
-		}
-	}
+    const [input, setInput] = useState('');
 
-	useEffect(() => {
-		aiHandleSubmit();
-	}, [selectedOption]);
+
+    const handleSubmit = e => {
+        e.preventDefault();
+        sendMessage({ text: input });
+        setInput('');
+        setSelectedOption("");
+    };
+
 
 	useEffect(() => {
 		if (scrollAreaRef.current) {
@@ -60,14 +71,14 @@ export default function ChatLLM() {
 						className="inputField text-black dark:text-white"
 						label="Type your message here..."
 						placeholder="Enter your message and press ENTER"
-						onChange={handleInputChange}
+						onChange={e => setInput(e.target.value)}
 						margin="normal"
 						value={input}
-						onKeyPress={event => {
-							if (event.key === 'Enter') {
-								aiHandleSubmit();
-							}
-						}}
+                        onKeyDown={event => {
+                            if (event.key === 'Enter') {
+                                handleSubmit(event);
+                            }
+                        }}
 						inputProps={{ style: { color: 'blue' } }}
 						InputLabelProps={{ style: { color: 'black' } }}
 					/>
