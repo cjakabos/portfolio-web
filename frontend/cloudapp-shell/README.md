@@ -24,7 +24,7 @@ Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastruct
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        LLM_MODEL: 'deepseek-r1:1.5b'
+        NEXT_PUBLIC_LLM_MODEL: 'deepseek-r1:1.5b'
     ports:
       - 11434:11434
 ```
