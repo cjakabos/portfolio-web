@@ -46,7 +46,8 @@ public class WebSecurityConfiguration {
     };
 
     private static final String[] AUTH_WHITELIST = {
-            "/ws/**"
+            "/ws/**",
+            "/actuator/**"
     };
 
     @Bean
