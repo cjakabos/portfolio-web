@@ -78,7 +78,7 @@ services:
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        NEXT_PUBLIC_LLM_MODEL: 'deepseek-r1:1.5b'
+        NEXT_PUBLIC_LLM_MODEL: 'llama3.2:3b'
     ports:
       - 11434:11434
 volumes:

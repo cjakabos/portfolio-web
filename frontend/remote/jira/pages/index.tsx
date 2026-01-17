@@ -38,7 +38,7 @@ export default function Index(this: any) {
     const [batchModal, setBatchModal] = useState<{
         open: boolean;
         parent?: any;
-        childType?: "Feature" | "Subtask";
+        childType?: "Task" | "Subtask";
         count: number;
         loading: boolean;
         error?: string;
@@ -250,12 +250,12 @@ export default function Index(this: any) {
         setCompareModal({open: true, original, proposed});
     }
 
-    function childTypeForParent(parentKey?: string): "Feature" | "Subtask" | undefined {
+    function childTypeForParent(parentKey?: string): "Task" | "Subtask" | undefined {
         if (!parentKey) return undefined;
         const parent = tickets.find((t) => t.key === parentKey);
         const tname = parent?.fields?.issuetype?.name;
-        if (tname === "Epic") return "Feature";
-        if (tname === "Feature") return "Subtask";
+        if (tname === "Epic") return "Task";
+        if (tname === "Task") return "Subtask";
         return undefined; // fallback handled later
     }
 
@@ -337,22 +337,22 @@ export default function Index(this: any) {
         setChatOpen(true); // 👈 open right chat
     }
 
-    // Build Epic → (Feature | Story | Task | Request| Bug) tree where Features can have Subtasks as children + parentless
+    // Build Epic → (Task | Story | Request| Bug) tree where Tasks can have Subtasks as children + parentless
     function buildHierarchy() {
         const epics = tickets.filter((t) => t.fields.issuetype.name === "Epic");
-        const features = tickets.filter((t) => t.fields.issuetype.name === "Feature");
-        const others = tickets.filter((t) => ["Story", "Task", "Request", "Bug"].includes(t.fields.issuetype.name));
+        const tasks = tickets.filter((t) => t.fields.issuetype.name === "Task");
+        const others = tickets.filter((t) => ["Story", "Request", "Bug"].includes(t.fields.issuetype.name));
         const subtasks = tickets.filter((t) => t.fields.issuetype.name === "Subtask");
 
         const epicNodes = epics.map((epic) => ({
             ...epic,
             children: [
-                ...features.filter((f) => f.fields.parent?.key === epic.key),
+                ...tasks.filter((f) => f.fields.parent?.key === epic.key),
                 ...others.filter((o) => o.fields.parent?.key === epic.key),
             ],
         }));
 
-        features.forEach((f) => {
+        tasks.forEach((f) => {
             f.children = subtasks.filter((s) => s.fields.parent?.key === f.key);
         });
 
@@ -457,7 +457,7 @@ export default function Index(this: any) {
                                             <TreeItem key={sub.key} itemId={sub.key}
                                                       label={`🔹 ${sub.key}: ${sub.fields.summary}`}/>
                                         ))}
-                                        {child.fields.issuetype.name === "Feature" && (
+                                        {child.fields.issuetype.name === "Task" && (
                                             <Button size="small" onClick={() => openBatchCreate(child.key)}>
                                                 Batch Create
                                             </Button>
@@ -488,7 +488,7 @@ export default function Index(this: any) {
                                                     ticketKey: t.key
                                                 })}>Delete</Button>
                                             </div>
-                                            {t.fields.issuetype.name === "Feature" && (
+                                            {t.fields.issuetype.name === "Task" && (
                                                 <Button size="small" onClick={() => openBatchCreate(t.key)}>
                                                     Batch Create
                                                 </Button>
@@ -741,12 +741,12 @@ export default function Index(this: any) {
 
                                     {newTicketData.issuetype && newTicketData.issuetype == "Subtask" && (
                                         <>
-                                            <option value="">-- Select Feature --</option>
+                                            <option value="">-- Select Task --</option>
                                             {tickets
-                                                .filter((t) => t.fields.issuetype.name === "Feature")
-                                                .map((feature) => (
-                                                    <option key={feature.key} value={feature.key}>
-                                                        {feature.key}: {feature.fields.summary}
+                                                .filter((t) => t.fields.issuetype.name === "Task")
+                                                .map((task) => (
+                                                    <option key={task.key} value={task.key}>
+                                                        {task.key}: {task.fields.summary}
                                                     </option>
                                                 ))}
                                         </>

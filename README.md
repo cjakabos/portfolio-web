@@ -11,7 +11,7 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
 - **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
-- **Locally hosted LLM with Ollama**: Deploy and interact with a locally hosted LLM using Ollama, featuring a configurable model setup. In this case, Deepseek R1 was used to provide AI-driven insights while maintaining full control over data privacy and performance. [Details on LLM integration](#5-private-local-llm-ai)
+- **Locally hosted LLM with Ollama**: Deploy and interact with a locally hosted LLM using Ollama, featuring a configurable model setup. In this case, LLAMA 3.2 was used to provide AI-driven insights while maintaining full control over data privacy and performance. [Details on LLM integration](#5-private-local-llm-ai)
 - **Integrated External APIs**: Enhance functionality with third-party services like Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#6-jira).
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
 - **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
@@ -37,7 +37,7 @@ Build and start the Java based services, the Python based ml-pipeline and the Ne
 ```bash
 docker-compose -f docker-compose-app.yml up -d
 ```
-Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was deepseek-r1 with 1.5B parameter, good enough for local testing purposes.
+Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was llama3.2 with 3B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama
@@ -45,7 +45,7 @@ Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        NEXT_PUBLIC_LLM_MODEL: 'deepseek-r1:1.5b'
+        NEXT_PUBLIC_LLM_MODEL: 'llama3.2:3b'
     ports:
       - 11434:11434
 ```
@@ -144,7 +144,7 @@ The module is built as Micro Frontend:
 3. Optionally one can also use command line:
 ```bash
 curl http://localhost:11434/api/generate -d '{                              
-  "model": "deepseek-r1:1.5b",
+  "model": "llama3.2:3b",
   "prompt": "Why is the sky blue?"
 }'
 ```
