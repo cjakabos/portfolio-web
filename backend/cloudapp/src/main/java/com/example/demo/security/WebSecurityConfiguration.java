@@ -3,8 +3,8 @@ package com.example.demo.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,18 +15,16 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfiguration {
 
-
     @Autowired
     private JWTAuthenticationVerificationFilter authenticationTokenFilter;
 
-    // Do not remove, needed for USerDetailsServiceImpl to work
+    // Do not remove, needed for UserDetailsServiceImpl to work
     @Autowired
     private final UserDetailsServiceImpl userDetailsService;
 
@@ -50,7 +48,34 @@ public class WebSecurityConfiguration {
             "/actuator/**"
     };
 
+    // Check if request comes from internal Docker network
+    private boolean isInternalRequest(jakarta.servlet.http.HttpServletRequest request) {
+        String remoteAddr = request.getRemoteAddr();
+        return remoteAddr.startsWith("172.") ||
+                remoteAddr.startsWith("10.") ||
+                remoteAddr.equals("127.0.0.1");
+    }
+
+    // This filter chain handles internal Docker network requests - no JWT required
     @Bean
+    @Order(1)
+    public SecurityFilterChain internalNetworkFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher(request -> isInternalRequest(request))
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                );
+        // No JWT filter added here
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
         http.cors(Customizer.withDefaults());
@@ -75,4 +100,3 @@ public class WebSecurityConfiguration {
         return authenticationConfiguration.getAuthenticationManager();
     }
 }
-

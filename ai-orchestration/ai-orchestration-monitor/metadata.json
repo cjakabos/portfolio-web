@@ -1,0 +1,5 @@
+{
+  "name": "AI Orchestration Monitor",
+  "description": "A comprehensive dashboard for monitoring AI orchestration, managing A/B tests, handling human-in-the-loop approvals, and visualizing error rates.",
+  "requestFramePermissions": []
+}

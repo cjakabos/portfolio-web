@@ -1,0 +1,226 @@
+# ============================================================================
+# File: backend/ai-orchestration-layer/src/tools/http_client.py
+# HTTP CLIENT WITH CONNECTION POOLING
+# ============================================================================
+
+import asyncio
+import json
+from typing import Dict, Any, Optional
+
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+    import aiohttp
+
+from core.config import get_config
+
+
+class HTTPClient:
+    """
+    Async HTTP Client with connection pooling and retry logic
+    """
+
+    def __init__(
+        self,
+        base_url: str = "",
+        timeout: int = 10,
+        max_retries: int = 3,
+        max_connections: int = 100,
+        max_keepalive_connections: int = 20
+    ):
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self.max_connections = max_connections
+        self.max_keepalive_connections = max_keepalive_connections
+        self._client: Optional['httpx.AsyncClient'] = None
+        self._session: Optional['aiohttp.ClientSession'] = None
+        self._use_httpx = HTTPX_AVAILABLE
+        self._client_lock = asyncio.Lock()
+
+    async def _get_client(self) -> 'httpx.AsyncClient':
+        """Get or create httpx client with connection pooling"""
+        if self._client is None or self._client.is_closed:
+            async with self._client_lock:
+                if self._client is None or self._client.is_closed:
+                    limits = httpx.Limits(
+                        max_connections=self.max_connections,
+                        max_keepalive_connections=self.max_keepalive_connections
+                    )
+                    self._client = httpx.AsyncClient(
+                        base_url=self.base_url,
+                        timeout=httpx.Timeout(self.timeout),
+                        limits=limits,
+                        http2=True
+                    )
+        return self._client
+
+    async def _get_session(self) -> 'aiohttp.ClientSession':
+        """Get or create aiohttp session (fallback)"""
+        if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(
+                limit=self.max_connections,
+                limit_per_host=self.max_keepalive_connections
+            )
+            timeout = aiohttp.ClientTimeout(total=self.timeout)
+            self._session = aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout
+            )
+        return self._session
+
+    async def request(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
+        """Perform HTTP request with retry logic"""
+        last_error = None
+
+        for attempt in range(self.max_retries):
+            try:
+                if self._use_httpx:
+                    client = await self._get_client()
+                    response = await client.request(
+                        method=method,
+                        url=url,
+                        params=params,
+                        data=data,
+                        json=json_data,
+                        headers=headers
+                    )
+                    response.raise_for_status()
+                    try:
+                        return response.json()
+                    except:
+                        return {"text": response.text, "status_code": response.status_code}
+                else:
+                    session = await self._get_session()
+                    full_url = f"{self.base_url}{url}" if self.base_url and not url.startswith("http") else url
+                    async with session.request(
+                        method=method,
+                        url=full_url,
+                        params=params,
+                        data=data,
+                        json=json_data,
+                        headers=headers
+                    ) as response:
+                        response.raise_for_status()
+                        try:
+                            return await response.json()
+                        except:
+                            text = await response.text()
+                            return {"text": text, "status": response.status}
+
+            except Exception as e:
+                last_error = e
+                if attempt >= self.max_retries - 1:
+                    break
+                delay = min(2 ** attempt, 10)
+                await asyncio.sleep(delay)
+
+        raise Exception(f"HTTP request failed after {self.max_retries} attempts: {last_error}")
+
+    async def get(self, url: str, params: Optional[Dict[str, Any]] = None, **kwargs) -> Any:
+        return await self.request("GET", url, params=params, **kwargs)
+
+    async def post(self, url: str, json: Optional[Dict[str, Any]] = None, **kwargs) -> Any:
+        return await self.request("POST", url, json_data=json, **kwargs)
+
+    async def put(self, url: str, json: Optional[Dict[str, Any]] = None, **kwargs) -> Any:
+        return await self.request("PUT", url, json_data=json, **kwargs)
+
+    async def delete(self, url: str, **kwargs) -> Any:
+        return await self.request("DELETE", url, **kwargs)
+
+    async def patch(self, url: str, json: Optional[Dict[str, Any]] = None, **kwargs) -> Any:
+        return await self.request("PATCH", url, json_data=json, **kwargs)
+
+    async def get_connection_stats(self) -> Dict[str, Any]:
+        """Get connection pool statistics"""
+        if not self._use_httpx or not self._client:
+            return {"available": False}
+        return {
+            "available": True,
+            "client_closed": self._client.is_closed,
+            "max_connections": self.max_connections,
+            "max_keepalive_connections": self.max_keepalive_connections,
+            "http2_enabled": True
+        }
+
+    async def aclose(self):
+        """Close clients"""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+        if self._session and not self._session.closed:
+            await self._session.close()
+
+
+class ServiceHTTPClients:
+    """
+    Factory for creating HTTP clients for different services
+    Each service gets a dedicated client with connection pooling
+    """
+    _clients: Dict[str, HTTPClient] = {}
+
+    @classmethod
+    def get_cloudapp_client(cls) -> HTTPClient:
+        if "cloudapp" not in cls._clients:
+            config = get_config()
+            cls._clients["cloudapp"] = HTTPClient(
+                base_url=config.services.cloudapp_url,
+                timeout=config.services.http_timeout
+            )
+        return cls._clients["cloudapp"]
+
+    @classmethod
+    def get_petstore_client(cls) -> HTTPClient:
+        if "petstore" not in cls._clients:
+            config = get_config()
+            cls._clients["petstore"] = HTTPClient(
+                base_url=config.services.petstore_url,
+                timeout=config.services.http_timeout
+            )
+        return cls._clients["petstore"]
+
+    @classmethod
+    def get_vehicles_client(cls) -> HTTPClient:
+        if "vehicles" not in cls._clients:
+            config = get_config()
+            cls._clients["vehicles"] = HTTPClient(
+                base_url=config.services.vehicles_url,
+                timeout=config.services.http_timeout
+            )
+        return cls._clients["vehicles"]
+
+    @classmethod
+    def get_ml_client(cls) -> HTTPClient:
+        if "ml" not in cls._clients:
+            config = get_config()
+            cls._clients["ml"] = HTTPClient(
+                base_url=config.services.ml_url,
+                timeout=config.services.http_timeout
+            )
+        return cls._clients["ml"]
+
+    @classmethod
+    def get_proxy_client(cls) -> HTTPClient:
+        if "proxy" not in cls._clients:
+            config = get_config()
+            cls._clients["proxy"] = HTTPClient(
+                timeout=config.services.http_timeout
+            )
+        return cls._clients["proxy"]
+
+    @classmethod
+    async def close_all_clients(cls):
+        """Close all shared clients"""
+        for client in cls._clients.values():
+            await client.aclose()
+        cls._clients.clear()

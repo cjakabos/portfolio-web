@@ -81,5 +81,172 @@ services:
         NEXT_PUBLIC_LLM_MODEL: 'llama3.2:3b'
     ports:
       - 11434:11434
+  # =============================================================================
+  # AI Orchestration Layer - Infrastructure Only
+  # =============================================================================
+  # Use this for local development where you run the app outside Docker
+  # but need the infrastructure services (Redis, MongoDB, etc.)
+  #
+  # Usage:
+  #   docker-compose -f docker-compose-infrastructure.yml up -d
+  # =============================================================================
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # ---------------------------------------------------------------------------
+  # MongoDB
+  # ---------------------------------------------------------------------------
+  mongodb-abtest:
+    image: mongo:7
+    container_name: mongodb-abtest
+    restart: unless-stopped
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin_password
+      MONGO_INITDB_DATABASE: ai_orchestration
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # ---------------------------------------------------------------------------
+  # ChromaDB - Vector Database for RAG
+  # ---------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8123/api/v1/heartbeat || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  # ===========================================================================
+  # APPLICATION SERVICES
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # AI Orchestration Layer - Main API
+  # ---------------------------------------------------------------------------
+  ai-orchestration-layer:
+    build:
+      context: ./ai-orchestration/ai-orchestration-layer
+      dockerfile: Dockerfile
+    container_name: ai-orchestration-layer
+    restart: unless-stopped
+    ports:
+      - "8700:8700"
+    environment:
+      # Environment
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+
+      # LLM Configuration
+      - LLM_MODEL=${LLM_MODEL:-llama3.2:3b}
+      - OLLAMA_URL=http://ollama:11434
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.7}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-2000}
+
+      # Service URLs (internal Docker network)
+      - CLOUDAPP_URL=${CLOUDAPP_URL:-http://cloudapp:8099/cloudapp}
+      - PETSTORE_URL=${PETSTORE_URL:-http://petstore:8083/petstore}
+      - VEHICLES_URL=${VEHICLES_URL:-http://vehicles-api:8880/vehicles}
+      - ML_URL=${ML_URL:-http://mlops-segmentation:8600}
+      - POSTGRES_URL=postgresql://websitemaster:local@postgres:5432/cloudappdb
+
+      # Redis Configuration
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_MAX_CONNECTIONS=${REDIS_MAX_CONNECTIONS:-50}
+
+      # MongoDB Configuration
+      - MONGODB_URL=mongodb://orchestration_user:orchestration_pass@mongodb-abtest:27017/ai_orchestration?authSource=ai_orchestration
+      - MONGODB_DATABASE=ai_orchestration
+
+      # HTTP Client Configuration
+      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-10}
+      - HTTP_MAX_CONNECTIONS=${HTTP_MAX_CONNECTIONS:-100}
+      - HTTP_MAX_KEEPALIVE=${HTTP_MAX_KEEPALIVE:-20}
+
+      # RAG Configuration
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8123
+      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-user_documents}
+      - RAG_SEARCH_K=${RAG_SEARCH_K:-3}
+
+      # Feature Flags
+      - ENABLE_CHECKPOINTING=${ENABLE_CHECKPOINTING:-true}
+      - ENABLE_HITL=${ENABLE_HITL:-true}
+      - ENABLE_PARALLEL=${ENABLE_PARALLEL:-true}
+      - ENABLE_ERROR_HANDLING=${ENABLE_ERROR_HANDLING:-true}
+      - ENABLE_AB_TESTING=${ENABLE_AB_TESTING:-true}
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+
+      # Python
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8700/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  # ---------------------------------------------------------------------------
+  # Observability Dashboard (Optional)
+  # ---------------------------------------------------------------------------
+  ai-orchestration-monitor:
+    build:
+      context: ./ai-orchestration/ai-orchestration-monitor
+      dockerfile: Dockerfile
+    container_name: ai-orchestration-monitor
+    restart: unless-stopped
+    ports:
+      - "5010:8700"
+    environment:
+      - VITE_API_URL=http://localhost:8700
+      - NODE_ENV=production
 volumes:
   petstore:
+  redis_data:
+    name: ai-orchestration-redis
+  mongodb_data:
+    name: ai-orchestration-mongodb
+  chroma_data:
+    name: ai-orchestration-chroma

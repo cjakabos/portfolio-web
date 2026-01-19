@@ -1,0 +1,31 @@
+# ============================================================================
+# File: backend/ai-orchestration-layer/src/tools/web_proxy_tools.py
+# EXTERNAL WEB PROXY
+# ============================================================================
+
+from langchain_core.tools import tool
+import json
+from .http_client import ServiceHTTPClients
+
+try:
+    from src.core.unified_logger import get_logger
+    logger = get_logger()
+except ImportError:
+    import logging
+    logger = logging.getLogger("web_proxy_tools")
+
+@tool
+async def proxy_request(url: str, method: str = "GET") -> str:
+    """
+    Proxy an external API call through the backend.
+    Args:
+        url: External URL to call
+        method: HTTP method (GET, POST, etc.)
+    """
+    try:
+        client = ServiceHTTPClients.get_proxy_client()
+        response = await client.request(method, url)
+        return json.dumps(response)
+    except Exception as e:
+        logger.error("proxy_request_failed", {"url": url, "error": str(e)}, error=e)
+        return json.dumps({"error": str(e)})

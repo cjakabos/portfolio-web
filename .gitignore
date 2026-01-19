@@ -34,3 +34,4 @@ package-lock.json
 node_modules
 .env
 next-env.d.ts
+*.txt

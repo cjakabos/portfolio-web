@@ -99,7 +99,7 @@ public class UserController {
         );
     }
 
-    @PostMapping("/employee/{employeeId}")
+    @GetMapping("/employee/{employeeId}")
     public EmployeeDTO getEmployee(@PathVariable long employeeId) {
         return getEmployeeDTO(
                 employeeService.getEmployeeById(employeeId)

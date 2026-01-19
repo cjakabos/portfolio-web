@@ -1,0 +1,42 @@
+# =============================================================================
+# Docker Ignore - AI Orchestration Layer
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# Python bytecode (NOT source files)
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data (not needed in image)
+chroma_db/
+*.db
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Readme
+README.md
