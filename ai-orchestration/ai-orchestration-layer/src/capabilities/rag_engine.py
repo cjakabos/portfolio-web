@@ -4,6 +4,7 @@
 RAG Engine with Thread-Safe Initialization - FIXED
 ISSUE #4 FIX: Thread-safe initialization using asyncio.Lock
 Prevents race conditions when multiple concurrent requests initialize RAG
+Tracks capabilities used for observability metrics
 """
 
 import asyncio
@@ -16,6 +17,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from capabilities.base_capability import BaseCapability, CapabilityError, CapabilityStatus
 from core.config import get_config
 from core.llm_manager import get_llm
+from core.state import UnifiedState
 
 
 class RAGEngine(BaseCapability):
@@ -142,48 +144,41 @@ class RAGEngine(BaseCapability):
                 metadata={"user_id": 1, "type": "note", "id": 1, "category": "strategy"}
             ),
             Document(
-                page_content="Product development roadmap focuses on AI integration and mobile experience. Priority features include real-time analytics, automated workflows, and enhanced security.",
-                metadata={"user_id": 1, "type": "note", "id": 2, "category": "product"}
+                page_content="Q4 sales analysis shows 15% growth in online orders. Key drivers: mobile app adoption and expanded delivery zones. Recommend increasing digital marketing spend.",
+                metadata={"user_id": 1, "type": "note", "id": 2, "category": "analysis"}
             ),
             Document(
-                page_content="Q4 strategy emphasizes customer acquisition and market expansion. Key initiatives: digital marketing campaigns, partnership development, and product diversification.",
-                metadata={"user_id": 1, "type": "note", "id": 3, "category": "strategy"}
+                page_content="Pet grooming best practices: Regular brushing, nail trimming every 2-3 weeks, ear cleaning weekly. Dogs with longer coats need professional grooming monthly.",
+                metadata={"user_id": 2, "type": "note", "id": 3, "category": "pets"}
             ),
             Document(
-                page_content="Technical architecture uses microservices pattern with event-driven communication. Services include orchestration layer, ML pipeline, RAG system, and agent framework.",
-                metadata={"user_id": 1, "type": "note", "id": 4, "category": "technical"}
+                page_content="Vehicle maintenance schedule: Oil change every 5,000 miles, tire rotation every 7,500 miles, brake inspection annually. Premium vehicles may require synthetic oil.",
+                metadata={"user_id": 3, "type": "note", "id": 4, "category": "vehicles"}
             ),
             Document(
-                page_content="Team structure: Engineering (15), Product (5), Sales (8), Marketing (6). Focus on cross-functional collaboration and agile methodologies.",
-                metadata={"user_id": 1, "type": "note", "id": 5, "category": "organization"}
-            ),
-            Document(
-                page_content="Security best practices: regular audits, encryption at rest and in transit, zero-trust architecture, multi-factor authentication, and compliance with SOC 2 standards.",
-                metadata={"user_id": 1, "type": "note", "id": 6, "category": "security"}
-            ),
-            Document(
-                page_content="Performance metrics: 99.9% uptime, <200ms API response time, 10M+ requests/day. Infrastructure uses Kubernetes for orchestration and auto-scaling.",
-                metadata={"user_id": 1, "type": "note", "id": 7, "category": "technical"}
-            ),
-            Document(
-                page_content="Machine learning pipeline includes data preprocessing, feature engineering, model training with cross-validation, A/B testing, and continuous monitoring.",
-                metadata={"user_id": 1, "type": "note", "id": 8, "category": "ml"}
+                page_content="Shopping cart optimization: Reduce abandonment by offering guest checkout, displaying security badges, and showing shipping costs early in the process.",
+                metadata={"user_id": 1, "type": "note", "id": 5, "category": "ecommerce"}
             )
         ]
     
-    async def _execute_internal(self, state) -> Dict[str, Any]:
+    async def _execute_internal(self, state: UnifiedState) -> Dict[str, Any]:
         """
-        Internal execution logic - queries knowledge base with thread-safe initialization
+        Internal execution logic - performs RAG query
         
         Args:
             state: Current unified state
         
         Returns:
-            RAG query results
+            RAG query results with retrieved context
         """
-        # Ensure vectorstore is initialized (thread-safe)
-        await self._ensure_initialized()
+        # Track RAG capabilities usage
+        if "capabilities_used" not in state:
+            state["capabilities_used"] = []
+        state["capabilities_used"].extend(["RAG", "Vector DB", "LLM Gen"])
         
+        # Ensure initialized (thread-safe)
+        await self._ensure_initialized()
+
         if not RAGEngine._vectorstore:
             raise CapabilityError(
                 message="Vector store not initialized",
@@ -191,50 +186,82 @@ class RAGEngine(BaseCapability):
                 error_code="RAG_VECTORSTORE_NOT_INITIALIZED",
                 recoverable=True
             )
-        
-        query: str = state["input_data"]
+
+        query = state["input_data"]
+        user_id = state.get("user_id")
         
         try:
-            # Perform similarity search
-            docs: List[Document] = await self._async_similarity_search(
-                query,
-                k=self.config.rag.search_k
+            # Retrieve relevant documents
+            retriever = RAGEngine._vectorstore.as_retriever(
+                search_kwargs={
+                    "k": self.config.rag.search_k,
+                    "filter": {"user_id": user_id} if user_id else None
+                }
             )
+            
+            docs = await retriever.ainvoke(query)
             
             if not docs:
                 return {
-                    "answer": "I couldn't find any relevant information in the knowledge base for your query.",
-                    "documents": [],
-                    "confidence": 0.0,
-                    "status": "no_results",
-                    "result": "No relevant information found"
+                    "result": "I couldn't find any relevant information in your documents. Try rephrasing your question or adding more context.",
+                    "sources": [],
+                    "context_used": False,
+                    "status": "no_results"
                 }
             
-            # Filter by similarity threshold if available
-            filtered_docs: List[Document] = self._filter_by_similarity(docs)
+            # Format context from retrieved documents
+            context = "\n\n".join([
+                f"Document {i+1}:\n{doc.page_content}"
+                for i, doc in enumerate(docs)
+            ])
             
-            if not filtered_docs:
-                return {
-                    "answer": "The information I found doesn't seem relevant enough to your query.",
-                    "documents": [self._doc_to_dict(d) for d in docs],
-                    "confidence": 0.3,
-                    "status": "low_relevance",
-                    "result": "Low relevance results"
-                }
+            # Generate response using LLM with context
+            llm = get_llm()
             
-            # Generate answer using retrieved context
-            answer = await self._generate_answer(query, filtered_docs)
+            messages = [
+                SystemMessage(content="""You are a helpful assistant that answers questions based on the provided context.
+                
+Rules:
+1. Only use information from the provided context
+2. If the context doesn't contain relevant information, say so
+3. Be concise and direct in your answers
+4. Cite which document(s) you're referencing when relevant"""),
+                HumanMessage(content=f"""Context:
+{context}
+
+Question: {query}
+
+Answer based on the context above:""")
+            ]
+            
+            response = await llm.ainvoke(messages)
+            
+            # Extract content
+            if hasattr(response, 'content'):
+                answer = response.content
+            else:
+                answer = str(response)
             
             return {
-                "answer": answer,
-                "documents": [self._doc_to_dict(d) for d in filtered_docs],
-                "confidence": 0.85,
-                "status": "success",
-                "result": answer
+                "result": answer,
+                "sources": [
+                    {
+                        "content": doc.page_content[:200] + "...",
+                        "metadata": doc.metadata
+                    }
+                    for doc in docs
+                ],
+                "context_used": True,
+                "documents_retrieved": len(docs),
+                "status": "success"
             }
             
         except Exception as e:
-            self.logger.error("rag_query_failed", {"query": query, "error": str(e)}, error=e)
+            self.logger.error("rag_query_failed", {
+                "query": query,
+                "error": str(e)
+            }, error=e)
+            
             raise CapabilityError(
                 message=f"RAG query failed: {str(e)}",
                 capability_name=self.capability_name,
@@ -243,103 +270,26 @@ class RAGEngine(BaseCapability):
                 original_error=e
             )
     
-    async def _async_similarity_search(self, query: str, k: int) -> List[Document]:
-        """
-        Async wrapper for similarity search
-        
-        Args:
-            query: Search query
-            k: Number of results to return
-        
-        Returns:
-            List of relevant documents
-        """
-        # Run synchronous similarity_search in thread pool
-        loop = asyncio.get_event_loop()
-        docs = await loop.run_in_executor(
-            None,
-            RAGEngine._vectorstore.similarity_search,
-            query,
-            k
-        )
-        return docs
-    
-    def _filter_by_similarity(self, docs: List[Document]) -> List[Document]:
-        """
-        Filter documents by similarity threshold
-        
-        Args:
-            docs: Documents to filter
-        
-        Returns:
-            Filtered documents above threshold
-        """
-        # If docs have scores, filter by threshold
-        # Note: Chroma similarity_search doesn't return scores by default
-        # Use similarity_search_with_score for this functionality
-        
-        # For now, return all docs (can enhance with similarity_search_with_score)
-        return docs
-    
-    async def _generate_answer(self, query: str, docs: List[Document]) -> str:
-        """
-        Generate answer using LLM and retrieved documents
-        
-        Args:
-            query: User query
-            docs: Retrieved documents
-        
-        Returns:
-            Generated answer
-        """
-        # Build context from documents
-        context = "\n\n".join([
-            f"Document {i+1}:\n{doc.page_content}"
-            for i, doc in enumerate(docs)
-        ])
-        
-        # Create system prompt
-        system_prompt = """You are a helpful assistant that answers questions based on the provided context.
-Use ONLY the information from the context to answer the question.
-If the context doesn't contain enough information, say so.
-Be concise and specific."""
-        
-        # Create user prompt
-        user_prompt = f"""Context:
-{context}
-
-Question: {query}
-
-Answer based on the context above:"""
-        
-        # Generate answer using LLM
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
-        ]
-        
-        response = await self.llm.ainvoke(messages)
-        
-        return response.content
-    
-    def _doc_to_dict(self, doc: Document) -> Dict[str, Any]:
-        """Convert document to dictionary for response"""
+    async def _execute_fallback(self, state: UnifiedState) -> Dict[str, Any]:
+        """Fallback when RAG query fails"""
         return {
-            "content": doc.page_content,
-            "metadata": doc.metadata
+            "result": "I'm having trouble searching through your documents right now. Please try again in a moment.",
+            "sources": [],
+            "context_used": False,
+            "status": "fallback"
         }
     
     async def add_documents(
         self,
-        documents: List[Document],
+        documents: List[Dict[str, Any]],
         user_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Add documents to the vector store (thread-safe)
+        Add documents to vector store (thread-safe)
         
         Args:
-            documents: Documents to add
-            user_id: Optional user ID to associate with documents
+            documents: List of documents with 'content' and optional 'metadata'
+            user_id: User ID to associate with documents
         
         Returns:
             Result with document IDs
@@ -348,19 +298,26 @@ Answer based on the context above:"""
         await self._ensure_initialized()
         
         try:
-            # Add user_id to metadata if provided
-            if user_id:
-                for doc in documents:
-                    doc.metadata["user_id"] = user_id
+            # Convert to Document objects
+            docs = []
+            for doc in documents:
+                metadata = doc.get("metadata", {})
+                if user_id:
+                    metadata["user_id"] = user_id
+                
+                docs.append(Document(
+                    page_content=doc["content"],
+                    metadata=metadata
+                ))
             
-            # Add documents to vectorstore
-            ids = RAGEngine._vectorstore.add_documents(documents)
+            # Add to vectorstore
+            ids = RAGEngine._vectorstore.add_documents(docs)
             
             # Persist changes
             RAGEngine._vectorstore.persist()
             
             self.logger.info("rag_documents_added", {
-                "count": len(documents),
+                "count": len(docs),
                 "user_id": user_id,
                 "ids": ids
             })

@@ -115,14 +115,14 @@ async def get_all_pets() -> str:
 
 
 @tool
-async def create_pet(pet_type: str, name: str, owner_id: int, birth_date: str = None, notes: str = None) -> str:
+async def create_pet(pet_type: str, name: str, owner_id: int, birth_date: str = None, notes: Optional[str] = None) -> str:
     """
     Create a new pet with full details.
     Args:
         pet_type: Type of pet (e.g., DOG, CAT, BIRD)
         name: Name of the pet
         owner_id: ID of the customer who owns the pet
-        birth_date: Birth date in YYYY-MM-DD format (optional)
+        birth_date: Birth date in YYYY-MM-DD format
         notes: Additional notes about the pet (optional)
     Returns: JSON string containing the created pet
     """
@@ -350,7 +350,7 @@ async def get_customer_by_id(customer_id: int) -> str:
 
 
 @tool
-async def create_customer(name: str, phone_number: str, notes: str = None) -> str:
+async def create_customer(name: str, phone_number: str, notes: Optional[str] = None) -> str:
     """
     Create a new customer.
     Args:

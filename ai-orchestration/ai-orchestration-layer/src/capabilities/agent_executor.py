@@ -2,6 +2,7 @@
 # File: backend/ai-orchestration-layer/src/capabilities/agent_executor.py
 # Multi-Agent System Executor - UPDATED WITH ALL NEW TOOLS
 # Now includes note, cart, and room management capabilities
+# Tracks capabilities used for observability metrics
 # ============================================================================
 
 from typing import Dict, Any, Optional, Literal
@@ -185,6 +186,11 @@ CRITICAL INSTRUCTIONS:
         Returns:
             Agent execution results
         """
+        # Track Agent Execution capability usage
+        if "capabilities_used" not in state:
+            state["capabilities_used"] = []
+        state["capabilities_used"].append("Agent Execution")
+        
         query: str = state["input_data"]
         
         # Use supervisor to determine best agent
@@ -213,6 +219,9 @@ CRITICAL INSTRUCTIONS:
             )
         
         try:
+            # Track Tool Invocation capability
+            state["capabilities_used"].append("Tool Invocation")
+            
             # Execute agent (async invoke)
             result = await agent.ainvoke({"input": query})
             
@@ -293,8 +302,9 @@ CRITICAL INSTRUCTIONS:
         
         # Vehicle agent keywords
         vehicle_keywords = [
-            "vehicle", "car", "auto", "automobile", "toyota", "honda", 
-            "ford", "make", "model", "year", "price", "drive"
+            "car", "vehicle", "auto", "truck", "suv", "sedan",
+            "toyota", "honda", "ford", "chevrolet", "bmw", "mercedes",
+            "price", "mileage", "year", "model", "make"
         ]
         
         if any(word in query_lower for word in vehicle_keywords):
@@ -310,15 +320,15 @@ CRITICAL INSTRUCTIONS:
                 "fallback": "none"
             })
             return "none"
-    
+
     async def _llm_supervisor_decision(self, query: str) -> AgentType:
         """
         Use LLM to make routing decision for ambiguous queries
         UPDATED with new capabilities
-        
+
         Args:
             query: User query
-        
+
         Returns:
             Agent type decision
         """
@@ -334,30 +344,30 @@ Analyze this query and respond with ONLY the agent name (shop/petstore/vehicle/n
 Query: {query}
 
 Agent:"""
-        
+
         messages = [
             SystemMessage(content="You are a routing supervisor. Respond with only: shop, petstore, vehicle, or none"),
             HumanMessage(content=supervisor_prompt)
         ]
-        
+
         response = await self.llm.ainvoke(messages)
         decision = response.content.strip().lower()
-        
+
         # Validate decision
         valid_agents: set[str] = {"shop", "petstore", "vehicle", "none"}
         if decision in valid_agents:
             return decision  # type: ignore
-        
+
         return "none"
     
     def _handle_no_agent_match(self, query: str) -> Dict[str, Any]:
         """
         Handle queries that don't match any agent
         UPDATED with new capabilities
-        
+
         Args:
             query: User query
-        
+
         Returns:
             Helpful response
         """
@@ -390,50 +400,20 @@ What would you like to do?""",
             ]
         }
     
-    def _extract_keywords(self, query: str) -> list[str]:
+    def _extract_keywords(self, query: str) -> list:
         """Extract keywords from query for logging"""
-        keywords = []
-        query_lower = query.lower()
-        
-        keyword_patterns = {
-            "shopping": ["shop", "buy", "item", "product"],
-            "cart": ["cart", "basket", "add", "remove"],
-            "order": ["order", "checkout", "purchase"],
-            "note": ["note", "write", "list"],
-            "pet": ["pet", "groom", "appointment"],
-            "vehicle": ["vehicle", "car", "drive"],
-            "employee": ["employee", "staff", "schedule"]
-        }
-        
-        for category, patterns in keyword_patterns.items():
-            if any(p in query_lower for p in patterns):
-                keywords.append(category)
-        
-        return keywords
+        words = query.lower().split()
+        keywords = [w for w in words if len(w) > 3]
+        return keywords[:5]
     
-    def _calculate_routing_confidence(
-        self,
-        query: str,
-        agent_type: AgentType
-    ) -> float:
-        """
-        Calculate confidence in routing decision
-        UPDATED with new keyword maps
-        
-        Args:
-            query: User query
-            agent_type: Selected agent
-        
-        Returns:
-            Confidence score (0-1)
-        """
+    def _calculate_routing_confidence(self, query: str, agent_type: AgentType) -> float:
+        """Calculate confidence score for routing decision"""
         query_lower = query.lower()
         
-        # High confidence for direct keyword matches
         confidence_map = {
-            "shop": ["shop", "buy", "cart", "order", "item", "note", "purchase"],
-            "petstore": ["pet", "groom", "appointment", "vet", "schedule"],
-            "vehicle": ["vehicle", "car", "auto", "drive", "make", "model"]
+            "shop": ["shop", "buy", "cart", "order", "item", "note"],
+            "petstore": ["pet", "groom", "schedule", "appointment"],
+            "vehicle": ["car", "vehicle", "auto", "price"]
         }
         
         if agent_type == "none":

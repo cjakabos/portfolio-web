@@ -3,6 +3,7 @@
 """
 Chat Manager - FIXED
 Now fully async with standardized error handling
+Tracks capabilities used for observability metrics
 """
 
 from typing import Dict, Any
@@ -42,6 +43,11 @@ let the user know what services are available."""
         Returns:
             Chat response
         """
+        # Track Chat Manager and LLM capabilities usage
+        if "capabilities_used" not in state:
+            state["capabilities_used"] = []
+        state["capabilities_used"].extend(["Chat Manager", "LLM Gen"])
+        
         query = state["input_data"]
         conversation_history = state.get("conversation_history", [])
         

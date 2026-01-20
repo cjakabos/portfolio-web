@@ -276,12 +276,12 @@ async def search_vehicles_by_price_range(min_price: float, max_price: float) -> 
 
 @tool
 async def search_vehicles(
-    manufacturer: str = None, 
-    condition: str = None, 
-    min_price: float = None, 
-    max_price: float = None,
-    min_year: int = None,
-    max_year: int = None
+    manufacturer: Optional[str] = None,
+    condition: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    min_year: Optional[int] = None,
+    max_year: Optional[int] = None
 ) -> str:
     """
     Search vehicles with multiple criteria.

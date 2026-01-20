@@ -17,7 +17,6 @@ from typing import List, Optional, Dict, Any
 from collections import deque
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-import random
 import time
 
 logger = logging.getLogger(__name__)
@@ -107,7 +106,8 @@ class MetricsCollector:
             "workflow": 0,
             "agent_routing": 0,
             "rag_query": 0,
-            "ml_pipeline": 0
+            "ml_pipeline": 0,
+            "conversational": 0
         }
         
         # Capability usage counts
@@ -117,7 +117,11 @@ class MetricsCollector:
             "Code Exec": 0,
             "Web Search": 0,
             "RAG": 0,
-            "Tool Invocation": 0
+            "Tool Invocation": 0,
+            "ML Pipeline": 0,
+            "Agent Execution": 0,
+            "Workflow Execution": 0,
+            "Chat Manager": 0
         }
         
         # Active orchestrations
@@ -204,6 +208,8 @@ class MetricsCollector:
             # Update orchestration counts
             if orchestration_type in self._orchestration_counts:
                 self._orchestration_counts[orchestration_type] += 1
+            else:
+                self._orchestration_counts[orchestration_type] = 1
             
             # Update capability counts
             for cap in capabilities_used:
@@ -277,11 +283,13 @@ class MetricsCollector:
             orchestrationTypes=[
                 OrchestrationTypeMetric(name=k, value=v)
                 for k, v in self._orchestration_counts.items()
+                if v > 0
             ],
             capabilityUsage=[
                 CapabilityUsageMetric(name=k, used=v)
-                for k, v in sorted(self._capability_counts.items(), key=lambda x: x[1], reverse=True)[:8]
-            ],
+                for k, v in sorted(self._capability_counts.items(), key=lambda x: x[1], reverse=True)
+                if v > 0
+            ][:8],
             recentExecutions=[ExecutionRecord(**e) for e in recent[:20]]
         )
     
@@ -380,47 +388,14 @@ collector = MetricsCollector()
 
 
 # =============================================================================
-# Background Simulation (for demo purposes when no real traffic)
-# =============================================================================
-
-async def simulate_traffic():
-    """Simulate traffic for demonstration purposes."""
-    orchestration_types = ["workflow", "agent_routing", "rag_query", "ml_pipeline"]
-    capabilities = ["LLM Gen", "Vector DB", "Code Exec", "Web Search", "RAG", "Tool Invocation"]
-    
-    while True:
-        try:
-            # Simulate 1-3 requests every 5-15 seconds
-            await asyncio.sleep(random.uniform(5, 15))
-            
-            num_requests = random.randint(1, 3)
-            for _ in range(num_requests):
-                orch_type = random.choice(orchestration_types)
-                caps_used = random.sample(capabilities, k=random.randint(1, 3))
-                duration = random.randint(50, 2000)
-                success = random.random() > 0.05  # 95% success rate
-                
-                await collector.record_execution(
-                    orchestration_type=orch_type,
-                    capabilities_used=caps_used,
-                    duration_ms=duration,
-                    success=success,
-                    request_id=f"sim-{random.randint(1000, 9999)}"
-                )
-        except Exception as e:
-            logger.error(f"Error in traffic simulation: {e}")
-
-
-# =============================================================================
-# Startup
+# Startup - Initialize collector (NO simulate_traffic)
 # =============================================================================
 
 @router.on_event("startup")
 async def startup_event():
-    """Initialize metrics collector and start simulation."""
+    """Initialize metrics collector."""
     await collector.initialize()
-    # Start background simulation for demo
-    asyncio.create_task(simulate_traffic())
+    logger.info("Metrics collector initialized - recording real traffic only")
 
 
 # =============================================================================
@@ -429,83 +404,57 @@ async def startup_event():
 
 @router.get("", response_model=Metrics)
 async def get_metrics():
-    """Get current aggregated metrics."""
+    """
+    Get current aggregated metrics.
+    
+    Returns real-time metrics including:
+    - Total requests and success rate
+    - Average latency and percentiles
+    - Orchestration type distribution
+    - Capability usage counts
+    - Recent executions
+    """
     return collector.get_metrics()
 
 
 @router.get("/detailed", response_model=DetailedMetrics)
-async def get_detailed_metrics(hours: int = Query(24, ge=1, le=168)):
-    """Get detailed metrics for a time range."""
+async def get_detailed_metrics(
+    hours: int = Query(default=24, ge=1, le=168, description="Hours of history to include")
+):
+    """
+    Get detailed metrics with time series data.
+    
+    Args:
+        hours: Number of hours to include (1-168)
+    
+    Returns:
+        Detailed metrics including time series data
+    """
     return collector.get_detailed_metrics(hours)
-
-
-@router.post("/record")
-async def record_execution(
-    orchestration_type: str,
-    capabilities_used: List[str],
-    duration_ms: int,
-    success: bool,
-    request_id: Optional[str] = None,
-    user_id: Optional[int] = None
-):
-    """Record an orchestration execution (for external integrations)."""
-    await collector.record_execution(
-        orchestration_type=orchestration_type,
-        capabilities_used=capabilities_used,
-        duration_ms=duration_ms,
-        success=success,
-        request_id=request_id,
-        user_id=user_id
-    )
-    return {"status": "recorded"}
-
-
-@router.get("/executions", response_model=List[ExecutionRecord])
-async def get_recent_executions(
-    limit: int = Query(100, ge=1, le=1000),
-    orchestration_type: Optional[str] = None,
-    success: Optional[bool] = None
-):
-    """Get recent execution records."""
-    executions = list(collector._executions)
-    executions.reverse()  # Newest first
-    
-    if orchestration_type:
-        executions = [e for e in executions if e["orchestration_type"] == orchestration_type]
-    
-    if success is not None:
-        executions = [e for e in executions if e["success"] == success]
-    
-    return [ExecutionRecord(**e) for e in executions[:limit]]
-
-
-@router.get("/time-series")
-async def get_time_series(
-    metric: str = Query("requests", regex="^(requests|latency|errors|success_rate)$"),
-    hours: int = Query(24, ge=1, le=168),
-    resolution: str = Query("hour", regex="^(minute|hour|day)$")
-):
-    """Get time series data for a specific metric."""
-    detailed = collector.get_detailed_metrics(hours)
-    
-    if metric in detailed.time_series:
-        return {
-            "metric": metric,
-            "time_range": f"{hours}h",
-            "resolution": resolution,
-            "data": detailed.time_series[metric]
-        }
-    
-    return {"metric": metric, "time_range": f"{hours}h", "data": []}
 
 
 @router.get("/health")
 async def health_check():
     """Check metrics system health."""
     metrics = collector.get_metrics()
+    
     return {
         "status": "healthy",
         "service": "metrics",
-        "total_tracked": metrics.totalRequests,
-        "active_orchestrations": metrics.activeOrchestrations
+        "total_requests_tracked": metrics.totalRequests,
+        "active_orchestrations": metrics.activeOrchestrations,
+        "persistence": "redis" if collector._redis_client else "memory"
+    }
+
+
+@router.post("/reset")
+async def reset_metrics():
+    """Reset all metrics (admin endpoint)."""
+    global collector
+    collector = MetricsCollector()
+    await collector.initialize()
+    
+    return {
+        "status": "reset",
+        "message": "All metrics have been reset"
     }

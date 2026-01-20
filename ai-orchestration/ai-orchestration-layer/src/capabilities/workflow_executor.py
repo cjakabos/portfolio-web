@@ -3,6 +3,7 @@
 """
 Workflow Executor - FIXED
 Now fully async with standardized error handling
+Tracks capabilities used for observability metrics
 """
 
 from typing import Dict, Any, List
@@ -30,6 +31,11 @@ class WorkflowExecutor(BaseCapability):
         Returns:
             Workflow execution results
         """
+        # Track Workflow Execution capability usage
+        if "capabilities_used" not in state:
+            state["capabilities_used"] = []
+        state["capabilities_used"].append("Workflow Execution")
+        
         query = state["input_data"]
         
         # Detect workflow type
@@ -63,6 +69,9 @@ class WorkflowExecutor(BaseCapability):
         5. Add supplies to cart
         """
         steps: List[str] = []
+        
+        # Track additional capabilities used in this workflow
+        state["capabilities_used"].extend(["Tool Invocation", "LLM Gen"])
         
         try:
             # Step 1: Check pet preferences
@@ -108,6 +117,9 @@ class WorkflowExecutor(BaseCapability):
         """
         steps: List[str] = []
         
+        # Track additional capabilities used in this workflow
+        state["capabilities_used"].extend(["Tool Invocation", "Code Exec"])
+        
         try:
             steps.append("✓ Validated inventory availability")
             steps.append("✓ Reserved items for order")
@@ -134,6 +146,9 @@ class WorkflowExecutor(BaseCapability):
     
     async def _generic_workflow(self, state: UnifiedState) -> Dict[str, Any]:
         """Generic workflow for unrecognized patterns"""
+        # Track LLM usage for generic processing
+        state["capabilities_used"].append("LLM Gen")
+        
         return {
             "workflow": "generic",
             "steps": ["Analyzed request", "Determined generic workflow"],

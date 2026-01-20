@@ -14,6 +14,9 @@ from core.orchestrator import AIOrchestrationLayer, UnifiedState, OrchestrationT
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
 
+# Import metrics collector for recording real metrics
+from routers.metrics_router import collector
+
 # Configure Router
 router = APIRouter(tags=["Orchestration"])
 logger = logging.getLogger(__name__)
@@ -60,6 +63,7 @@ async def orchestrate(request: OrchestrationRequest):
     """
     Main orchestration endpoint.
     Routes the request through the LangGraph workflow.
+    Records real metrics after execution.
     """
     if not _orchestrator or not _context_store or not _memory_manager:
         raise HTTPException(status_code=503, detail="Orchestration layer not initialized")
@@ -73,6 +77,9 @@ async def orchestrate(request: OrchestrationRequest):
         "type": request.orchestration_type
     })
 
+    # Mark orchestration as active
+    collector.start_orchestration(request_id)
+
     try:
         # 1. Load User Context
         user_profile = _context_store.load_user_profile(request.user_id)
@@ -83,7 +90,7 @@ async def orchestrate(request: OrchestrationRequest):
         # 3. Merge Contexts
         merged_context = {**user_profile, **(request.context or {})}
 
-        # 4. Create State
+        # 4. Create State with capabilities_used tracking
         initial_state = UnifiedState(
             request_id=request_id,
             user_id=request.user_id,
@@ -99,35 +106,96 @@ async def orchestrate(request: OrchestrationRequest):
             next_action="",
             requires_human=False,
             logs=[],
-            metrics={}
+            metrics={},
+            capabilities_used=[]  # Track capabilities used
         )
 
         # 5. Execute Workflow
         result_state = await _orchestrator.invoke(initial_state)
 
         # 6. Calculate Duration
-        duration = (time.time() - start_time) * 1000
+        duration_ms = int((time.time() - start_time) * 1000)
 
-        # 7. Save Interaction
+        # 7. Get capabilities used from state
+        capabilities_used = result_state.get("capabilities_used", [])
+        
+        # If no capabilities tracked, derive from execution path
+        if not capabilities_used:
+            execution_path = result_state.get("execution_path", [])
+            capabilities_used = _derive_capabilities_from_path(execution_path)
+
+        # 8. Record real metrics
+        success = result_state.get("final_output") is not None and not result_state.get("errors")
+        
+        await collector.record_execution(
+            orchestration_type=request.orchestration_type,
+            capabilities_used=capabilities_used,
+            duration_ms=duration_ms,
+            success=success,
+            request_id=request_id,
+            user_id=int(request.user_id) if request.user_id.isdigit() else None
+        )
+
+        # 9. Save Interaction
         if result_state.get("final_output"):
             _memory_manager.save_interaction(
                 session_id=request.session_id,
                 user_message=request.message,
                 assistant_response=result_state["final_output"],
-                metadata={"request_id": request_id, "duration": duration}
+                metadata={"request_id": request_id, "duration": duration_ms}
             )
 
         return {
             "request_id": request_id,
             "response": result_state.get("final_output"),
             "execution_path": result_state.get("execution_path"),
+            "capabilities_used": capabilities_used,
             "metrics": result_state.get("metrics"),
-            "requires_human": result_state.get("requires_human")
+            "requires_human": result_state.get("requires_human"),
+            "duration_ms": duration_ms
         }
 
     except Exception as e:
+        # Record failed execution
+        duration_ms = int((time.time() - start_time) * 1000)
+        
+        await collector.record_execution(
+            orchestration_type=request.orchestration_type,
+            capabilities_used=["Error"],
+            duration_ms=duration_ms,
+            success=False,
+            request_id=request_id,
+            user_id=int(request.user_id) if request.user_id.isdigit() else None
+        )
+        
         logger.error(f"Orchestration failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+    
+    finally:
+        # Mark orchestration as complete
+        collector.end_orchestration(request_id)
+
+
+def _derive_capabilities_from_path(execution_path: list) -> list:
+    """Derive capabilities from execution path if not explicitly tracked."""
+    capability_map = {
+        "rag": ["RAG", "Vector DB", "LLM Gen"],
+        "ml": ["ML Pipeline"],
+        "agent": ["Agent Execution", "Tool Invocation"],
+        "workflow": ["Workflow Execution"],
+        "chat": ["Chat Manager", "LLM Gen"],
+        "llm": ["LLM Gen"],
+        "tool": ["Tool Invocation"],
+    }
+    
+    capabilities = set()
+    for node in execution_path:
+        node_lower = node.lower()
+        for key, caps in capability_map.items():
+            if key in node_lower:
+                capabilities.update(caps)
+    
+    return list(capabilities) if capabilities else ["LLM Gen"]
 
 
 @router.delete("/user/preferences/{user_id}/{key}")
@@ -160,6 +228,7 @@ async def websocket_stream(websocket: WebSocket):
     """
     WebSocket endpoint for real-time streaming orchestration.
     Supports bidirectional communication for chat-style interactions.
+    Records real metrics for each message processed.
 
     FIXED: Properly handles client disconnects without error logging
     """
@@ -218,6 +287,11 @@ async def websocket_stream(websocket: WebSocket):
                 })
                 continue
 
+            # Start timing
+            start_time = time.time()
+            request_id = str(uuid.uuid4())
+            collector.start_orchestration(request_id)
+
             # Send acknowledgment
             await websocket.send_json({
                 "type": "ack",
@@ -225,9 +299,6 @@ async def websocket_stream(websocket: WebSocket):
             })
 
             try:
-                # Process with orchestrator
-                request_id = str(uuid.uuid4())
-
                 # Load context if available
                 user_profile = {}
                 history = []
@@ -237,7 +308,7 @@ async def websocket_stream(websocket: WebSocket):
                 if _memory_manager:
                     history = _memory_manager.get_history(session_id)
 
-                # Create initial state
+                # Create initial state with capabilities tracking
                 initial_state = UnifiedState(
                     request_id=request_id,
                     user_id=str(user_id),
@@ -253,8 +324,12 @@ async def websocket_stream(websocket: WebSocket):
                     next_action="",
                     requires_human=False,
                     logs=[],
-                    metrics={}
+                    metrics={},
+                    capabilities_used=[]
                 )
+
+                # Track capabilities used during streaming
+                capabilities_used = []
 
                 # Check if orchestrator supports streaming
                 if hasattr(_orchestrator, 'astream'):
@@ -275,59 +350,80 @@ async def websocket_stream(websocket: WebSocket):
                                 "data": {"node": chunk["current_node"]},
                                 "request_id": request_id
                             })
+                        
+                        # Collect capabilities
+                        if "capabilities_used" in chunk:
+                            capabilities_used.extend(chunk["capabilities_used"])
+
+                    # Get final state
+                    final_output = chunk.get("final_output", "")
+                    
                 else:
                     # Non-streaming fallback
-                    result_state = await _orchestrator.invoke(initial_state)
-
-                    if websocket.client_state == WebSocketState.CONNECTED:
-                        await websocket.send_json({
-                            "type": "complete",
-                            "data": {
-                                "content": result_state.get("final_output", ""),
-                                "metrics": result_state.get("metrics", {})
-                            },
-                            "request_id": request_id
-                        })
-
-                # Send completion if still connected
-                if websocket.client_state == WebSocketState.CONNECTED:
+                    result = await _orchestrator.invoke(initial_state)
+                    final_output = result.get("final_output", "")
+                    capabilities_used = result.get("capabilities_used", [])
+                    
                     await websocket.send_json({
-                        "type": "complete",
-                        "data": {
-                            "content": initial_state.get("final_output") or "",
-                            "metrics": initial_state.get("metrics")
-                        },
+                        "type": "token",
+                        "data": {"token": final_output},
                         "request_id": request_id
                     })
 
+                # Calculate duration
+                duration_ms = int((time.time() - start_time) * 1000)
+                
+                # Deduplicate capabilities
+                capabilities_used = list(set(capabilities_used)) if capabilities_used else ["LLM Gen"]
+
+                # Record metrics
+                await collector.record_execution(
+                    orchestration_type="conversational",
+                    capabilities_used=capabilities_used,
+                    duration_ms=duration_ms,
+                    success=True,
+                    request_id=request_id,
+                    user_id=int(user_id) if str(user_id).isdigit() else None
+                )
+
+                # Send completion
+                await websocket.send_json({
+                    "type": "complete",
+                    "data": {
+                        "content": final_output,
+                        "metrics": {
+                            "tokens_generated": len(final_output.split()),
+                            "latency_ms": duration_ms,
+                            "capabilities_used": capabilities_used
+                        }
+                    },
+                    "request_id": request_id
+                })
+
             except Exception as e:
-                logger.error(f"WebSocket {client_id} orchestration error: {e}", exc_info=True)
-                if websocket.client_state == WebSocketState.CONNECTED:
-                    await websocket.send_json({
-                        "type": "error",
-                        "error": str(e)
-                    })
+                # Record failed execution
+                duration_ms = int((time.time() - start_time) * 1000)
+                
+                await collector.record_execution(
+                    orchestration_type="conversational",
+                    capabilities_used=["Error"],
+                    duration_ms=duration_ms,
+                    success=False,
+                    request_id=request_id,
+                    user_id=int(user_id) if str(user_id).isdigit() else None
+                )
+                
+                logger.error(f"WebSocket {client_id} processing error: {e}")
+                await websocket.send_json({
+                    "type": "error",
+                    "error": str(e),
+                    "request_id": request_id
+                })
+            
+            finally:
+                collector.end_orchestration(request_id)
 
-    except WebSocketDisconnect as e:
-        # Normal client disconnect
-        logger.info(f"WebSocket {client_id} client disconnected (code: {e.code})")
     except Exception as e:
-        # Classify the error
-        error_str = str(e)
-
-        # These are normal client disconnects, not errors
-        if any(code in error_str for code in ['1000', '1001', '1005', '1006']):
-            logger.debug(f"WebSocket {client_id} closed by client: {e}")
-        elif 'WebSocket is closed' in error_str:
-            logger.debug(f"WebSocket {client_id} connection closed: {e}")
-        else:
-            # Actual error
-            logger.error(f"WebSocket {client_id} unexpected error: {e}", exc_info=True)
+        logger.error(f"WebSocket {client_id} error: {e}")
     finally:
-        # Ensure we close the connection
-        try:
-            if websocket.client_state == WebSocketState.CONNECTED:
-                await websocket.close()
-        except Exception:
-            pass
-        logger.debug(f"WebSocket {client_id} handler finished")
+        logger.info(f"WebSocket {client_id} connection closed")

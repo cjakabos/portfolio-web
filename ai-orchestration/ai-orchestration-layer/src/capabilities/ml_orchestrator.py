@@ -3,6 +3,7 @@
 """
 ML Orchestrator - FIXED
 Now fully async with standardized error handling
+Tracks capabilities used for observability metrics
 """
 
 import os
@@ -33,6 +34,11 @@ class MLOrchestrator(BaseCapability):
         Returns:
             ML prediction results
         """
+        # Track ML Pipeline capability usage
+        if "capabilities_used" not in state:
+            state["capabilities_used"] = []
+        state["capabilities_used"].append("ML Pipeline")
+        
         query = state["input_data"]
         query_lower = query.lower()
         
@@ -57,6 +63,9 @@ class MLOrchestrator(BaseCapability):
                         raise Exception(f"ML service returned status {response.status}")
                     
                     data = await response.json()
+                    
+                    # Track additional capability for segmentation analysis
+                    state["capabilities_used"].append("Code Exec")
                     
                     return {
                         "operation": "segmentation",
@@ -85,6 +94,9 @@ class MLOrchestrator(BaseCapability):
     
     async def _run_prediction(self, state: UnifiedState) -> Dict[str, Any]:
         """Run ML prediction"""
+        # Track prediction capability
+        state["capabilities_used"].append("Code Exec")
+        
         # Simulated prediction for now
         return {
             "operation": "prediction",
