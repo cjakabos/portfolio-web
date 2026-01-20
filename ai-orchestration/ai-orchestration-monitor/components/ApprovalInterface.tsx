@@ -6,15 +6,23 @@
 // - Visual error handling and success feedback
 // - Manual refresh capability
 // - Detailed payload inspection
+// - Risk-based approval display
+// - Real-time WebSocket updates
 // =============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   CheckCircle, XCircle, Clock, AlertTriangle,
   ChevronRight, ExternalLink, ShieldAlert, Check,
-  X, RefreshCw, Loader2, AlertCircle, FileJson
+  X, RefreshCw, Loader2, AlertCircle, FileJson,
+  Activity, Shield, AlertOctagon, Info, Zap
 } from 'lucide-react';
-import { approvalClient, type ApprovalRequest } from '../services/approvalClient';
+import {
+  approvalClient,
+  type ApprovalRequest,
+  type RiskLevel,
+  type ApprovalMode
+} from '../services/approvalClient';
 
 export default function ApprovalInterface() {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
@@ -22,7 +30,9 @@ export default function ApprovalInterface() {
   const [error, setError] = useState<string | null>(null);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [notification, setNotification] = useState<{type: 'success' | 'error' | 'info', message: string} | null>(null);
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const wsRef = useRef<WebSocket | null>(null);
 
   // Fetch approvals from backend
   const fetchApprovals = useCallback(async () => {
@@ -39,10 +49,63 @@ export default function ApprovalInterface() {
     }
   }, []);
 
-  // Initial load
+  // Connect to WebSocket for real-time updates
+  const connectWebSocket = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    try {
+      const ws = approvalClient.connectWebSocket(
+        // On new approval request
+        (request) => {
+          setApprovals(prev => {
+            // Avoid duplicates
+            if (prev.some(a => a.request_id === request.request_id)) {
+              return prev;
+            }
+            return [request, ...prev];
+          });
+          setNotification({ type: 'info', message: 'New approval request received' });
+        },
+        // On approval update
+        (updatedRequest) => {
+          setApprovals(prev => prev.map(a =>
+            a.request_id === updatedRequest.request_id ? updatedRequest : a
+          ));
+          // Remove from list if no longer pending
+          if (updatedRequest.status !== 'pending') {
+            setApprovals(prev => prev.filter(a => a.request_id !== updatedRequest.request_id));
+            if (selectedApproval?.request_id === updatedRequest.request_id) {
+              setSelectedApproval(null);
+            }
+          }
+        },
+        // On error
+        (err) => {
+          console.error('WebSocket error:', err);
+        },
+        // On close
+        () => {
+          console.log('WebSocket closed, attempting reconnect...');
+          setTimeout(connectWebSocket, 5000);
+        }
+      );
+      wsRef.current = ws;
+    } catch (err) {
+      console.error('Failed to connect WebSocket:', err);
+    }
+  }, [selectedApproval]);
+
+  // Initial load and WebSocket connection
   useEffect(() => {
     fetchApprovals();
-  }, [fetchApprovals]);
+    connectWebSocket();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [fetchApprovals, connectWebSocket]);
 
   // Clear notification after 3 seconds
   useEffect(() => {
@@ -55,9 +118,10 @@ export default function ApprovalInterface() {
   const handleApprove = async (requestId: string) => {
     setActionLoading(true);
     try {
-      await approvalClient.approveAction(requestId);
+      await approvalClient.approveAction(requestId, 1, approvalNotes || undefined);
       setApprovals(prev => prev.filter(a => a.request_id !== requestId));
       setSelectedApproval(null);
+      setApprovalNotes('');
       setNotification({ type: 'success', message: 'Action approved successfully' });
     } catch (err) {
       console.error('Failed to approve:', err);
@@ -70,9 +134,10 @@ export default function ApprovalInterface() {
   const handleReject = async (requestId: string) => {
     setActionLoading(true);
     try {
-      await approvalClient.rejectAction(requestId, "Rejected by user");
+      await approvalClient.rejectAction(requestId, 1, approvalNotes || "Rejected by user");
       setApprovals(prev => prev.filter(a => a.request_id !== requestId));
       setSelectedApproval(null);
+      setApprovalNotes('');
       setNotification({ type: 'success', message: 'Action rejected' });
     } catch (err) {
       console.error('Failed to reject:', err);
@@ -82,14 +147,55 @@ export default function ApprovalInterface() {
     }
   };
 
-  // Helper to get priority badge color
-  const getPriorityColor = (priority?: string) => {
-    switch (priority?.toLowerCase()) {
+  // Helper to get risk level badge color
+  const getRiskLevelColor = (riskLevel?: RiskLevel) => {
+    switch (riskLevel?.toLowerCase()) {
+      case 'critical': return 'bg-red-600 text-white border-red-700';
       case 'high': return 'bg-red-100 text-red-700 border-red-200';
       case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'low': return 'bg-green-100 text-green-700 border-green-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
+  };
+
+  // Helper to get risk score color
+  const getRiskScoreColor = (score?: number) => {
+    if (score === undefined) return 'text-gray-500';
+    if (score >= 0.7) return 'text-red-600';
+    if (score >= 0.3) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
+  // Helper to get approval type icon
+  const getApprovalTypeIcon = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'financial': return <Activity className="w-4 h-4" />;
+      case 'ml_decision': return <Zap className="w-4 h-4" />;
+      case 'data_access': return <Shield className="w-4 h-4" />;
+      case 'agent_action': return <AlertOctagon className="w-4 h-4" />;
+      default: return <Info className="w-4 h-4" />;
+    }
+  };
+
+  // Format risk score as percentage
+  const formatRiskScore = (score?: number) => {
+    if (score === undefined) return 'N/A';
+    return `${(score * 100).toFixed(0)}%`;
+  };
+
+  // Calculate time remaining until expiry
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diff = expiry.getTime() - now.getTime();
+
+    if (diff <= 0) return 'Expired';
+
+    const minutes = Math.floor(diff / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
   };
 
   return (
@@ -115,6 +221,9 @@ export default function ApprovalInterface() {
           <div className="flex items-center space-x-2 text-xs text-gray-500">
             <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full font-medium">
               {approvals.length} Pending
+            </span>
+            <span className="px-2 py-0.5 bg-red-50 text-red-700 rounded-full font-medium">
+              {approvals.filter(a => a.risk_level === 'high' || a.risk_level === 'critical').length} High Risk
             </span>
           </div>
         </div>
@@ -163,20 +272,42 @@ export default function ApprovalInterface() {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
                   )}
                   <div className="flex justify-between items-start mb-2">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${getPriorityColor(approval.priority)}`}>
-                      {approval.priority || 'Medium'}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${getRiskLevelColor(approval.risk_level)}`}>
+                        {approval.risk_level || 'Medium'}
+                      </span>
+                      <span className="text-xs text-gray-500 flex items-center">
+                        {getApprovalTypeIcon(approval.approval_type)}
+                        <span className="ml-1 capitalize">{approval.approval_type?.replace(/_/g, ' ')}</span>
+                      </span>
+                    </div>
                     <span className="text-xs text-gray-400 flex items-center">
                       <Clock className="w-3 h-3 mr-1" />
-                      {new Date(approval.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      {getTimeRemaining(approval.expires_at)}
                     </span>
                   </div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">
-                    {approval.action_type.replace(/_/g, ' ')}
+                    {approval.proposed_action || 'Pending Action'}
                   </h3>
                   <p className="text-xs text-gray-500 line-clamp-2">
-                    {approval.description || 'No description provided'}
+                    {approval.context?.query || 'No description provided'}
                   </p>
+                  {approval.context?.risk_score !== undefined && (
+                    <div className="mt-2 flex items-center">
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            approval.context.risk_score >= 0.7 ? 'bg-red-500' :
+                            approval.context.risk_score >= 0.3 ? 'bg-yellow-500' : 'bg-green-500'
+                          }`}
+                          style={{ width: `${approval.context.risk_score * 100}%` }}
+                        />
+                      </div>
+                      <span className={`ml-2 text-xs font-medium ${getRiskScoreColor(approval.context.risk_score)}`}>
+                        {formatRiskScore(approval.context.risk_score)}
+                      </span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -189,9 +320,11 @@ export default function ApprovalInterface() {
         {/* Global Notification Toast */}
         {notification && (
           <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full shadow-lg z-50 flex items-center space-x-2 animate-in slide-in-from-top-4 fade-in duration-200 ${
-            notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            notification.type === 'success' ? 'bg-green-600 text-white' :
+            notification.type === 'info' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'
           }`}>
-            {notification.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+            {notification.type === 'success' ? <CheckCircle className="w-4 h-4" /> :
+             notification.type === 'info' ? <Info className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
             <span className="text-sm font-medium">{notification.message}</span>
           </div>
         )}
@@ -203,15 +336,19 @@ export default function ApprovalInterface() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-md border uppercase tracking-wider ${getPriorityColor(selectedApproval.priority)}`}>
-                      {selectedApproval.priority || 'Normal'} Priority
+                    <span className={`px-2.5 py-1 text-xs font-bold rounded-md border uppercase tracking-wider ${getRiskLevelColor(selectedApproval.risk_level)}`}>
+                      {selectedApproval.risk_level || 'Normal'} Risk
+                    </span>
+                    <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200 capitalize flex items-center">
+                      {getApprovalTypeIcon(selectedApproval.approval_type)}
+                      <span className="ml-1">{selectedApproval.approval_type?.replace(/_/g, ' ')}</span>
                     </span>
                     <span className="text-sm text-gray-500 font-mono">
                       ID: {selectedApproval.request_id.slice(0, 8)}
                     </span>
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900 capitalize">
-                    {selectedApproval.action_type.replace(/_/g, ' ')}
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {selectedApproval.proposed_action || 'Review Required'}
                   </h1>
                 </div>
                 <div className="flex space-x-3">
@@ -239,30 +376,98 @@ export default function ApprovalInterface() {
             <div className="flex-1 overflow-y-auto p-8">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
 
-                {/* Description Section */}
+                {/* Risk Assessment Section */}
+                {selectedApproval.context?.risk_score !== undefined && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Risk Assessment
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Risk Score</span>
+                        <span className={`text-lg font-bold ${getRiskScoreColor(selectedApproval.context.risk_score)}`}>
+                          {formatRiskScore(selectedApproval.context.risk_score)}
+                        </span>
+                      </div>
+                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            selectedApproval.context.risk_score >= 0.7 ? 'bg-red-500' :
+                            selectedApproval.context.risk_score >= 0.3 ? 'bg-yellow-500' : 'bg-green-500'
+                          }`}
+                          style={{ width: `${selectedApproval.context.risk_score * 100}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-2 text-xs text-gray-500">
+                        <span>Low (&lt;30%)</span>
+                        <span>Medium (30-70%)</span>
+                        <span>High (&gt;70%)</span>
+                      </div>
+                      <p className="mt-3 text-sm text-gray-600">
+                        {selectedApproval.context.risk_score >= 0.7
+                          ? '⚠️ This operation requires human approval due to high risk score.'
+                          : selectedApproval.context.risk_score >= 0.3
+                          ? 'ℹ️ This operation was flagged for review but may proceed with approval.'
+                          : '✅ This is a low-risk operation.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-gray-100 my-4"></div>
+
+                {/* Request Context Section */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-                    Description
+                    Request Context
                   </h3>
-                  <p className="text-gray-900 leading-relaxed">
-                    {selectedApproval.description || 'No detailed description available.'}
-                  </p>
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    {selectedApproval.context?.query && (
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase">Query</span>
+                        <p className="text-gray-900 mt-1">{selectedApproval.context.query}</p>
+                      </div>
+                    )}
+                    {selectedApproval.context?.orchestration_type && (
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase">Orchestration Type</span>
+                        <p className="text-gray-900 mt-1 capitalize">{selectedApproval.context.orchestration_type.replace(/_/g, ' ')}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="border-t border-gray-100 my-4"></div>
 
-                {/* Payload Viewer */}
+                {/* Approval Notes Input */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
+                    Approval Notes (Optional)
+                  </h3>
+                  <textarea
+                    value={approvalNotes}
+                    onChange={(e) => setApprovalNotes(e.target.value)}
+                    placeholder="Add notes for this approval decision..."
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="border-t border-gray-100 my-4"></div>
+
+                {/* Full Context Viewer */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider flex items-center">
                       <FileJson className="w-4 h-4 mr-2" />
-                      Action Payload
+                      Full Request Context
                     </h3>
                     <span className="text-xs text-gray-400">Read-only</span>
                   </div>
                   <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto shadow-inner">
                     <pre className="text-sm font-mono text-blue-300 leading-relaxed">
-                      {JSON.stringify(selectedApproval.payload || {}, null, 2)}
+                      {JSON.stringify(selectedApproval.context || {}, null, 2)}
                     </pre>
                   </div>
                 </div>
@@ -273,6 +478,18 @@ export default function ApprovalInterface() {
                     <h4 className="text-xs text-gray-500 uppercase mb-1">Created At</h4>
                     <p className="text-sm text-gray-900">
                       {new Date(selectedApproval.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs text-gray-500 uppercase mb-1">Expires At</h4>
+                    <p className="text-sm text-gray-900">
+                      {new Date(selectedApproval.expires_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs text-gray-500 uppercase mb-1">Requester ID</h4>
+                    <p className="text-sm text-gray-900">
+                      {selectedApproval.requester_id}
                     </p>
                   </div>
                   <div>

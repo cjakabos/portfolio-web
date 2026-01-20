@@ -53,6 +53,8 @@ except ImportError as e:
 
 # Human-in-the-Loop
 HITL_AVAILABLE = False
+RISK_THRESHOLD_LOW = 0.2      # Auto-approve below this
+RISK_THRESHOLD_HIGH = 0.25     # Require human approval above this
 HumanInLoopManager = None
 ApprovalType = None
 ApprovalStatus = None
@@ -518,7 +520,6 @@ class AIOrchestrationLayer:
     def _add_hitl_nodes(self, workflow: StateGraph) -> None:
         """Add human-in-the-loop nodes"""
         workflow.add_node("human_review", self.human_review_node)
-        workflow.add_node("apply_human_feedback", self.apply_human_feedback)
 
     def _add_parallel_nodes(self, workflow: StateGraph) -> None:
         """Add parallel execution nodes"""
@@ -562,16 +563,50 @@ class AIOrchestrationLayer:
         )
 
     def _define_hitl_edges(self, workflow: StateGraph) -> None:
-        """Define human-in-the-loop edges"""
+        """
+        Define human-in-the-loop edges.
+
+        FIXED: After approval, route to the appropriate capability (not just synthesize_response).
+        After rejection, go directly to synthesize_response with rejection message.
+        """
+
+        def route_after_human_review(state: UnifiedState) -> str:
+            """Route based on approval status AND original orchestration type"""
+            approval_status = state.get("approval_status", "")
+
+            if approval_status == "approved":
+                # Route to the originally intended capability
+                orchestration_type = state.get("orchestration_type", OrchestrationType.CONVERSATIONAL)
+
+                routing_map = {
+                    OrchestrationType.CONVERSATIONAL: "chat_system",
+                    OrchestrationType.AGENT_ROUTING: "agent_system",
+                    OrchestrationType.WORKFLOW_EXECUTION: "workflow_system",
+                    OrchestrationType.ML_PIPELINE: "ml_system",
+                    OrchestrationType.RAG_QUERY: "rag_system",
+                }
+
+                target = routing_map.get(orchestration_type, "chat_system")
+                return target
+            else:
+                # Rejected or timeout - go to synthesize with rejection message
+                return "synthesize_response"
+
+        # Add conditional edges from human_review to capabilities or rejection
         workflow.add_conditional_edges(
             "human_review",
-            lambda state: "approved" if state.get("approval_status") == "approved" else "rejected",
+            route_after_human_review,
             {
-                "approved": "apply_human_feedback",
-                "rejected": "synthesize_response"
+                "agent_system": "agent_system",
+                "workflow_system": "workflow_system",
+                "ml_system": "ml_system",
+                "rag_system": "rag_system",
+                "chat_system": "chat_system",
+                "synthesize_response": "synthesize_response",  # For rejections
             }
         )
-        workflow.add_edge("apply_human_feedback", "synthesize_response")
+
+        # The capability will execute after approval
 
     def _define_parallel_edges(self, workflow: StateGraph) -> None:
         """Define parallel execution edges"""
@@ -654,24 +689,46 @@ class AIOrchestrationLayer:
         state["execution_path"].append("route_to_capability")
         return state
 
+    # =============================================================================
+    # Decide_execution_strategy method
+    # =============================================================================
+
     def decide_execution_strategy(self, state: UnifiedState) -> RoutingDecision:
-        """Decide execution strategy with ALL original logic"""
+        """
+        Decide execution strategy with RISK-BASED HITL for ALL operations.
+
+        This is the routing function that decides where the graph goes next.
+        FIXED: Now applies risk assessment to ALL orchestration types, not just ML_PIPELINE.
+        """
+        state_logger = get_state_logger(state)
 
         # Check for errors first
         if self.enable_error_handling and state.get("errors"):
             return "error"
 
-        # Check if human review needed (original HITL logic)
+        # =======================================================================
+        # FIXED: Apply risk-based HITL to ALL orchestration types
+        # =======================================================================
         if self.enable_hitl:
+            # Check if explicitly marked as requiring human approval
             if state.get("requires_human", False):
+                state_logger.info("Routing to human_review: explicitly marked requires_human")
                 return "human_review"
 
-            # Check risk score for ML operations
-            if state.get("orchestration_type") == OrchestrationType.ML_PIPELINE:
-                risk_score = self._calculate_risk_score(state)
-                if risk_score > 0.7:
-                    state["requires_human"] = True
-                    return "human_review"
+            # Calculate risk score for ALL operations (not just ML)
+            risk_score = self._calculate_risk_score(state)
+            state["risk_score"] = risk_score  # Store for later use
+
+            state_logger.info(f"Risk score calculated: {risk_score:.2f} for {state.get('orchestration_type')}")
+
+            # Route to human_review if risk is above threshold
+            if risk_score >= RISK_THRESHOLD_HIGH:
+                state["requires_human"] = True
+                state_logger.info(f"Routing to human_review: risk score {risk_score:.2f} >= {RISK_THRESHOLD_HIGH}")
+                return "human_review"
+
+            # For medium risk, we'll still execute but flag it (handled in human_review_node)
+            # For now, continue to normal routing
 
         # Check for parallel execution opportunity (original parallel logic)
         if self.enable_parallel:
@@ -679,7 +736,7 @@ class AIOrchestrationLayer:
             if len(capabilities_needed) > 1:
                 return "parallel"
 
-        # Route to specific capability
+        # Route to specific capability based on orchestration type
         orchestration_type = state.get("orchestration_type", OrchestrationType.CONVERSATIONAL)
 
         routing_map: Dict[OrchestrationType, RoutingDecision] = {
@@ -692,20 +749,171 @@ class AIOrchestrationLayer:
 
         return routing_map.get(orchestration_type, "chat")
 
+    async def synthesize_response(self, state: UnifiedState) -> UnifiedState:
+        """
+        Synthesize final response.
+
+        UPDATED: Handle rejection case with appropriate message.
+        """
+        state_logger = get_state_logger(state)
+        state["execution_path"].append("synthesize_response")
+
+        # Check if this is a rejection from human review
+        if state.get("approval_status") == "rejected":
+            if state.get("timeout_occurred"):
+                state["final_output"] = (
+                    "⏱️ Request timed out waiting for human approval. "
+                    "The operation was not executed for safety reasons. "
+                    "Please try again or contact an administrator."
+                )
+            else:
+                state["final_output"] = (
+                    "❌ Request was rejected by human reviewer. "
+                    "The operation was not executed. "
+                    f"Original request: {state.get('input_data', '')[:100]}..."
+                )
+            state_logger.info("Response synthesized: Human review rejection")
+            return state
+
+        # Normal response synthesis (existing logic)
+        result = state.get("result", "")
+        intermediate = state.get("intermediate_results", {})
+
+        if result:
+            state["final_output"] = result
+        elif intermediate:
+            # Compile intermediate results
+            outputs = []
+            for key, value in intermediate.items():
+                if value:
+                    outputs.append(f"{key}: {value}")
+            state["final_output"] = "\n".join(outputs) if outputs else "Operation completed."
+        else:
+            state["final_output"] = "Request processed successfully."
+
+        state_logger.info("Response synthesized")
+        return state
+
     def _calculate_risk_score(self, state: UnifiedState) -> float:
-        """Calculate risk score for HITL decision (original logic)"""
+        """
+        Calculate comprehensive risk score for HITL decision.
+
+        Factors considered:
+        - Operation type (ML, financial, data access, workflow, agent)
+        - Sensitive keywords in input (delete, transfer, payment, etc.)
+        - Transaction amounts (if present)
+        - ML confidence scores (if present)
+
+        Returns:
+            float: Risk score between 0.0 and 1.0
+        """
         risk = 0.0
 
-        # High risk for ML decisions
-        if state.get("orchestration_type") == OrchestrationType.ML_PIPELINE:
-            risk += 0.3
+        # Factor 1: Operation type base risk
+        orchestration_type = state.get("orchestration_type")
+        type_risk = {
+            OrchestrationType.ML_PIPELINE: 0.3,
+            OrchestrationType.AGENT_ROUTING: 0.25,
+            OrchestrationType.WORKFLOW_EXECUTION: 0.2,
+            OrchestrationType.RAG_QUERY: 0.1,
+            OrchestrationType.CONVERSATIONAL: 0.05,
+        }
+        risk += type_risk.get(orchestration_type, 0.15)
 
-        # Check for sensitive operations
-        query_lower = state["input_data"].lower()
-        if any(word in query_lower for word in ["delete", "remove", "cancel"]):
-            risk += 0.4
+        # Factor 2: Sensitive operation keywords
+        query_lower = str(state.get("input_data", "")).lower()
 
-        return min(risk, 1.0)
+        # High-risk keywords (each adds significant risk)
+        high_risk_keywords = {
+            "delete": 0.35,
+            "remove": 0.30,
+            "transfer": 0.35,
+            "payment": 0.30,
+            "refund": 0.25,
+            "cancel": 0.25,
+            "confidential": 0.30,
+            "sensitive": 0.25,
+            "personal": 0.20,
+            "private": 0.20,
+        }
+
+        # Medium-risk keywords
+        medium_risk_keywords = {
+            "execute": 0.15,
+            "modify": 0.15,
+            "update": 0.10,
+            "approve": 0.15,
+            "send": 0.10,
+            "email": 0.10,
+            "notify": 0.10,
+        }
+
+        # Check high-risk keywords
+        for keyword, keyword_risk in high_risk_keywords.items():
+            if keyword in query_lower:
+                risk += keyword_risk
+
+        # Check medium-risk keywords
+        for keyword, keyword_risk in medium_risk_keywords.items():
+            if keyword in query_lower:
+                risk += keyword_risk
+
+        # Factor 3: Check for monetary amounts in the query
+        # Look for patterns like $5000, $100, etc.
+        import re
+        money_pattern = r'\$[\d,]+(?:\.\d{2})?|\d+\s*(?:dollars?|usd)'
+        money_matches = re.findall(money_pattern, query_lower)
+        if money_matches:
+            # Extract the largest amount mentioned
+            amounts = []
+            for match in money_matches:
+                # Extract numeric value
+                num = re.sub(r'[^\d.]', '', match)
+                try:
+                    amounts.append(float(num))
+                except ValueError:
+                    pass
+
+            if amounts:
+                max_amount = max(amounts)
+                if max_amount >= 10000:
+                    risk += 0.40
+                elif max_amount >= 1000:
+                    risk += 0.30
+                elif max_amount >= 100:
+                    risk += 0.15
+
+        # Factor 4: Transaction amount from intermediate_results (if present)
+        intermediate_results = state.get("intermediate_results", {})
+        if "transaction_amount" in intermediate_results:
+            amount = intermediate_results["transaction_amount"]
+            if amount > 10000:
+                risk += 0.40
+            elif amount > 1000:
+                risk += 0.25
+            elif amount > 100:
+                risk += 0.10
+
+        # Factor 5: ML confidence (low confidence = higher risk)
+        metrics = state.get("metrics", {})
+        if "ml_confidence" in metrics:
+            confidence = metrics["ml_confidence"]
+            if confidence < 0.5:
+                risk += 0.30
+            elif confidence < 0.7:
+                risk += 0.15
+
+        # Factor 6: Multiple high-risk operations combined
+        high_risk_count = sum(1 for kw in high_risk_keywords if kw in query_lower)
+        if high_risk_count >= 3:
+            risk += 0.20  # Bonus risk for multiple dangerous keywords
+        elif high_risk_count >= 2:
+            risk += 0.10
+
+        # Cap risk at 1.0
+        final_risk = min(risk, 1.0)
+
+        return final_risk
 
     def _identify_needed_capabilities(self, state: UnifiedState) -> List[str]:
         """Identify which capabilities are needed (original logic)"""
@@ -818,52 +1026,142 @@ class AIOrchestrationLayer:
         return result_state
 
     # ========================================================================
-    # HITL NODES - ORIGINAL LOGIC
+    # HITL NODES - RISK-BASED HYBRID APPROACH
     # ========================================================================
 
     async def human_review_node(self, state: UnifiedState) -> UnifiedState:
-        """Request human approval (original logic)"""
-        if not self.enable_hitl:
-            # Fallback: auto-approve
+        """
+        Request human approval - RISK-BASED MODE
+
+        This node is reached when decide_execution_strategy routes here
+        because risk_score >= RISK_THRESHOLD_HIGH (0.7).
+
+        It creates an approval request and WAITS for human decision.
+        """
+        if not self.enable_hitl or not self.hitl_manager:
+            # Fallback: auto-approve when HITL is disabled
             state["approval_status"] = "approved"
             return state
 
         state_logger = get_state_logger(state)
         state["execution_path"].append("human_review")
-        state_logger.info("Requesting human approval...")
 
-        # Create approval request
-        approval_request = await self.hitl_manager.create_approval_request(
-            orchestration_id=state["request_id"],
+        risk_score = state.get("risk_score", self._calculate_risk_score(state))
+        state_logger.info(f"Human review required. Risk score: {risk_score:.2f}")
+
+        # Determine approval type based on context
+        approval_type = self._determine_approval_type(state)
+
+        # Create approval request using the correct method signature
+        # request_approval(state, node_name, approval_type, context)
+        approval_request = await self.hitl_manager.request_approval(
+            state=state,
             node_name="human_review",
-            approval_type=ApprovalType.ML_DECISION,
-            requester_id=state["user_id"],
+            approval_type=approval_type,
             context={
                 "query": state["input_data"],
-                "orchestration_type": state["orchestration_type"].value,
-                "risk_score": self._calculate_risk_score(state)
-            },
-            proposed_action="Execute ML pipeline",
-            timeout_seconds=300
+                "orchestration_type": state["orchestration_type"].value if hasattr(state["orchestration_type"], 'value') else str(state["orchestration_type"]),
+                "risk_score": risk_score,
+                "risk_level": self._get_risk_level(risk_score),
+            }
         )
 
         state["approval_request_id"] = approval_request.request_id
         state_logger.info(f"Approval request created: {approval_request.request_id}")
+        state_logger.info(f"Waiting for human approval...")
 
-        # In production, this would wait for actual approval
-        # For now, simulate immediate approval
-        state["approval_status"] = "approved"
+        # =======================================================================
+        # CRITICAL: Actually wait for human approval!
+        # =======================================================================
+        status, modifications = await self.hitl_manager.wait_for_approval(
+            approval_request,
+            state
+        )
+
+        if status == ApprovalStatus.APPROVED:
+            state["approval_status"] = "approved"
+            state_logger.info(f"Human APPROVED request {approval_request.request_id}")
+
+            # Apply any modifications from the approver
+            if modifications:
+                state["intermediate_results"].update(modifications)
+                state["logs"].append(f"Applied human modifications: {list(modifications.keys())}")
+
+        elif status == ApprovalStatus.REJECTED:
+            state["approval_status"] = "rejected"
+            state_logger.info(f"Human REJECTED request {approval_request.request_id}")
+
+        elif status == ApprovalStatus.TIMEOUT:
+            state["approval_status"] = "rejected"
+            state["timeout_occurred"] = True
+            state_logger.warning(f"Approval request {approval_request.request_id} TIMED OUT - treating as rejected")
+
+        else:
+            # Cancelled or other status
+            state["approval_status"] = "rejected"
+            state_logger.info(f"Approval request {approval_request.request_id} was cancelled")
 
         return state
 
-    async def apply_human_feedback(self, state: UnifiedState) -> UnifiedState:
-        """Apply human feedback after approval"""
-        state_logger = get_state_logger(state)
-        state["execution_path"].append("apply_human_feedback")
-        state_logger.info("Applying human feedback...")
 
-        # Continue with approved action
-        return state
+    def _get_risk_level(self, risk_score: float) -> str:
+        """Convert risk score to human-readable level"""
+        if risk_score < RISK_THRESHOLD_LOW:
+            return "low"
+        elif risk_score < RISK_THRESHOLD_HIGH:
+            return "medium"
+        elif risk_score < 0.9:
+            return "high"
+        else:
+            return "critical"
+
+    def _determine_approval_type(self, state: UnifiedState) -> ApprovalType:
+        """Determine the appropriate approval type based on state context"""
+        orchestration_type = state.get("orchestration_type")
+        input_data = str(state.get("input_data", "")).lower()
+
+        # Check for financial operations
+        if any(word in input_data for word in ["payment", "transfer", "refund", "$"]):
+            return ApprovalType.FINANCIAL
+
+        # Check for ML decisions
+        if orchestration_type == OrchestrationType.ML_PIPELINE:
+            return ApprovalType.ML_DECISION
+
+        # Check for data access patterns
+        if any(word in input_data for word in ["customer data", "personal", "sensitive", "private", "delete"]):
+            return ApprovalType.DATA_ACCESS
+
+        # Check for external API calls
+        if any(word in input_data for word in ["api", "external", "third-party"]):
+            return ApprovalType.EXTERNAL_API
+
+        # Check for agent actions
+        if orchestration_type == OrchestrationType.AGENT_ROUTING:
+            return ApprovalType.AGENT_ACTION
+
+        # Default to workflow branch
+        return ApprovalType.WORKFLOW_BRANCH
+
+
+    def _generate_proposed_action_description(self, state: UnifiedState) -> str:
+        """Generate a human-readable description of the proposed action"""
+        orchestration_type = state.get("orchestration_type")
+        input_data = state.get("input_data", "")[:200]  # Truncate for readability
+
+        type_descriptions = {
+            OrchestrationType.ML_PIPELINE: f"Execute ML pipeline: {input_data}",
+            OrchestrationType.AGENT_ROUTING: f"Execute agent action: {input_data}",
+            OrchestrationType.WORKFLOW_EXECUTION: f"Execute workflow: {input_data}",
+            OrchestrationType.RAG_QUERY: f"Execute RAG query: {input_data}",
+            OrchestrationType.CONVERSATIONAL: f"Process request: {input_data}",
+        }
+
+        return type_descriptions.get(
+            orchestration_type,
+            f"Execute operation: {input_data}"
+        )
+
 
     # ========================================================================
     # PARALLEL EXECUTION - ORIGINAL LOGIC

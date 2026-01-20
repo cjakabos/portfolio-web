@@ -205,33 +205,48 @@ export interface ExperimentCreateRequest {
   variants: VariantConfig[];
 }
 
-// HITL Approvals
-export type ApprovalType = 'financial' | 'ml_decision' | 'data_access' | 'workflow_branch' | 'agent_action' | 'external_api';
+// =============================================================================
+// HITL Approvals - Enhanced for Risk-Based Hybrid Approach
+// =============================================================================
+
+export type ApprovalType = 'financial' | 'ml_decision' | 'data_access' | 'workflow_branch' | 'agent_action' | 'external_api' | 'content_generation';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled' | 'timeout';
+export type ApprovalMode = 'auto_low_risk' | 'auto_medium_risk_flagged' | 'human_required';
 
 export interface ApprovalContext {
-  state_summary: {
+  query?: string;
+  orchestration_type?: string;
+  risk_score?: number;
+  risk_level?: string;
+  state_summary?: {
     user: string;
     type: string;
     input: string;
     steps_completed: number;
   };
-  risk_score: number;
   current_results?: Record<string, unknown>;
 }
 
 export interface ApprovalRequest {
   request_id: string;
   orchestration_id: string;
+  node_name?: string;
   approval_type: ApprovalType;
   status: ApprovalStatus;
   created_at: string;
   expires_at: string;
   requester_id: number;
+  approver_id?: number;
+  approved_at?: string;
   proposed_action: string;
   risk_level: RiskLevel;
   context: ApprovalContext;
+  approval_notes?: string;
+  modifications?: Record<string, unknown>;
+  // New fields for risk-based approach
+  approval_mode?: ApprovalMode;
+  requires_post_review?: boolean;
 }
 
 export interface ApprovalHistoryItem extends ApprovalRequest {
@@ -244,6 +259,7 @@ export interface ApprovalDecision {
   approved: boolean;
   approver_id: number;
   approval_notes?: string;
+  modifications?: Record<string, unknown>;
 }
 
 export interface ApprovalStats {
@@ -251,7 +267,18 @@ export interface ApprovalStats {
   approved_count: number;
   rejected_count: number;
   expired_count: number;
+  timeout_count: number;
   avg_response_time_seconds: number;
+  // New stats for risk-based approach
+  auto_approved_count: number;
+  human_approved_count: number;
+  flagged_for_review_count: number;
+  risk_distribution: {
+    low: number;
+    medium: number;
+    high: number;
+    critical: number;
+  };
 }
 
 // Orchestration
@@ -271,6 +298,11 @@ export interface OrchestrationResponse {
   latency_ms: number;
   success: boolean;
   metadata?: Record<string, unknown>;
+  // New fields for HITL tracking
+  approval_required?: boolean;
+  approval_status?: ApprovalStatus;
+  approval_mode?: ApprovalMode;
+  risk_score?: number;
 }
 
 // Tools
@@ -521,7 +553,7 @@ export interface WebProxyResponse {
 // =============================================================================
 
 export interface WebSocketStreamMessage {
-  type: 'token' | 'node_start' | 'node_end' | 'complete' | 'error';
+  type: 'token' | 'node_start' | 'node_end' | 'complete' | 'error' | 'approval_required' | 'approval_update';
   data: {
     token?: string;
     node?: string;
@@ -531,6 +563,9 @@ export interface WebSocketStreamMessage {
       tokens_generated: number;
       latency_ms: number;
     };
+    // Approval-related data
+    approval_request?: ApprovalRequest;
+    approval_status?: ApprovalStatus;
   };
 }
 
@@ -545,4 +580,7 @@ export interface ChatMessage {
     totalTokens: number;
     latency: number;
   };
+  // HITL metadata
+  approval_required?: boolean;
+  approval_request_id?: string;
 }

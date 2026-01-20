@@ -1,9 +1,15 @@
+# =============================================================================
+# File: src/routers/approvals_router.py
+# FIXED: Connected to Orchestrator's HumanInLoopManager
+# =============================================================================
 """
 Approvals Router - Human-in-the-Loop (HITL) Approval System
 
-FIXES APPLIED:
-1. .dict() → .model_dump() (Pydantic v2)
-2. @router.on_event("startup") → exported initialize_approvals() function
+CRITICAL FIX: Now reads from orchestrator.hitl_manager.pending_approvals
+instead of a separate ApprovalStorage class.
+
+The orchestrator creates approval requests via hitl_manager.request_approval()
+and this router exposes those approvals via the REST API.
 """
 
 import logging
@@ -12,7 +18,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from enum import Enum
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 import asyncio
 import json
@@ -71,26 +77,37 @@ class ApprovalRequestCreate(BaseModel):
     expires_in_seconds: int = Field(default=300, ge=60, le=3600)
 
 
-class ApprovalRequest(BaseModel):
+class ApprovalRequestResponse(BaseModel):
     request_id: str
     orchestration_id: str
-    approval_type: ApprovalType
-    status: ApprovalStatus
+    approval_type: str
+    status: str
     created_at: str
     expires_at: str
-    requester_id: int
+    requester_id: Any
     proposed_action: str
-    risk_level: RiskLevel
-    context: ApprovalContext
+    risk_level: str
+    context: Dict[str, Any]
 
 
 class ApprovalDecision(BaseModel):
     approved: bool
     approver_id: int
     approval_notes: Optional[str] = None
+    modifications: Optional[Dict[str, Any]] = None
 
 
-class ApprovalHistoryItem(ApprovalRequest):
+class ApprovalHistoryItem(BaseModel):
+    request_id: str
+    orchestration_id: str
+    approval_type: str
+    status: str
+    created_at: str
+    expires_at: str
+    requester_id: Any
+    proposed_action: str
+    risk_level: str
+    context: Dict[str, Any]
     approved_at: Optional[str] = None
     approver_id: Optional[int] = None
     approval_notes: Optional[str] = None
@@ -107,157 +124,105 @@ class ApprovalStats(BaseModel):
 
 
 # =============================================================================
-# In-Memory Storage (Redis fallback)
+# CRITICAL: Reference to Orchestrator's HumanInLoopManager
 # =============================================================================
 
-class ApprovalStorage:
-    """In-memory approval storage with optional Redis backend."""
-    
-    def __init__(self):
-        self._pending: Dict[str, dict] = {}
-        self._history: List[dict] = []
-        self._redis_client = None
-        self._use_redis = False
-        self._initialized = False
-        
-    async def initialize(self):
-        """Try to connect to Redis, fallback to in-memory."""
-        if self._initialized:
-            return
-            
-        try:
-            import redis.asyncio as redis
-            redis_url = os.getenv("REDIS_URL", "redis://redis:6379")
-            self._redis_client = redis.from_url(redis_url, db=2)
-            await self._redis_client.ping()
-            self._use_redis = True
-            logger.info("Approvals storage using Redis")
-        except Exception as e:
-            logger.warning(f"Redis unavailable for approvals, using in-memory: {e}")
-            self._use_redis = False
-        
-        self._initialized = True
-    
-    async def add_pending(self, request_id: str, data: dict):
-        """Add a pending approval request."""
-        if self._use_redis and self._redis_client:
-            await self._redis_client.hset("approvals:pending", request_id, json.dumps(data))
-            # Set expiration
-            expires_at = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
-            ttl = int((expires_at - datetime.now()).total_seconds())
-            if ttl > 0:
-                await self._redis_client.expire(f"approvals:pending:{request_id}", ttl)
-        else:
-            self._pending[request_id] = data
-    
-    async def get_pending(self, request_id: str) -> Optional[dict]:
-        """Get a pending approval by ID."""
-        if self._use_redis and self._redis_client:
-            data = await self._redis_client.hget("approvals:pending", request_id)
-            return json.loads(data) if data else None
-        return self._pending.get(request_id)
-    
-    async def get_all_pending(self) -> List[dict]:
-        """Get all pending approvals."""
-        if self._use_redis and self._redis_client:
-            all_data = await self._redis_client.hgetall("approvals:pending")
-            return [json.loads(v) for v in all_data.values()]
-        return list(self._pending.values())
-    
-    async def remove_pending(self, request_id: str) -> Optional[dict]:
-        """Remove a pending approval."""
-        if self._use_redis and self._redis_client:
-            data = await self._redis_client.hget("approvals:pending", request_id)
-            if data:
-                await self._redis_client.hdel("approvals:pending", request_id)
-                return json.loads(data)
-            return None
-        return self._pending.pop(request_id, None)
-    
-    async def add_to_history(self, data: dict):
-        """Add an approval to history."""
-        if self._use_redis and self._redis_client:
-            await self._redis_client.lpush("approvals:history", json.dumps(data))
-            # Keep only last 1000 entries
-            await self._redis_client.ltrim("approvals:history", 0, 999)
-        else:
-            self._history.insert(0, data)
-            self._history = self._history[:1000]
-    
-    async def get_history(self, limit: int = 100, offset: int = 0) -> List[dict]:
-        """Get approval history."""
-        if self._use_redis and self._redis_client:
-            data = await self._redis_client.lrange("approvals:history", offset, offset + limit - 1)
-            return [json.loads(item) for item in data]
-        return self._history[offset:offset + limit]
-    
-    async def get_stats(self) -> dict:
-        """Get approval statistics."""
-        history = await self.get_history(limit=1000)
-        pending = await self.get_all_pending()
-        
-        total_approved = sum(1 for h in history if h.get("status") == "approved")
-        total_rejected = sum(1 for h in history if h.get("status") == "rejected")
-        total_expired = sum(1 for h in history if h.get("status") in ["expired", "timeout"])
-        
-        # Calculate average response time
-        response_times = []
-        for h in history:
-            if h.get("created_at") and h.get("approved_at"):
-                try:
-                    created = datetime.fromisoformat(h["created_at"].replace("Z", "+00:00"))
-                    approved = datetime.fromisoformat(h["approved_at"].replace("Z", "+00:00"))
-                    response_times.append((approved - created).total_seconds())
-                except:
-                    pass
-        
-        by_type = {}
-        by_risk = {}
-        for item in history + pending:
-            atype = item.get("approval_type", "unknown")
-            risk = item.get("risk_level", "unknown")
-            by_type[atype] = by_type.get(atype, 0) + 1
-            by_risk[risk] = by_risk.get(risk, 0) + 1
-        
-        return {
-            "total_pending": len(pending),
-            "total_approved": total_approved,
-            "total_rejected": total_rejected,
-            "total_expired": total_expired,
-            "avg_response_time_seconds": sum(response_times) / len(response_times) if response_times else 0,
-            "by_type": by_type,
-            "by_risk_level": by_risk
-        }
+# This will be set via dependency injection from main.py
+_hitl_manager = None
+_orchestrator = None
+
+# History storage (approvals that have been decided)
+_approval_history: List[dict] = []
 
 
-# Global storage instance
-storage = ApprovalStorage()
+def set_approvals_hitl_manager(hitl_manager, orchestrator=None):
+    """
+    Dependency injection - connect this router to the orchestrator's hitl_manager.
+    
+    Called from main.py lifespan:
+        from routers import approvals_router
+        approvals_router.set_approvals_hitl_manager(orchestrator.hitl_manager, orchestrator)
+    """
+    global _hitl_manager, _orchestrator
+    _hitl_manager = hitl_manager
+    _orchestrator = orchestrator
+    logger.info("Approvals router connected to HumanInLoopManager")
 
-# Background task reference
-_expiration_task = None
+
+def _get_hitl_manager():
+    """Get the HumanInLoopManager, raising error if not connected."""
+    if _hitl_manager is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Approvals system not initialized. HumanInLoopManager not connected."
+        )
+    return _hitl_manager
+
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+def _approval_request_to_dict(request) -> dict:
+    """Convert ApprovalRequest dataclass to dict for JSON serialization."""
+    return {
+        "request_id": request.request_id,
+        "orchestration_id": request.orchestration_id,
+        "node_name": getattr(request, 'node_name', 'unknown'),
+        "approval_type": request.approval_type.value if hasattr(request.approval_type, 'value') else str(request.approval_type),
+        "status": request.status.value if hasattr(request.status, 'value') else str(request.status),
+        "created_at": request.created_at.isoformat() + "Z" if hasattr(request.created_at, 'isoformat') else str(request.created_at),
+        "expires_at": request.expires_at.isoformat() + "Z" if hasattr(request.expires_at, 'isoformat') else str(request.expires_at),
+        "requester_id": request.requester_id,
+        "proposed_action": request.proposed_action,
+        "risk_level": request.risk_level.value if hasattr(request.risk_level, 'value') else str(request.risk_level),
+        "context": request.context if isinstance(request.context, dict) else {},
+        "metadata": getattr(request, 'metadata', {})
+    }
+
+
+def _get_risk_level_from_score(score: float) -> str:
+    """Convert risk score to risk level string."""
+    if score < 0.3:
+        return "low"
+    elif score < 0.7:
+        return "medium"
+    elif score < 0.9:
+        return "high"
+    else:
+        return "critical"
 
 
 # =============================================================================
 # Background Tasks
 # =============================================================================
 
+_expiration_task = None
+
+
 async def check_expired_approvals():
     """Background task to expire old approvals."""
     while True:
         try:
-            pending = await storage.get_all_pending()
-            now = datetime.utcnow()
-            
-            for approval in pending:
-                expires_at = datetime.fromisoformat(approval["expires_at"].replace("Z", "+00:00"))
-                if now > expires_at:
-                    # Move to history as expired
-                    expired = await storage.remove_pending(approval["request_id"])
-                    if expired:
-                        expired["status"] = "expired"
-                        expired["approved_at"] = now.isoformat() + "Z"
-                        await storage.add_to_history(expired)
-                        logger.info(f"Approval {approval['request_id']} expired")
+            hitl = _hitl_manager
+            if hitl and hasattr(hitl, 'pending_approvals'):
+                now = datetime.utcnow()
+                expired_ids = []
+                
+                for request_id, request in list(hitl.pending_approvals.items()):
+                    if hasattr(request, 'expires_at') and now > request.expires_at:
+                        expired_ids.append(request_id)
+                
+                for request_id in expired_ids:
+                    request = hitl.pending_approvals.pop(request_id, None)
+                    if request:
+                        # Add to history as expired
+                        history_item = _approval_request_to_dict(request)
+                        history_item["status"] = "expired"
+                        history_item["approved_at"] = now.isoformat() + "Z"
+                        _approval_history.insert(0, history_item)
+                        logger.info(f"Approval {request_id} expired")
+                        
         except Exception as e:
             logger.error(f"Error in expiration check: {e}")
         
@@ -265,18 +230,17 @@ async def check_expired_approvals():
 
 
 # =============================================================================
-# Initialization Function (called from main.py lifespan)
+# Initialization Functions (called from main.py lifespan)
 # =============================================================================
 
 async def initialize_approvals():
     """
-    Initialize approval storage and start background tasks.
-    Called from main.py lifespan.
+    Initialize approval system and start background tasks.
+    Called from main.py lifespan AFTER orchestrator is created.
     """
     global _expiration_task
-    await storage.initialize()
     _expiration_task = asyncio.create_task(check_expired_approvals())
-    logger.info("Approvals system initialized")
+    logger.info("Approvals background task started")
 
 
 async def shutdown_approvals():
@@ -291,101 +255,131 @@ async def shutdown_approvals():
 
 
 # =============================================================================
-# Helper to ensure initialization
-# =============================================================================
-
-async def _ensure_initialized():
-    """Ensure storage is initialized before operations."""
-    if not storage._initialized:
-        await storage.initialize()
-
-
-# =============================================================================
 # API Endpoints
 # =============================================================================
 
-@router.post("/request", response_model=ApprovalRequest)
-async def create_approval_request(request: ApprovalRequestCreate):
-    """Create a new approval request."""
-    await _ensure_initialized()
-    
-    request_id = f"req-{uuid.uuid4().hex[:8]}"
-    now = datetime.utcnow()
-    expires_at = now + timedelta(seconds=request.expires_in_seconds)
-    
-    approval_data = {
-        "request_id": request_id,
-        "orchestration_id": request.orchestration_id,
-        "approval_type": request.approval_type.value,
-        "status": ApprovalStatus.PENDING.value,
-        "created_at": now.isoformat() + "Z",
-        "expires_at": expires_at.isoformat() + "Z",
-        "requester_id": request.requester_id,
-        "proposed_action": request.proposed_action,
-        "risk_level": request.risk_level.value,
-        "context": request.context.model_dump()  # FIXED: was .dict()
-    }
-    
-    await storage.add_pending(request_id, approval_data)
-    logger.info(f"Created approval request {request_id}")
-    
-    return ApprovalRequest(**approval_data)
-
-
-@router.get("/pending", response_model=List[ApprovalRequest])
+@router.get("/pending", response_model=List[ApprovalRequestResponse])
 async def get_pending_approvals(
     approval_type: Optional[ApprovalType] = None,
     risk_level: Optional[RiskLevel] = None
 ):
-    """Get all pending approval requests."""
-    await _ensure_initialized()
+    """
+    Get all pending approval requests.
     
-    pending = await storage.get_all_pending()
+    FIXED: Now reads from orchestrator.hitl_manager.pending_approvals
+    """
+    hitl = _get_hitl_manager()
+    
+    # Get pending approvals from HumanInLoopManager
+    pending_requests = list(hitl.pending_approvals.values())
+    
+    # Convert to dicts
+    pending = [_approval_request_to_dict(req) for req in pending_requests]
     
     # Apply filters
     if approval_type:
         pending = [p for p in pending if p["approval_type"] == approval_type.value]
     if risk_level:
-        pending = [p for p in pending if p["risk_level"] == risk_level.value]
+        pending = [p for p in pending if p.get("risk_level") == risk_level.value]
     
     # Sort by creation time (newest first)
-    pending.sort(key=lambda x: x["created_at"], reverse=True)
+    pending.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     
-    return [ApprovalRequest(**p) for p in pending]
+    logger.info(f"Returning {len(pending)} pending approvals")
+    return pending
 
 
-@router.get("/pending/{request_id}", response_model=ApprovalRequest)
+@router.get("/pending/{request_id}", response_model=ApprovalRequestResponse)
 async def get_pending_approval(request_id: str):
     """Get a specific pending approval."""
-    await _ensure_initialized()
+    hitl = _get_hitl_manager()
     
-    approval = await storage.get_pending(request_id)
-    if not approval:
+    request = hitl.pending_approvals.get(request_id)
+    if not request:
         raise HTTPException(status_code=404, detail="Approval request not found")
-    return ApprovalRequest(**approval)
+    
+    return _approval_request_to_dict(request)
 
 
 @router.post("/pending/{request_id}/decide", response_model=ApprovalHistoryItem)
 async def decide_approval(request_id: str, decision: ApprovalDecision):
-    """Approve or reject a pending request."""
-    await _ensure_initialized()
+    """
+    Approve or reject a pending request.
     
-    approval = await storage.remove_pending(request_id)
-    if not approval:
-        raise HTTPException(status_code=404, detail="Approval request not found or already processed")
+    FIXED: Now calls hitl_manager.process_approval() to unblock the waiting orchestration.
+    """
+    hitl = _get_hitl_manager()
     
+    # Check if request exists
+    request = hitl.pending_approvals.get(request_id)
+    if not request:
+        raise HTTPException(
+            status_code=404, 
+            detail="Approval request not found or already processed"
+        )
+    
+    # Process the approval through HumanInLoopManager
+    # This will update the status and trigger the waiting asyncio.Event
+    try:
+        if decision.approved:
+            from core.human_in_loop import ApprovalStatus as HITLApprovalStatus
+            await hitl.process_approval(
+                request_id=request_id,
+                approved=True,
+                approver_id=decision.approver_id,
+                notes=decision.approval_notes,
+                modifications=decision.modifications
+            )
+            status = "approved"
+        else:
+            await hitl.process_approval(
+                request_id=request_id,
+                approved=False,
+                approver_id=decision.approver_id,
+                notes=decision.approval_notes
+            )
+            status = "rejected"
+    except Exception as e:
+        logger.error(f"Error processing approval: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    # Create history item
     now = datetime.utcnow()
-    approval["status"] = ApprovalStatus.APPROVED.value if decision.approved else ApprovalStatus.REJECTED.value
-    approval["approved_at"] = now.isoformat() + "Z"
-    approval["approver_id"] = decision.approver_id
-    approval["approval_notes"] = decision.approval_notes
+    history_item = _approval_request_to_dict(request)
+    history_item["status"] = status
+    history_item["approved_at"] = now.isoformat() + "Z"
+    history_item["approver_id"] = decision.approver_id
+    history_item["approval_notes"] = decision.approval_notes
     
-    await storage.add_to_history(approval)
+    # Add to history
+    _approval_history.insert(0, history_item)
+    _approval_history[:] = _approval_history[:1000]  # Keep last 1000
     
     action = "approved" if decision.approved else "rejected"
     logger.info(f"Approval {request_id} {action} by user {decision.approver_id}")
     
-    return ApprovalHistoryItem(**approval)
+    return history_item
+
+
+@router.delete("/pending/{request_id}")
+async def cancel_approval_request(request_id: str):
+    """Cancel a pending approval request."""
+    hitl = _get_hitl_manager()
+    
+    request = hitl.pending_approvals.pop(request_id, None)
+    if not request:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+    
+    # Add to history as cancelled
+    now = datetime.utcnow()
+    history_item = _approval_request_to_dict(request)
+    history_item["status"] = "cancelled"
+    history_item["approved_at"] = now.isoformat() + "Z"
+    _approval_history.insert(0, history_item)
+    
+    logger.info(f"Approval {request_id} cancelled")
+    
+    return {"status": "cancelled", "request_id": request_id}
 
 
 @router.get("/history", response_model=List[ApprovalHistoryItem])
@@ -396,106 +390,117 @@ async def get_approval_history(
     approval_type: Optional[ApprovalType] = None
 ):
     """Get approval history."""
-    await _ensure_initialized()
-    
-    history = await storage.get_history(limit=limit + 100, offset=0)  # Get extra for filtering
+    history = _approval_history[offset:offset + limit]
     
     # Apply filters
     if status:
-        history = [h for h in history if h["status"] == status.value]
+        history = [h for h in history if h.get("status") == status.value]
     if approval_type:
-        history = [h for h in history if h["approval_type"] == approval_type.value]
+        history = [h for h in history if h.get("approval_type") == approval_type.value]
     
-    # Apply pagination after filtering
-    history = history[offset:offset + limit]
-    
-    return [ApprovalHistoryItem(**h) for h in history]
+    return history
 
 
 @router.get("/stats", response_model=ApprovalStats)
 async def get_approval_stats():
     """Get approval statistics."""
-    await _ensure_initialized()
+    hitl = _get_hitl_manager()
     
-    stats = await storage.get_stats()
-    return ApprovalStats(**stats)
-
-
-@router.delete("/pending/{request_id}")
-async def cancel_approval_request(request_id: str):
-    """Cancel a pending approval request."""
-    await _ensure_initialized()
+    pending = list(hitl.pending_approvals.values())
+    history = _approval_history
     
-    approval = await storage.remove_pending(request_id)
-    if not approval:
-        raise HTTPException(status_code=404, detail="Approval request not found")
+    total_approved = sum(1 for h in history if h.get("status") == "approved")
+    total_rejected = sum(1 for h in history if h.get("status") == "rejected")
+    total_expired = sum(1 for h in history if h.get("status") in ["expired", "timeout", "cancelled"])
     
-    # Add to history as cancelled
-    approval["status"] = "cancelled"
-    approval["approved_at"] = datetime.utcnow().isoformat() + "Z"
-    await storage.add_to_history(approval)
-    
-    return {"status": "success", "message": f"Approval {request_id} cancelled"}
-
-
-# =============================================================================
-# WebSocket for Real-time Updates (Optional)
-# =============================================================================
-
-from fastapi import WebSocket, WebSocketDisconnect
-
-
-class ApprovalNotifier:
-    """Manages WebSocket connections for real-time approval notifications."""
-    
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-    
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-    
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-    
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections:
+    # Calculate average response time
+    response_times = []
+    for h in history:
+        if h.get("created_at") and h.get("approved_at"):
             try:
-                await connection.send_json(message)
+                created = datetime.fromisoformat(h["created_at"].replace("Z", "+00:00"))
+                approved = datetime.fromisoformat(h["approved_at"].replace("Z", "+00:00"))
+                response_times.append((approved - created).total_seconds())
             except:
                 pass
+    
+    # Count by type and risk
+    by_type = {}
+    by_risk = {}
+    
+    all_items = [_approval_request_to_dict(p) for p in pending] + history
+    for item in all_items:
+        atype = item.get("approval_type", "unknown")
+        risk = item.get("risk_level", "unknown")
+        by_type[atype] = by_type.get(atype, 0) + 1
+        by_risk[risk] = by_risk.get(risk, 0) + 1
+    
+    return ApprovalStats(
+        total_pending=len(pending),
+        total_approved=total_approved,
+        total_rejected=total_rejected,
+        total_expired=total_expired,
+        avg_response_time_seconds=sum(response_times) / len(response_times) if response_times else 0,
+        by_type=by_type,
+        by_risk_level=by_risk
+    )
 
-
-notifier = ApprovalNotifier()
-
-
-@router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time approval notifications."""
-    await notifier.connect(websocket)
-    try:
-        while True:
-            # Keep connection alive, handle incoming messages
-            data = await websocket.receive_text()
-            # Could handle subscription filters here
-    except WebSocketDisconnect:
-        notifier.disconnect(websocket)
-
-
-# =============================================================================
-# Health Check
-# =============================================================================
 
 @router.get("/health")
 async def health_check():
-    """Check approval system health."""
-    await _ensure_initialized()
+    """Check approvals system health."""
+    hitl = _hitl_manager
+    connected = hitl is not None
+    pending_count = len(hitl.pending_approvals) if hitl else 0
     
-    stats = await storage.get_stats()
     return {
-        "status": "healthy",
+        "status": "healthy" if connected else "degraded",
         "service": "approvals",
-        "storage": "redis" if storage._use_redis else "memory",
-        "pending_count": stats["total_pending"]
+        "hitl_connected": connected,
+        "pending_count": pending_count,
+        "history_count": len(_approval_history)
     }
+
+
+# =============================================================================
+# WebSocket for Real-time Updates
+# =============================================================================
+
+_ws_connections: List[WebSocket] = []
+
+
+@router.websocket("/ws")
+async def approvals_websocket(websocket: WebSocket):
+    """WebSocket endpoint for real-time approval updates."""
+    await websocket.accept()
+    _ws_connections.append(websocket)
+    logger.info(f"WebSocket client connected. Total: {len(_ws_connections)}")
+    
+    try:
+        while True:
+            # Keep connection alive, listen for pings
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        pass
+    finally:
+        if websocket in _ws_connections:
+            _ws_connections.remove(websocket)
+        logger.info(f"WebSocket client disconnected. Total: {len(_ws_connections)}")
+
+
+async def broadcast_approval_update(event_type: str, data: dict):
+    """Broadcast approval update to all connected WebSocket clients."""
+    message = json.dumps({"event": event_type, "data": data})
+    disconnected = []
+    
+    for ws in _ws_connections:
+        try:
+            await ws.send_text(message)
+        except:
+            disconnected.append(ws)
+    
+    for ws in disconnected:
+        if ws in _ws_connections:
+            _ws_connections.remove(ws)

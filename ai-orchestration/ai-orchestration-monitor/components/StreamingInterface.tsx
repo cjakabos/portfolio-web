@@ -31,6 +31,7 @@ export default function StreamingInterface({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
 
   // FIXED: Memoize error handler to prevent infinite reconnection loop
   // This was causing the useEffect -> connect -> disconnect cycle

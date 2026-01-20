@@ -228,13 +228,14 @@ async def websocket_stream(websocket: WebSocket):
     """
     WebSocket endpoint for real-time streaming orchestration.
     Supports bidirectional communication for chat-style interactions.
-    Records real metrics for each message processed.
 
-    FIXED: Properly handles client disconnects without error logging
+    FIXED: Hardened connection state checks to prevent "Need to call accept first"
+    and race conditions during human-in-the-loop approvals.
     """
     client_id = str(uuid.uuid4())[:8]
     logger.info(f"WebSocket connection attempt from client {client_id}")
 
+    # 1. ATTEMPT ACCEPT
     try:
         await websocket.accept()
         logger.info(f"WebSocket {client_id} accepted")
@@ -244,71 +245,56 @@ async def websocket_stream(websocket: WebSocket):
 
     if not _orchestrator:
         logger.warning(f"WebSocket {client_id}: Orchestrator not initialized, closing")
-        await websocket.close(code=1011, reason="Orchestrator not ready")
+        if websocket.client_state == WebSocketState.CONNECTED:
+            await websocket.close(code=1011, reason="Orchestrator not ready")
         return
-
-    logger.info(f"WebSocket {client_id} ready, entering message loop")
 
     try:
         while True:
-            # Check if connection is still open
+            # 2. CHECK STATE BEFORE RECEIVE
             if websocket.client_state != WebSocketState.CONNECTED:
-                logger.debug(f"WebSocket {client_id}: Client no longer connected")
                 break
 
-            # Receive message from client
             try:
                 raw_data = await websocket.receive_text()
-            except WebSocketDisconnect as e:
-                # Normal disconnect - not an error
-                logger.info(f"WebSocket {client_id} disconnected normally (code: {e.code})")
+            except (WebSocketDisconnect, RuntimeError):
                 break
 
-            # Parse JSON
             try:
                 data = json.loads(raw_data)
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "type": "error",
-                    "error": "Invalid JSON format"
-                })
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.send_json({"type": "error", "error": "Invalid JSON format"})
                 continue
 
-            # Extract request parameters
             message = data.get("message", "")
             user_id = data.get("user_id", "anonymous")
             session_id = data.get("session_id", str(uuid.uuid4()))
             context = data.get("context", {})
 
             if not message:
-                await websocket.send_json({
-                    "type": "error",
-                    "error": "No message provided"
-                })
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.send_json({"type": "error", "error": "No message provided"})
                 continue
 
-            # Start timing
             start_time = time.time()
             request_id = str(uuid.uuid4())
             collector.start_orchestration(request_id)
 
-            # Send acknowledgment
-            await websocket.send_json({
-                "type": "ack",
-                "message": "Processing request..."
-            })
+            # 3. ACKNOWLEDGMENT
+            if websocket.client_state == WebSocketState.CONNECTED:
+                try:
+                    await websocket.send_json({"type": "ack", "message": "Processing request..."})
+                except Exception: pass
 
             try:
-                # Load context if available
                 user_profile = {}
                 history = []
-
                 if _context_store:
                     user_profile = _context_store.load_user_profile(str(user_id))
                 if _memory_manager:
                     history = _memory_manager.get_history(session_id)
 
-                # Create initial state with capabilities tracking
                 initial_state = UnifiedState(
                     request_id=request_id,
                     user_id=str(user_id),
@@ -328,55 +314,50 @@ async def websocket_stream(websocket: WebSocket):
                     capabilities_used=[]
                 )
 
-                # Track capabilities used during streaming
                 capabilities_used = []
+                final_output = ""
 
-                # Check if orchestrator supports streaming
                 if hasattr(_orchestrator, 'astream'):
-                    # Stream response chunks
                     async for chunk in _orchestrator.astream(initial_state):
+                        # 4. CHECK STATE INSIDE STREAM LOOP
                         if websocket.client_state != WebSocketState.CONNECTED:
                             break
 
-                        if "final_output" in chunk and chunk["final_output"]:
-                            await websocket.send_json({
-                                "type": "token",
-                                "data": {"token": chunk["final_output"]},
-                                "request_id": request_id
-                            })
-                        elif "current_node" in chunk:
-                            await websocket.send_json({
-                                "type": "node_start",
-                                "data": {"node": chunk["current_node"]},
-                                "request_id": request_id
-                            })
-                        
-                        # Collect capabilities
-                        if "capabilities_used" in chunk:
-                            capabilities_used.extend(chunk["capabilities_used"])
+                        try:
+                            if "final_output" in chunk and chunk["final_output"]:
+                                await websocket.send_json({
+                                    "type": "token",
+                                    "data": {"token": chunk["final_output"]},
+                                    "request_id": request_id
+                                })
+                            elif "current_node" in chunk:
+                                await websocket.send_json({
+                                    "type": "node_start",
+                                    "data": {"node": chunk["current_node"]},
+                                    "request_id": request_id
+                                })
 
-                    # Get final state
+                            if "capabilities_used" in chunk:
+                                capabilities_used.extend(chunk["capabilities_used"])
+                        except (RuntimeError, WebSocketDisconnect):
+                            break
+
                     final_output = chunk.get("final_output", "")
-                    
                 else:
-                    # Non-streaming fallback
                     result = await _orchestrator.invoke(initial_state)
                     final_output = result.get("final_output", "")
                     capabilities_used = result.get("capabilities_used", [])
-                    
-                    await websocket.send_json({
-                        "type": "token",
-                        "data": {"token": final_output},
-                        "request_id": request_id
-                    })
 
-                # Calculate duration
+                    if websocket.client_state == WebSocketState.CONNECTED:
+                        await websocket.send_json({
+                            "type": "token",
+                            "data": {"token": final_output},
+                            "request_id": request_id
+                        })
+
                 duration_ms = int((time.time() - start_time) * 1000)
-                
-                # Deduplicate capabilities
                 capabilities_used = list(set(capabilities_used)) if capabilities_used else ["LLM Gen"]
 
-                # Record metrics
                 await collector.record_execution(
                     orchestration_type="conversational",
                     capabilities_used=capabilities_used,
@@ -386,24 +367,29 @@ async def websocket_stream(websocket: WebSocket):
                     user_id=int(user_id) if str(user_id).isdigit() else None
                 )
 
-                # Send completion
-                await websocket.send_json({
-                    "type": "complete",
-                    "data": {
-                        "content": final_output,
-                        "metrics": {
-                            "tokens_generated": len(final_output.split()),
-                            "latency_ms": duration_ms,
-                            "capabilities_used": capabilities_used
-                        }
-                    },
-                    "request_id": request_id
-                })
+                # 5. FINAL COMPLETION
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    try:
+                        await websocket.send_json({
+                            "type": "complete",
+                            "data": {
+                                "content": final_output,
+                                "metrics": {
+                                    "tokens_generated": len(final_output.split()),
+                                    "latency_ms": duration_ms,
+                                    "capabilities_used": capabilities_used
+                                }
+                            },
+                            "request_id": request_id
+                        })
+                    except Exception: pass
+
+            except (RuntimeError, WebSocketDisconnect):
+                logger.info(f"WebSocket {client_id} disconnected during processing")
+                break
 
             except Exception as e:
-                # Record failed execution
                 duration_ms = int((time.time() - start_time) * 1000)
-                
                 await collector.record_execution(
                     orchestration_type="conversational",
                     capabilities_used=["Error"],
@@ -412,18 +398,21 @@ async def websocket_stream(websocket: WebSocket):
                     request_id=request_id,
                     user_id=int(user_id) if str(user_id).isdigit() else None
                 )
-                
                 logger.error(f"WebSocket {client_id} processing error: {e}")
-                await websocket.send_json({
-                    "type": "error",
-                    "error": str(e),
-                    "request_id": request_id
-                })
-            
+
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    try:
+                        await websocket.send_json({
+                            "type": "error",
+                            "error": str(e),
+                            "request_id": request_id
+                        })
+                    except Exception: pass
+
             finally:
                 collector.end_orchestration(request_id)
 
     except Exception as e:
-        logger.error(f"WebSocket {client_id} error: {e}")
+        logger.error(f"WebSocket {client_id} top-level error: {e}")
     finally:
         logger.info(f"WebSocket {client_id} connection closed")

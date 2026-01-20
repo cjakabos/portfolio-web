@@ -22,7 +22,6 @@ import type {
   ApprovalStats,
   OrchestrationResponse,
   ToolDiscoveryResponse,
-  ChatMessage,
   WebSocketStreamMessage,
 } from '../types';
 
@@ -48,7 +47,7 @@ function useFetch<T>(
   options: UseFetchOptions<T> = {}
 ): UseFetchResult<T> {
   const { initialData = null, autoFetch = true, refetchInterval = null } = options;
-  
+
   const [data, setData] = useState<T | null>(initialData);
   const [isLoading, setIsLoading] = useState(autoFetch);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +96,7 @@ export function useMetrics(options: UseMetricsOptions = {}) {
   const { autoRefresh = true, refreshInterval = 5000 } = options;
 
   const fetchMetrics = useCallback(() => orchestrationClient.getMetrics(), []);
-  
+
   return useFetch<Metrics>(fetchMetrics, {
     autoFetch: true,
     refetchInterval: autoRefresh ? refreshInterval : null,
@@ -109,7 +108,7 @@ export function useDetailedMetrics(hours: number = 24) {
     () => orchestrationClient.getDetailedMetrics(hours),
     [hours]
   );
-  
+
   return useFetch<DetailedMetrics>(fetchDetailedMetrics);
 }
 
@@ -124,9 +123,9 @@ export interface UseCircuitBreakersOptions {
 
 export function useCircuitBreakers(options: UseCircuitBreakersOptions = {}) {
   const { autoRefresh = true, refreshInterval = 10000 } = options;
-  
+
   const [resettingBreaker, setResettingBreaker] = useState<string | null>(null);
-  
+
   const fetchCircuitBreakers = useCallback(
     () => orchestrationClient.getCircuitBreakers(),
     []
@@ -242,7 +241,7 @@ export function useExperiment(experimentId: string | null) {
 
   const fetchExperiment = useCallback(async () => {
     if (!experimentId) return;
-    
+
     setIsLoading(true);
     setError(null);
     try {
@@ -361,10 +360,18 @@ export function useExperimentActions() {
 }
 
 // =============================================================================
-// APPROVALS HOOKS
+// APPROVALS HOOKS - Enhanced for Risk-Based HITL
 // =============================================================================
 
-export function usePendingApprovals(autoRefresh: boolean = true) {
+export interface UsePendingApprovalsOptions {
+  autoRefresh?: boolean;
+  refreshInterval?: number;
+  filterByRiskLevel?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export function usePendingApprovals(options: UsePendingApprovalsOptions = {}) {
+  const { autoRefresh = true, refreshInterval = 5000, filterByRiskLevel } = options;
+
   const fetchPendingApprovals = useCallback(
     () => orchestrationClient.getPendingApprovals(),
     []
@@ -372,19 +379,35 @@ export function usePendingApprovals(autoRefresh: boolean = true) {
 
   const result = useFetch<ApprovalRequest[]>(fetchPendingApprovals, {
     autoFetch: true,
-    refetchInterval: autoRefresh ? 5000 : null,
+    refetchInterval: autoRefresh ? refreshInterval : null,
   });
+
+  // Filter by risk level if specified
+  const filteredApprovals = filterByRiskLevel
+    ? (result.data || []).filter(a => a.risk_level === filterByRiskLevel)
+    : (result.data || []);
+
+  // Computed statistics
+  const stats = {
+    total: filteredApprovals.length,
+    highRisk: filteredApprovals.filter(a => a.risk_level === 'high' || a.risk_level === 'critical').length,
+    mediumRisk: filteredApprovals.filter(a => a.risk_level === 'medium').length,
+    lowRisk: filteredApprovals.filter(a => a.risk_level === 'low').length,
+  };
 
   return {
     ...result,
-    pendingApprovals: result.data || [],
+    pendingApprovals: filteredApprovals,
+    stats,
   };
 }
 
-export function useApprovalHistory(limit: number = 100) {
+export function useApprovalHistory(options: { limit?: number; userId?: number } = {}) {
+  const { limit = 100, userId } = options;
+
   const fetchHistory = useCallback(
-    () => orchestrationClient.getApprovalHistory({ limit }),
-    [limit]
+    () => orchestrationClient.getApprovalHistory({ limit, userId }),
+    [limit, userId]
   );
 
   const result = useFetch<ApprovalHistoryItem[]>(fetchHistory);
@@ -408,11 +431,16 @@ export function useApprovalActions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const approve = useCallback(async (requestId: string, approverId: number, notes?: string) => {
+  const approve = useCallback(async (
+    requestId: string,
+    approverId: number,
+    notes?: string,
+    modifications?: Record<string, unknown>
+  ) => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await orchestrationClient.approveRequest(requestId, approverId, notes);
+      const result = await orchestrationClient.approveRequest(requestId, approverId, notes, modifications);
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to approve request';
@@ -456,6 +484,118 @@ export function useApprovalActions() {
 }
 
 // =============================================================================
+// REAL-TIME APPROVALS HOOK with WebSocket
+// =============================================================================
+
+export interface UseRealtimeApprovalsOptions {
+  autoConnect?: boolean;
+  onNewApproval?: (approval: ApprovalRequest) => void;
+  onApprovalUpdate?: (approval: ApprovalRequest) => void;
+}
+
+export function useRealtimeApprovals(options: UseRealtimeApprovalsOptions = {}) {
+  const { autoConnect = true, onNewApproval, onApprovalUpdate } = options;
+
+  const [isConnected, setIsConnected] = useState(false);
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const callbacksRef = useRef({ onNewApproval, onApprovalUpdate });
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    callbacksRef.current = { onNewApproval, onApprovalUpdate };
+  });
+
+  const connect = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    try {
+      // Assume orchestrationClient has a method for approval WebSocket
+      const ws = new WebSocket('ws://localhost:8700/approvals/ws');
+
+      ws.onopen = () => {
+        setIsConnected(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'approval_request') {
+            const approval = data.data as ApprovalRequest;
+            setApprovals(prev => {
+              if (prev.some(a => a.request_id === approval.request_id)) {
+                return prev;
+              }
+              return [approval, ...prev];
+            });
+            callbacksRef.current.onNewApproval?.(approval);
+          } else if (data.type === 'approval_update') {
+            const approval = data.data as ApprovalRequest;
+            setApprovals(prev => {
+              // Remove if no longer pending
+              if (approval.status !== 'pending') {
+                return prev.filter(a => a.request_id !== approval.request_id);
+              }
+              // Update existing
+              return prev.map(a =>
+                a.request_id === approval.request_id ? approval : a
+              );
+            });
+            callbacksRef.current.onApprovalUpdate?.(approval);
+          }
+        } catch (err) {
+          console.error('Failed to parse WebSocket message:', err);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsConnected(false);
+      };
+
+      ws.onclose = () => {
+        setIsConnected(false);
+        // Attempt reconnect after 5 seconds
+        setTimeout(() => {
+          if (autoConnect) connect();
+        }, 5000);
+      };
+
+      wsRef.current = ws;
+    } catch (err) {
+      console.error('Failed to connect WebSocket:', err);
+      setIsConnected(false);
+    }
+  }, [autoConnect]);
+
+  const disconnect = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    setIsConnected(false);
+  }, []);
+
+  // Auto-connect on mount
+  useEffect(() => {
+    if (autoConnect) {
+      connect();
+    }
+    return () => {
+      disconnect();
+    };
+  }, [autoConnect, connect, disconnect]);
+
+  return {
+    isConnected,
+    approvals,
+    connect,
+    disconnect,
+  };
+}
+
+// =============================================================================
 // ORCHESTRATION HOOK
 // =============================================================================
 
@@ -469,21 +609,29 @@ export function useOrchestration({ userId, sessionId, initialContext }: UseOrche
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastResponse, setLastResponse] = useState<OrchestrationResponse | null>(null);
+  const [pendingApproval, setPendingApproval] = useState<ApprovalRequest | null>(null);
 
   const execute = useCallback(
     async (message: string, context?: Record<string, unknown>) => {
       setIsLoading(true);
       setError(null);
+      setPendingApproval(null);
 
       try {
         const mergedContext = { ...initialContext, ...context };
         const response = await orchestrationClient.execute(
-          message, 
-          userId, 
-          sessionId, 
+          message,
+          userId,
+          sessionId,
           mergedContext
         );
         setLastResponse(response);
+
+        // Check if approval is required
+        if (response.approval_required && response.metadata?.approval_request) {
+          setPendingApproval(response.metadata.approval_request as ApprovalRequest);
+        }
+
         return response;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Orchestration failed';
@@ -501,6 +649,7 @@ export function useOrchestration({ userId, sessionId, initialContext }: UseOrche
     isLoading,
     error,
     lastResponse,
+    pendingApproval,
   };
 }
 
@@ -508,12 +657,6 @@ export function useOrchestration({ userId, sessionId, initialContext }: UseOrche
 // WEBSOCKET STREAMING HOOK
 // =============================================================================
 
-// =============================================================================
-// useStreaming Hook - Fixed Version
-// =============================================================================
-// FIXED: Uses refs for callbacks to prevent infinite reconnection loop
-// Replace the useStreaming function in hooks/useOrchestrationHooks.ts with this
-// =============================================================================
 interface UseStreamingOptions {
   userId: number;
   sessionId: string;
@@ -522,6 +665,7 @@ interface UseStreamingOptions {
   onNodeEnd?: (node: string) => void;
   onComplete?: (content: string, metrics?: { tokens_generated: number; latency_ms: number }) => void;
   onError?: (error: string) => void;
+  onApprovalRequired?: (approval: ApprovalRequest) => void;
   autoConnect?: boolean;
 }
 
@@ -533,6 +677,7 @@ export function useStreaming({
   onNodeEnd,
   onComplete,
   onError,
+  onApprovalRequired,
   autoConnect = false,
 }: UseStreamingOptions) {
   const [isConnected, setIsConnected] = useState(false);
@@ -540,15 +685,17 @@ export function useStreaming({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeNodes, setActiveNodes] = useState<string[]>([]);
   const [currentStreamingContent, setCurrentStreamingContent] = useState('');
+  const [pendingApproval, setPendingApproval] = useState<ApprovalRequest | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // FIXED: Store callbacks in refs to avoid dependency changes triggering reconnects
+  // Store callbacks in refs to avoid dependency changes triggering reconnects
   const callbacksRef = useRef({
     onToken,
     onNodeStart,
     onNodeEnd,
     onComplete,
     onError,
+    onApprovalRequired,
   });
 
   // Update refs when callbacks change (without triggering effects)
@@ -559,10 +706,11 @@ export function useStreaming({
       onNodeEnd,
       onComplete,
       onError,
+      onApprovalRequired,
     };
   });
 
-  // FIXED: handleMessage now uses refs, so it's stable
+  // Handle incoming WebSocket messages
   const handleMessage = useCallback((data: WebSocketStreamMessage) => {
     const callbacks = callbacksRef.current;
 
@@ -583,6 +731,13 @@ export function useStreaming({
         if (data.data.node) {
           setActiveNodes(prev => prev.filter(n => n !== data.data.node));
           callbacks.onNodeEnd?.(data.data.node);
+        }
+        break;
+      case 'approval_required':
+        if (data.data.approval_request) {
+          setPendingApproval(data.data.approval_request);
+          setIsStreaming(false);
+          callbacks.onApprovalRequired?.(data.data.approval_request);
         }
         break;
       case 'complete':
@@ -614,9 +769,9 @@ export function useStreaming({
         }
         break;
     }
-  }, []); // Empty deps - uses refs for callbacks
+  }, []);
 
-  // FIXED: connect is now stable (handleMessage is stable)
+  // Connect to WebSocket
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -656,6 +811,9 @@ export function useStreaming({
 
   const sendMessage = useCallback(
     async (message: string, context?: Record<string, unknown>) => {
+      // Clear any pending approval
+      setPendingApproval(null);
+
       // Add user message to chat
       const userMessage: ChatMessage = {
         id: `msg_${Date.now()}`,
@@ -675,6 +833,13 @@ export function useStreaming({
         try {
           setIsStreaming(true);
           const response = await orchestrationClient.execute(message, userId, sessionId, context);
+
+          // Check if approval is required
+          if (response.approval_required && response.metadata?.approval_request) {
+            setPendingApproval(response.metadata.approval_request as ApprovalRequest);
+            setIsStreaming(false);
+            return;
+          }
 
           const assistantMessage: ChatMessage = {
             id: `msg_${Date.now() + 1}`,
@@ -696,16 +861,16 @@ export function useStreaming({
         }
       }
     },
-    [userId, sessionId]  // Removed onError from deps - using ref instead
+    [userId, sessionId]
   );
 
   const clearMessages = useCallback(() => {
     setMessages([]);
     setCurrentStreamingContent('');
+    setPendingApproval(null);
   }, []);
 
-  // FIXED: Only run on mount/unmount when autoConnect is true
-  // Using a ref to track if we've connected to prevent double-connect in StrictMode
+  // Auto-connect on mount
   const hasConnectedRef = useRef(false);
 
   useEffect(() => {
@@ -729,6 +894,7 @@ export function useStreaming({
     messages,
     activeNodes,
     currentStreamingContent,
+    pendingApproval,
     connect,
     disconnect,
     sendMessage,
@@ -786,13 +952,13 @@ export function useSystemStatus(autoRefresh: boolean = true) {
   const featureStatus = useFeatureStatus();
   const errorSummary = useErrorSummary(24, { autoRefresh });
 
-  const isLoading = 
+  const isLoading =
     circuitBreakers.isLoading ||
     connectionStats.isLoading ||
     featureStatus.isLoading ||
     errorSummary.isLoading;
 
-  const hasError = 
+  const hasError =
     circuitBreakers.error ||
     connectionStats.error ||
     featureStatus.error ||

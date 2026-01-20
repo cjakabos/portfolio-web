@@ -127,6 +127,11 @@ async def lifespan(app: FastAPI):
     # -------------------------------------------------------------------------
     logger.info("Initializing Approvals Storage...")
     try:
+        # Connect approvals router to orchestrator's hitl_manager
+        approvals_router.set_approvals_hitl_manager(
+            hitl_manager=orchestrator.hitl_manager,
+            orchestrator=orchestrator
+        )
         await approvals_router.initialize_approvals()
         logger.info("✅ Approvals storage initialized")
     except Exception as e:
