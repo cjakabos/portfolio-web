@@ -1,5 +1,6 @@
 // =============================================================================
 // Types - AI Orchestration Frontend
+// UPDATED: Added execution context types for HITL resume functionality
 // =============================================================================
 
 // Health & Status
@@ -206,53 +207,67 @@ export interface ExperimentCreateRequest {
 }
 
 // =============================================================================
-// HITL Approvals - Enhanced for Risk-Based Hybrid Approach
+// HITL Approvals (UPDATED)
 // =============================================================================
 
 export type ApprovalType = 'financial' | 'ml_decision' | 'data_access' | 'workflow_branch' | 'agent_action' | 'external_api' | 'content_generation';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled' | 'timeout';
-export type ApprovalMode = 'auto_low_risk' | 'auto_medium_risk_flagged' | 'human_required';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled' | 'auto_approved' | 'flagged' | 'timeout';
+
+// Execution context preserved during HITL pause
+export interface ExecutionContext {
+  next_capability?: string;
+  selected_agent?: string;
+  planned_tool_calls?: Record<string, unknown>[];
+  planned_workflow_steps?: string[];
+  ml_model_id?: string;
+  ml_prediction_params?: Record<string, unknown>;
+  agent_task?: string;
+  agent_tools_selected?: string[];
+  rag_query?: string;
+  rag_retrieved_docs?: Record<string, unknown>[];
+  workflow_id?: string;
+  workflow_step_index?: number;
+  workflow_branch?: string;
+  risk_score?: number;
+  risk_factors?: string[];
+  checkpoint_id?: string;
+  checkpoint_thread_id?: string;
+}
 
 export interface ApprovalContext {
-  query?: string;
-  orchestration_type?: string;
-  risk_score?: number;
-  risk_level?: string;
-  state_summary?: {
-    user: string;
-    type: string;
-    input: string;
-    steps_completed: number;
+  state_summary: {
+    user?: string;
+    type?: string;
+    input?: string;
+    steps_completed?: number;
   };
+  risk_score: number;
   current_results?: Record<string, unknown>;
+  additional_info?: Record<string, unknown>;
 }
 
 export interface ApprovalRequest {
   request_id: string;
   orchestration_id: string;
-  node_name?: string;
   approval_type: ApprovalType;
   status: ApprovalStatus;
   created_at: string;
   expires_at: string;
   requester_id: number;
-  approver_id?: number;
-  approved_at?: string;
   proposed_action: string;
   risk_level: RiskLevel;
+  risk_score: number;
+  risk_factors: string[];
   context: ApprovalContext;
-  approval_notes?: string;
-  modifications?: Record<string, unknown>;
-  // New fields for risk-based approach
-  approval_mode?: ApprovalMode;
-  requires_post_review?: boolean;
+  execution_context?: ExecutionContext;
 }
 
 export interface ApprovalHistoryItem extends ApprovalRequest {
-  approved_at: string;
+  approved_at?: string;
   approver_id?: number;
   approval_notes?: string;
+  modifications?: Record<string, unknown>;
 }
 
 export interface ApprovalDecision {
@@ -263,22 +278,36 @@ export interface ApprovalDecision {
 }
 
 export interface ApprovalStats {
-  pending_count: number;
-  approved_count: number;
-  rejected_count: number;
-  expired_count: number;
-  timeout_count: number;
+  pending_count?: number;
+  total_pending: number;
+  approved_count?: number;
+  total_approved: number;
+  rejected_count?: number;
+  total_rejected: number;
+  expired_count?: number;
+  total_expired: number;
+  total_auto_approved?: number;
+  total_flagged?: number;
   avg_response_time_seconds: number;
-  // New stats for risk-based approach
-  auto_approved_count: number;
-  human_approved_count: number;
-  flagged_for_review_count: number;
-  risk_distribution: {
-    low: number;
-    medium: number;
-    high: number;
-    critical: number;
-  };
+  by_type?: Record<string, number>;
+  by_risk_level?: Record<string, number>;
+}
+
+// Resume workflow after approval
+export interface ResumeRequest {
+  user_id: number;
+  session_id: string;
+  additional_context?: Record<string, unknown>;
+}
+
+export interface ResumeResponse {
+  request_id: string;
+  approval_id: string;
+  status: 'completed' | 'rejected' | 'expired' | 'error' | 'pending';
+  response?: string;
+  execution_path?: string[];
+  capabilities_used?: string[];
+  error?: string;
 }
 
 // Orchestration
@@ -298,11 +327,11 @@ export interface OrchestrationResponse {
   latency_ms: number;
   success: boolean;
   metadata?: Record<string, unknown>;
-  // New fields for HITL tracking
-  approval_required?: boolean;
+  // HITL-related fields
   approval_status?: ApprovalStatus;
-  approval_mode?: ApprovalMode;
+  approval_request_id?: string;
   risk_score?: number;
+  requires_human?: boolean;
 }
 
 // Tools
@@ -340,6 +369,53 @@ export interface ToolInvocationResponse {
   result: unknown;
   latency_ms: number;
   error?: string;
+}
+
+// =============================================================================
+// WebSocket Messages (UPDATED)
+// =============================================================================
+
+export interface WebSocketStreamMessage {
+  type: 'token' | 'node_start' | 'node_end' | 'complete' | 'error' | 'approval_required' | 'approval_update';
+  data: {
+    token?: string;
+    node?: string;
+    content?: string;
+    error?: string;
+    metrics?: {
+      tokens_generated: number;
+      latency_ms: number;
+    };
+    // HITL-related
+    approval_request?: ApprovalRequest;
+    approval_status?: ApprovalStatus;
+    risk_score?: number;
+  };
+}
+
+// Approval WebSocket messages
+export interface ApprovalWebSocketMessage {
+  type: 'approval_request' | 'approval_decided' | 'approval_expired' | 'approval_cancelled' | 'pong' | 'subscribed';
+  data?: ApprovalRequest | ApprovalHistoryItem;
+  status?: string;
+}
+
+// Chat Message
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  metrics?: {
+    tokensPerSecond: number;
+    totalTokens: number;
+    latency: number;
+  };
+  // HITL-related
+  approval_status?: ApprovalStatus;
+  approval_request_id?: string;
+  risk_score?: number;
+  requires_approval?: boolean;
 }
 
 // =============================================================================
@@ -389,105 +465,25 @@ export interface Note {
   created_at?: string;
 }
 
-export interface CloudAppRoom {
-  id: number;
-  name: string;
-  code: string;
-  createdBy: string;
-}
-
-// CloudApp Files
-export interface CloudAppFile {
-  id: number;
-  filename: string;
-  contentType: string;
-  size: string;
-  userId: number;
-  createdAt?: string;
-}
-
-// CloudApp Auth
-export interface AuthResponse {
-  token: string;
-  username: string;
-  message?: string;
-}
-
-// =============================================================================
-// Petstore Types
-// =============================================================================
-
-export interface Employee {
-  id: number;
-  name: string;
-  skills: string[];
-  daysAvailable: string[];
-}
-
-export interface Customer {
-  id: number;
-  name: string;
-  phoneNumber: string;
-  notes?: string;
-  petIds?: number[];
-}
-
 export interface Pet {
   id: number;
-  type: string;
   name: string;
-  ownerId: number;
-  birthDate?: string;
-  notes?: string;
+  species: string;
+  breed?: string;
+  age?: number;
+  status: 'available' | 'pending' | 'sold';
 }
-
-export interface Schedule {
-  id: number;
-  date: string;
-  employeeIds: number[];
-  petIds: number[];
-  activities: string[];
-}
-
-// =============================================================================
-// Vehicles Types
-// =============================================================================
 
 export interface Vehicle {
   id: number;
-  condition: string;
-  details: {
-    manufacturer?: string;
-    model?: string;
-    year?: number;
-    price?: number;
-    mileage?: number;
-    color?: string;
-  };
-  location?: {
-    city?: string;
-    state?: string;
-    zip?: string;
-  };
+  make: string;
+  model: string;
+  year: number;
+  color?: string;
+  status: 'available' | 'reserved' | 'sold';
 }
 
-export interface Manufacturer {
-  code: number;
-  name: string;
-}
-
-export interface VehicleStats {
-  totalVehicles: number;
-  byCondition: Record<string, number>;
-  byManufacturer: Record<string, number>;
-  avgPrice: number;
-  avgMileage: number;
-}
-
-// =============================================================================
-// ML Pipeline Types
-// =============================================================================
-
+// ML Types
 export interface SegmentationCustomer {
   id?: number;
   gender: string;
@@ -498,9 +494,9 @@ export interface SegmentationCustomer {
 }
 
 export interface MLInfo {
-  image2: string;  // base64 encoded image
-  image3: string;  // base64 encoded image
-  image4: string;  // base64 encoded image
+  image2: string;
+  image3: string;
+  image4: string;
 }
 
 export interface MLDiagnostics {
@@ -533,54 +529,14 @@ export interface MLSummaryStatistics {
   }>;
 }
 
-// =============================================================================
 // Web Proxy Types
-// =============================================================================
-
 export interface WebProxyRequest {
   webDomain: string;
   webApiKey: string;
-  [key: string]: unknown;  // Additional body properties for POST/PUT
+  [key: string]: unknown;
 }
 
 export interface WebProxyResponse {
   data: unknown;
   status?: number;
-}
-
-// =============================================================================
-// WebSocket Messages
-// =============================================================================
-
-export interface WebSocketStreamMessage {
-  type: 'token' | 'node_start' | 'node_end' | 'complete' | 'error' | 'approval_required' | 'approval_update';
-  data: {
-    token?: string;
-    node?: string;
-    content?: string;
-    error?: string;
-    metrics?: {
-      tokens_generated: number;
-      latency_ms: number;
-    };
-    // Approval-related data
-    approval_request?: ApprovalRequest;
-    approval_status?: ApprovalStatus;
-  };
-}
-
-// Chat Message
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: string;
-  metrics?: {
-    tokensPerSecond: number;
-    totalTokens: number;
-    latency: number;
-  };
-  // HITL metadata
-  approval_required?: boolean;
-  approval_request_id?: string;
 }

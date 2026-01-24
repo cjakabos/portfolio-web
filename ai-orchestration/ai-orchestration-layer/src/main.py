@@ -2,7 +2,9 @@
 AI Orchestration Layer - Main Application
 Integrates all service routers for the AI Orchestration Monitor.
 
-FIXED: Added experiments_router initialization in lifespan
+FIXED:
+- Added experiments_router initialization in lifespan
+- Added approvals_router.set_orchestration_deps() for HITL frontend sync
 """
 
 import logging
@@ -52,22 +54,22 @@ from routers import (
 
 class Settings:
     """Application settings from environment variables."""
-    
+
     # Server
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8700"))
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
-    
+
     # Backend Services
     CLOUDAPP_URL: str = os.getenv("CLOUDAPP_URL", "http://cloudapp:8099/cloudapp")
     PETSTORE_URL: str = os.getenv("PETSTORE_URL", "http://petstore:8803/petstore")
     VEHICLES_URL: str = os.getenv("VEHICLES_URL", "http://vehicles-api:8880/vehicles")
     ML_PIPELINE_URL: str = os.getenv("ML_PIPELINE_URL", "http://mlops-segmentation:8600")
-    
+
     # Data Storage
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379")
     MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://mongodb-abtest:27019")
-    
+
     # CORS
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://ai-orchestration-monitor:5010").split(",")
 
@@ -84,7 +86,7 @@ orchestrator = None
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown."""
     global orchestrator
-    
+
     logger.info("Starting AI Orchestration Layer...")
     logger.info(f"Environment: {settings.DEBUG and 'DEBUG' or 'PROD'}")
 
@@ -92,7 +94,7 @@ async def lifespan(app: FastAPI):
     # 1. Initialize Core AI Components
     # -------------------------------------------------------------------------
     logger.info("Initializing Core Components (Metrics, Memory, Orchestrator)...")
-    
+
     metrics_collector = MetricsCollector()
     tracer = RequestTracer()
     memory_manager = MemoryManager()
@@ -102,6 +104,7 @@ async def lifespan(app: FastAPI):
     orchestrator = AIOrchestrationLayer(
         enable_checkpointing=True,
         enable_hitl=True,
+        hitl_wait_mode="risk_based",
         enable_parallel=True,
         enable_streaming=False
     )
@@ -140,12 +143,24 @@ async def lifespan(app: FastAPI):
     # -------------------------------------------------------------------------
     # 3. Inject Dependencies into Routers
     # -------------------------------------------------------------------------
-    # Inject into the new Orchestration Router
+    # Inject into the new Orchestration Router (for WebSocket streaming)
     orchestration_router.set_orchestration_deps(
         orchestrator=orchestrator,
         memory_manager=memory_manager,
         context_store=context_store
     )
+
+    # =========================================================================
+    # CRITICAL FIX: Inject into Approvals Router for HITL frontend sync
+    # This connects the orchestrator's HITL manager to the approvals storage
+    # so pending approvals appear in the frontend!
+    # =========================================================================
+    approvals_router.set_orchestration_deps(
+        orchestrator=orchestrator,
+        memory_manager=memory_manager,
+        context_store=context_store
+    )
+    logger.info("✅ Approvals router connected to orchestrator")
 
     # Inject into System Router (from old main.py logic)
     system_router.set_orchestrator(orchestrator)
@@ -162,18 +177,18 @@ async def lifespan(app: FastAPI):
     logger.info("✅ All services initialized successfully")
 
     yield
-    
+
     # -------------------------------------------------------------------------
     # Shutdown
     # -------------------------------------------------------------------------
     logger.info("Shutting down AI Orchestration Layer...")
-    
+
     # Cleanup approvals background task
     try:
         await approvals_router.shutdown_approvals()
     except Exception as e:
         logger.warning(f"Approvals shutdown error: {e}")
-    
+
     if orchestrator:
         await orchestrator.cleanup()
     logger.info("✅ Shutdown complete")
@@ -186,7 +201,7 @@ app = FastAPI(
     title="AI Orchestration Layer",
     description="""
     Backend API for the AI Orchestration Monitor dashboard.
-    
+
     Features:
     - Multi-model Orchestration (LangGraph)
     - Service Proxies (CloudApp, Petstore, Vehicles)
@@ -281,9 +296,9 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     import httpx
-    
+
     services = {}
-    
+
     # Check backend services
     async with httpx.AsyncClient(timeout=5.0) as client:
         for name, url in [
@@ -299,7 +314,7 @@ async def health_check():
                     services[name] = "degraded"
             except:
                 services[name] = "unavailable"
-    
+
     # Check AI Core Health
     if orchestrator:
         services["orchestrator"] = "healthy"
@@ -309,7 +324,7 @@ async def health_check():
     # Overall status
     all_healthy = all(s == "healthy" for s in services.values())
     any_available = any(s != "unavailable" for s in services.values())
-    
+
     return {
         "status": "healthy" if all_healthy else ("degraded" if any_available else "unhealthy"),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -320,25 +335,12 @@ async def health_check():
 async def get_config():
     """Get current configuration (non-sensitive)."""
     return {
-        "cors_origins": settings.CORS_ORIGINS,
         "debug": settings.DEBUG,
         "services": {
             "cloudapp": settings.CLOUDAPP_URL,
             "petstore": settings.PETSTORE_URL,
             "vehicles": settings.VEHICLES_URL,
             "ml_pipeline": settings.ML_PIPELINE_URL
-        }
+        },
+        "cors_origins": settings.CORS_ORIGINS
     }
-
-# =============================================================================
-# Run Application
-# =============================================================================
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG
-    )

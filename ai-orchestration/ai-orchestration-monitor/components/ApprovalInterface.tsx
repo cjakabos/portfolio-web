@@ -1,38 +1,47 @@
 // =============================================================================
 // ApprovalInterface - Human-in-the-loop Approval Workflow
 // =============================================================================
+// UPDATED: Added resume functionality and risk-based approval display
 // Features:
 // - Fetches pending approvals from backend
-// - Visual error handling and success feedback
-// - Manual refresh capability
-// - Detailed payload inspection
-// - Risk-based approval display
-// - Real-time WebSocket updates
+// - Real-time updates via WebSocket
+// - Resume workflow after approval (even if WS was closed)
+// - Risk score visualization
+// - Detailed execution context inspection
 // =============================================================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   CheckCircle, XCircle, Clock, AlertTriangle,
   ChevronRight, ExternalLink, ShieldAlert, Check,
   X, RefreshCw, Loader2, AlertCircle, FileJson,
-  Activity, Shield, AlertOctagon, Info, Zap
+  Play, Zap, Activity, Target, Shield, Eye
 } from 'lucide-react';
-import {
-  approvalClient,
-  type ApprovalRequest,
-  type RiskLevel,
-  type ApprovalMode
-} from '../services/approvalClient';
+import { approvalClient, type ApprovalRequest, type ApprovalHistoryItem } from '../services/approvalClient';
+import type { ApprovalWebSocketMessage, ResumeResponse, ApprovalStatus } from '../types';
 
-export default function ApprovalInterface() {
+interface ApprovalInterfaceProps {
+  userId?: number;
+  sessionId?: string;
+  onResumeComplete?: (response: ResumeResponse) => void;
+}
+
+export default function ApprovalInterface({
+  userId = 1,
+  sessionId = `session_${Date.now()}`,
+  onResumeComplete
+}: ApprovalInterfaceProps) {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [resumeLoading, setResumeLoading] = useState(false);
   const [notification, setNotification] = useState<{type: 'success' | 'error' | 'info', message: string} | null>(null);
-  const [approvalNotes, setApprovalNotes] = useState('');
-  const wsRef = useRef<WebSocket | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<ApprovalHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Fetch approvals from backend
   const fetchApprovals = useCallback(async () => {
@@ -49,63 +58,66 @@ export default function ApprovalInterface() {
     }
   }, []);
 
-  // Connect to WebSocket for real-time updates
-  const connectWebSocket = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
+  // Fetch history
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
     try {
-      const ws = approvalClient.connectWebSocket(
-        // On new approval request
-        (request) => {
-          setApprovals(prev => {
-            // Avoid duplicates
-            if (prev.some(a => a.request_id === request.request_id)) {
-              return prev;
-            }
-            return [request, ...prev];
-          });
-          setNotification({ type: 'info', message: 'New approval request received' });
-        },
-        // On approval update
-        (updatedRequest) => {
-          setApprovals(prev => prev.map(a =>
-            a.request_id === updatedRequest.request_id ? updatedRequest : a
-          ));
-          // Remove from list if no longer pending
-          if (updatedRequest.status !== 'pending') {
-            setApprovals(prev => prev.filter(a => a.request_id !== updatedRequest.request_id));
-            if (selectedApproval?.request_id === updatedRequest.request_id) {
-              setSelectedApproval(null);
-            }
-          }
-        },
-        // On error
-        (err) => {
-          console.error('WebSocket error:', err);
-        },
-        // On close
-        () => {
-          console.log('WebSocket closed, attempting reconnect...');
-          setTimeout(connectWebSocket, 5000);
-        }
-      );
-      wsRef.current = ws;
+      const data = await approvalClient.getApprovalHistory({
+        limit: 50,
+        include_auto_approved: true
+      });
+      setHistory(data);
     } catch (err) {
-      console.error('Failed to connect WebSocket:', err);
+      console.error('Failed to fetch history:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  // Handle WebSocket messages
+  const handleWsMessage = useCallback((message: ApprovalWebSocketMessage) => {
+    if (message.type === 'approval_request' && message.data) {
+      // New approval request
+      setApprovals(prev => {
+        const exists = prev.some(a => a.request_id === (message.data as ApprovalRequest).request_id);
+        if (exists) return prev;
+        return [(message.data as ApprovalRequest), ...prev];
+      });
+      setNotification({ type: 'info', message: 'New approval request received' });
+    } else if (message.type === 'approval_decided' && message.data) {
+      // Approval decided - remove from pending
+      const decided = message.data as ApprovalHistoryItem;
+      setApprovals(prev => prev.filter(a => a.request_id !== decided.request_id));
+      if (selectedApproval?.request_id === decided.request_id) {
+        setSelectedApproval(null);
+      }
+    } else if (message.type === 'approval_expired' && message.data) {
+      // Approval expired
+      const expired = message.data as ApprovalRequest;
+      setApprovals(prev => prev.filter(a => a.request_id !== expired.request_id));
+      setNotification({ type: 'info', message: `Approval ${expired.request_id.slice(0, 8)} expired` });
     }
   }, [selectedApproval]);
 
-  // Initial load and WebSocket connection
+  // Connect WebSocket
+  useEffect(() => {
+    approvalClient.connectWebSocket(handleWsMessage, setWsConnected);
+    return () => {
+      approvalClient.disconnectWebSocket();
+    };
+  }, [handleWsMessage]);
+
+  // Initial load
   useEffect(() => {
     fetchApprovals();
-    connectWebSocket();
+  }, [fetchApprovals]);
 
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [fetchApprovals, connectWebSocket]);
+  // Load history when tab switches
+  useEffect(() => {
+    if (showHistory && history.length === 0) {
+      fetchHistory();
+    }
+  }, [showHistory, history.length, fetchHistory]);
 
   // Clear notification after 3 seconds
   useEffect(() => {
@@ -115,29 +127,13 @@ export default function ApprovalInterface() {
     }
   }, [notification]);
 
-  const handleApprove = async (requestId: string) => {
-    setActionLoading(true);
-    try {
-      await approvalClient.approveAction(requestId, 1, approvalNotes || undefined);
-      setApprovals(prev => prev.filter(a => a.request_id !== requestId));
-      setSelectedApproval(null);
-      setApprovalNotes('');
-      setNotification({ type: 'success', message: 'Action approved successfully' });
-    } catch (err) {
-      console.error('Failed to approve:', err);
-      setNotification({ type: 'error', message: 'Failed to submit approval' });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
+  // Handle reject action
   const handleReject = async (requestId: string) => {
     setActionLoading(true);
     try {
-      await approvalClient.rejectAction(requestId, 1, approvalNotes || "Rejected by user");
+      await approvalClient.rejectAction(requestId, userId, 'Rejected by user');
       setApprovals(prev => prev.filter(a => a.request_id !== requestId));
       setSelectedApproval(null);
-      setApprovalNotes('');
       setNotification({ type: 'success', message: 'Action rejected' });
     } catch (err) {
       console.error('Failed to reject:', err);
@@ -147,55 +143,89 @@ export default function ApprovalInterface() {
     }
   };
 
-  // Helper to get risk level badge color
-  const getRiskLevelColor = (riskLevel?: RiskLevel) => {
+  // Handle approve and resume - This is the key function for resuming after WS close
+  const handleApproveAndResume = async (requestId: string) => {
+    setActionLoading(true);
+    setResumeLoading(true);
+    try {
+      // First approve
+      await approvalClient.approveAction(requestId, userId, 'Approved and resumed');
+
+      // Then resume the workflow
+      const response = await approvalClient.resumeAfterApproval(
+        requestId,
+        userId,
+        sessionId
+      );
+
+      setApprovals(prev => prev.filter(a => a.request_id !== requestId));
+      setSelectedApproval(null);
+
+      if (response.status === 'completed') {
+        setNotification({ type: 'success', message: 'Workflow resumed and completed successfully!' });
+      } else if (response.status === 'error') {
+        setNotification({ type: 'error', message: `Resume failed: ${response.error}` });
+      }
+
+      // Notify parent component
+      onResumeComplete?.(response);
+
+    } catch (err) {
+      console.error('Failed to approve and resume:', err);
+      setNotification({ type: 'error', message: 'Failed to approve and resume workflow' });
+    } finally {
+      setActionLoading(false);
+      setResumeLoading(false);
+    }
+  };
+
+  // Helper to get priority/risk badge color
+  const getRiskColor = (riskLevel?: string, riskScore?: number) => {
+    if (riskScore !== undefined) {
+      if (riskScore >= 0.7) return 'bg-red-100 text-red-700 border-red-200';
+      if (riskScore >= 0.3) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      return 'bg-green-100 text-green-700 border-green-200';
+    }
     switch (riskLevel?.toLowerCase()) {
-      case 'critical': return 'bg-red-600 text-white border-red-700';
-      case 'high': return 'bg-red-100 text-red-700 border-red-200';
+      case 'critical': return 'bg-red-100 text-red-700 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'low': return 'bg-green-100 text-green-700 border-green-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
-  // Helper to get risk score color
-  const getRiskScoreColor = (score?: number) => {
-    if (score === undefined) return 'text-gray-500';
-    if (score >= 0.7) return 'text-red-600';
-    if (score >= 0.3) return 'text-yellow-600';
-    return 'text-green-600';
+  // Helper to get status badge
+  const getStatusBadge = (status: ApprovalStatus) => {
+    const badges: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
+      pending: { color: 'bg-blue-100 text-blue-700', icon: <Clock className="w-3 h-3" />, label: 'Pending' },
+      approved: { color: 'bg-green-100 text-green-700', icon: <Check className="w-3 h-3" />, label: 'Approved' },
+      rejected: { color: 'bg-red-100 text-red-700', icon: <X className="w-3 h-3" />, label: 'Rejected' },
+      auto_approved: { color: 'bg-teal-100 text-teal-700', icon: <Zap className="w-3 h-3" />, label: 'Auto-approved' },
+      flagged: { color: 'bg-amber-100 text-amber-700', icon: <Eye className="w-3 h-3" />, label: 'Flagged' },
+      expired: { color: 'bg-gray-100 text-gray-700', icon: <Clock className="w-3 h-3" />, label: 'Expired' },
+      timeout: { color: 'bg-gray-100 text-gray-700', icon: <Clock className="w-3 h-3" />, label: 'Timeout' },
+      cancelled: { color: 'bg-gray-100 text-gray-700', icon: <X className="w-3 h-3" />, label: 'Cancelled' },
+    };
+    return badges[status] || badges.pending;
   };
 
-  // Helper to get approval type icon
-  const getApprovalTypeIcon = (type?: string) => {
-    switch (type?.toLowerCase()) {
-      case 'financial': return <Activity className="w-4 h-4" />;
-      case 'ml_decision': return <Zap className="w-4 h-4" />;
-      case 'data_access': return <Shield className="w-4 h-4" />;
-      case 'agent_action': return <AlertOctagon className="w-4 h-4" />;
-      default: return <Info className="w-4 h-4" />;
-    }
-  };
+  // Risk score visualization
+  const RiskMeter = ({ score }: { score: number }) => {
+    const percentage = Math.round(score * 100);
+    const color = score >= 0.7 ? 'bg-red-500' : score >= 0.3 ? 'bg-yellow-500' : 'bg-green-500';
 
-  // Format risk score as percentage
-  const formatRiskScore = (score?: number) => {
-    if (score === undefined) return 'N/A';
-    return `${(score * 100).toFixed(0)}%`;
-  };
-
-  // Calculate time remaining until expiry
-  const getTimeRemaining = (expiresAt: string) => {
-    const now = new Date();
-    const expiry = new Date(expiresAt);
-    const diff = expiry.getTime() - now.getTime();
-
-    if (diff <= 0) return 'Expired';
-
-    const minutes = Math.floor(diff / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-
-    if (minutes > 0) return `${minutes}m ${seconds}s`;
-    return `${seconds}s`;
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${color} transition-all duration-300`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <span className="text-sm font-medium text-gray-700">{percentage}%</span>
+      </div>
+    );
   };
 
   return (
@@ -204,27 +234,48 @@ export default function ApprovalInterface() {
       <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-gray-900 flex items-center">
               <ShieldAlert className="w-5 h-5 mr-2 text-blue-600" />
-              Pending Actions
+              Approval Queue
             </h2>
-            <button
-              onClick={fetchApprovals}
-              disabled={loading}
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-              title="Refresh list"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+            <div className="flex items-center space-x-2">
+              {/* WebSocket status */}
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}
+                   title={wsConnected ? 'Real-time connected' : 'Disconnected'} />
+              <button
+                onClick={fetchApprovals}
+                disabled={loading}
+                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title="Refresh list"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center space-x-2 text-xs text-gray-500">
-            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full font-medium">
-              {approvals.length} Pending
-            </span>
-            <span className="px-2 py-0.5 bg-red-50 text-red-700 rounded-full font-medium">
-              {approvals.filter(a => a.risk_level === 'high' || a.risk_level === 'critical').length} High Risk
-            </span>
+
+          {/* Tabs */}
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowHistory(false)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                !showHistory
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Pending ({approvals.length})
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                showHistory
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              History
+            </button>
           </div>
         </div>
 
@@ -247,84 +298,130 @@ export default function ApprovalInterface() {
 
         {/* List Content */}
         <div className="flex-1 overflow-y-auto">
-          {loading && approvals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-              <Loader2 className="w-8 h-8 animate-spin mb-3" />
-              <p className="text-sm">Loading requests...</p>
-            </div>
-          ) : approvals.length === 0 && !error ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400 p-6 text-center">
-              <CheckCircle className="w-12 h-12 mb-3 text-green-100" />
-              <h3 className="text-gray-900 font-medium mb-1">All Caught Up</h3>
-              <p className="text-sm">No pending actions require your approval at this time.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {approvals.map((approval) => (
-                <button
-                  key={approval.request_id}
-                  onClick={() => setSelectedApproval(approval)}
-                  className={`w-full text-left p-4 hover:bg-gray-50 transition-colors group relative ${
-                    selectedApproval?.request_id === approval.request_id ? 'bg-blue-50 hover:bg-blue-50' : ''
-                  }`}
-                >
-                  {selectedApproval?.request_id === approval.request_id && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
-                  )}
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${getRiskLevelColor(approval.risk_level)}`}>
-                        {approval.risk_level || 'Medium'}
+          {!showHistory ? (
+            // Pending approvals
+            loading && approvals.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                <p className="text-sm">Loading requests...</p>
+              </div>
+            ) : approvals.length === 0 && !error ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400 p-6 text-center">
+                <CheckCircle className="w-12 h-12 mb-3 text-green-200" />
+                <h3 className="text-gray-900 font-medium mb-1">All Caught Up</h3>
+                <p className="text-sm">No pending actions require your approval.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {approvals.map((approval) => (
+                  <button
+                    key={approval.request_id}
+                    onClick={() => setSelectedApproval(approval)}
+                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors group relative ${
+                      selectedApproval?.request_id === approval.request_id ? 'bg-blue-50 hover:bg-blue-50' : ''
+                    }`}
+                  >
+                    {selectedApproval?.request_id === approval.request_id && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
+                    )}
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${getRiskColor(approval.risk_level, approval.risk_score)}`}>
+                        {approval.risk_score !== undefined
+                          ? `Risk: ${Math.round(approval.risk_score * 100)}%`
+                          : approval.risk_level || 'Medium'}
                       </span>
-                      <span className="text-xs text-gray-500 flex items-center">
-                        {getApprovalTypeIcon(approval.approval_type)}
-                        <span className="ml-1 capitalize">{approval.approval_type?.replace(/_/g, ' ')}</span>
+                      <span className="text-xs text-gray-400 flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {new Date(approval.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-400 flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {getTimeRemaining(approval.expires_at)}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">
-                    {approval.proposed_action || 'Pending Action'}
-                  </h3>
-                  <p className="text-xs text-gray-500 line-clamp-2">
-                    {approval.context?.query || 'No description provided'}
-                  </p>
-                  {approval.context?.risk_score !== undefined && (
-                    <div className="mt-2 flex items-center">
-                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            approval.context.risk_score >= 0.7 ? 'bg-red-500' :
-                            approval.context.risk_score >= 0.3 ? 'bg-yellow-500' : 'bg-green-500'
-                          }`}
-                          style={{ width: `${approval.context.risk_score * 100}%` }}
-                        />
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">
+                      {approval.approval_type.replace(/_/g, ' ')}
+                    </h3>
+                    <p className="text-xs text-gray-500 line-clamp-2">
+                      {approval.proposed_action || 'No description provided'}
+                    </p>
+                    {approval.risk_factors && approval.risk_factors.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {approval.risk_factors.slice(0, 2).map((factor, idx) => (
+                          <span key={idx} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                            {factor}
+                          </span>
+                        ))}
+                        {approval.risk_factors.length > 2 && (
+                          <span className="text-[10px] text-gray-400">+{approval.risk_factors.length - 2} more</span>
+                        )}
                       </div>
-                      <span className={`ml-2 text-xs font-medium ${getRiskScoreColor(approval.context.risk_score)}`}>
-                        {formatRiskScore(approval.context.risk_score)}
-                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )
+          ) : (
+            // History
+            historyLoading ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                <p className="text-sm">Loading history...</p>
+              </div>
+            ) : history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400 p-6 text-center">
+                <Activity className="w-12 h-12 mb-3 text-gray-200" />
+                <h3 className="text-gray-900 font-medium mb-1">No History Yet</h3>
+                <p className="text-sm">Completed approvals will appear here.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {history.map((item) => {
+                  const statusBadge = getStatusBadge(item.status);
+                  return (
+                    <div
+                      key={item.request_id}
+                      className="p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded flex items-center space-x-1 ${statusBadge.color}`}>
+                          {statusBadge.icon}
+                          <span>{statusBadge.label}</span>
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {item.approved_at
+                            ? new Date(item.approved_at).toLocaleString()
+                            : new Date(item.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">
+                        {item.approval_type.replace(/_/g, ' ')}
+                      </h3>
+                      <p className="text-xs text-gray-500 line-clamp-1">
+                        {item.proposed_action}
+                      </p>
+                      {item.approval_notes && (
+                        <p className="text-xs text-gray-400 mt-1 italic">
+                          Note: {item.approval_notes}
+                        </p>
+                      )}
                     </div>
-                  )}
-                </button>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )
           )}
         </div>
       </div>
 
       {/* Right Panel: Detail View */}
       <div className="flex-1 bg-gray-50 flex flex-col relative overflow-hidden">
-        {/* Global Notification Toast */}
+        {/* Notification Toast */}
         {notification && (
           <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full shadow-lg z-50 flex items-center space-x-2 animate-in slide-in-from-top-4 fade-in duration-200 ${
             notification.type === 'success' ? 'bg-green-600 text-white' :
-            notification.type === 'info' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'
+            notification.type === 'error' ? 'bg-red-600 text-white' :
+            'bg-blue-600 text-white'
           }`}>
             {notification.type === 'success' ? <CheckCircle className="w-4 h-4" /> :
-             notification.type === 'info' ? <Info className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+             notification.type === 'error' ? <AlertTriangle className="w-4 h-4" /> :
+             <AlertCircle className="w-4 h-4" />}
             <span className="text-sm font-medium">{notification.message}</span>
           </div>
         )}
@@ -336,19 +433,15 @@ export default function ApprovalInterface() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-md border uppercase tracking-wider ${getRiskLevelColor(selectedApproval.risk_level)}`}>
-                      {selectedApproval.risk_level || 'Normal'} Risk
-                    </span>
-                    <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200 capitalize flex items-center">
-                      {getApprovalTypeIcon(selectedApproval.approval_type)}
-                      <span className="ml-1">{selectedApproval.approval_type?.replace(/_/g, ' ')}</span>
+                    <span className={`px-2.5 py-1 text-xs font-bold rounded-md border uppercase tracking-wider ${getRiskColor(selectedApproval.risk_level, selectedApproval.risk_score)}`}>
+                      {selectedApproval.risk_level || 'Medium'} Risk
                     </span>
                     <span className="text-sm text-gray-500 font-mono">
-                      ID: {selectedApproval.request_id.slice(0, 8)}
+                      ID: {selectedApproval.request_id.slice(0, 12)}
                     </span>
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {selectedApproval.proposed_action || 'Review Required'}
+                  <h1 className="text-2xl font-bold text-gray-900 capitalize">
+                    {selectedApproval.approval_type.replace(/_/g, ' ')}
                   </h1>
                 </div>
                 <div className="flex space-x-3">
@@ -357,149 +450,126 @@ export default function ApprovalInterface() {
                     disabled={actionLoading}
                     className="flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all disabled:opacity-50"
                   >
-                    {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <X className="w-4 h-4 mr-2" />}
+                    {actionLoading && !resumeLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <X className="w-4 h-4 mr-2" />}
                     Reject
                   </button>
-                  <button
-                    onClick={() => handleApprove(selectedApproval.request_id)}
-                    disabled={actionLoading}
-                    className="flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50"
-                  >
-                    {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
-                    Approve Action
-                  </button>
+                  {selectedApproval.execution_context && (
+                    <button
+                      onClick={() => handleApproveAndResume(selectedApproval.request_id)}
+                      disabled={actionLoading}
+                      className="flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all disabled:opacity-50"
+                      title="Approve and immediately resume the workflow"
+                    >
+                      {resumeLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
+                      Approve & Resume
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Detail Content */}
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-
-                {/* Risk Assessment Section */}
-                {selectedApproval.context?.risk_score !== undefined && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
-                      <Shield className="w-4 h-4 mr-2" />
+              <div className="space-y-6">
+                {/* Risk Score Card */}
+                {selectedApproval.risk_score !== undefined && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center">
+                      <Target className="w-4 h-4 mr-2" />
                       Risk Assessment
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600">Risk Score</span>
-                        <span className={`text-lg font-bold ${getRiskScoreColor(selectedApproval.context.risk_score)}`}>
-                          {formatRiskScore(selectedApproval.context.risk_score)}
-                        </span>
+                    <RiskMeter score={selectedApproval.risk_score} />
+                    {selectedApproval.risk_factors && selectedApproval.risk_factors.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs text-gray-500 mb-2">Risk Factors:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApproval.risk_factors.map((factor, idx) => (
+                            <span key={idx} className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-md flex items-center">
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              {factor}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            selectedApproval.context.risk_score >= 0.7 ? 'bg-red-500' :
-                            selectedApproval.context.risk_score >= 0.3 ? 'bg-yellow-500' : 'bg-green-500'
-                          }`}
-                          style={{ width: `${selectedApproval.context.risk_score * 100}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-2 text-xs text-gray-500">
-                        <span>Low (&lt;30%)</span>
-                        <span>Medium (30-70%)</span>
-                        <span>High (&gt;70%)</span>
-                      </div>
-                      <p className="mt-3 text-sm text-gray-600">
-                        {selectedApproval.context.risk_score >= 0.7
-                          ? '⚠️ This operation requires human approval due to high risk score.'
-                          : selectedApproval.context.risk_score >= 0.3
-                          ? 'ℹ️ This operation was flagged for review but may proceed with approval.'
-                          : '✅ This is a low-risk operation.'}
-                      </p>
-                    </div>
+                    )}
                   </div>
                 )}
 
-                <div className="border-t border-gray-100 my-4"></div>
-
-                {/* Request Context Section */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-                    Request Context
-                  </h3>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    {selectedApproval.context?.query && (
-                      <div>
-                        <span className="text-xs text-gray-500 uppercase">Query</span>
-                        <p className="text-gray-900 mt-1">{selectedApproval.context.query}</p>
-                      </div>
-                    )}
-                    {selectedApproval.context?.orchestration_type && (
-                      <div>
-                        <span className="text-xs text-gray-500 uppercase">Orchestration Type</span>
-                        <p className="text-gray-900 mt-1 capitalize">{selectedApproval.context.orchestration_type.replace(/_/g, ' ')}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-100 my-4"></div>
-
-                {/* Approval Notes Input */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-                    Approval Notes (Optional)
-                  </h3>
-                  <textarea
-                    value={approvalNotes}
-                    onChange={(e) => setApprovalNotes(e.target.value)}
-                    placeholder="Add notes for this approval decision..."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="border-t border-gray-100 my-4"></div>
-
-                {/* Full Context Viewer */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider flex items-center">
-                      <FileJson className="w-4 h-4 mr-2" />
-                      Full Request Context
+                {/* Main Details Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+                  {/* Proposed Action */}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
+                      Proposed Action
                     </h3>
-                    <span className="text-xs text-gray-400">Read-only</span>
+                    <p className="text-gray-900 leading-relaxed">
+                      {selectedApproval.proposed_action || 'No detailed description available.'}
+                    </p>
                   </div>
-                  <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto shadow-inner">
-                    <pre className="text-sm font-mono text-blue-300 leading-relaxed">
-                      {JSON.stringify(selectedApproval.context || {}, null, 2)}
-                    </pre>
+
+                  <div className="border-t border-gray-100 my-4"></div>
+
+                  {/* Context Summary */}
+                  {selectedApproval.context && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                        <FileJson className="w-4 h-4 mr-2" />
+                        Request Context
+                      </h3>
+                      <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto shadow-inner">
+                        <pre className="text-sm font-mono text-blue-300 leading-relaxed">
+                          {JSON.stringify(selectedApproval.context, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Execution Context (NEW) */}
+                  {selectedApproval.execution_context && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                        <Activity className="w-4 h-4 mr-2" />
+                        Execution Context (for Resume)
+                      </h3>
+                      <div className="bg-emerald-900 rounded-lg p-4 overflow-x-auto shadow-inner">
+                        <pre className="text-sm font-mono text-emerald-300 leading-relaxed">
+                          {JSON.stringify(selectedApproval.execution_context, null, 2)}
+                        </pre>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        ℹ️ This context allows the workflow to resume exactly where it paused, even after WebSocket disconnection.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-2 gap-6 pt-4">
+                    <div>
+                      <h4 className="text-xs text-gray-500 uppercase mb-1">Created At</h4>
+                      <p className="text-sm text-gray-900">
+                        {new Date(selectedApproval.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-xs text-gray-500 uppercase mb-1">Expires At</h4>
+                      <p className="text-sm text-gray-900">
+                        {new Date(selectedApproval.expires_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-xs text-gray-500 uppercase mb-1">Orchestration ID</h4>
+                      <p className="text-sm text-gray-900 font-mono">
+                        {selectedApproval.orchestration_id.slice(0, 16)}...
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-xs text-gray-500 uppercase mb-1">Requester ID</h4>
+                      <p className="text-sm text-gray-900">
+                        User #{selectedApproval.requester_id}
+                      </p>
+                    </div>
                   </div>
                 </div>
-
-                {/* Metadata Grid */}
-                <div className="grid grid-cols-2 gap-6 pt-4">
-                  <div>
-                    <h4 className="text-xs text-gray-500 uppercase mb-1">Created At</h4>
-                    <p className="text-sm text-gray-900">
-                      {new Date(selectedApproval.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs text-gray-500 uppercase mb-1">Expires At</h4>
-                    <p className="text-sm text-gray-900">
-                      {new Date(selectedApproval.expires_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs text-gray-500 uppercase mb-1">Requester ID</h4>
-                    <p className="text-sm text-gray-900">
-                      {selectedApproval.requester_id}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs text-gray-500 uppercase mb-1">Status</h4>
-                    <p className="text-sm text-gray-900 capitalize">
-                      {selectedApproval.status}
-                    </p>
-                  </div>
-                </div>
-
               </div>
             </div>
           </>

@@ -1,69 +1,33 @@
 // =============================================================================
 // Approval Client - Human-in-the-loop Service
 // =============================================================================
-// Handles fetching, approving, and rejecting pending actions.
-// Updated to work with the AI Orchestration backend HITL system.
+// UPDATED: Added resume functionality and risk-based approval support
 // =============================================================================
 
-export type ApprovalType = 'financial' | 'ml_decision' | 'data_access' | 'workflow_branch' | 'agent_action' | 'external_api' | 'content_generation';
-export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled' | 'timeout';
-export type ApprovalMode = 'auto_low_risk' | 'auto_medium_risk_flagged' | 'human_required';
+import type {
+  ApprovalRequest,
+  ApprovalHistoryItem,
+  ApprovalDecision,
+  ApprovalStats,
+  ApprovalStatus,
+  ApprovalType,
+  RiskLevel,
+  ResumeRequest,
+  ResumeResponse,
+  ApprovalWebSocketMessage,
+} from '../types';
 
-export interface ApprovalContext {
-  query?: string;
-  orchestration_type?: string;
-  risk_score?: number;
-  risk_level?: string;
-  state_summary?: {
-    user: string;
-    type: string;
-    input: string;
-    steps_completed: number;
-  };
-  current_results?: Record<string, unknown>;
-}
-
-export interface ApprovalRequest {
-  request_id: string;
-  orchestration_id: string;
-  node_name: string;
-  approval_type: ApprovalType;
-  status: ApprovalStatus;
-  created_at: string;
-  expires_at: string;
-  requester_id: number;
-  approver_id?: number;
-  approved_at?: string;
-  proposed_action: string;
-  risk_level: RiskLevel;
-  context: ApprovalContext;
-  approval_notes?: string;
-  modifications?: Record<string, unknown>;
-  approval_mode?: ApprovalMode;
-  requires_post_review?: boolean;
-}
-
-export interface ApprovalDecision {
-  approved: boolean;
-  approver_id: number;
-  approval_notes?: string;
-  modifications?: Record<string, unknown>;
-}
-
-export interface ApprovalStats {
-  pending_count: number;
-  approved_count: number;
-  rejected_count: number;
-  expired_count: number;
-  timeout_count: number;
-  avg_response_time_seconds: number;
-  auto_approved_count: number;
-  human_approved_count: number;
-}
+// Re-export types for convenience
+export type { ApprovalRequest, ApprovalHistoryItem, ApprovalDecision, ApprovalStats };
 
 class ApprovalClient {
   private baseUrl: string;
+  private ws: WebSocket | null = null;
+  private wsReconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+  private messageHandlers: Set<(message: ApprovalWebSocketMessage) => void> = new Set();
+  private connectionHandlers: Set<(connected: boolean) => void> = new Set();
 
   constructor(baseUrl = 'http://localhost:8700') {
     this.baseUrl = baseUrl;
@@ -79,146 +43,291 @@ class ApprovalClient {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Approval API Error: ${response.statusText}`);
+      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(error.detail || `Approval API Error: ${response.statusText}`);
     }
 
     return response.json();
   }
 
+  // ===========================================================================
+  // Pending Approvals
+  // ===========================================================================
+
   /**
    * Fetches all pending approval requests.
    */
-  async getPendingApprovals(): Promise<ApprovalRequest[]> {
-    return this.request<ApprovalRequest[]>('/approvals/pending');
+  async getPendingApprovals(filters?: {
+    approval_type?: ApprovalType;
+    risk_level?: RiskLevel;
+    min_risk_score?: number;
+  }): Promise<ApprovalRequest[]> {
+    const params = new URLSearchParams();
+    if (filters?.approval_type) params.append('approval_type', filters.approval_type);
+    if (filters?.risk_level) params.append('risk_level', filters.risk_level);
+    if (filters?.min_risk_score !== undefined) params.append('min_risk_score', String(filters.min_risk_score));
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<ApprovalRequest[]>(`/approvals/pending${query}`);
   }
 
   /**
-   * Fetches pending approvals for a specific user.
+   * Gets a specific pending approval by ID.
    */
-  async getPendingApprovalsForUser(userId: number): Promise<ApprovalRequest[]> {
-    return this.request<ApprovalRequest[]>(`/approvals/pending?user_id=${userId}`);
+  async getPendingApproval(requestId: string): Promise<ApprovalRequest> {
+    return this.request<ApprovalRequest>(`/approvals/pending/${requestId}`);
   }
 
   /**
-   * Fetches a single approval request by ID.
+   * Gets any approval by ID (pending or processed).
    */
-  async getApproval(requestId: string): Promise<ApprovalRequest> {
-    return this.request<ApprovalRequest>(`/approvals/${requestId}`);
+  async getApproval(requestId: string): Promise<ApprovalHistoryItem> {
+    return this.request<ApprovalHistoryItem>(`/approvals/${requestId}`);
   }
+
+  // ===========================================================================
+  // Approval Actions
+  // ===========================================================================
 
   /**
    * Approves a specific action by ID.
    */
   async approveAction(
-      requestId: string,
-      approverId: number = 1,
-      notes?: string,
-      modifications?: Record<string, unknown>
-    ): Promise<ApprovalRequest> {
-      // FIXED: Changed endpoint to /pending/{id}/decide and added 'approved: true'
-      return this.request<ApprovalRequest>(`/approvals/pending/${requestId}/decide`, {
-        method: 'POST',
-        body: JSON.stringify({
-          approved: true,
-          approver_id: approverId,
-          approval_notes: notes,
-          modifications
-        }),
-      });
-    }
-
-  /**
-   * Rejects a specific action by ID with an optional reason.
-   */
-
-  async rejectAction(
-      requestId: string,
-      approverId: number = 1,
-      reason?: string
-    ): Promise<ApprovalRequest> {
-      // FIXED: Changed endpoint to /pending/{id}/decide and added 'approved: false'
-      return this.request<ApprovalRequest>(`/approvals/pending/${requestId}/decide`, {
-        method: 'POST',
-        body: JSON.stringify({
-          approved: false,
-          approver_id: approverId,
-          approval_notes: reason
-        }),
-      });
-    }
-
-  /**
-   * Cancels a pending approval request.
-   */
-  async cancelApproval(requestId: string): Promise<void> {
-    await this.request(`/approvals/${requestId}/cancel`, {
+    requestId: string,
+    approverId: number = 1,
+    notes?: string,
+    modifications?: Record<string, unknown>
+  ): Promise<ApprovalHistoryItem> {
+    return this.request<ApprovalHistoryItem>(`/approvals/pending/${requestId}/decide`, {
       method: 'POST',
+      body: JSON.stringify({
+        approved: true,
+        approver_id: approverId,
+        approval_notes: notes,
+        modifications,
+      } as ApprovalDecision),
     });
   }
 
   /**
-   * Fetches approval history with optional filters.
+   * Rejects a specific action by ID with an optional reason.
    */
-  async getApprovalHistory(options: {
-    userId?: number;
-    limit?: number;
-    status?: ApprovalStatus;
-  } = {}): Promise<ApprovalRequest[]> {
-    const params = new URLSearchParams();
-    if (options.userId) params.append('user_id', options.userId.toString());
-    if (options.limit) params.append('limit', options.limit.toString());
-    if (options.status) params.append('status', options.status);
-
-    const queryString = params.toString();
-    const endpoint = `/approvals/history${queryString ? `?${queryString}` : ''}`;
-    return this.request<ApprovalRequest[]>(endpoint);
+  async rejectAction(
+    requestId: string,
+    approverId: number = 1,
+    reason?: string
+  ): Promise<ApprovalHistoryItem> {
+    return this.request<ApprovalHistoryItem>(`/approvals/pending/${requestId}/decide`, {
+      method: 'POST',
+      body: JSON.stringify({
+        approved: false,
+        approver_id: approverId,
+        approval_notes: reason,
+      } as ApprovalDecision),
+    });
   }
 
   /**
-   * Fetches approval statistics.
+   * Cancels a pending approval request.
+   */
+  async cancelApproval(requestId: string): Promise<{ status: string; message: string }> {
+    return this.request<{ status: string; message: string }>(`/approvals/pending/${requestId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ===========================================================================
+  // Resume Workflow After Approval (NEW)
+  // ===========================================================================
+
+  /**
+   * Resume workflow execution after approval.
+   * This is the key method for continuing workflows after WS disconnect.
+   */
+  async resumeAfterApproval(
+    approvalId: string,
+    userId: number,
+    sessionId: string,
+    additionalContext?: Record<string, unknown>
+  ): Promise<ResumeResponse> {
+    return this.request<ResumeResponse>(`/approvals/pending/${approvalId}/resume`, {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        session_id: sessionId,
+        additional_context: additionalContext,
+      } as ResumeRequest),
+    });
+  }
+
+  // ===========================================================================
+  // History & Stats
+  // ===========================================================================
+
+  /**
+   * Gets approval history with filters.
+   */
+  async getApprovalHistory(options?: {
+    limit?: number;
+    offset?: number;
+    status?: ApprovalStatus;
+    approval_type?: ApprovalType;
+    include_auto_approved?: boolean;
+  }): Promise<ApprovalHistoryItem[]> {
+    const params = new URLSearchParams();
+    if (options?.limit) params.append('limit', String(options.limit));
+    if (options?.offset) params.append('offset', String(options.offset));
+    if (options?.status) params.append('status', options.status);
+    if (options?.approval_type) params.append('approval_type', options.approval_type);
+    if (options?.include_auto_approved !== undefined) {
+      params.append('include_auto_approved', String(options.include_auto_approved));
+    }
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<ApprovalHistoryItem[]>(`/approvals/history${query}`);
+  }
+
+  /**
+   * Gets approval statistics.
    */
   async getApprovalStats(): Promise<ApprovalStats> {
     return this.request<ApprovalStats>('/approvals/stats');
   }
 
   /**
-   * WebSocket connection for real-time approval updates.
+   * Health check for approval system.
+   */
+  async healthCheck(): Promise<{
+    status: string;
+    service: string;
+    storage: string;
+    pending_count: number;
+    orchestrator_available: boolean;
+  }> {
+    return this.request('/approvals/health');
+  }
+
+  // ===========================================================================
+  // WebSocket for Real-time Updates
+  // ===========================================================================
+
+  /**
+   * Connect to approval WebSocket for real-time updates.
    */
   connectWebSocket(
-    onApprovalRequest: (request: ApprovalRequest) => void,
-    onApprovalUpdate: (request: ApprovalRequest) => void,
-    onError?: (error: Event) => void,
-    onClose?: () => void
-  ): WebSocket {
-    const wsUrl = this.baseUrl.replace('http', 'ws');
-    const ws = new WebSocket(`${wsUrl}/approvals/ws`);
+    onMessage?: (message: ApprovalWebSocketMessage) => void,
+    onConnectionChange?: (connected: boolean) => void
+  ): WebSocket | null {
+    if (onMessage) this.messageHandlers.add(onMessage);
+    if (onConnectionChange) this.connectionHandlers.add(onConnectionChange);
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'approval_request') {
-          onApprovalRequest(data.data);
-        } else if (data.type === 'approval_update') {
-          onApprovalUpdate(data.data);
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      onConnectionChange?.(true);
+      return this.ws;
+    }
+
+    try {
+      const wsUrl = this.baseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+      this.ws = new WebSocket(`${wsUrl}/approvals/ws`);
+
+      this.ws.onopen = () => {
+        console.log('Approval WebSocket connected');
+        this.wsReconnectAttempts = 0;
+        this.connectionHandlers.forEach(handler => handler(true));
+
+        // Send ping periodically to keep connection alive
+        this.startPingInterval();
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as ApprovalWebSocketMessage;
+          this.messageHandlers.forEach(handler => handler(message));
+        } catch (err) {
+          console.error('Failed to parse WebSocket message:', err);
         }
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
+      };
+
+      this.ws.onclose = (event) => {
+        console.log('Approval WebSocket closed:', event.code, event.reason);
+        this.connectionHandlers.forEach(handler => handler(false));
+        this.stopPingInterval();
+
+        // Auto-reconnect
+        if (this.wsReconnectAttempts < this.maxReconnectAttempts) {
+          this.wsReconnectAttempts++;
+          const delay = this.reconnectDelay * Math.pow(2, this.wsReconnectAttempts - 1);
+          console.log(`Reconnecting in ${delay}ms (attempt ${this.wsReconnectAttempts})`);
+          setTimeout(() => this.connectWebSocket(), delay);
+        }
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('Approval WebSocket error:', error);
+      };
+
+      return this.ws;
+    } catch (err) {
+      console.error('Failed to create WebSocket:', err);
+      return null;
+    }
+  }
+
+  private pingInterval: NodeJS.Timeout | null = null;
+
+  private startPingInterval() {
+    this.stopPingInterval();
+    this.pingInterval = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'ping' }));
       }
-    };
+    }, 30000);
+  }
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      onError?.(error);
-    };
+  private stopPingInterval() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+  }
 
-    ws.onclose = () => {
-      onClose?.();
-    };
+  /**
+   * Disconnect WebSocket.
+   */
+  disconnectWebSocket() {
+    this.stopPingInterval();
+    if (this.ws) {
+      this.ws.close(1000, 'Client disconnect');
+      this.ws = null;
+    }
+    this.messageHandlers.clear();
+    this.connectionHandlers.clear();
+  }
 
-    return ws;
+  /**
+   * Check if WebSocket is connected.
+   */
+  isWebSocketConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * Remove a message handler.
+   */
+  removeMessageHandler(handler: (message: ApprovalWebSocketMessage) => void) {
+    this.messageHandlers.delete(handler);
+  }
+
+  /**
+   * Remove a connection handler.
+   */
+  removeConnectionHandler(handler: (connected: boolean) => void) {
+    this.connectionHandlers.delete(handler);
   }
 }
 
 // Export a singleton instance
 export const approvalClient = new ApprovalClient();
+
+// Also export the class for custom instances
+export { ApprovalClient };
