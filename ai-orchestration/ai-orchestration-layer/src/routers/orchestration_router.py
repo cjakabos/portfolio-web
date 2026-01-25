@@ -105,9 +105,14 @@ async def orchestrate(request: OrchestrationRequest):
             final_output=None,
             next_action="",
             requires_human=False,
+            approval_status=None,
+            approval_request_id=None,
+            resuming_from_approval=False,
+            auto_approved=False,
+            risk_score=0.0,
             logs=[],
             metrics={},
-            capabilities_used=[]  # Track capabilities used
+            capabilities_used=[]
         )
 
         # 5. Execute Workflow
@@ -309,6 +314,11 @@ async def websocket_stream(websocket: WebSocket):
                     final_output=None,
                     next_action="",
                     requires_human=False,
+                    approval_status=None,
+                    approval_request_id=None,
+                    resuming_from_approval=False,
+                    auto_approved=False,
+                    risk_score=0.0,
                     logs=[],
                     metrics={},
                     capabilities_used=[]

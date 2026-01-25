@@ -605,6 +605,21 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         orchestration_id = approval.get("orchestration_id", str(uuid.uuid4()))
         context_data = approval.get("context", {})
 
+        # =================================================================
+        # FIX: Get the ORIGINAL session_id from approval context
+        # This is the session that was active when the approval was created
+        # The graph execution may overwrite session_id, so we preserve it here
+        # =================================================================
+        original_session_id = (
+            context_data.get("state_summary", {}).get("session_id")
+            or context_data.get("session_id")
+            or execution_context.get("session_id")
+            or approval.get("session_id")
+            or resume_request.session_id  # fallback to request
+        )
+
+        logger.info(f"Resuming with original session_id: {original_session_id}")
+
         # Determine orchestration type from execution context
         capability_to_type = {
             "chat": OrchestrationType.CONVERSATIONAL,
@@ -629,22 +644,28 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         if _context_store:
             user_context = _context_store.load_user_profile(str(resume_request.user_id))
         if _memory_manager:
-            history = _memory_manager.get_history(resume_request.session_id)
+            # Use original session_id for history lookup
+            history = _memory_manager.get_history(original_session_id)
 
         # Merge additional context
         if resume_request.additional_context:
             user_context.update(resume_request.additional_context)
 
         # Create state with preserved execution context
+        # Use ORIGINAL session_id, not the one from resume_request
         state = create_initial_state(
             request_id=orchestration_id,
             user_id=str(resume_request.user_id),
-            session_id=resume_request.session_id,
+            session_id=original_session_id,  # FIX: Use original session_id
             input_data=original_input,
             orchestration_type=orchestration_type,
             user_context=user_context,
             conversation_history=history
         )
+
+        # FIX: Convert datetime to ISO string for JSON serialization
+        if "start_time" in state and hasattr(state["start_time"], 'isoformat'):
+            state["start_time"] = state["start_time"].isoformat()
 
         # Restore execution context
         state["execution_context"] = execution_context
@@ -680,8 +701,8 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         logger.info(f"Resuming workflow {orchestration_id} with capability {next_capability}")
 
         # Execute the resumed workflow
-        # We use invoke instead of astream for simpler handling
-        config = {"configurable": {"thread_id": resume_request.session_id}}
+        # Use original session_id for thread_id as well
+        config = {"configurable": {"thread_id": original_session_id}}
 
         if hasattr(_orchestrator, 'graph'):
             # Use the compiled graph
@@ -693,11 +714,28 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         # Save interaction
         if _memory_manager and result_state.get("final_output"):
             _memory_manager.save_interaction(
-                session_id=resume_request.session_id,
+                session_id=original_session_id,
                 user_message=original_input,
                 assistant_response=result_state["final_output"],
                 metadata={"request_id": orchestration_id, "resumed_from_approval": request_id}
             )
+
+        # Store for conversation sync with ORIGINAL session_id
+        # This is critical - the frontend polls using the original session_id
+        try:
+            from routers.conversation_sync import store_resume_response
+            await store_resume_response(
+                session_id=original_session_id,  # FIX: Use original session_id
+                request_id=orchestration_id,
+                user_message=original_input,
+                response=result_state.get("final_output", ""),
+                capabilities_used=result_state.get("capabilities_used", [])
+            )
+            logger.info(f"Stored resume response for session {original_session_id}")
+        except ImportError:
+            logger.warning("conversation_sync not available, skipping response sync")
+        except Exception as e:
+            logger.error(f"Failed to store resume response: {e}")
 
         return ResumeResponse(
             request_id=orchestration_id,

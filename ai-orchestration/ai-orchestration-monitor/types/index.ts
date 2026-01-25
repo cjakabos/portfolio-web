@@ -416,6 +416,21 @@ export interface ChatMessage {
   approval_request_id?: string;
   risk_score?: number;
   requires_approval?: boolean;
+  metadata?: ChatMessageMetadata;
+}
+
+export interface ChatMessageMetadata {
+  /** Capabilities used (for display) */
+  capabilities?: string[];
+
+  /** Whether this message was resumed from the approval interface */
+  resumedFromApproval?: boolean;
+
+  /** The approval request ID if resumed */
+  approvalRequestId?: string;
+
+  /** Risk score if this was a high-risk operation */
+  riskScore?: number;
 }
 
 // =============================================================================
@@ -539,4 +554,46 @@ export interface WebProxyRequest {
 export interface WebProxyResponse {
   data: unknown;
   status?: number;
+}
+
+// =============================================================================
+// Synced Message from Backend
+// =============================================================================
+
+export interface SyncedMessage {
+  /** The orchestration request ID */
+  request_id: string;
+
+  /** The original user message that triggered the workflow */
+  user_message: string;
+
+  /** The LLM response after workflow completion */
+  response: string;
+
+  /** Capabilities used during execution (e.g., ["agent", "RAG"]) */
+  capabilities_used: string[];
+
+  /** ISO timestamp of when the response was generated */
+  timestamp: string;
+
+  /** Whether this message has been delivered to the chat interface */
+  delivered: boolean;
+}
+
+// =============================================================================
+// API Request/Response Types
+// =============================================================================
+
+export interface MarkDeliveredRequest {
+  request_ids: string[];
+}
+
+export interface MarkDeliveredResponse {
+  marked: number;
+}
+
+export interface ConversationSyncHealth {
+  status: string;
+  service: string;
+  storage: string;
 }

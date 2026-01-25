@@ -477,6 +477,7 @@ class HumanInLoopManager:
             approval_type=approval_type,
             requester_id=int(state.get("user_id", 0)) if str(state.get("user_id", "0")).isdigit() else 0,
             context={
+                "session_id": state.get("session_id"),
                 "query": state["input_data"],
                 "orchestration_type": state.get("orchestration_type", OrchestrationType.CONVERSATIONAL).value,
                 "intermediate_results": state.get("intermediate_results", {})

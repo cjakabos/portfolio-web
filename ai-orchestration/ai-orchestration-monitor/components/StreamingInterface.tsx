@@ -3,15 +3,18 @@
 // =============================================================================
 // Fully integrated with backend - with restored UI functionality
 // FIXED: Memoized callbacks to prevent WebSocket reconnection loop
+// FIXED: Proper conversation sync with message merging
+// FIXED: User messages persist during approval flow
 // =============================================================================
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Send, Bot, User, Zap, Activity, Brain, Database,
   Workflow, RefreshCw, Wifi, WifiOff, Loader2, X,
-  AlertCircle, Settings, Trash2, Copy, Check
+  AlertCircle, Settings, Trash2, Copy, Check, Clock
 } from 'lucide-react';
 import { useStreaming } from '../hooks/useOrchestrationHooks';
+import { useConversationSync, SyncedMessage } from '../hooks/useConversationSync';
 import type { ChatMessage } from '../types';
 
 interface StreamingInterfaceProps {
@@ -33,8 +36,52 @@ export default function StreamingInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
 
+  // ==========================================================================
+  // FIX: Local state for synced messages from approval resumes
+  // ==========================================================================
+  const [syncedMessages, setSyncedMessages] = useState<ChatMessage[]>([]);
+
+  // ==========================================================================
+  // FIX: Pending user messages with sessionStorage persistence
+  // These survive navigation between tabs (e.g., to Approvals and back)
+  // ==========================================================================
+  const [pendingUserMessages, setPendingUserMessages] = useState<ChatMessage[]>([]);
+
+  // Load pending messages from sessionStorage on mount and when sessionId changes
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(`pending_messages_${localSessionId}`);
+      console.log('[StreamingInterface] Loading pending messages for session:', localSessionId, 'Found:', stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('[StreamingInterface] Restored pending messages:', parsed.length);
+          setPendingUserMessages(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load pending messages:', e);
+    }
+  }, [localSessionId]);
+
+  // Persist pending messages to sessionStorage whenever they change
+  useEffect(() => {
+    console.log('[StreamingInterface] Pending messages changed:', pendingUserMessages.length, pendingUserMessages.map(m => m.content.slice(0, 30)));
+    try {
+      if (pendingUserMessages.length > 0) {
+        sessionStorage.setItem(
+          `pending_messages_${localSessionId}`,
+          JSON.stringify(pendingUserMessages)
+        );
+      } else {
+        sessionStorage.removeItem(`pending_messages_${localSessionId}`);
+      }
+    } catch (e) {
+      console.warn('Failed to persist pending messages:', e);
+    }
+  }, [pendingUserMessages, localSessionId]);
+
   // FIXED: Memoize error handler to prevent infinite reconnection loop
-  // This was causing the useEffect -> connect -> disconnect cycle
   const handleStreamingError = useCallback((err: string) => {
     console.error('Streaming error:', err);
     setError('Connection lost. Please check your network or backend service.');
@@ -44,19 +91,121 @@ export default function StreamingInterface({
   const {
     isConnected,
     isStreaming,
-    messages,
+    messages: streamingMessages,  // Renamed for clarity
     activeNodes,
     currentStreamingContent,
     connect,
     disconnect,
-    sendMessage,
+    sendMessage: sendStreamingMessage,
     clearMessages,
   } = useStreaming({
     userId,
     sessionId: localSessionId,
-    onError: handleStreamingError,  // Use memoized callback
+    onError: handleStreamingError,
     autoConnect: true,
   });
+
+  // ==========================================================================
+  // FIX: Merge all message sources with proper deduplication
+  // Pending messages stay visible until they appear in synced messages
+  // (which means the full approval + response flow completed)
+  // ==========================================================================
+  const messages = useMemo(() => {
+    console.log('[StreamingInterface] Merging messages - streaming:', streamingMessages.length,
+                'synced:', syncedMessages.length, 'pending:', pendingUserMessages.length);
+
+    // Create sets for deduplication by ID
+    const streamingIds = new Set(streamingMessages.map(m => m.id));
+    const syncedIds = new Set(syncedMessages.map(m => m.id));
+
+    // Get user message contents that have been synced (flow completed)
+    const syncedUserContents = new Set(
+      syncedMessages.filter(m => m.role === 'user').map(m => m.content)
+    );
+
+    // Get user message contents currently in streaming
+    const streamingUserContents = new Set(
+      streamingMessages.filter(m => m.role === 'user').map(m => m.content)
+    );
+
+    // Filter synced messages that don't already exist in streaming
+    const uniqueSyncedMessages = syncedMessages.filter(
+      m => !streamingIds.has(m.id)
+    );
+
+    // Filter pending messages:
+    // - Remove if already in streaming or synced by ID
+    // - Remove if the content matches a synced user message (flow completed)
+    // - Remove if content is currently showing in streaming (avoid duplicates)
+    const uniquePendingMessages = pendingUserMessages.filter(pending => {
+      // Check by ID
+      if (streamingIds.has(pending.id) || syncedIds.has(pending.id)) {
+        console.log('[StreamingInterface] Filtering pending (by ID):', pending.content.slice(0, 30));
+        return false;
+      }
+      // Check if this message's content has been synced (flow completed)
+      if (syncedUserContents.has(pending.content)) {
+        console.log('[StreamingInterface] Filtering pending (synced):', pending.content.slice(0, 30));
+        return false;
+      }
+      // Check if content is currently in streaming (avoid showing twice)
+      if (streamingUserContents.has(pending.content)) {
+        console.log('[StreamingInterface] Filtering pending (in streaming):', pending.content.slice(0, 30));
+        return false;
+      }
+      // Keep the pending message
+      return true;
+    });
+
+    console.log('[StreamingInterface] After filtering - unique pending:', uniquePendingMessages.length);
+
+    // Merge and sort by timestamp
+    const allMessages = [...streamingMessages, ...uniqueSyncedMessages, ...uniquePendingMessages];
+
+    return allMessages.sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  }, [streamingMessages, syncedMessages, pendingUserMessages]);
+
+  // ==========================================================================
+  // FIX: Clean up pending messages only when a RESPONSE has been received
+  // Don't clean just because the message appears in streaming (it might get lost)
+  // ==========================================================================
+  useEffect(() => {
+    if (pendingUserMessages.length === 0) return;
+
+    // Get all assistant messages from streaming and synced
+    const allAssistantMessages = [
+      ...streamingMessages.filter(m => m.role === 'assistant'),
+      ...syncedMessages.filter(m => m.role === 'assistant')
+    ];
+
+    // Get user messages that have been synced (these have completed the full flow)
+    const syncedUserContents = new Set(
+      syncedMessages.filter(m => m.role === 'user').map(m => m.content)
+    );
+
+    // Only remove a pending message if:
+    // 1. It has been synced (appears in syncedMessages as user message), OR
+    // 2. There's at least one assistant response after it was sent
+    setPendingUserMessages(prev => {
+      return prev.filter(pending => {
+        // If it's in synced messages, remove it
+        if (syncedUserContents.has(pending.content)) {
+          return false;
+        }
+
+        // If there's an assistant message with a later timestamp, we got a response
+        const pendingTime = new Date(pending.timestamp).getTime();
+        const hasResponse = allAssistantMessages.some(
+          assistant => new Date(assistant.timestamp).getTime() > pendingTime
+        );
+
+        // Keep it if no response yet
+        return !hasResponse;
+      });
+    });
+  }, [streamingMessages, syncedMessages]);
 
   // Scroll to bottom on new messages
   const scrollToBottom = useCallback(() => {
@@ -87,20 +236,37 @@ export default function StreamingInterface({
     }
   }, [messages]);
 
-  // Handle sending messages
+  // ==========================================================================
+  // FIX: Handle sending messages - store locally BEFORE sending
+  // ==========================================================================
   const handleSend = useCallback(async () => {
     if (!input.trim() || isStreaming) return;
-    const message = input;
+    const message = input.trim();
     setInput('');
     setError(null);
 
+    // Create the user message object
+    const userMessage: ChatMessage = {
+      id: `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        pending: true
+      }
+    };
+
+    // Add to pending messages IMMEDIATELY (before WebSocket)
+    setPendingUserMessages(prev => [...prev, userMessage]);
+
     try {
-      await sendMessage(message);
+      await sendStreamingMessage(message);
     } catch (err) {
       console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
+      // Don't remove the pending message - it shows what the user tried to send
     }
-  }, [input, isStreaming, sendMessage]);
+  }, [input, isStreaming, sendStreamingMessage]);
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -112,10 +278,18 @@ export default function StreamingInterface({
   const handleResetSession = useCallback(() => {
     disconnect();
     clearMessages();
+    setSyncedMessages([]);
+    setPendingUserMessages([]);
+    // Clear from sessionStorage too
+    try {
+      sessionStorage.removeItem(`pending_messages_${localSessionId}`);
+    } catch (e) {
+      console.warn('Failed to clear pending messages from storage:', e);
+    }
     setLocalSessionId(`session_${Date.now()}`);
     setError(null);
     setTimeout(() => connect(), 100);
-  }, [disconnect, clearMessages, connect]);
+  }, [disconnect, clearMessages, connect, localSessionId]);
 
   const copySessionId = useCallback(() => {
     navigator.clipboard.writeText(localSessionId);
@@ -123,178 +297,160 @@ export default function StreamingInterface({
     setTimeout(() => setCopied(false), 2000);
   }, [localSessionId]);
 
-  // Node icons
-  const getNodeIcon = useCallback((node: string) => {
-    const icons: Record<string, React.ReactNode> = {
-      'classify_intent': <Brain className="w-4 h-4" />,
-      'agent_system': <Bot className="w-4 h-4" />,
-      'rag_system': <Database className="w-4 h-4" />,
-      'workflow_system': <Workflow className="w-4 h-4" />,
-      'synthesize_response': <Zap className="w-4 h-4" />,
-      'tool_execution': <Settings className="w-4 h-4" />
-    };
-    return icons[node] || <Activity className="w-4 h-4" />;
+  // ==========================================================================
+  // FIX: Handle synced messages from approval resumes
+  // Now uses setSyncedMessages instead of non-existent setMessages
+  // ==========================================================================
+  const handleSyncedMessages = useCallback((newSyncedMessages: SyncedMessage[]) => {
+    setSyncedMessages(prev => {
+      const existingIds = new Set(prev.map(m => m.id));
+
+      const newChatMessages: ChatMessage[] = [];
+
+      for (const synced of newSyncedMessages) {
+        // Add user message if not exists
+        const userMsgId = `user-${synced.request_id}`;
+        if (!existingIds.has(userMsgId) && synced.user_message) {
+          newChatMessages.push({
+            id: userMsgId,
+            role: 'user',
+            content: synced.user_message,
+            timestamp: synced.timestamp,
+          });
+        }
+
+        // Add assistant response if not exists
+        const assistantMsgId = `assistant-${synced.request_id}`;
+        if (!existingIds.has(assistantMsgId)) {
+          newChatMessages.push({
+            id: assistantMsgId,
+            role: 'assistant',
+            content: synced.response,
+            timestamp: synced.timestamp,
+            metadata: {
+              capabilities: synced.capabilities_used,
+              resumedFromApproval: true
+            }
+          });
+        }
+      }
+
+      if (newChatMessages.length === 0) return prev;
+
+      // Merge and sort by timestamp
+      return [...prev, ...newChatMessages].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+    });
   }, []);
 
+  // Enable conversation sync
+  const { isSyncing, refresh: refreshSync } = useConversationSync({
+    sessionId: localSessionId,
+    onNewMessages: handleSyncedMessages,
+    pollInterval: 5000
+  });
+
   return (
-    <div className={`flex flex-col h-full bg-white relative ${embedded ? '' : 'shadow-sm border-x border-gray-200'}`}>
+    <div className={`flex flex-col bg-gray-50 ${embedded ? 'h-full' : 'h-screen'}`}>
       {/* Header */}
-      {!embedded && (
-        <div className="bg-white border-b px-6 py-4 sticky top-0 z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">AI Orchestration Streaming</h1>
-              <p className="text-sm text-gray-500 mt-1">Real-time token streaming with LangGraph</p>
+      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+        <div className={`flex items-center justify-between ${embedded ? '' : 'max-w-3xl mx-auto'}`}>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-sm">
+              <Bot className="w-6 h-6 text-white" />
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Connection Status */}
-              <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-                isConnected
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
-              }`}>
-                {isConnected ? (
-                  <>
-                    <Wifi className="w-4 h-4" />
-                    <span>Connected</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="w-4 h-4" />
-                    <span>Disconnected</span>
-                  </>
-                )}
-              </div>
-
-              {/* Metrics */}
-              <div className="flex items-center space-x-6 text-sm bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-4 h-4 text-yellow-500" />
-                  <span className="text-gray-700 font-medium">{metrics.tokensPerSecond} tokens/sec</span>
-                </div>
-                <div className="w-px h-4 bg-gray-300"></div>
-                <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-green-500" />
-                  <span className="text-gray-700 font-medium">{metrics.latency}ms latency</span>
-                </div>
-              </div>
-
-              {/* Actions */}
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">AI Chat</h1>
               <div className="flex items-center space-x-2">
-                 <button
-                    onClick={() => setShowSettings(true)}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={handleResetSession}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Reset Session"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
-                  <div className="w-px h-6 bg-gray-200 mx-2"></div>
-                {!isConnected ? (
-                  <button
-                    onClick={connect}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    Connect
-                  </button>
+                {isConnected ? (
+                  <span className="flex items-center text-xs text-green-600 font-medium">
+                    <Wifi className="w-3 h-3 mr-1" />
+                    Live
+                  </span>
                 ) : (
-                  <button
-                    onClick={disconnect}
-                    className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
-                  >
-                    Disconnect
-                  </button>
+                  <span className="flex items-center text-xs text-red-500 font-medium">
+                    <WifiOff className="w-3 h-3 mr-1" />
+                    Offline
+                  </span>
                 )}
-                <button
-                  onClick={clearMessages}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Clear chat"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {isSyncing && (
+                  <span className="flex items-center text-xs text-blue-600 font-medium">
+                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                    Syncing
+                  </span>
+                )}
+                {pendingUserMessages.length > 0 && (
+                  <span className="flex items-center text-xs text-amber-600 font-medium">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Awaiting response
+                  </span>
+                )}
               </div>
             </div>
           </div>
+
+          <div className="flex items-center space-x-2">
+            {/* Refresh Sync Button */}
+            <button
+              onClick={refreshSync}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+              title="Refresh synced messages"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+
+            {/* Reconnect button */}
+            {!isConnected && (
+              <button
+                onClick={connect}
+                className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Reconnect
+              </button>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-50 border-b border-red-100 px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3 text-red-700">
-            <AlertCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">{error}</span>
-          </div>
-          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Embedded metrics strip */}
-      {embedded && (
-        <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-100">
-          <div className="flex items-center space-x-3">
-            <div className={`flex items-center space-x-1.5 text-xs font-medium ${
-              isConnected ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              <span>{isConnected ? 'Live' : 'Offline'}</span>
+        <div className="bg-red-50 border-b border-red-100 px-6 py-3">
+          <div className={`flex items-center justify-between ${embedded ? '' : 'max-w-3xl mx-auto'}`}>
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <p className="text-sm text-red-700">{error}</p>
             </div>
-            <span className="text-xs text-gray-400">Session: {localSessionId.slice(0, 12)}...</span>
-          </div>
-          <div className="flex items-center space-x-4 text-xs">
-            <div className="flex items-center space-x-1.5">
-              <Zap className="w-3 h-3 text-yellow-500" />
-              <span className="text-gray-700 font-medium">{metrics.tokensPerSecond} t/s</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <Activity className="w-3 h-3 text-green-500" />
-              <span className="text-gray-700 font-medium">{metrics.latency}ms</span>
-            </div>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
 
-      {/* Active Nodes Display */}
-      {activeNodes.length > 0 && (
-        <div className="bg-blue-50 border-b border-blue-100 px-6 py-3 transition-all">
-          <div className="flex items-center space-x-4">
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Active Nodes:</span>
-            <div className="flex items-center space-x-2">
-              {activeNodes.map(node => (
-                <div
-                  key={node}
-                  className="flex items-center space-x-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-blue-100 animate-pulse"
-                >
-                  {getNodeIcon(node)}
-                  <span className="text-xs font-medium text-gray-700 capitalize">
-                    {node.replace(/_/g, ' ')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-6">
-        <div className={`mx-auto space-y-6 ${embedded ? 'max-w-full' : 'max-w-3xl'}`}>
-          {/* Welcome message if no messages */}
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className={`${embedded ? 'p-4' : 'max-w-3xl mx-auto p-6'} space-y-4`}>
+          {/* Welcome Message */}
           {messages.length === 0 && !currentStreamingContent && (
             <div className="text-center py-12">
-              <Bot className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">AI Orchestration Ready</h3>
-              <p className="text-sm text-gray-500 max-w-md mx-auto">
-                Start a conversation to interact with the AI orchestration layer.
-                Your messages will be processed through LangGraph workflows in real-time.
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                AI Orchestration Ready
+              </h2>
+              <p className="text-gray-500 max-w-md mx-auto text-sm">
+                I can help with data analysis, API integrations, workflow automation, and more.
+                Start by typing your message below.
               </p>
               {!isConnected && (
                 <button
@@ -316,10 +472,28 @@ export default function StreamingInterface({
               <div
                 className={`max-w-[85%] rounded-2xl px-5 py-4 ${
                   message.role === 'user'
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? message.metadata?.pending
+                      ? 'bg-blue-400 text-white shadow-md'  // Lighter for pending
+                      : 'bg-blue-600 text-white shadow-md'
                     : 'bg-white text-gray-800 shadow-sm border border-gray-200'
                 }`}
               >
+                {/* Pending indicator for user messages */}
+                {message.metadata?.pending && (
+                  <div className="flex items-center space-x-1 mb-2 text-blue-100">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-xs font-medium">Sending...</span>
+                  </div>
+                )}
+
+                {/* Resumed from approval indicator */}
+                {message.metadata?.resumedFromApproval && (
+                  <div className="flex items-center space-x-1 mb-2 text-amber-600">
+                    <RefreshCw className="w-3 h-3" />
+                    <span className="text-xs font-medium">Completed via approval</span>
+                  </div>
+                )}
+
                 {/* Message Icon */}
                 <div className={`flex items-center space-x-2 mb-2 ${
                   message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -335,6 +509,20 @@ export default function StreamingInterface({
 
                 {/* Message Content */}
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+
+                {/* Capabilities badge for resumed messages */}
+                {message.metadata?.capabilities && message.metadata.capabilities.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {message.metadata.capabilities.map((cap: string, i: number) => (
+                      <span
+                        key={i}
+                        className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full"
+                      >
+                        {cap}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Metrics Badge */}
                 {message.metrics && message.role === 'assistant' && (
@@ -441,6 +629,20 @@ export default function StreamingInterface({
                 <label className="block text-xs font-medium text-gray-500 uppercase mb-1">User ID</label>
                 <div className="bg-gray-50 px-3 py-2 rounded-lg text-sm text-gray-700 border border-gray-200 font-mono">
                   {userId}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Synced Messages</label>
+                <div className="bg-gray-50 px-3 py-2 rounded-lg text-sm text-gray-700 border border-gray-200">
+                  {syncedMessages.length} messages from approvals
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Pending Messages</label>
+                <div className="bg-gray-50 px-3 py-2 rounded-lg text-sm text-gray-700 border border-gray-200">
+                  {pendingUserMessages.length} awaiting response
                 </div>
               </div>
 

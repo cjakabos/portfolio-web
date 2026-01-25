@@ -45,7 +45,8 @@ from routers import (
     experiments_router,
     orchestration_router,
     system_router,
-    tools_router
+    tools_router,
+    conversation_sync
 )
 
 # =============================================================================
@@ -139,6 +140,16 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Approvals storage initialized")
     except Exception as e:
         logger.warning(f"⚠️ Approvals storage initialization failed (will use fallback): {e}")
+
+    # -------------------------------------------------------------------------
+    # 2c. Initialize Conversation Sync (Redis)
+    # -------------------------------------------------------------------------
+    logger.info("Initializing Conversation Sync...")
+    try:
+        await conversation_sync.init_redis()
+        logger.info("✅ Conversation sync initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ Conversation sync initialization failed: {e}")
 
     # -------------------------------------------------------------------------
     # 3. Inject Dependencies into Routers
@@ -268,6 +279,7 @@ app.include_router(metrics_router.router)
 app.include_router(experiments_router.router)
 app.include_router(system_router.router)
 app.include_router(tools_router.router)
+app.include_router(conversation_sync.router)
 
 # =============================================================================
 # Root Endpoints

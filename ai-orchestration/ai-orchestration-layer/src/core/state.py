@@ -170,12 +170,13 @@ def create_initial_state(
         auto_approved=False,
         human_feedback=None,
         human_modifications=None,
+        resuming_from_approval=False,
         errors=[],
         
         # Observability
         logs=[],
         metrics={},
-        start_time=datetime.now(),
+        start_time=datetime.now().isoformat(),
         capabilities_used=[]
     )
 
