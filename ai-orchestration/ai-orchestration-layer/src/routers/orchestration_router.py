@@ -328,31 +328,47 @@ async def websocket_stream(websocket: WebSocket):
                 final_output = ""
 
                 if hasattr(_orchestrator, 'astream'):
+                    last_state = {}
                     async for chunk in _orchestrator.astream(initial_state):
-                        # 4. CHECK STATE INSIDE STREAM LOOP
                         if websocket.client_state != WebSocketState.CONNECTED:
                             break
 
                         try:
-                            if "final_output" in chunk and chunk["final_output"]:
-                                await websocket.send_json({
-                                    "type": "token",
-                                    "data": {"token": chunk["final_output"]},
-                                    "request_id": request_id
-                                })
-                            elif "current_node" in chunk:
-                                await websocket.send_json({
-                                    "type": "node_start",
-                                    "data": {"node": chunk["current_node"]},
-                                    "request_id": request_id
-                                })
+                            # LangGraph chunks are {node_name: node_output}
+                            # Extract the state from the chunk
+                            for node_name, node_output in chunk.items():
+                                if isinstance(node_output, dict):
+                                    # Track the latest state
+                                    last_state = node_output
 
-                            if "capabilities_used" in chunk:
-                                capabilities_used.extend(chunk["capabilities_used"])
+                                    # Send node progress
+                                    if websocket.client_state == WebSocketState.CONNECTED:
+                                        await websocket.send_json({
+                                            "type": "node_end",
+                                            "data": {"node": node_name},
+                                            "request_id": request_id
+                                        })
+
+                                    # If this node has final_output, send it as a token
+                                    if "final_output" in node_output and node_output["final_output"]:
+                                        if websocket.client_state == WebSocketState.CONNECTED:
+                                            await websocket.send_json({
+                                                "type": "token",
+                                                "data": {"token": node_output["final_output"]},
+                                                "request_id": request_id
+                                            })
+
+                                    # Track capabilities
+                                    if "capabilities_used" in node_output:
+                                        caps = node_output["capabilities_used"]
+                                        if isinstance(caps, list):
+                                            capabilities_used.extend(caps)
+
                         except (RuntimeError, WebSocketDisconnect):
                             break
 
-                    final_output = chunk.get("final_output", "")
+                    # Get final output from the last state
+                    final_output = last_state.get("final_output", "")
                 else:
                     result = await _orchestrator.invoke(initial_state)
                     final_output = result.get("final_output", "")

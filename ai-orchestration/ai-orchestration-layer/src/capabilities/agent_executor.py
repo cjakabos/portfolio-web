@@ -102,7 +102,7 @@ Always confirm actions with the user before making changes."""),
         ])
         
         agent = create_tool_calling_agent(self.llm, tools, prompt)
-        return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False)
+        return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
     
     def _create_petstore_agent(self) -> LangChainAgentExecutor:
         """
@@ -136,7 +136,7 @@ Use the available tools to help with pet care scheduling and employee management
         ])
         
         agent = create_tool_calling_agent(self.llm, tools, prompt)
-        return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False)
+        return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
     
     def _create_vehicle_agent(self) -> LangChainAgentExecutor:
         """
@@ -174,7 +174,7 @@ CRITICAL INSTRUCTIONS:
         ])
         
         agent = create_tool_calling_agent(self.llm, tools, prompt)
-        return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False)
+        return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
     
     async def _execute_internal(self, state: UnifiedState) -> Dict[str, Any]:
         """

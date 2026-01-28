@@ -20,9 +20,14 @@ import {
 } from '../hooks/useOrchestrationHooks';
 import StreamingInterface from './StreamingInterface';
 import ApprovalInterface from './ApprovalInterface';
+import { getPersistentSessionId } from '../utils/sessionUtils';
 
 export default function UnifiedDashboard() {
   const [activePanel, setActivePanel] = useState<'chat' | 'approvals'>('chat');
+
+  // FIX: Use persistent session ID for chat - ensures messages synced from 
+  // approval resumes are visible regardless of navigation
+  const [chatSessionId] = useState(() => getPersistentSessionId());
 
   // Hooks for real-time data
   const { data: metrics, isLoading: metricsLoading, refresh: refreshMetrics } = useMetrics({ autoRefresh: true });
@@ -178,30 +183,26 @@ export default function UnifiedDashboard() {
                 {openCircuitBreakers === 0 ? 'All Clear' : `${openCircuitBreakers} Open`}
               </span>
             </div>
-            <div className="p-4">
-              {cbLoading && circuitBreakers.length === 0 ? (
+            <div className="p-4 space-y-2 max-h-48 overflow-y-auto">
+              {cbLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                 </div>
-              ) : circuitBreakers.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No circuit breakers registered</p>
+              ) : circuitBreakers.length > 0 ? (
+                circuitBreakers.map((cb) => (
+                  <div key={cb.name} className="flex items-center justify-between py-1">
+                    <span className="text-sm text-gray-600 truncate mr-2">{cb.name}</span>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
+                      cb.state === 'closed' ? 'bg-green-100 text-green-700' :
+                      cb.state === 'open' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {cb.state}
+                    </span>
+                  </div>
+                ))
               ) : (
-                <div className="space-y-2">
-                  {circuitBreakers.slice(0, 5).map(cb => (
-                    <div key={cb.name} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <span className="text-sm font-medium text-gray-700">{cb.name}</span>
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                        cb.state === 'closed' 
-                          ? 'bg-green-100 text-green-700'
-                          : cb.state === 'open'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {cb.state.replace('_', ' ')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-sm text-gray-500 text-center py-2">No circuit breakers configured</p>
               )}
               {storageBackend && (
                 <p className="text-xs text-gray-400 mt-3">
@@ -211,43 +212,43 @@ export default function UnifiedDashboard() {
             </div>
           </div>
 
-          {/* Experiments Status */}
+          {/* A/B Experiments Status */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center">
                 <Beaker className="w-4 h-4 mr-2 text-gray-500" />
                 A/B Experiments
               </h3>
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                runningExperiments > 0 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
                 {runningExperiments} Running
               </span>
             </div>
-            <div className="p-4">
-              {experimentsLoading && experiments.length === 0 ? (
+            <div className="p-4 space-y-2 max-h-48 overflow-y-auto">
+              {experimentsLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                 </div>
-              ) : experiments.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No experiments configured</p>
+              ) : experiments.length > 0 ? (
+                experiments.slice(0, 5).map((exp) => (
+                  <div key={exp.experiment_id} className="flex items-center justify-between py-1">
+                    <span className="text-sm text-gray-600 truncate mr-2">{exp.name}</span>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
+                      exp.status === 'running' ? 'bg-blue-100 text-blue-700' :
+                      exp.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {exp.status}
+                    </span>
+                  </div>
+                ))
               ) : (
-                <div className="space-y-2">
-                  {experiments.slice(0, 4).map(exp => (
-                    <div key={exp.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 truncate">{exp.name}</p>
-                        <p className="text-xs text-gray-400">{exp.variants} variants</p>
-                      </div>
-                      <span className={`ml-2 px-2 py-0.5 text-xs font-medium rounded-full ${
-                        exp.status === 'running' 
-                          ? 'bg-green-100 text-green-700'
-                          : exp.status === 'draft'
-                          ? 'bg-gray-100 text-gray-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {exp.status}
-                      </span>
-                    </div>
-                  ))}
+                <div className="text-center py-4">
+                  <Beaker className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No experiments</p>
                 </div>
               )}
             </div>
@@ -330,7 +331,9 @@ export default function UnifiedDashboard() {
           {/* Panel Content */}
           <div className="flex-1 overflow-hidden">
             {activePanel === 'chat' ? (
-              <StreamingInterface embedded userId={1} sessionId="command_center_session" />
+              // FIX: Use persistent session
+              // This ensures messages synced from approval resumes are visible
+              <StreamingInterface embedded userId={1} sessionId={chatSessionId} />
             ) : (
               <ApprovalInterface embedded currentUserId={1} />
             )}

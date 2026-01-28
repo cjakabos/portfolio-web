@@ -21,9 +21,12 @@ import {
 } from 'lucide-react';
 import { approvalClient, type ApprovalRequest, type ApprovalHistoryItem } from '../services/approvalClient';
 import type { ApprovalWebSocketMessage, ResumeResponse, ApprovalStatus } from '../types';
+import { getPersistentSessionId } from '../utils/sessionUtils';
 
 interface ApprovalInterfaceProps {
+  embedded?: boolean;
   userId?: number;
+  currentUserId?: number;
   sessionId?: string;
   onResumeComplete?: (response: ResumeResponse) => void;
 }
@@ -36,10 +39,16 @@ type SelectedItem = (ApprovalRequest | ApprovalHistoryItem) & {
 };
 
 export default function ApprovalInterface({
+  embedded = false,
   userId = 1,
-  sessionId = `session_${Date.now()}`,
+  currentUserId,
+  sessionId,
   onResumeComplete
 }: ApprovalInterfaceProps) {
+
+  // FIX: Use persistent session ID if none provided
+  const effectiveSessionId = sessionId || getPersistentSessionId();
+  const effectiveUserId = currentUserId || userId;
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -192,7 +201,7 @@ export default function ApprovalInterface({
       const originalSessionId = (selectedApproval as ApprovalRequest)?.context?.session_id
         || (selectedApproval as ApprovalRequest)?.context?.state_summary?.session_id
         || selectedApproval?.orchestration_id?.split('_')[0]
-        || 'command_center_session';
+        || effectiveSessionId;
 
       // Then resume the workflow with the ORIGINAL session ID
       const response = await approvalClient.resumeAfterApproval(

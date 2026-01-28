@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useStreaming } from '../hooks/useOrchestrationHooks';
 import { useConversationSync, SyncedMessage } from '../hooks/useConversationSync';
+import { getPersistentSessionId } from '../utils/sessionUtils';
 import type { ChatMessage } from '../types';
 
 interface StreamingInterfaceProps {
@@ -26,11 +27,15 @@ interface StreamingInterfaceProps {
 export default function StreamingInterface({
   embedded = false,
   userId = 1,
-  sessionId = `session_${Date.now()}`
+  sessionId
 }: StreamingInterfaceProps) {
+
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [localSessionId, setLocalSessionId] = useState(sessionId);
+  // FIX: Use persistent session ID if none provided
+  // This ensures all chat instances use the same session for proper message sync
+  const effectiveSessionId = sessionId || getPersistentSessionId();
+  const [localSessionId, setLocalSessionId] = useState(effectiveSessionId);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);

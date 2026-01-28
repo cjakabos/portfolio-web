@@ -262,6 +262,37 @@ class AIOrchestrationLayer:
             "total_features": len(enabled)
         })
 
+    def get_feature_status(self) -> Dict[str, Any]:
+        """Get status of all system features."""
+        available = dict(self.features_available)
+
+        enabled = {
+            "checkpointing": self.enable_checkpointing,
+            "hitl": self.enable_hitl,
+            "parallel": self.enable_parallel,
+            "streaming": self.enable_streaming,
+            "error_handling": self.enable_error_handling,
+        }
+
+        fallbacks = {
+            "checkpointing": "in-memory" if not self.enable_checkpointing else None,
+            "hitl": "auto-approve-all" if not self.enable_hitl else None,
+            "parallel": "sequential" if not self.enable_parallel else None,
+            "streaming": "batch-response" if not self.enable_streaming else None,
+            "error_handling": "basic" if not self.enable_error_handling else None,
+        }
+
+        fixes_applied = {}
+        if hasattr(self, 'checkpointer') and isinstance(self.checkpointer, MemorySaver):
+            fixes_applied["checkpointing"] = "using_memory_saver_fallback"
+
+        return {
+            "available": available,
+            "enabled": enabled,
+            "fallbacks": fallbacks,
+            "fixes_applied": fixes_applied,
+        }
+
     # ========================================================================
     # GRAPH BUILDING
     # ========================================================================
