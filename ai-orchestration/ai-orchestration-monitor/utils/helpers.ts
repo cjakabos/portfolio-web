@@ -283,17 +283,17 @@ export type CircuitBreakerState = typeof CIRCUIT_BREAKER_STATES[number];
 // ============================================================================
 
 export const API_CONFIG = {
-  baseUrl: 'http://localhost:8700',
+  baseUrl: 'http://localhost:80',
   timeout: 30000,
   retries: 3,
   services: {
-    cloudapp: '',
+    cloudapp: '/cloudapp',
     petstore: '/petstore',
     vehicles: '/vehicles',
-    ml: '/ml',
+    mlops-segmentation: '/mlops-segmentation',
     proxy: '/proxy',
-    tools: '/tools',
-    approvals: '/approvals',
-    errors: '/errors',
+    tools: '/ai/tools',
+    approvals: '/ai/approvals',
+    errors: '/ai/errors',
   },
 };

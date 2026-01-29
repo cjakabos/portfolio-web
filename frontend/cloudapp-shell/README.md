@@ -24,7 +24,7 @@ Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastruct
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        NEXT_PUBLIC_LLM_MODEL: 'llama3.2:3b'
+        NEXT_PUBLIC_LLM_MODEL: 'qwen3:4b'
     ports:
       - 11434:11434
 ```
@@ -131,7 +131,7 @@ The module is built as Micro Frontend:
 3. Optionally one can also use command line:
 ```bash
 curl http://localhost:11434/api/generate -d '{                              
-  "model": "llama3.2:3b",
+  "model": "qwen3:4b",
   "prompt": "Why is the sky blue?"
 }'
 ```

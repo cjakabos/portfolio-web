@@ -29,7 +29,7 @@ class ApprovalClient {
   private messageHandlers: Set<(message: ApprovalWebSocketMessage) => void> = new Set();
   private connectionHandlers: Set<(connected: boolean) => void> = new Set();
 
-  constructor(baseUrl = 'http://localhost:8700') {
+  constructor(baseUrl = 'http://localhost:8700/ai') {
     this.baseUrl = baseUrl;
   }
 

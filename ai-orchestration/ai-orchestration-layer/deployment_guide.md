@@ -91,7 +91,7 @@ nano .env
 ENVIRONMENT=development
 
 # LLM
-LLM_MODEL=llama3.2:3b
+LLM_MODEL=qwen3:4b
 OLLAMA_URL=http://ollama:11434
 
 # Services
@@ -197,7 +197,7 @@ exit
 
 ```bash
 # Pull the LLM model
-docker exec -it ollama ollama pull llama3.2:3b
+docker exec -it ollama ollama pull qwen3:4b
 
 # Verify model is available
 docker exec -it ollama ollama list

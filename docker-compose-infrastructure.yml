@@ -78,7 +78,7 @@ services:
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        NEXT_PUBLIC_LLM_MODEL: 'llama3.2:3b'
+        NEXT_PUBLIC_LLM_MODEL: 'qwen3:4b'
     ports:
       - 11434:11434
   # =============================================================================
@@ -168,16 +168,16 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
 
       # LLM Configuration
-      - LLM_MODEL=${LLM_MODEL:-llama3.2:3b}
+      - LLM_MODEL=${LLM_MODEL:-qwen3:4b}
       - OLLAMA_URL=http://ollama:11434
       - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.7}
       - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-2000}
 
       # Service URLs (internal Docker network)
-      - CLOUDAPP_URL=${CLOUDAPP_URL:-http://cloudapp:8099/cloudapp}
-      - PETSTORE_URL=${PETSTORE_URL:-http://petstore:8083/petstore}
-      - VEHICLES_URL=${VEHICLES_URL:-http://vehicles-api:8880/vehicles}
-      - ML_URL=${ML_URL:-http://mlops-segmentation:8600}
+      - CLOUDAPP_URL=${CLOUDAPP_URL:-http://next-nginx-jwt:80/cloudapp}
+      - PETSTORE_URL=${PETSTORE_URL:-http://next-nginx-jwt:80/petstore}
+      - VEHICLES_URL=${VEHICLES_URL:-http://next-nginx-jwt:80/vehicles}
+      - ML_URL=${ML_URL:-http://next-nginx-jwt:80/mlops-segmentation}
       - POSTGRES_URL=postgresql://websitemaster:local@postgres:5432/cloudappdb
 
       # Redis Configuration
@@ -238,9 +238,9 @@ services:
     container_name: ai-orchestration-monitor
     restart: unless-stopped
     ports:
-      - "5010:8700"
+      - "5010:5010"
     environment:
-      - VITE_API_URL=http://localhost:8700
+      - VITE_API_URL=http://localhost:80
       - NODE_ENV=production
 volumes:
   petstore:

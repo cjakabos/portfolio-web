@@ -13,7 +13,6 @@ import json
 import numpy as np
 
 from flask import Flask, jsonify, request, make_response
-from flask_cors import CORS, cross_origin
 from sqlalchemy import create_engine
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
@@ -22,19 +21,7 @@ from werkzeug.middleware.dispatcher import DispatcherMiddleware
 app = Flask(__name__)
 default_prefix = '/mlops-segmentation'
 host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
-CORS(app, resources={r"/*": {"origins": [
-    "http://localhost:5001",
-    "https://localhost:5001",
-    "http://127.0.0.1:5001",
-    "https://127.0.0.1:5001",
-    "http://localhost:5005",
-    "https://localhost:5005",
-    "http://127.0.0.1:5005",
-    "https://127.0.0.1:5005",
-    "http://127.0.0.1:80",
-    "https://127.0.0.1:443"
-]}})
-app.config['CORS_HEADERS'] = 'Content-Type'
+
 app.config['APPLICATION_ROOT'] = default_prefix
 
 # Spectral_r colormap colors for 5 clusters - matches plt.get_cmap("Spectral_r", 5)
@@ -48,7 +35,6 @@ SPECTRAL_R_COLORS = {
 
 
 @app.route('/')
-@cross_origin()
 def index():
     return "Hello World"
 

@@ -19,7 +19,7 @@ RUN npm install
 COPY . .
 
 # Build arguments for API URL
-ARG VITE_API_URL=http://localhost:8700
+ARG VITE_API_URL=http://localhost:80
 ENV VITE_API_URL=$VITE_API_URL
 
 # Build the application
@@ -39,7 +39,7 @@ RUN npm install -g serve
 COPY --from=builder /app/dist ./dist
 
 # Expose port (Serve defaults to 8700)
-EXPOSE 8700
+EXPOSE 5010
 
 # Health check (Checks if root returns 200 OK)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
@@ -48,5 +48,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 # Start the server
 # -s: Single-page application (rewrites 404s to index.html)
 # dist: The folder to serve
-# -l 8700: Listen on port 8700
-CMD ["serve", "-s", "dist", "-l", "8700"]
+# -l 5010: Listen on port 5010
+CMD ["serve", "-s", "dist", "-l", "5010"]

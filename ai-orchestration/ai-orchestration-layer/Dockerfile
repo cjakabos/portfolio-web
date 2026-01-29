@@ -75,7 +75,7 @@ ENV PYTHONPATH=/app/src \
     PORT=8700 \
     DEBUG=false \
     # LLM Configuration
-    LLM_MODEL=llama3.2:3b \
+    LLM_MODEL=qwen3:4b \
     OLLAMA_URL=http://ollama:11434 \
     LLM_TEMPERATURE=0.7 \
     LLM_MAX_TOKENS=2000 \

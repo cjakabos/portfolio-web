@@ -44,7 +44,7 @@ interface UseConversationSyncReturn {
 // API Client Functions
 // =============================================================================
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8700';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:80';
 
 async function fetchSessionResponses(
   sessionId: string,
@@ -64,7 +64,7 @@ async function fetchSessionResponses(
   
   const query = params.toString() ? `?${params.toString()}` : '';
   const response = await fetch(
-    `${API_BASE}/conversation-sync/session/${sessionId}/responses${query}`
+    `${API_BASE}/ai/conversation-sync/session/${sessionId}/responses${query}`
   );
   
   if (!response.ok) {
@@ -79,7 +79,7 @@ async function markResponsesDelivered(
   requestIds: string[]
 ): Promise<{ marked: number }> {
   const response = await fetch(
-    `${API_BASE}/conversation-sync/session/${sessionId}/responses/mark-delivered`,
+    `${API_BASE}/ai/conversation-sync/session/${sessionId}/responses/mark-delivered`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

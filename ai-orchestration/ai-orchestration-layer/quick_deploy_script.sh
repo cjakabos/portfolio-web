@@ -91,7 +91,7 @@ create_env_file() {
 ENVIRONMENT=development
 
 # LLM Configuration
-LLM_MODEL=llama3.2:3b
+LLM_MODEL=qwen3:4b
 OLLAMA_URL=http://ollama:11434
 LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=2000
@@ -187,7 +187,7 @@ verify_infrastructure() {
 pull_ollama_model() {
     print_header "Pulling Ollama Model"
     
-    docker exec ollama ollama pull llama3.2:3b
+    docker exec ollama ollama pull qwen3:4b
     
     print_success "Model pulled successfully"
 }

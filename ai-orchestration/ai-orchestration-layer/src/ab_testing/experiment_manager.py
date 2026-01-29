@@ -837,7 +837,7 @@ async def track_error(
 TESTING EXAMPLES:
 
 # Test 1: Create a new experiment
-curl -X POST http://ai-orchestration-layer:8700/experiments \
+curl -X POST http://ai-orchestration-layer:8700/ai/experiments \
   -H "Content-Type: application/json" \
   -d '{
     "name": "RAG_algorithm_test",
@@ -862,35 +862,35 @@ curl -X POST http://ai-orchestration-layer:8700/experiments \
   }'
 
 # Test 2: Start an experiment
-curl -X POST http://ai-orchestration-layer:8700/experiments/exp_001/start
+curl -X POST http://ai-orchestration-layer:8700/ai/experiments/exp_001/start
 
 # Test 3: Get experiment results
-curl http://ai-orchestration-layer:8700/experiments/exp_001
+curl http://ai-orchestration-layer:8700/ai/experiments/exp_001
 
 # Test 4: Get variant for user
-curl http://ai-orchestration-layer:8700/experiments/exp_001/variant/123
+curl http://ai-orchestration-layer:8700/ai/experiments/exp_001/variant/123
 
 # Test 5: Track conversion
-curl -X POST http://ai-orchestration-layer:8700/experiments/exp_001/track/conversion \
+curl -X POST http://ai-orchestration-layer:8700/ai/experiments/exp_001/track/conversion \
   -H "Content-Type: application/json" \
   -d '{"user_id": 123}'
 
 # Test 6: Track latency
-curl -X POST http://ai-orchestration-layer:8700/experiments/exp_001/track/latency \
+curl -X POST http://ai-orchestration-layer:8700/ai/experiments/exp_001/track/latency \
   -H "Content-Type: application/json" \
   -d '{"user_id": 123, "latency_ms": 250}'
 
 # Test 7: Stop experiment
-curl -X POST http://ai-orchestration-layer:8700/experiments/exp_001/stop
+curl -X POST http://ai-orchestration-layer:8700/ai/experiments/exp_001/stop
 
 # Test 8: List all experiments
-curl http://ai-orchestration-layer:8700/experiments
+curl http://ai-orchestration-layer:8700/ai/experiments
 
 # Test 9: List running experiments only
-curl http://ai-orchestration-layer:8700/experiments?status=running
+curl http://ai-orchestration-layer:8700/ai/experiments?status=running
 
 # Test 10: Delete experiment
-curl -X DELETE http://ai-orchestration-layer:8700/experiments/exp_001
+curl -X DELETE http://ai-orchestration-layer:8700/ai/experiments/exp_001
 """
 
 

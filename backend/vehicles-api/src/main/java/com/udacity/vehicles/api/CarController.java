@@ -28,14 +28,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 /**
  * Implements a REST-based controller for the Vehicles API.
  */
-@CrossOrigin(origins = {
-        "http://localhost:5001",
-        "https://localhost:5001",
-        "http://localhost:5002",
-        "https://localhost:5002",
-        "http://localhost:80",
-        "https://localhost:80"
-})
 @RestController
 @RequestMapping("/cars")
 class CarController {

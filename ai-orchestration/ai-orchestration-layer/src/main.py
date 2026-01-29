@@ -37,9 +37,6 @@ logger = logging.getLogger(__name__)
 # Import Routers
 # =============================================================================
 from routers import (
-    cloudapp_router,
-    petstore_router,
-    vehicles_router,
     approvals_router,
     metrics_router,
     experiments_router,
@@ -62,10 +59,10 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
     # Backend Services
-    CLOUDAPP_URL: str = os.getenv("CLOUDAPP_URL", "http://cloudapp:8099/cloudapp")
-    PETSTORE_URL: str = os.getenv("PETSTORE_URL", "http://petstore:8803/petstore")
-    VEHICLES_URL: str = os.getenv("VEHICLES_URL", "http://vehicles-api:8880/vehicles")
-    ML_PIPELINE_URL: str = os.getenv("ML_PIPELINE_URL", "http://mlops-segmentation:8600")
+    CLOUDAPP_URL: str = os.getenv("CLOUDAPP_URL", "http://next-nginx-jwt:80/cloudapp")
+    PETSTORE_URL: str = os.getenv("PETSTORE_URL", "http://next-nginx-jwt:80/petstore")
+    VEHICLES_URL: str = os.getenv("VEHICLES_URL", "http://next-nginx-jwt:80/vehicles")
+    ML_PIPELINE_URL: str = os.getenv("ML_PIPELINE_URL", "http://mlops-segmentation:80/mlops-segmentation")
 
     # Data Storage
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379")
@@ -221,7 +218,8 @@ app = FastAPI(
     - Circuit Breakers & A/B Testing
     """,
     version="2.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    root_path="/ai"
 )
 
 # =============================================================================
@@ -268,12 +266,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 1. The Core AI Logic (Restored)
 app.include_router(orchestration_router.router)
 
-# 2. Portfolio Backend Services (Proxies)
-app.include_router(cloudapp_router.router)
-app.include_router(petstore_router.router)
-app.include_router(vehicles_router.router)
 
-# 3. Operational/System Features
+# 2. Operational/System Features
 app.include_router(approvals_router.router)
 app.include_router(metrics_router.router)
 app.include_router(experiments_router.router)

@@ -574,7 +574,7 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {vehicle.details?.manufacturer} {vehicle.details?.model}
+                            {vehicle.details?.manufacturer.name} {vehicle.details?.model}
                           </h4>
                           <p className="text-sm text-gray-500">{vehicle.details?.year}</p>
                         </div>

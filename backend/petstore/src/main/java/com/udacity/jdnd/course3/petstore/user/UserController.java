@@ -19,14 +19,6 @@ import java.util.stream.Collectors;
  * Includes requests for both customers and employees. Splitting this into separate user and customer controllers
  * would be fine too, though that is not part of the required scope for this class.
  */
-@CrossOrigin(origins = {
-        "http://localhost:5001",
-        "https://localhost:5001",
-        "http://localhost:5006",
-        "https://localhost:5006",
-        "http://localhost:80",
-        "https://localhost:80"
-})
 @RestController
 @RequestMapping("/user")
 public class UserController {

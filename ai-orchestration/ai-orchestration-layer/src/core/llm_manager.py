@@ -17,7 +17,7 @@ class LLMConfig:
     
     def __init__(
         self,
-        model: str = "llama3.2:3b",
+        model: str = "qwen3:4b",
         base_url: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
@@ -108,7 +108,7 @@ class LLMManager:
     
     def get_embeddings(
         self,
-        model: str = "llama3.2:3b",
+        model: str = "qwen3:4b",
         cache_key: Optional[str] = None
     ) -> OllamaEmbeddings:
         """
@@ -165,7 +165,7 @@ def get_llm(config: Optional[LLMConfig] = None) -> BaseChatModel:
     return LLMManager.get_instance().get_llm(config)
 
 
-def get_embeddings(model: str = "llama3.2:3b") -> OllamaEmbeddings:
+def get_embeddings(model: str = "qwen3:4b") -> OllamaEmbeddings:
     """Get embeddings from manager"""
     return LLMManager.get_instance().get_embeddings(model)
 

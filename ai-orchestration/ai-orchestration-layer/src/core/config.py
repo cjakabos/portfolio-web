@@ -21,7 +21,7 @@ class Environment(Enum):
 @dataclass
 class LLMConfiguration:
     """LLM configuration"""
-    model: str = "llama3.2:3b"
+    model: str = "qwen3:4b"
     base_url: str = "http://ollama:11434"
     temperature: float = 0.7
     max_tokens: int = 2000
@@ -32,7 +32,7 @@ class LLMConfiguration:
     def from_env(cls) -> 'LLMConfiguration':
         """Create configuration from environment variables"""
         return cls(
-            model=os.getenv("LLM_MODEL", "llama3.2:3b"),
+            model=os.getenv("LLM_MODEL", "qwen3:4b"),
             base_url=os.getenv("OLLAMA_URL", "http://ollama:11434"),
             temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", "2000")),
@@ -44,10 +44,10 @@ class LLMConfiguration:
 @dataclass
 class ServiceConfiguration:
     """External service configuration"""
-    cloudapp_url: str = "http://cloudapp:8099/cloudapp"
-    petstore_url: str = "http://petstore:8083/petstore"
-    vehicles_url: str = "http://vehicles-api:8880/vehicles"
-    ml_url: str = "http://mlops-segmentation:8600"
+    cloudapp_url: str = "http://next-nginx-jwt:80/cloudapp"
+    petstore_url: str = "http://next-nginx-jwt:80/petstore"
+    vehicles_url: str = "http://next-nginx-jwt:80/vehicles"
+    ml_url: str = "http://next-nginx-jwt:80/mlops-segmentation"
     postgres_url: str = "postgresql://websitemaster:local@postgres:5432/cloudappdb"
     
     # HTTP client settings
@@ -65,10 +65,10 @@ class ServiceConfiguration:
     def from_env(cls) -> 'ServiceConfiguration':
         """Create configuration from environment variables"""
         return cls(
-            cloudapp_url=os.getenv("CLOUDAPP_URL", "http://cloudapp:8099/cloudapp"),
-            petstore_url=os.getenv("PETSTORE_URL", "http://petstore:8083/petstore"),
-            vehicles_url=os.getenv("VEHICLES_URL", "http://vehicles-api:8880/vehicles"),
-            ml_url=os.getenv("ML_URL", "http://mlops-segmentation:8600"),
+            cloudapp_url=os.getenv("CLOUDAPP_URL", "http://next-nginx-jwt:80/cloudapp"),
+            petstore_url=os.getenv("PETSTORE_URL", "http://next-nginx-jwt:80/petstore"),
+            vehicles_url=os.getenv("VEHICLES_URL", "http://next-nginx-jwt:80/vehicles"),
+            ml_url=os.getenv("ML_URL", "http://mlops-segmentation:80/mlops-segmentation"),
             postgres_url=os.getenv("POSTGRES_URL", "postgresql://websitemaster:local@postgres:5432/cloudappdb"),
             http_timeout=int(os.getenv("HTTP_TIMEOUT", "10")),
             ml_timeout=int(os.getenv("ML_TIMEOUT", "30")),
@@ -133,7 +133,7 @@ class RAGConfiguration:
     """RAG engine configuration"""
     persist_directory: str = "./chroma_db"
     collection_name: str = "user_documents"
-    embedding_model: str = "llama3.2:3b"
+    embedding_model: str = "qwen3:4b"
     chunk_size: int = 1000
     chunk_overlap: int = 200
     search_k: int = 3
@@ -145,7 +145,7 @@ class RAGConfiguration:
         return cls(
             persist_directory=os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
             collection_name=os.getenv("CHROMA_COLLECTION", "user_documents"),
-            embedding_model=os.getenv("EMBEDDING_MODEL", "llama3.2:3b"),
+            embedding_model=os.getenv("EMBEDDING_MODEL", "qwen3:4b"),
             chunk_size=int(os.getenv("RAG_CHUNK_SIZE", "1000")),
             chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP", "200")),
             search_k=int(os.getenv("RAG_SEARCH_K", "3")),
