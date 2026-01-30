@@ -31,25 +31,43 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserRepository userRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
+
         // Get jwt token from header
         var authHeader = request.getHeader(SecurityConstants.HEADER_STRING);
-        if (authHeader != null) {
-            var token = authHeader.replace("Bearer ", "");
-            var username = jwtUtilities.getSubject(token); // extract username
-            if (username != null) { // Valid token
+
+        // Skip if no header or doesn't start with Bearer
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        var token = authHeader.substring(7); // Use substring instead of replace
+
+        // Skip if token is empty
+        if (token.isEmpty()) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            var username = jwtUtilities.getSubject(token);
+            if (username != null) {
                 User user = userRepository.findByUsername(username);
                 if (user != null) {
                     var authentication = new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
-                    //var authentication = new UsernamePasswordAuthenticationToken(user, null,
-                    //user.getAuthorities()); // Forced login
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
+        } catch (Exception e) {
+            // Invalid token - just log and continue without authentication
+            // Spring Security will deny access to protected routes
+            logger.warn("JWT validation failed: " + e.getMessage());
         }
+
         chain.doFilter(request, response);
     }
-
 }

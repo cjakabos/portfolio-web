@@ -1,4 +1,7 @@
 services:
+  # ===========================================================================
+  # BACKEND SERVICES - Internal only (no ports exposed to host)
+  # ===========================================================================
   jiraproxy:
     image: jiraproxy:latest
     container_name: jiraproxy
@@ -7,9 +10,11 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/web-proxy
-    ports:
-      - 8501:8501
+    # NO ports exposed - only accessible via NGINX
+    networks:
+      - backend
     restart: unless-stopped
+
   vehicles-api:
     image: vehicles-api:latest
     container_name: vehicles-api
@@ -18,9 +23,11 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/vehicles-api
-    ports:
-      - 8880:8880
+    # NO ports exposed - only accessible via NGINX
+    networks:
+      - backend
     restart: unless-stopped
+
   petstore:
     image: petstore:latest
     container_name: petstore
@@ -29,11 +36,13 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/petstore
-    ports:
-      - 8083:8083
+    # NO ports exposed - only accessible via NGINX
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - backend
     restart: unless-stopped
+
   cloudapp:
     image: cloudapp:latest
     container_name: cloudapp
@@ -42,12 +51,14 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/cloudapp
-    ports:
-      - 8099:8099
+    # NO ports exposed - only accessible via NGINX
     environment:
       - DOCKER_HOST_IP=host.docker.internal
       - DOCKER_HOST_KAFKA_PORT=9092
+    networks:
+      - backend
     restart: unless-stopped
+
   mlops-segmentation:
     build:
       context: ./
@@ -56,22 +67,26 @@ services:
         SERVICE_PATH: backend/ml-pipeline
         SERVICE_PORT: 8600
     container_name: mlops-segmentation
-    ports:
-      - 8600:8600
+    # NO ports exposed - only accessible via NGINX
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - backend
     restart: unless-stopped
+
+  # ===========================================================================
+  # NGINX GATEWAY - The ONLY entry point to backends
+  # ===========================================================================
   next-nginx-jwt:
     container_name: next-nginx-jwt
-    #    image: next-nginx-jwt:latest
     ports:
-      - "80:80"
+      - "80:80"  # Only NGINX is exposed to host
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
-    #    volumes:
-    #      - ./frontend/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
-    #      - ./frontend/nginx/localhost+3-key.pub:/etc/nginx/localhost+3-key.pub
+    networks:
+      - frontend
+      - backend
     depends_on:
       - cloudapp
       - petstore
@@ -79,6 +94,10 @@ services:
       - vehicles-api
       - mlops-segmentation
     restart: unless-stopped
+
+  # ===========================================================================
+  # FRONTEND SERVICES - Exposed to host (users access these directly)
+  # ===========================================================================
   next-cloudapp-shell:
     build:
       context: ./
@@ -92,7 +111,10 @@ services:
       - 5001:5001
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - frontend
     restart: unless-stopped
+
   next-openmaps:
     build:
       context: ./
@@ -106,7 +128,10 @@ services:
       - 5002:5002
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - frontend
     restart: unless-stopped
+
   next-jira:
     build:
       context: ./
@@ -125,7 +150,10 @@ services:
       - 5003:5003
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - frontend
     restart: unless-stopped
+
   next-mlops:
     build:
       context: ./
@@ -139,7 +167,10 @@ services:
       - 5005:5005
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - frontend
     restart: unless-stopped
+
   next-petstore:
     build:
       context: ./
@@ -153,7 +184,10 @@ services:
       - 5006:5006
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - frontend
     restart: unless-stopped
+
   next-chatllm:
     build:
       context: ./
@@ -168,4 +202,15 @@ services:
       - 5333:5333
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+    networks:
+      - frontend
     restart: unless-stopped
+
+# ===========================================================================
+# NETWORKS
+# ===========================================================================
+networks:
+  frontend:
+    name: app-frontend
+  backend:
+    name: app-backend

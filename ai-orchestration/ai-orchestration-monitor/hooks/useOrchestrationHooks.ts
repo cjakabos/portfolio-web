@@ -511,7 +511,7 @@ export function useRealtimeApprovals(options: UseRealtimeApprovalsOptions = {}) 
 
     try {
       // Assume orchestrationClient has a method for approval WebSocket
-      const ws = new WebSocket('ws://localhost:8700/ai/approvals/ws');
+      const ws = new WebSocket('ws://localhost:80/ai/approvals/ws');
 
       ws.onopen = () => {
         setIsConnected(true);

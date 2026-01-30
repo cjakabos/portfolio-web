@@ -2,6 +2,7 @@
 # AI Orchestration Layer - Dockerfile
 # =============================================================================
 # Multi-stage build for optimized production image
+# Runtime configuration is handled via docker-compose environment section
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -42,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed packages from builder
 COPY --from=builder /build/deps /usr/local/lib/python3.12/site-packages/
 
-# Copy application code - IMPORTANT: This copies the src folder
+# Copy application code
 COPY ./src /app/src
 COPY ./requirements.txt /app/
 
@@ -64,34 +65,12 @@ RUN mkdir -p /data/chroma /app/logs /app/data && \
 USER appuser
 
 # -----------------------------------------------------------------------------
-# Environment Configuration
+# Build-time configuration (only what's needed for the build)
+# Runtime configuration comes from docker-compose environment section
 # -----------------------------------------------------------------------------
 ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    # Application defaults
-    ENVIRONMENT=production \
-    HOST=0.0.0.0 \
-    PORT=8700 \
-    DEBUG=false \
-    # LLM Configuration
-    LLM_MODEL=qwen3:4b \
-    OLLAMA_URL=http://ollama:11434 \
-    LLM_TEMPERATURE=0.7 \
-    LLM_MAX_TOKENS=2000 \
-    # Service URLs (default to Docker service names)
-    CLOUDAPP_URL=http://cloudapp:8099/cloudapp \
-    PETSTORE_URL=http://petstore:8803/petstore \
-    VEHICLES_URL=http://vehicles-api:8880/vehicles \
-    ML_PIPELINE_URL=http://ml-pipeline:8000 \
-    # Storage
-    REDIS_URL=redis://redis:6379/0 \
-    MONGODB_URL=mongodb://mongodb-abtest:27019 \
-    # RAG
-    CHROMA_PERSIST_DIR=/data/chroma \
-    # Logging
-    LOG_LEVEL=INFO \
-    LOG_FORMAT=json
+    PYTHONDONTWRITEBYTECODE=1
 
 # Expose port
 EXPOSE 8700
@@ -101,6 +80,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
     CMD curl -f http://localhost:8700/health || exit 1
 
 # Run application
+# With PYTHONPATH=/app/src, uvicorn finds main.py directly
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8700"]
 
 # -----------------------------------------------------------------------------
@@ -126,11 +106,6 @@ RUN pip install --no-cache-dir \
     mypy
 
 USER appuser
-
-# Development settings
-ENV DEBUG=true \
-    LOG_LEVEL=DEBUG \
-    ENVIRONMENT=development
 
 # Run with hot reload for development
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8700", "--reload"]

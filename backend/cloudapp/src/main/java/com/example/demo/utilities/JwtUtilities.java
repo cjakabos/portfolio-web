@@ -74,22 +74,21 @@ public class JwtUtilities {
             X509EncodedKeySpec data = new X509EncodedKeySpec(Base64.getDecoder().decode((publicKeyPem)));
             key = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(data);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
-            throw new IllegalArgumentException(e);
+            logger.error("Failed to load public key: {}", e.getMessage());
+            throw new IllegalArgumentException("Failed to load public key", e);
         }
 
-        DecodedJWT verifier = null;
         try {
             Algorithm algorithm = Algorithm.RSA512(key);
-            verifier = JWT.require(algorithm)
+            DecodedJWT decodedJWT = JWT.require(algorithm)
                     .withIssuer("cloudapp")
                     .build()
                     .verify(token);
-            verifier.getSubject();
+            return decodedJWT.getSubject();
         } catch (JWTVerificationException exception) {
-            System.out.println(exception.toString());
+            logger.error("JWT verification failed: {}", exception.getMessage());
+            throw new IllegalArgumentException("Invalid JWT token", exception);
         }
-
-        return verifier.getSubject();
     }
 }
 

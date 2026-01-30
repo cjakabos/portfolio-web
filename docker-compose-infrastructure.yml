@@ -1,4 +1,7 @@
 services:
+  # ===========================================================================
+  # DATABASE SERVICES - Internal only
+  # ===========================================================================
   postgres:
     image: postgres:15
     environment:
@@ -7,6 +10,8 @@ services:
       POSTGRES_DB: cloudappdb
     ports:
       - "5433:5432"
+    networks:
+      - backend
     restart: unless-stopped
 
   postgres-ml:
@@ -19,6 +24,8 @@ services:
       POSTGRES_DB: segmentationdb
     ports:
       - "5434:5432"
+    networks:
+      - backend
     restart: unless-stopped
 
   mysql:
@@ -31,6 +38,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: petstore
+    networks:
+      - backend
     restart: unless-stopped
 
   mongo:
@@ -42,14 +51,21 @@ services:
       MONGO_INITDB_ROOT_USERNAME: websitemaster
       MONGO_INITDB_ROOT_PASSWORD: local
       MONGO_INITDB_DATABASE: cloudappdb
+    networks:
+      - backend
     restart: unless-stopped
 
+  # ===========================================================================
+  # MESSAGING SERVICES - Internal only
+  # ===========================================================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.2.3
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend
     restart: unless-stopped
 
   broker:
@@ -71,7 +87,13 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - backend
     restart: unless-stopped
+
+  # ===========================================================================
+  # LLM Provider - Internal only
+  # ===========================================================================
   ollama:
     container_name: ollama
     build:
@@ -79,20 +101,15 @@ services:
       dockerfile: Dockerfile_OLLAMA
       args:
         NEXT_PUBLIC_LLM_MODEL: 'qwen3:4b'
+    restart: unless-stopped
     ports:
       - 11434:11434
-  # =============================================================================
-  # AI Orchestration Layer - Infrastructure Only
-  # =============================================================================
-  # Use this for local development where you run the app outside Docker
-  # but need the infrastructure services (Redis, MongoDB, etc.)
-  #
-  # Usage:
-  #   docker-compose -f docker-compose-infrastructure.yml up -d
-  # =============================================================================
-  # ---------------------------------------------------------------------------
-  # Redis
-  # ---------------------------------------------------------------------------
+    networks:
+      - backend
+
+  # ===========================================================================
+  # AI ORCHESTRATION INFRASTRUCTURE - Internal only
+  # ===========================================================================
   redis:
     image: redis:7-alpine
     container_name: redis-cache
@@ -107,9 +124,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # ---------------------------------------------------------------------------
-  # MongoDB
-  # ---------------------------------------------------------------------------
+    networks:
+      - backend
+
   mongodb-abtest:
     image: mongo:7
     container_name: mongodb-abtest
@@ -128,9 +145,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  # ---------------------------------------------------------------------------
-  # ChromaDB - Vector Database for RAG
-  # ---------------------------------------------------------------------------
+    networks:
+      - backend
+
   chromadb:
     image: chromadb/chroma:latest
     container_name: chromadb
@@ -148,6 +165,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - backend
+
   # ===========================================================================
   # APPLICATION SERVICES
   # ===========================================================================
@@ -159,67 +179,72 @@ services:
     build:
       context: ./ai-orchestration/ai-orchestration-layer
       dockerfile: Dockerfile
+      # Only keep build-time args that affect the image build itself
+      args:
+        PYTHONPATH: /app/src
+        PYTHONUNBUFFERED: 1
     container_name: ai-orchestration-layer
     restart: unless-stopped
-    ports:
-      - "8700:8700"
+    # Runtime environment variables - these are read by os.getenv() in Python
     environment:
+      # Python
+      PYTHONPATH: /app/src
+      PYTHONUNBUFFERED: 1
+
       # Environment
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
 
       # LLM Configuration
-      - LLM_MODEL=${LLM_MODEL:-qwen3:4b}
-      - OLLAMA_URL=http://ollama:11434
-      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.7}
-      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-2000}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b}
+      OLLAMA_URL: http://ollama:11434
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}
 
-      # Service URLs (internal Docker network)
-      - CLOUDAPP_URL=${CLOUDAPP_URL:-http://next-nginx-jwt:80/cloudapp}
-      - PETSTORE_URL=${PETSTORE_URL:-http://next-nginx-jwt:80/petstore}
-      - VEHICLES_URL=${VEHICLES_URL:-http://next-nginx-jwt:80/vehicles}
-      - ML_URL=${ML_URL:-http://next-nginx-jwt:80/mlops-segmentation}
-      - POSTGRES_URL=postgresql://websitemaster:local@postgres:5432/cloudappdb
+      # Service URLs (via NGINX gateway)
+      CLOUDAPP_URL: ${CLOUDAPP_URL:-http://next-nginx-jwt:80/cloudapp}
+      PETSTORE_URL: ${PETSTORE_URL:-http://next-nginx-jwt:80/petstore}
+      VEHICLES_URL: ${VEHICLES_URL:-http://next-nginx-jwt:80/vehicles}
+      ML_URL: ${ML_URL:-http://next-nginx-jwt:80/mlops-segmentation}
+      POSTGRES_URL: postgresql://websitemaster:local@postgres:5432/cloudappdb
 
       # Redis Configuration
-      - REDIS_URL=redis://redis:6379/0
-      - REDIS_MAX_CONNECTIONS=${REDIS_MAX_CONNECTIONS:-50}
+      REDIS_URL: redis://redis:6379/0
+      REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-50}
 
       # MongoDB Configuration
-      - MONGODB_URL=mongodb://orchestration_user:orchestration_pass@mongodb-abtest:27017/ai_orchestration?authSource=ai_orchestration
-      - MONGODB_DATABASE=ai_orchestration
+      MONGODB_URL: mongodb://orchestration_user:orchestration_pass@mongodb-abtest:27017/ai_orchestration?authSource=ai_orchestration
+      MONGODB_DATABASE: ai_orchestration
 
       # HTTP Client Configuration
-      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-10}
-      - HTTP_MAX_CONNECTIONS=${HTTP_MAX_CONNECTIONS:-100}
-      - HTTP_MAX_KEEPALIVE=${HTTP_MAX_KEEPALIVE:-20}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT:-10}
+      HTTP_MAX_CONNECTIONS: ${HTTP_MAX_CONNECTIONS:-100}
+      HTTP_MAX_KEEPALIVE: ${HTTP_MAX_KEEPALIVE:-20}
 
       # RAG Configuration
-      - CHROMA_HOST=chromadb
-      - CHROMA_PORT=8123
-      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-user_documents}
-      - RAG_SEARCH_K=${RAG_SEARCH_K:-3}
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8123
+      CHROMA_COLLECTION: ${CHROMA_COLLECTION:-user_documents}
+      CHROMA_PERSIST_DIR: /data/chroma
+      RAG_SEARCH_K: ${RAG_SEARCH_K:-3}
 
       # Feature Flags
-      - ENABLE_CHECKPOINTING=${ENABLE_CHECKPOINTING:-true}
-      - ENABLE_HITL=${ENABLE_HITL:-true}
-      - ENABLE_PARALLEL=${ENABLE_PARALLEL:-true}
-      - ENABLE_ERROR_HANDLING=${ENABLE_ERROR_HANDLING:-true}
-      - ENABLE_AB_TESTING=${ENABLE_AB_TESTING:-true}
+      ENABLE_CHECKPOINTING: ${ENABLE_CHECKPOINTING:-true}
+      ENABLE_HITL: ${ENABLE_HITL:-true}
+      ENABLE_PARALLEL: ${ENABLE_PARALLEL:-true}
+      ENABLE_ERROR_HANDLING: ${ENABLE_ERROR_HANDLING:-true}
+      ENABLE_AB_TESTING: ${ENABLE_AB_TESTING:-true}
 
       # Logging
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - LOG_FORMAT=${LOG_FORMAT:-json}
-
-      # Python
-      - PYTHONPATH=/app/src
-      - PYTHONUNBUFFERED=1
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+    # NO ports exposed - only accessible via NGINX
     volumes:
       - ./logs:/app/logs
     depends_on:
       redis:
-        condition: service_healthy
+        condition: service_started
       chromadb:
-        condition: service_healthy
+        condition: service_started
       ollama:
         condition: service_started
     healthcheck:
@@ -228,20 +253,31 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-  # ---------------------------------------------------------------------------
-  # Observability Dashboard (Optional)
-  # ---------------------------------------------------------------------------
+    networks:
+      - backend
+
+  # ===========================================================================
+  # AI MONITOR DASHBOARD - Exposed to host (user-facing)
+  # ===========================================================================
   ai-orchestration-monitor:
     build:
       context: ./ai-orchestration/ai-orchestration-monitor
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:80
+        VITE_AI_BASE_URL: http://localhost:80/ai
+        VITE_AI_WS_URL: ws://localhost:80/ai
+        NODE_ENV: production
     container_name: ai-orchestration-monitor
     restart: unless-stopped
     ports:
       - "5010:5010"
-    environment:
-      - VITE_API_URL=http://localhost:80
-      - NODE_ENV=production
+    networks:
+      - frontend
+
+# ===========================================================================
+# VOLUMES
+# ===========================================================================
 volumes:
   petstore:
   redis_data:
@@ -250,3 +286,12 @@ volumes:
     name: ai-orchestration-mongodb
   chroma_data:
     name: ai-orchestration-chroma
+
+# ===========================================================================
+# NETWORKS - Must match docker-compose-app.yml
+# ===========================================================================
+networks:
+  frontend:
+    name: app-frontend
+  backend:
+    name: app-backend

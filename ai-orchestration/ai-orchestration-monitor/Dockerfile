@@ -19,8 +19,13 @@ RUN npm install
 COPY . .
 
 # Build arguments for API URL
-ARG VITE_API_URL=http://localhost:80
+ARG VITE_API_URL
+ARG VITE_AI_BASE_URL
+ARG VITE_AI_WS_URL
+
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_AI_BASE_URL=$VITE_AI_BASE_URL
+ENV VITE_AI_WS_URL=$VITE_AI_WS_URL
 
 # Build the application
 RUN npm run build
@@ -43,7 +48,7 @@ EXPOSE 5010
 
 # Health check (Checks if root returns 200 OK)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8700/ || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost:5010/ || exit 1
 
 # Start the server
 # -s: Single-page application (rewrites 404s to index.html)

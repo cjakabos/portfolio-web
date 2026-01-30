@@ -93,9 +93,9 @@ interface ClientConfig {
 const getConfig = (): ClientConfig => {
   // AI Orchestration Layer - direct connection (not through nginx)
   const aiBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_BASE_URL)
-    || 'http://localhost:8700';
+    || 'http://localhost:80';
   const aiWsUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_WS_URL)
-    || 'ws://localhost:8700';
+    || 'ws://localhost:80';
 
   // Nginx gateway for other services
   const gatewayUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
