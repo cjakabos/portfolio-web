@@ -356,6 +356,33 @@ notifier = ApprovalNotifier()
 _orchestrator = None
 _memory_manager = None
 _context_store = None
+_hitl_manager = None
+
+def set_approvals_hitl_manager(hitl_manager=None, orchestrator=None):
+    """
+    Set HITL manager and orchestrator references for approvals integration.
+
+    This function is called from main.py during startup to connect the
+    orchestrator's HITL manager to the router's storage and notifier,
+    enabling pending approvals to appear in the frontend.
+
+    Args:
+        hitl_manager: The HITL manager instance from the orchestrator
+        orchestrator: The orchestrator instance (for additional context)
+    """
+    global _hitl_manager, _orchestrator
+    _hitl_manager = hitl_manager
+    if orchestrator:
+        _orchestrator = orchestrator
+
+    logger.info("Approvals HITL manager reference set")
+
+    # Connect HITL manager to router storage for frontend visibility
+    if hitl_manager and hasattr(hitl_manager, 'set_router_deps'):
+        hitl_manager.set_router_deps(storage, notifier)
+        logger.info("HITL manager connected to router storage and notifier")
+    elif hitl_manager:
+        logger.warning("HITL manager does not have set_router_deps method")
 
 
 def set_orchestration_deps(orchestrator, memory_manager=None, context_store=None):
@@ -870,7 +897,6 @@ async def health_check():
         "service": "approvals",
         "storage": "redis" if storage._use_redis else "memory",
         "pending_count": stats["total_pending"],
-        "orchestrator_available": _orchestrator is not None
+        "orchestrator_available": _orchestrator is not None,
+        "hitl_manager_available": _hitl_manager is not None
     }
-
-

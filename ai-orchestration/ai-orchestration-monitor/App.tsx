@@ -1,13 +1,15 @@
-// =============================================================================
-// App.tsx - Main Application Component
-// =============================================================================
-// AI Orchestration Monitor - Fully integrated with backend
-// =============================================================================
+// ============================================================================
+// File: frontend-ai/src/App.tsx
+// MODIFICATIONS TO ADD RAG DASHBOARD
+// ============================================================================
+// This file shows the changes needed to add RAG to your existing App.tsx
+// ============================================================================
 
 import React, { useState } from 'react';
 import { 
   Activity, MessageSquare, CheckSquare, AlertOctagon, 
-  LayoutDashboard, Menu, X, Layout, Wrench, Car 
+  LayoutDashboard, Menu, X, Layout, Wrench, Car,
+  BookOpen
 } from 'lucide-react';
 
 // Import all components
@@ -18,7 +20,9 @@ import ErrorDashboard from './components/ErrorDashboard';
 import UnifiedDashboard from './components/UnifiedDashboard';
 import ToolsExplorer from './components/ToolsExplorer';
 import ServicesDashboard from './components/ServicesDashboard';
+import RAGDashboard from './components/RAGDashboard';  // <-- ADD THIS IMPORT
 
+// ADD 'RAG' to the View enum
 enum View {
   UNIFIED = 'unified',
   DASHBOARD = 'dashboard',
@@ -27,6 +31,7 @@ enum View {
   ERRORS = 'errors',
   TOOLS = 'tools',
   SERVICES = 'services',
+  RAG = 'rag',  // <-- ADD THIS
 }
 
 export default function App() {
@@ -49,6 +54,8 @@ export default function App() {
         return <ToolsExplorer />;
       case View.SERVICES:
         return <ServicesDashboard />;
+      case View.RAG:                     // <-- ADD THIS CASE
+        return <RAGDashboard />;
       default:
         return <UnifiedDashboard />;
     }
@@ -101,6 +108,14 @@ export default function App() {
             <NavItem view={View.ERRORS} icon={AlertOctagon} label="Error Handling" />
             <NavItem view={View.TOOLS} icon={Wrench} label="Tools Explorer" />
             
+            {/* ================================================================
+                ADD RAG NAV ITEM HERE - under "Intelligence" section
+                ================================================================ */}
+            <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6">
+              Intelligence
+            </p>
+            <NavItem view={View.RAG} icon={BookOpen} label="Documents (RAG)" />
+            
             <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6">
               Services
             </p>
@@ -141,7 +156,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - ADD RAG HERE TOO */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 bg-white z-40 pt-16 px-4 md:hidden">
           <nav className="space-y-2">
@@ -149,6 +164,7 @@ export default function App() {
             <NavItem view={View.DASHBOARD} icon={Activity} label="Observability" />
             <NavItem view={View.ERRORS} icon={AlertOctagon} label="Error Handling" />
             <NavItem view={View.TOOLS} icon={Wrench} label="Tools Explorer" />
+            <NavItem view={View.RAG} icon={BookOpen} label="Documents (RAG)" />  {/* <-- ADD */}
             <NavItem view={View.SERVICES} icon={Car} label="All Services" />
             <NavItem view={View.STREAMING} icon={MessageSquare} label="Live Chat" />
             <NavItem view={View.APPROVALS} icon={CheckSquare} label="Approvals" />
@@ -165,3 +181,17 @@ export default function App() {
     </div>
   );
 }
+
+
+// ============================================================================
+// SUMMARY OF CHANGES:
+// ============================================================================
+// 
+// 1. Import BookOpen icon from lucide-react
+// 2. Import RAGDashboard component
+// 3. Add 'RAG = rag' to View enum
+// 4. Add case View.RAG in renderContent()
+// 5. Add NavItem for RAG in sidebar (under "Intelligence" section)
+// 6. Add NavItem for RAG in mobile menu
+//
+// ============================================================================

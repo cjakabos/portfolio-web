@@ -43,7 +43,8 @@ from routers import (
     orchestration_router,
     system_router,
     tools_router,
-    conversation_sync
+    conversation_sync,
+    rag_router
 )
 
 # =============================================================================
@@ -184,6 +185,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"  - Vehicles: {settings.VEHICLES_URL}")
     logger.info("✅ All services initialized successfully")
 
+    # -------------------------------------------------------------------------
+    # 5. RAG
+    # -------------------------------------------------------------------------
+    try:
+        await rag_router.initialize_rag()
+        logger.info("✅ RAG system initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ RAG initialization warning: {e}")
+
     yield
 
     # -------------------------------------------------------------------------
@@ -274,6 +284,7 @@ app.include_router(experiments_router.router)
 app.include_router(system_router.router)
 app.include_router(tools_router.router)
 app.include_router(conversation_sync.router)
+app.include_router(rag_router.router)
 
 # =============================================================================
 # Root Endpoints

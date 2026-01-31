@@ -16,7 +16,7 @@
   ```bash
   docker-compose -f docker-compose-app.yml up -d
   ```
-Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastructure.yml, in this example it was llama3.2 with 3B parameter, good enough for local testing purposes.
+Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastructure.yml, in this example it was qwen3 with 1.7B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama
@@ -24,7 +24,7 @@ Note: configure Ollama model to use with LLM_MODEL in docker-compose-infrastruct
       context: ./
       dockerfile: Dockerfile_OLLAMA
       args:
-        NEXT_PUBLIC_LLM_MODEL: 'qwen3:4b'
+        NEXT_PUBLIC_LLM_MODEL: 'qwen3:1.7b'
     ports:
       - 11434:11434
 ```
@@ -131,7 +131,7 @@ The module is built as Micro Frontend:
 3. Optionally one can also use command line:
 ```bash
 curl http://localhost:11434/api/generate -d '{                              
-  "model": "qwen3:4b",
+  "model": "qwen3:1.7b",
   "prompt": "Why is the sky blue?"
 }'
 ```

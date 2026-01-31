@@ -9,7 +9,7 @@ ENVIRONMENT=development  # Options: development, staging, production
 # ============================================================================
 # LLM CONFIGURATION
 # ============================================================================
-LLM_MODEL=qwen3:4b
+LLM_MODEL=qwen3:1.7b
 OLLAMA_URL=http://localhost:11434
 LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=2000
@@ -39,7 +39,7 @@ RETRY_BACKOFF=2.0
 # ============================================================================
 CHROMA_PERSIST_DIR=./chroma_db
 CHROMA_COLLECTION=user_documents
-EMBEDDING_MODEL=qwen3:4b
+EMBEDDING_MODEL=qwen3:1.7b
 RAG_CHUNK_SIZE=1000
 RAG_CHUNK_OVERLAP=200
 RAG_SEARCH_K=3

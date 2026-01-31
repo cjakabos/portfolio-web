@@ -3,7 +3,9 @@ FROM ollama/ollama:latest
 
 # Start the Ollama server in the background and pull the model from docker-compose NEXT_PUBLIC_LLM_MODEL variable
 ARG NEXT_PUBLIC_LLM_MODEL
+ARG NEXT_PUBLIC_LLM_MODEL_EMBEDDING
 RUN /bin/sh -c "ollama serve & sleep 2 && ollama pull $NEXT_PUBLIC_LLM_MODEL"
+RUN /bin/sh -c "ollama serve & sleep 2 && ollama pull $NEXT_PUBLIC_LLM_MODEL_EMBEDDING"
 
 # Set the entry point to start Ollama
 ENTRYPOINT ["/bin/ollama"]

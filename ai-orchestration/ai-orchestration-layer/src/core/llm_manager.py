@@ -17,14 +17,14 @@ class LLMConfig:
     
     def __init__(
         self,
-        model: str = "qwen3:4b",
+        model: str = "qwen3:1.7b",
         base_url: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
         streaming: bool = False
     ):
         self.model = model
-        self.base_url = base_url or os.getenv("OLLAMA_URL", "http://ollama:11434")
+        self.base_url = base_url or os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.streaming = streaming
@@ -108,7 +108,7 @@ class LLMManager:
     
     def get_embeddings(
         self,
-        model: str = "qwen3:4b",
+        model: str = "qwen3-embedding:4b",
         cache_key: Optional[str] = None
     ) -> OllamaEmbeddings:
         """
@@ -165,7 +165,7 @@ def get_llm(config: Optional[LLMConfig] = None) -> BaseChatModel:
     return LLMManager.get_instance().get_llm(config)
 
 
-def get_embeddings(model: str = "qwen3:4b") -> OllamaEmbeddings:
+def get_embeddings(model: str = "qwen3-embedding:4b") -> OllamaEmbeddings:
     """Get embeddings from manager"""
     return LLMManager.get_instance().get_embeddings(model)
 

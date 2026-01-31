@@ -91,8 +91,8 @@ create_env_file() {
 ENVIRONMENT=development
 
 # LLM Configuration
-LLM_MODEL=qwen3:4b
-OLLAMA_URL=http://ollama:11434
+LLM_MODEL=qwen3:1.7b
+OLLAMA_URL=http://host.docker.internal:11434
 LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=2000
 
@@ -176,7 +176,7 @@ verify_infrastructure() {
     fi
     
     # Check Ollama
-    if curl -f http://localhost:11434/api/tags &> /dev/null; then
+    if curl -f http://host.docker.internal:11434/api/tags &> /dev/null; then
         print_success "Ollama is healthy"
     else
         print_warning "Ollama is not responding (will pull model later)"
@@ -187,7 +187,7 @@ verify_infrastructure() {
 pull_ollama_model() {
     print_header "Pulling Ollama Model"
     
-    docker exec ollama ollama pull qwen3:4b
+    docker exec ollama ollama pull qwen3:1.7b
     
     print_success "Model pulled successfully"
 }

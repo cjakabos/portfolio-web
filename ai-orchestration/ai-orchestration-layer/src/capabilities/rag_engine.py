@@ -1,424 +1,493 @@
 # backend/ai-orchestration-layer/src/capabilities/rag_engine.py
+# FIXED VERSION - Addresses hardcoded values, missing method, and persistent registry
+# UPDATED: Use new langchain-ollama and langchain-chroma packages
 
-"""
-RAG Engine with Thread-Safe Initialization - FIXED
-ISSUE #4 FIX: Thread-safe initialization using asyncio.Lock
-Prevents race conditions when multiple concurrent requests initialize RAG
-Tracks capabilities used for observability metrics
-"""
-
+import os
+import json
 import asyncio
-from typing import Dict, Any, List, Optional
-from langchain_chroma import Chroma
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain.schema import Document
+import logging
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+from dataclasses import dataclass, field, asdict
+from pathlib import Path
+
+# Updated LangChain imports (new packages)
+try:
+    from langchain_chroma import Chroma
+except ImportError:
+    # Fallback to old import if new package not installed
+    from langchain_community.vectorstores import Chroma
+
+try:
+    from langchain_ollama import OllamaEmbeddings
+except ImportError:
+    # Fallback to old import if new package not installed
+    from langchain_community.embeddings import OllamaEmbeddings
+
+from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from capabilities.base_capability import BaseCapability, CapabilityError, CapabilityStatus
-from core.config import get_config
+# Framework imports
+from capabilities.base_capability import BaseCapability, CapabilityError
 from core.llm_manager import get_llm
 from core.state import UnifiedState
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DocumentInfo:
+    """Information about a stored document"""
+    doc_id: str
+    filename: str
+    doc_type: str
+    chunk_count: int
+    char_count: int
+    word_count: int
+    user_id: Optional[int]
+    created_at: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class RAGQueryResult:
+    """Standardized return type for RAG queries"""
+    answer: str
+    sources: List[Dict[str, Any]]
+    query: str
+    documents_searched: int  # Now represents actual unique documents
+    chunks_retrieved: int    # NEW: Number of chunks retrieved
+    confidence: float        # NEW: Actually calculated from similarity scores
 
 
 class RAGEngine(BaseCapability):
     """
-    Advanced RAG System with thread-safe initialization
-    Handles document retrieval, semantic search, and answer generation
-    
-    FIXED: Multiple concurrent requests can safely initialize the engine
+    Advanced RAG System with thread-safe initialization and persistent document registry.
+
+    FIXES APPLIED:
+    1. Document registry is now persisted to disk
+    2. Confidence is calculated from actual similarity scores
+    3. documents_searched now shows unique documents, not top_k
+    4. Added proper initialize() method
     """
-    
-    # Class-level initialization lock and state (shared across all instances)
-    _initialization_lock = asyncio.Lock()
-    _vectorstore = None
-    _embeddings = None
-    _initialized = False
-    
+
+    # Class-level shared resources (singleton pattern)
+    _vectorstore: Optional[Chroma] = None
+    _embeddings: Optional[OllamaEmbeddings] = None
+    _initialized: bool = False
+    _initialization_lock: asyncio.Lock = None
+
+    # Document tracking registry - NOW LOADED FROM DISK
+    _document_registry: Dict[str, DocumentInfo] = {}
+    _registry_file: Optional[Path] = None
+
     def __init__(self):
-        """Initialize RAG engine"""
+        """Initialize RAG engine via BaseCapability."""
         super().__init__(capability_name="rag_engine")
-        
-        self.config = get_config()
-        
-        # Use class-level shared resources (will be initialized once)
-        # This prevents multiple instances from re-initializing
-    
+        self.logger = logging.getLogger(__name__)
+
+        # Configuration
+        self.persist_directory = os.getenv("CHROMA_PERSIST_DIR", "/data/chroma")
+        self.collection_name = os.getenv("CHROMA_COLLECTION", "user_documents")
+        self.embedding_model = os.getenv("RAG_EMBEDDING_MODEL", "qwen3-embedding:4b")
+        self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
+        self.search_k = int(os.getenv("RAG_SEARCH_K", "5"))
+
+        # FIX: Set registry file path for persistence
+        RAGEngine._registry_file = Path(self.persist_directory) / "document_registry.json"
+
+        # Initialize lock
+        if RAGEngine._initialization_lock is None:
+            RAGEngine._initialization_lock = asyncio.Lock()
+
+    def _save_registry(self):
+        """Persist document registry to disk."""
+        if RAGEngine._registry_file is None:
+            return
+
+        try:
+            registry_data = {
+                doc_id: asdict(info)
+                for doc_id, info in RAGEngine._document_registry.items()
+            }
+            RAGEngine._registry_file.parent.mkdir(parents=True, exist_ok=True)
+            RAGEngine._registry_file.write_text(json.dumps(registry_data, indent=2))
+            self.logger.debug(f"Registry saved: {len(registry_data)} documents")
+        except Exception as e:
+            self.logger.error(f"Failed to save registry: {e}")
+
+    def _load_registry(self):
+        """Load document registry from disk."""
+        if RAGEngine._registry_file is None or not RAGEngine._registry_file.exists():
+            self.logger.info("No existing registry found, starting fresh")
+            return
+
+        try:
+            registry_data = json.loads(RAGEngine._registry_file.read_text())
+            RAGEngine._document_registry = {
+                doc_id: DocumentInfo(**data)
+                for doc_id, data in registry_data.items()
+            }
+            self.logger.info(f"Registry loaded: {len(RAGEngine._document_registry)} documents")
+        except Exception as e:
+            self.logger.error(f"Failed to load registry: {e}")
+            RAGEngine._document_registry = {}
+
+    async def initialize(self):
+        """
+        Public initialization method - called by rag_router.py.
+        This was missing and causing the warning!
+        """
+        await self._ensure_initialized()
+
     async def _ensure_initialized(self):
-        """
-        Thread-safe initialization of RAG components
-        ISSUE #4 FIX: Uses asyncio.Lock to prevent race conditions
-        """
-        # Fast path: if already initialized, return immediately
+        """Thread-safe initialization."""
         if RAGEngine._initialized:
             return
-        
-        # Acquire lock for initialization
+
         async with RAGEngine._initialization_lock:
-            # Double-check after acquiring lock (another coroutine might have initialized)
             if RAGEngine._initialized:
                 return
-            
+
             try:
-                self.logger.info("rag_initialization_started", {
-                    "persist_directory": self.config.rag.persist_directory,
-                    "collection": self.config.rag.collection_name
+                self.logger.info("rag_initialization_started", extra={
+                    "persist_directory": self.persist_directory
                 })
-                
-                # Initialize embeddings (class-level, shared)
+
+                os.makedirs(self.persist_directory, exist_ok=True)
+
                 RAGEngine._embeddings = OllamaEmbeddings(
-                    model=self.config.rag.embedding_model,
-                    base_url=self.config.llm.base_url
+                    model=self.embedding_model,
+                    base_url=self.ollama_base_url
                 )
-                
-                # Try to load existing vectorstore
-                try:
-                    RAGEngine._vectorstore = Chroma(
-                        persist_directory=self.config.rag.persist_directory,
-                        embedding_function=RAGEngine._embeddings,
-                        collection_name=self.config.rag.collection_name
-                    )
-                    
-                    # Check if vectorstore is empty
-                    collection = RAGEngine._vectorstore._collection
-                    if collection.count() == 0:
-                        self.logger.warning("rag_vectorstore_empty", {
-                            "action": "initializing_with_samples"
-                        })
-                        await self._initialize_with_samples()
-                    else:
-                        self.logger.info("rag_vectorstore_loaded", {
-                            "document_count": collection.count()
-                        })
-                
-                except Exception as load_error:
-                    # Vectorstore doesn't exist, create with samples
-                    self.logger.warning("rag_vectorstore_not_found", {
-                        "error": str(load_error),
-                        "action": "creating_new"
-                    })
-                    await self._initialize_with_samples()
-                
+
+                RAGEngine._vectorstore = Chroma(
+                    persist_directory=self.persist_directory,
+                    embedding_function=RAGEngine._embeddings,
+                    collection_name=self.collection_name
+                )
+
+                # FIX: Load persisted registry on startup
+                self._load_registry()
+
+                # FIX: Sync registry with ChromaDB (handle orphaned docs)
+                await self._sync_registry_with_vectorstore()
+
                 RAGEngine._initialized = True
-                
-                self.logger.info("rag_initialization_completed", {
-                    "status": "success",
-                    "thread_safe": True
-                })
-                
+                self.logger.info("rag_initialization_completed")
+
             except Exception as e:
-                self.logger.error("rag_vectorstore_init_failed", 
-                                {"error": str(e)}, error=e)
-                raise CapabilityError(
-                    message=f"Failed to initialize vector store: {str(e)}",
-                    capability_name=self.capability_name,
-                    error_code="RAG_INIT_ERROR",
-                    recoverable=False,
-                    original_error=e
-                )
-    
-    async def _initialize_with_samples(self) -> None:
-        """Initialize vector store with sample documents"""
-        sample_docs = self._get_sample_documents()
-        
-        # Create vectorstore with documents
-        RAGEngine._vectorstore = Chroma.from_documents(
-            documents=sample_docs,
-            embedding=RAGEngine._embeddings,
-            persist_directory=self.config.rag.persist_directory,
-            collection_name=self.config.rag.collection_name
-        )
-        
-        # Persist to disk
-        RAGEngine._vectorstore.persist()
-        
-        self.logger.info("rag_vectorstore_initialized", {
-            "sample_document_count": len(sample_docs),
-            "persist_directory": self.config.rag.persist_directory
-        })
-    
-    def _get_sample_documents(self) -> List[Document]:
-        """Get sample documents for initialization"""
-        return [
-            Document(
-                page_content="Customer retention strategies include loyalty programs, personalized communication, and exclusive rewards. Focus on building long-term relationships through consistent engagement.",
-                metadata={"user_id": 1, "type": "note", "id": 1, "category": "strategy"}
-            ),
-            Document(
-                page_content="Q4 sales analysis shows 15% growth in online orders. Key drivers: mobile app adoption and expanded delivery zones. Recommend increasing digital marketing spend.",
-                metadata={"user_id": 1, "type": "note", "id": 2, "category": "analysis"}
-            ),
-            Document(
-                page_content="Pet grooming best practices: Regular brushing, nail trimming every 2-3 weeks, ear cleaning weekly. Dogs with longer coats need professional grooming monthly.",
-                metadata={"user_id": 2, "type": "note", "id": 3, "category": "pets"}
-            ),
-            Document(
-                page_content="Vehicle maintenance schedule: Oil change every 5,000 miles, tire rotation every 7,500 miles, brake inspection annually. Premium vehicles may require synthetic oil.",
-                metadata={"user_id": 3, "type": "note", "id": 4, "category": "vehicles"}
-            ),
-            Document(
-                page_content="Shopping cart optimization: Reduce abandonment by offering guest checkout, displaying security badges, and showing shipping costs early in the process.",
-                metadata={"user_id": 1, "type": "note", "id": 5, "category": "ecommerce"}
-            )
-        ]
-    
+                self.logger.error(f"RAG Init Failed: {e}")
+                raise CapabilityError(f"RAG Init Failed: {str(e)}", self.capability_name)
+
+    async def _sync_registry_with_vectorstore(self):
+        """
+        FIX: Sync registry with actual ChromaDB state.
+        Handles cases where registry is out of sync with vectorstore.
+        """
+        if not RAGEngine._vectorstore:
+            return
+
+        try:
+            # Get all unique doc_ids from ChromaDB
+            collection = RAGEngine._vectorstore._collection
+            all_metadata = collection.get(include=["metadatas"])
+
+            if not all_metadata or not all_metadata.get("metadatas"):
+                return
+
+            # Extract unique doc_ids and their chunk counts from ChromaDB
+            chroma_docs: Dict[str, Dict[str, Any]] = {}
+            for meta in all_metadata["metadatas"]:
+                if meta and "doc_id" in meta:
+                    doc_id = meta["doc_id"]
+                    if doc_id not in chroma_docs:
+                        chroma_docs[doc_id] = {
+                            "chunk_count": 0,
+                            "filename": meta.get("filename", "unknown"),
+                            "doc_type": meta.get("doc_type", "unknown"),
+                            "user_id": meta.get("user_id"),
+                        }
+                    chroma_docs[doc_id]["chunk_count"] += 1
+
+            # Add any docs in ChromaDB but missing from registry
+            for doc_id, info in chroma_docs.items():
+                if doc_id not in RAGEngine._document_registry:
+                    self.logger.warning(f"Found orphaned doc in ChromaDB: {doc_id}, adding to registry")
+                    RAGEngine._document_registry[doc_id] = DocumentInfo(
+                        doc_id=doc_id,
+                        filename=info["filename"],
+                        doc_type=info["doc_type"],
+                        chunk_count=info["chunk_count"],
+                        char_count=0,  # Unknown for recovered docs
+                        word_count=0,
+                        user_id=info["user_id"],
+                        created_at=datetime.utcnow().isoformat() + "Z",
+                        metadata={"recovered": True}
+                    )
+
+            # Remove registry entries for docs not in ChromaDB
+            registry_doc_ids = list(RAGEngine._document_registry.keys())
+            for doc_id in registry_doc_ids:
+                if doc_id not in chroma_docs:
+                    self.logger.warning(f"Removing stale registry entry: {doc_id}")
+                    del RAGEngine._document_registry[doc_id]
+
+            self._save_registry()
+
+        except Exception as e:
+            self.logger.error(f"Registry sync failed: {e}")
+
+    # =========================================================================
+    # ORCHESTRATOR METHODS
+    # =========================================================================
+
     async def _execute_internal(self, state: UnifiedState) -> Dict[str, Any]:
-        """
-        Internal execution logic - performs RAG query
-        
-        Args:
-            state: Current unified state
-        
-        Returns:
-            RAG query results with retrieved context
-        """
-        # Track RAG capabilities usage
+        """Internal execution logic required by BaseCapability."""
+        await self._ensure_initialized()
+
         if "capabilities_used" not in state:
             state["capabilities_used"] = []
-        state["capabilities_used"].extend(["RAG", "Vector DB", "LLM Gen"])
-        
-        # Ensure initialized (thread-safe)
-        await self._ensure_initialized()
+        state["capabilities_used"].append("rag_engine")
 
-        if not RAGEngine._vectorstore:
-            raise CapabilityError(
-                message="Vector store not initialized",
-                capability_name=self.capability_name,
-                error_code="RAG_VECTORSTORE_NOT_INITIALIZED",
-                recoverable=True
-            )
+        query = state.get("input_data") or state.get("query")
+        if not query:
+            return {"status": "skipped", "reason": "no query provided"}
 
-        query = state["input_data"]
         user_id = state.get("user_id")
-        
+
         try:
-            # Retrieve relevant documents
-            retriever = RAGEngine._vectorstore.as_retriever(
-                search_kwargs={
-                    "k": self.config.rag.search_k,
-                    "filter": {"user_id": user_id} if user_id else None
-                }
+            result = await self.query(
+                query=query,
+                user_id=int(user_id) if user_id else None,
+                top_k=self.search_k
             )
-            
-            docs = await retriever.ainvoke(query)
-            
-            if not docs:
-                return {
-                    "result": "I couldn't find any relevant information in your documents. Try rephrasing your question or adding more context.",
-                    "sources": [],
-                    "context_used": False,
-                    "status": "no_results"
-                }
-            
-            # Format context from retrieved documents
-            context = "\n\n".join([
-                f"Document {i+1}:\n{doc.page_content}"
-                for i, doc in enumerate(docs)
-            ])
-            
-            # Generate response using LLM with context
-            llm = get_llm()
-            
-            messages = [
-                SystemMessage(content="""You are a helpful assistant that answers questions based on the provided context.
-                
-Rules:
-1. Only use information from the provided context
-2. If the context doesn't contain relevant information, say so
-3. Be concise and direct in your answers
-4. Cite which document(s) you're referencing when relevant"""),
-                HumanMessage(content=f"""Context:
-{context}
 
-Question: {query}
+            state.update("rag_response", result.answer)
+            state.update("rag_sources", result.sources)
+            state.update("rag_confidence", result.confidence)
 
-Answer based on the context above:""")
-            ]
-            
-            response = await llm.ainvoke(messages)
-            
-            # Extract content
-            if hasattr(response, 'content'):
-                answer = response.content
-            else:
-                answer = str(response)
-            
             return {
-                "result": answer,
-                "sources": [
-                    {
-                        "content": doc.page_content[:200] + "...",
-                        "metadata": doc.metadata
-                    }
-                    for doc in docs
-                ],
-                "context_used": True,
-                "documents_retrieved": len(docs),
+                "result": result.answer,
+                "sources": result.sources,
+                "confidence": result.confidence,
                 "status": "success"
             }
-            
+
         except Exception as e:
-            self.logger.error("rag_query_failed", {
-                "query": query,
-                "error": str(e)
-            }, error=e)
-            
-            raise CapabilityError(
-                message=f"RAG query failed: {str(e)}",
-                capability_name=self.capability_name,
-                error_code="RAG_QUERY_ERROR",
-                recoverable=True,
-                original_error=e
-            )
-    
-    async def _execute_fallback(self, state: UnifiedState) -> Dict[str, Any]:
-        """Fallback when RAG query fails"""
-        return {
-            "result": "I'm having trouble searching through your documents right now. Please try again in a moment.",
-            "sources": [],
-            "context_used": False,
-            "status": "fallback"
-        }
-    
-    async def add_documents(
-        self,
-        documents: List[Dict[str, Any]],
-        user_id: Optional[int] = None
-    ) -> Dict[str, Any]:
-        """
-        Add documents to vector store (thread-safe)
-        
-        Args:
-            documents: List of documents with 'content' and optional 'metadata'
-            user_id: User ID to associate with documents
-        
-        Returns:
-            Result with document IDs
-        """
-        # Ensure initialized
+            self.logger.error(f"RAG Internal Exec failed: {e}")
+            raise CapabilityError(f"RAG Internal Exec failed: {str(e)}", self.capability_name)
+
+    # =========================================================================
+    # DOCUMENT MANAGEMENT
+    # =========================================================================
+
+    async def add_document(self, doc_id: str, chunks: List[Dict[str, Any]], metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Add document with Metadata Sanitization."""
         await self._ensure_initialized()
-        
         try:
-            # Convert to Document objects
-            docs = []
-            for doc in documents:
-                metadata = doc.get("metadata", {})
-                if user_id:
-                    metadata["user_id"] = user_id
-                
-                docs.append(Document(
-                    page_content=doc["content"],
-                    metadata=metadata
-                ))
-            
-            # Add to vectorstore
-            ids = RAGEngine._vectorstore.add_documents(docs)
-            
-            # Persist changes
-            RAGEngine._vectorstore.persist()
-            
-            self.logger.info("rag_documents_added", {
-                "count": len(docs),
-                "user_id": user_id,
-                "ids": ids
-            })
-            
-            return {
-                "status": "success",
-                "documents_added": len(documents),
-                "document_ids": ids
-            }
-            
-        except Exception as e:
-            self.logger.error("rag_add_documents_failed", {
-                "error": str(e),
-                "user_id": user_id
-            }, error=e)
-            raise CapabilityError(
-                message=f"Failed to add documents: {str(e)}",
-                capability_name=self.capability_name,
-                error_code="RAG_ADD_DOCUMENTS_ERROR",
-                recoverable=True,
-                original_error=e
+            documents = []
+            for chunk in chunks:
+                chunk_meta = chunk.get("metadata", {}).copy()
+                chunk_meta["doc_id"] = doc_id
+
+                for k, v in metadata.items():
+                    if v is None or k == "raw_text":
+                        continue
+                    chunk_meta[k] = v if isinstance(v, (str, int, float, bool)) else str(v)
+
+                documents.append(Document(page_content=chunk["content"], metadata=chunk_meta))
+
+            RAGEngine._vectorstore.add_documents(documents)
+
+            RAGEngine._document_registry[doc_id] = DocumentInfo(
+                doc_id=doc_id,
+                filename=metadata.get("filename", "unknown"),
+                doc_type=metadata.get("doc_type", "unknown"),
+                chunk_count=len(chunks),
+                char_count=metadata.get("char_count", 0),
+                word_count=metadata.get("word_count", 0),
+                user_id=metadata.get("user_id"),
+                created_at=datetime.utcnow().isoformat() + "Z",
+                metadata=metadata
             )
-    
-    async def delete_documents(
-        self,
-        document_ids: Optional[List[str]] = None,
-        user_id: Optional[int] = None
-    ) -> Dict[str, Any]:
-        """
-        Delete documents from vector store (thread-safe)
-        
-        Args:
-            document_ids: Specific document IDs to delete
-            user_id: Delete all documents for this user
-        
-        Returns:
-            Result with deletion count
-        """
-        # Ensure initialized
+
+            # FIX: Persist registry after adding document
+            self._save_registry()
+
+            return {"status": "success", "doc_id": doc_id, "chunks_added": len(chunks)}
+        except Exception as e:
+            self.logger.error(f"Add document failed: {e}")
+            raise CapabilityError(f"Failed to add document: {str(e)}", self.capability_name)
+
+    async def list_documents(self, user_id: Optional[int] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """List documents from registry."""
         await self._ensure_initialized()
-        
-        try:
-            if document_ids:
-                # Delete specific documents
-                RAGEngine._vectorstore.delete(ids=document_ids)
-                count = len(document_ids)
-            elif user_id:
-                # Delete by user_id metadata
-                RAGEngine._vectorstore.delete(where={"user_id": user_id})
-                count = "all for user"
-            else:
-                raise ValueError("Must provide either document_ids or user_id")
-            
-            # Persist changes
-            RAGEngine._vectorstore.persist()
-            
-            self.logger.info("rag_documents_deleted", {
-                "count": count,
-                "user_id": user_id,
-                "document_ids": document_ids
-            })
-            
-            return {
-                "status": "success",
-                "documents_deleted": count
-            }
-            
-        except Exception as e:
-            self.logger.error("rag_delete_documents_failed", {
-                "error": str(e),
-                "user_id": user_id
-            }, error=e)
-            raise CapabilityError(
-                message=f"Failed to delete documents: {str(e)}",
-                capability_name=self.capability_name,
-                error_code="RAG_DELETE_DOCUMENTS_ERROR",
-                recoverable=True,
-                original_error=e
-            )
-    
+        docs = []
+        for info in RAGEngine._document_registry.values():
+            if user_id is None or info.user_id == user_id:
+                docs.append(asdict(info))
+            if len(docs) >= limit:
+                break
+        return docs
+
+    async def get_document_info(self, doc_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch info for a single document."""
+        await self._ensure_initialized()
+        info = RAGEngine._document_registry.get(doc_id)
+        return asdict(info) if info else None
+
+    async def delete_document(self, doc_id: str) -> Dict[str, Any]:
+        """Delete a specific document."""
+        await self._ensure_initialized()
+        RAGEngine._vectorstore._collection.delete(where={"doc_id": doc_id})
+        removed = RAGEngine._document_registry.pop(doc_id, None)
+
+        # Persist registry after deletion
+        self._save_registry()
+
+        return {"deleted": removed is not None}
+
+    async def delete_user_documents(self, user_id: int) -> Dict[str, Any]:
+        """Delete all documents for a specific user."""
+        await self._ensure_initialized()
+        RAGEngine._vectorstore.delete(where={"user_id": user_id})
+
+        to_remove = [k for k, v in RAGEngine._document_registry.items() if v.user_id == user_id]
+        for k in to_remove:
+            del RAGEngine._document_registry[k]
+
+        # FIX: Persist registry after deletion
+        self._save_registry()
+
+        return {"status": "success", "user_id": user_id, "documents_deleted": len(to_remove)}
+
     async def get_stats(self) -> Dict[str, Any]:
-        """Get RAG engine statistics"""
+        """Get system statistics."""
         await self._ensure_initialized()
-        
-        if not RAGEngine._vectorstore:
-            return {"initialized": False}
-        
-        try:
-            collection = RAGEngine._vectorstore._collection
-            count = collection.count()
-            
-            return {
-                "initialized": True,
-                "document_count": count,
-                "collection_name": self.config.rag.collection_name,
-                "persist_directory": self.config.rag.persist_directory,
-                "embedding_model": self.config.rag.embedding_model
-            }
-        except Exception as e:
-            self.logger.error("rag_get_stats_failed", {"error": str(e)}, error=e)
-            return {
-                "initialized": True,
-                "error": str(e)
-            }
+
+        doc_types = {}
+        for doc in RAGEngine._document_registry.values():
+            doc_types[doc.doc_type] = doc_types.get(doc.doc_type, 0) + 1
+
+        return {
+            "initialized": RAGEngine._initialized,
+            "total_documents": len(RAGEngine._document_registry),
+            "total_chunks": RAGEngine._vectorstore._collection.count() if RAGEngine._vectorstore else 0,
+            "documents_by_type": doc_types,
+            "persist_directory": self.persist_directory,
+            "collection_name": self.collection_name,
+            "embedding_model": self.embedding_model
+        }
+
+    # =========================================================================
+    # QUERY OPERATIONS - FIXED!
+    # =========================================================================
+
+    async def query(
+        self,
+        query: str,
+        user_id: Optional[int] = None,
+        top_k: int = 5,
+        generate_answer: bool = True
+    ) -> RAGQueryResult:
+        """
+        Public query method with ACTUAL confidence calculation.
+
+        FIXES:
+        - Confidence is calculated from similarity scores (not hardcoded 0.85)
+        - documents_searched is unique documents, not top_k
+        - Added chunks_retrieved field for clarity
+        """
+        await self._ensure_initialized()
+
+        search_filter = {"user_id": user_id} if user_id else None
+
+        # FIX: Use similarity_search_with_score to get actual confidence
+        docs_with_scores = RAGEngine._vectorstore.similarity_search_with_score(
+            query,
+            k=top_k,
+            filter=search_filter
+        )
+
+        if not docs_with_scores:
+            return RAGQueryResult(
+                answer="No relevant documents found.",
+                sources=[],
+                query=query,
+                documents_searched=0,
+                chunks_retrieved=0,
+                confidence=0.0
+            )
+
+        # FIX: Calculate actual confidence from similarity scores
+        # ChromaDB returns L2 distance - lower is better
+        # Convert to similarity score: similarity = 1 / (1 + distance)
+        scores = [1 / (1 + score) for _, score in docs_with_scores]
+        avg_confidence = sum(scores) / len(scores) if scores else 0.0
+
+        # FIX: Count unique documents (not just chunks)
+        unique_doc_ids = set()
+        for doc, _ in docs_with_scores:
+            doc_id = doc.metadata.get("doc_id")
+            if doc_id:
+                unique_doc_ids.add(doc_id)
+
+        # Extract just the documents
+        docs = [doc for doc, _ in docs_with_scores]
+
+        # Context formatting
+        context = "\n\n".join([f"Source {i+1}: {d.page_content}" for i, d in enumerate(docs)])
+
+        answer = "Answer generation disabled."
+        if generate_answer:
+            try:
+                llm = get_llm()
+                messages = [
+                    SystemMessage(content="""Answer the user's question based ONLY on the provided context.
+Be concise and direct. If the context doesn't contain relevant information, say so clearly.
+Do NOT list or cite sources in your answer - sources are displayed separately in the UI."""),
+                    HumanMessage(content=f"Context:\n{context}\n\nQuestion: {query}")
+                ]
+                response = await llm.ainvoke(messages)
+                answer = response.content if hasattr(response, 'content') else str(response)
+            except Exception as e:
+                self.logger.error(f"LLM Error: {e}")
+                answer = "Error generating answer from LLM."
+
+        return RAGQueryResult(
+            answer=answer,
+            sources=[{
+                "content": d.page_content,
+                "doc_id": d.metadata.get("doc_id"),
+                "filename": d.metadata.get("filename"),
+                "chunk_index": d.metadata.get("chunk_index"),
+                "doc_type": d.metadata.get("doc_type"),
+                "similarity_score": scores[i]  # FIX: Include per-source score
+            } for i, d in enumerate(docs)],
+            query=query,
+            documents_searched=len(unique_doc_ids),  # FIX: Unique documents
+            chunks_retrieved=len(docs),              # FIX: Actual chunks retrieved
+            confidence=round(avg_confidence, 3)      # FIX: Calculated confidence
+        )
+
+
+# ============================================================================
+# SINGLETON & HELPERS
+# ============================================================================
+
+_engine_instance = None
+
+
+def get_rag_engine():
+    global _engine_instance
+    if _engine_instance is None:
+        _engine_instance = RAGEngine()
+    return _engine_instance
+
+
+async def initialize_rag_engine():
+    """Helper function required by rag_router.py"""
+    engine = get_rag_engine()
+    await engine.initialize()  # FIX: Now this method exists!
+    return engine

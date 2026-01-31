@@ -10,6 +10,9 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
+# Disable ChromaDB telemetry before it gets imported anywhere
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 
 class Environment(Enum):
     """Application environment"""
@@ -21,19 +24,19 @@ class Environment(Enum):
 @dataclass
 class LLMConfiguration:
     """LLM configuration"""
-    model: str = "qwen3:4b"
-    base_url: str = "http://ollama:11434"
+    model: str = "qwen3:1.7b"
+    base_url: str = "http://host.docker.internal:11434"
     temperature: float = 0.7
     max_tokens: int = 2000
     streaming: bool = False
     timeout: int = 30
-    
+
     @classmethod
     def from_env(cls) -> 'LLMConfiguration':
         """Create configuration from environment variables"""
         return cls(
-            model=os.getenv("LLM_MODEL", "qwen3:4b"),
-            base_url=os.getenv("OLLAMA_URL", "http://ollama:11434"),
+            model=os.getenv("LLM_MODEL", "qwen3:1.7b"),
+            base_url=os.getenv("OLLAMA_URL", "http://host.docker.internal:11434"),
             temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", "2000")),
             streaming=os.getenv("LLM_STREAMING", "false").lower() == "true",
@@ -49,18 +52,18 @@ class ServiceConfiguration:
     vehicles_url: str = "http://next-nginx-jwt:80/vehicles"
     ml_url: str = "http://next-nginx-jwt:80/mlops-segmentation"
     postgres_url: str = "postgresql://websitemaster:local@postgres:5432/cloudappdb"
-    
+
     # HTTP client settings
     http_timeout: int = 10
     ml_timeout: int = 30
     http_max_connections: int = 100
     http_max_keepalive: int = 20
-    
+
     # Retry configuration
     max_retries: int = 3
     retry_delay: float = 1.0
     retry_backoff: float = 2.0
-    
+
     @classmethod
     def from_env(cls) -> 'ServiceConfiguration':
         """Create configuration from environment variables"""
@@ -89,7 +92,7 @@ class RedisConfiguration:
     socket_connect_timeout: int = 5
     retry_on_timeout: bool = True
     health_check_interval: int = 30
-    
+
     @classmethod
     def from_env(cls) -> 'RedisConfiguration':
         """Create configuration from environment variables"""
@@ -113,7 +116,7 @@ class MongoDBConfiguration:
     max_pool_size: int = 50
     min_pool_size: int = 10
     server_selection_timeout_ms: int = 5000
-    
+
     @classmethod
     def from_env(cls) -> 'MongoDBConfiguration':
         """Create configuration from environment variables"""
@@ -133,19 +136,19 @@ class RAGConfiguration:
     """RAG engine configuration"""
     persist_directory: str = "./chroma_db"
     collection_name: str = "user_documents"
-    embedding_model: str = "qwen3:4b"
+    embedding_model: str = "qwen3-embedding:4b"
     chunk_size: int = 1000
     chunk_overlap: int = 200
     search_k: int = 3
     similarity_threshold: float = 0.7
-    
+
     @classmethod
     def from_env(cls) -> 'RAGConfiguration':
         """Create configuration from environment variables"""
         return cls(
             persist_directory=os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
             collection_name=os.getenv("CHROMA_COLLECTION", "user_documents"),
-            embedding_model=os.getenv("EMBEDDING_MODEL", "qwen3:4b"),
+            embedding_model=os.getenv("EMBEDDING_MODEL", "qwen3-embedding:4b"),
             chunk_size=int(os.getenv("RAG_CHUNK_SIZE", "1000")),
             chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP", "200")),
             search_k=int(os.getenv("RAG_SEARCH_K", "3")),
@@ -162,7 +165,7 @@ class CacheConfiguration:
     llm_cache_enabled: bool = True
     embeddings_cache_enabled: bool = True
     tool_cache_enabled: bool = True
-    
+
     @classmethod
     def from_env(cls) -> 'CacheConfiguration':
         """Create configuration from environment variables"""
@@ -188,7 +191,7 @@ class OrchestrationConfiguration:
     max_parallel_workers: int = 10
     max_conversation_history: int = 20
     checkpoint_db_path: str = "data/orchestration_checkpoints.db"
-    
+
     @classmethod
     def from_env(cls) -> 'OrchestrationConfiguration':
         """Create configuration from environment variables"""
@@ -214,7 +217,7 @@ class LoggingConfiguration:
     log_file: str = "logs/orchestration.log"
     max_file_size: int = 10485760  # 10MB
     backup_count: int = 5
-    
+
     @classmethod
     def from_env(cls) -> 'LoggingConfiguration':
         """Create configuration from environment variables"""
@@ -240,12 +243,12 @@ class Configuration:
     cache: CacheConfiguration
     orchestration: OrchestrationConfiguration
     logging: LoggingConfiguration
-    
+
     @classmethod
     def from_env(cls) -> 'Configuration':
         """Create complete configuration from environment"""
         env = os.getenv("ENVIRONMENT", "development").lower()
-        
+
         return cls(
             environment=Environment(env),
             llm=LLMConfiguration.from_env(),
@@ -257,7 +260,7 @@ class Configuration:
             orchestration=OrchestrationConfiguration.from_env(),
             logging=LoggingConfiguration.from_env()
         )
-    
+
     def validate(self) -> bool:
         """Validate configuration"""
         required_vars = [
@@ -268,28 +271,28 @@ class Configuration:
             "ML_URL",
             "POSTGRES_URL"
         ]
-        
+
         # Redis and MongoDB are optional (will fallback to memory)
         optional_vars = [
             "REDIS_URL",
             "MONGODB_URL"
         ]
-        
+
         missing = []
         for var in required_vars:
             if not os.getenv(var):
                 missing.append(var)
-        
+
         if missing:
             raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
-        
+
         # Warn about optional vars
         for var in optional_vars:
             if not os.getenv(var):
                 print(f"⚠️  {var} not set - using fallback storage")
-        
+
         return True
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
