@@ -30,7 +30,7 @@ const nextConfig = {
           name: "chatllm",
           filename: `static/${remoteDir}/remoteEntry.js`,
           exposes: {
-            "./chatllm": "./components/ChatLLM/ChatLLM",
+            "./chatllm": "./pages/index",
           },
           shared: {
               "@tailwindcss/postcss": {

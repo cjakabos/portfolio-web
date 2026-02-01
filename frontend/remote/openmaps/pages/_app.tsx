@@ -1,19 +1,21 @@
-import { AppProps } from "next/app";
-import Head from "next/head";
-import "./styles.css";
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import type { AppProps } from "next/app";
+import '../styles/globals.css';
 
-function CustomApp({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }: AppProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Prevent hydration mismatch
+  if (!isClient) return null;
+
   return (
-    <>
-      <Head>
-        <title>OpenMaps Module - Remote</title>
-        <meta name="description" content="OpenMaps App" />
-      </Head>
-      <main className="app">
         <Component {...pageProps} />
-      </main>
-    </>
   );
 }
 
-export default CustomApp;
+export default MyApp;

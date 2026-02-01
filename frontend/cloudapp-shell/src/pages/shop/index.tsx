@@ -1,520 +1,272 @@
 'use client'
-import React, {FC, useRef, useEffect, useState} from "react";
-import axios from "axios";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import TextField from "@mui/material/TextField";
-import DialogActions from "@mui/material/DialogActions";
-import { Input } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
-const initialValues = {
-    id: "",
-    name: "",
-    price: "",
-    description: "",
-};
+// Import Custom Hooks
+import { useAuth } from "../../hooks/useAuth";
+import { useItems } from "../../hooks/useItems";
+import { useCart } from "../../hooks/useCart";
 
-const cartInitialValues = {
-    id: "",
-    items: [
-        {
-            id: "",
-            name: "",
-            price: "",
-            description: "",
-        }
-    ],
-    total: "",
-    user: ""
-};
+const initialFormValues = { name: "", price: "", description: "" };
 
 
-export default function Index(this: any) {
-    const [values, setValues] = useState(initialValues);
-    const [Name, setName] = useState("")
+import { Item, Cart, UserOrder } from '../../../types';
+import { ShoppingCart, Package, CheckCircle, Plus, X } from 'lucide-react';
 
-    const [userToken, setUserToken] = useState('');
-    const [username, setUsername] = useState('');
+const CloudShop: React.FC = () => {
 
-    //Make sure only runs once
-    const effectRan = useRef(false);
-    if (!effectRan.current) {
-        if (typeof window !== "undefined") {
-            setUserToken(localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '')
-            setUsername(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || '')
-            console.log('this is the username: ', username)
-            effectRan.current = true;
-        }
-    }
+    const [activeTab, setActiveTab] = useState<'SHOP' | 'ORDERS'>('SHOP');
 
+
+   // 1. Auth
+    const { token, username, isReady } = useAuth();
+
+    // 2. Logic Hooks
+    const { items, fetchItems, createItem } = useItems(token);
+    const { cart, history, fetchCart, fetchHistory, addToCart, clearCart, submitOrder } = useCart(username, token);
+
+    // 3. Local UI State
+    const [formValues, setFormValues] = useState(initialFormValues);
+    const [modals, setModals] = useState({ item: false, history: false, cart: false });
+
+    // 4. Initial Data Load
     useEffect(() => {
-        getItems()
-        getCart()
-        getHistory()
-    }, []);
+        if (isReady) {
+            fetchItems();
+            fetchCart();
+            fetchHistory();
+        }
+        console.log("cart", cart)
+    }, [isReady, fetchItems, fetchCart, fetchHistory]);
 
-
-    const handleChange = (event: { target: { name: any; value: any; }; }) => {
-        const {name, value} = event.target;
-        setValues({
-            ...values,
-            [name]: value,
-        });
+    // Handle form input changes
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormValues(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleItemSubmit = (e: { preventDefault: () => void; }) => {
+    // Handle create item submission
+    const handleCreateItem = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        var postData = {
-            name: values.name,
-            price: values.price,
-            description: values.description
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        console.log('console.log(axiosConfig)',axiosConfig)
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/cloudapp/item', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
-                //setName(response.data);
-                getItems()
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", postData);
-                //setName(error.response);
-            })
-
-        setModal1Open(false);
-        setValues(initialValues)
-
+        await createItem(formValues.name, formValues.price, formValues.description);
+        setFormValues(initialFormValues);
+        setModals(prev => ({ ...prev, item: false }));
     };
 
-    const [items, setItems] = useState([initialValues])
-    const [cart, setCart] = useState(cartInitialValues.items)
-    const [cartHistory, setCartHistory] = useState([cartInitialValues])
-    const [total, setTotal] = useState([initialValues])
-    const [loading, setLoading] = useState(false)
-
-
-    const handleItemFetch = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        getItems()
-    }
-
-    function getItems() {
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        setName(JSON.stringify(axiosConfig));
-        axios.get('http://localhost:80/cloudapp/item', axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data);
-                setItems(response.data);
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", error.response);
-                //setName(error.response);
-            })
+    // Open/close modal helpers
+    const openItemModal = () => setModals(prev => ({ ...prev, item: true }));
+    const closeItemModal = () => {
+        setModals(prev => ({ ...prev, item: false }));
+        setFormValues(initialFormValues);
     };
 
-    const handleCartFetch = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        getCart()
-    }
 
-    function getCart() {
-
-        var postData = {
-            username: username,
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/cloudapp/cart/getCart', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data);
-                if (response.data != '') {
-                    setCart(response.data.items);
-                    setTotal(response.data.total);
-                }
-
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", postData);
-            })
-    };
-
-    const handleCartClear = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        clearCart()
-    }
-
-    function clearCart() {
-
-        var postData = {
-            username: username,
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/cloudapp/cart/clearCart', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
-                setCart(response.data.items);
-                setTotal(response.data.total);
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", postData);
-            })
-
-        setModal3Open(false);
-    };
-
-    function addToCart(arg0: { id: string; name: string; price: string; description: string; }) {
-
-        console.log("Row: " + arg0.name);
-
-        var postData = {
-            username: username,
-            itemId: arg0.id,
-            quantity: 1
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/cloudapp/cart/addToCart', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
-                getCart()
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", postData);
-            })
-
-    };
-
-    const handleCartSubmit = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.post('http://localhost:80/cloudapp/order/submit/' + username, '', axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
-                //setName(response.data);
-                getHistory()
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", 'http://localhost:80/cloudapp/order/submit/' + username);
-                //setName(error.response);
-            })
-        setModal3Open(false);
-        clearCart()
-
-    };
-
-    const handleOrderHistorySubmit = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        getHistory()
-    }
-
-    function getHistory() {
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
-        };
-        //setName(JSON.stringify(postData));
-        axios.get('http://localhost:80/cloudapp/order/history/' + username, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.data);
-                setCartHistory(response.data);
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ");
-            })
-    };
-
-    const columns: GridColDef[] = [
-        { field: "id", headerName: "ID", width: 50 },
-        { field: "name", headerName: "Name", width: 105 },
-        { field: "price", headerName: "Price", width: 105 },
-        { field: "description", headerName: "Description", width: 105 }
-    ];
-
-    const columnsButton: GridColDef[] = [
-        { field: "id", headerName: "ID", width: 50 },
-        { field: "name", headerName: "Name", width: 105 },
-        { field: "price", headerName: "Price", width: 50 },
-        { field: "description", headerName: "Description", width: 250 },
-        {
-            field: "action",
-            headerName: "Add to Cart",
-            sortable: false,
-            renderCell: ({row}) =>
-                <button className="submitbutton" onClick={() => addToCart(row)}>
-                    Add
-                </button>
-        },
-    ];
-
-    const [isModal1Open, setModal1Open] = useState(false)
-    const [isModal2Open, setModal2Open] = useState(false)
-    const [isModal3Open, setModal3Open] = useState(false)
-
-    return (
-        <div className="flex-container px-4 pb-4 pt-6 flex-col items-center justify-center">
-            <div className="">
-                <Button variant="outlined" onClick={() => setModal1Open(true)}>
-                    Items
-                </Button>
-                <Button variant="outlined" onClick={() => setModal2Open(true)}>
-                    Order history
-                </Button>
-                {cart.length > 0 ?
-                        <Button variant="contained" onClick={() => setModal3Open(true)}>
-                            Check Cart
-                        </Button>
-                    :
-                        <Button variant="outlined" onClick={() => setModal3Open(true)}>
-                            Check Cart
-                        </Button>
-                }
-                <Dialog
-                    open={isModal1Open}
-                    onClose={() => setModal1Open(false)}
-                    className="dialog"
-                >
-                    <DialogTitle className="dialog">Item Creator</DialogTitle>
-                    <DialogContent className="dialog">
-                        <DialogContentText className="dialog">
-                            Create an Item by providing name, price and description
-                        </DialogContentText>
-                        <Input
-                            value={values.name}
-                            autoFocus
-                            margin="dense"
-                            id="name"
-                            name="name"
-                            placeholder="Name"
-                            type="text"
-                            fullWidth
-                            onChange={handleChange}
-                            required
-                            className="dialog"
-                            color="primary"
-                        />
-                        <Input
-                            value={values.price}
-                            autoFocus
-                            margin="dense"
-                            id="price"
-                            name="price"
-                            placeholder="Price"
-                            type="number"
-                            fullWidth
-                            onChange={handleChange}
-                            required
-                            className="dialog"
-                        />
-                        <Input
-                            value={values.description}
-                            autoFocus
-                            margin="dense"
-                            id="description"
-                            name="description"
-                            placeholder="Description"
-                            type="text"
-                            fullWidth
-                            onChange={handleChange}
-                            required
-                            className="dialog"
-                        />
-                    </DialogContent>
-                    <DialogActions className="dialog">
-                        <Button onClick={() => setModal1Open(false)}>Cancel</Button>
-                        <Button type="submit" onClick={handleItemSubmit}>Submit</Button>
-                    </DialogActions>
-                </Dialog>
-                <Dialog
-                    open={isModal2Open}
-                    onClose={() => setModal2Open(false)}
-                    className="dialog"
-                >
-                    <DialogTitle className="dialog">Order history</DialogTitle>
-                    <DialogContent className="dialog">
-                        <DialogContentText className="dialog">
-                            List of previous orders.
-                        </DialogContentText>
-                        <h1>Order History</h1>
-                        <>
-                            {cartHistory.map((cart, index) => (
-                                    <table>
-                                        <tbody>
-                                        <tr>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                        </tr>
-                                        <tr>
-                                            <th> Order {index + 1} - Total price: {cart.total} </th>
-                                            <th></th>
-                                            <th></th>
-                                        </tr>
-                                        <tr>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                        </tr>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Price</th>
-                                            <th>Description</th>
-                                        </tr>
-                                        {cart.items.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{item.name}</td>
-                                                <td>{item.price}</td>
-                                                <td>{item.description}</td>
-                                            </tr>
-                                        ))
-                                        }
-                                        </tbody>
-                                    </table>
-
-                                )
-                            )}
-                        </>
-                    </DialogContent>
-                    <DialogActions className="dialog">
-                        <Button onClick={() => setModal2Open(false)}>Cancel</Button>
-                    </DialogActions>
-                </Dialog>
-                <Dialog
-                    open={isModal3Open}
-                    onClose={() => setModal3Open(false)}
-                    className="dialog"
-                >
-                    <DialogTitle className="dialog">Cart contents</DialogTitle>
-                    <DialogContent className="dialog">
-                        <DialogContentText className="dialog">
-                            List of items in Cart.
-                        </DialogContentText>
-                        <div className="Files">
-                            {cart != null && loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    {cart.length > 0 ?
-                                        <>
-                                            <div className="login-top">
-                                                <h1>{("Cart")}
-                                                </h1>
-                                                <div className="flex">
-                                                    <button onClick={handleCartSubmit} className="submitbutton">Submit Cart</button>
-                                                    <button onClick={handleCartClear} className="clearbutton">Clear Cart</button>
-                                                </div>
-                                            </div>
-                                            <DataGrid
-                                                rows={cart}
-                                                columns={columns}
-                                                className="text-black dark:text-white h-auto"
-                                                slotProps={{
-                                                    row: {
-                                                        className: "text-black dark:text-white"
-                                                    },
-                                                    cell: {
-                                                        className: "text-black dark:text-white",
-                                                    },
-                                                    pagination: {
-                                                        className: "text-black dark:text-white",
-                                                    },
-                                                }}
-                                            />
-                                        </>
-                                        : <>Your cart is empty</>}
-                                </>
-                            )}
-                        </div>
-                    </DialogContent>
-                    <DialogActions className="dialog">
-                        <Button onClick={() => setModal3Open(false)}>Cancel</Button>
-                    </DialogActions>
-                </Dialog>
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+      {/* Create Item Modal */}
+      {modals.item && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Plus size={20} className="text-green-600 dark:text-green-400" />
+                Create New Item
+              </h2>
+              <button
+                onClick={closeItemModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+              >
+                <X size={20} />
+              </button>
             </div>
-            <div className="flex-row">
-                <div className="section">
-                    <div>
-                        <div className="Item">
-                            {items != null && loading ? (
-                                <div>Loading...</div>
-                            ) : (
-                                <>
-                                    {items.length > 0 ?
-                                        <>
-                                            <div className="login-top">
-                                                <h1>{("All items")}
-                                                </h1>
-                                            </div>
-                                            <DataGrid
-                                                rows={items}
-                                                columns={columnsButton}
-                                                className="text-black dark:text-white h-auto w-full"
-                                                slotProps={{
-                                                    row: {
-                                                        className: "text-black dark:text-white"
-                                                    },
-                                                    cell: {
-                                                        className: "text-black dark:text-white",
-                                                    },
-                                                    pagination: {
-                                                        className: "text-black dark:text-white",
-                                                    },
-                                                }}
-                                            />
-                                        </>
-                                        : null}
-                                </>
-                            )}
+            <form onSubmit={handleCreateItem} className="p-6 space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Item Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  placeholder="Enter item name"
+                />
+              </div>
+              <div>
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Price ($)
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={formValues.price}
+                  onChange={handleInputChange}
+                  required
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formValues.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition resize-none"
+                  placeholder="Enter item description"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeItemModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
+                >
+                  <Plus size={18} />
+                  Create Item
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="lg:col-span-2 space-y-6 overflow-y-auto pr-2">
+        <div className="flex items-center gap-4 mb-6 sticky top-0 bg-gray-100 dark:bg-gray-900 pt-1 z-10">
+            <button
+                onClick={() => setActiveTab('SHOP')}
+                className={`text-lg font-bold pb-2 border-b-2 ${activeTab === 'SHOP' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
+            >
+                Store Items
+            </button>
+            <button
+                onClick={() => setActiveTab('ORDERS')}
+                className={`text-lg font-bold pb-2 border-b-2 ${activeTab === 'ORDERS' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
+            >
+                My Orders
+            </button>
+            <button
+                onClick={openItemModal}
+                className="ml-auto px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+            >
+                <Plus size={16} />
+                Add Item
+            </button>
+        </div>
+
+        {activeTab === 'SHOP' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {items.map(item => (
+                <div key={item.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
+                    <div className="mb-4">
+                        <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center mb-3">
+                            <Package size={24} />
                         </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">{item.name}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{item.description}</p>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">${item.price.toFixed(2)}</span>
+                        <button
+                            onClick={() => addToCart(item)}
+                            className="px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition"
+                        >
+                            Add to Cart
+                        </button>
                     </div>
                 </div>
+            ))}
             </div>
-        </div>
-    )
-}
+        ) : (
+            <div className="space-y-4">
+                {history.map(order => (
+                    <div key={order.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <span className="text-xs font-bold text-green-600 dark:text-green-400 uppercase bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">Paid</span>
+                                <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">{new Date(order.date!).toLocaleDateString()}</span>
+                            </div>
+                            <span className="font-mono text-gray-400 text-sm">#{order.id}</span>
+                        </div>
+                        <div className="space-y-2">
+                            {order.items.map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-sm">
+                                    <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
+                                    <span className="text-gray-900 dark:text-white font-medium">${item.price}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between font-bold text-gray-900 dark:text-white">
+                            <span>Total</span>
+                            <span>${order.total}</span>
+                        </div>
+                    </div>
+                ))}
+                {history.length === 0 && <div className="text-gray-500 dark:text-gray-400 text-center py-8">No past orders.</div>}
+            </div>
+        )}
+      </div>
+
+      <div className="lg:col-span-1">
+         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 sticky top-6 flex flex-col max-h-[calc(100vh-8rem)]">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 shrink-0">
+                <ShoppingCart size={20} className="text-green-600 dark:text-green-400"/> Your Cart
+            </h3>
+{cart.items.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Cart is empty.</p>
+            ) : (
+                <div className="flex-1 flex flex-col min-h-0">
+                    {/* Cart Items List with Scroll */}
+                    <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar mb-4">
+                        {cart.items.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-sm group p-2 hover:bg-gray-50 dark:hover:bg-gray-750 rounded-lg transition-colors">
+                                <div>
+                                    <p className="font-medium text-gray-800 dark:text-gray-200">{item.name}</p>
+                                    <p className="text-xs text-gray-400">${item.price.toFixed(2)}</p>
+                                </div>
+                                <button onClick={() => clearCart()} className="text-gray-300 hover:text-red-500 p-1">
+                                    &times;
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Total Footer */}
+                    <div className="pt-4 border-t border-gray-100 dark:border-gray-700 shrink-0 mt-auto">
+                        <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            <span>Total</span>
+                            <span>${cart.total}</span>
+                        </div>
+                        <button
+                            onClick={submitOrder}
+                            className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-100 dark:shadow-green-900/20 flex justify-center items-center gap-2"
+                        >
+                            <CheckCircle size={18} /> Checkout
+                        </button>
+                    </div>
+                </div>
+            )}
+
+         </div>
+      </div>
+    </div>
+  );
+};
+
+export default CloudShop;

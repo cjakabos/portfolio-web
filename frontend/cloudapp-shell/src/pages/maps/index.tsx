@@ -8,9 +8,9 @@ const Maps = dynamic(() => import("remote/openmaps"), {
 
 const Index: React.FC = () => {
   return (
-      <>
-          <Maps />
-      </>
+    <div className="h-screen w-full [&>*]:h-full">
+      <Maps />
+    </div>
   );
 };
 

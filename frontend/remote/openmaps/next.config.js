@@ -1,21 +1,22 @@
+// host/next.config.js
 const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    transpilePackages: ["react-leaflet", "react-leaflet-cluster"],
-    experimental: {
-        esmExternals: "loose",
-    },
     reactStrictMode: false,
+    images: {
+        qualities: [25, 50, 75, 100],
+    },
     eslint: {
         ignoreDuringBuilds: true,
     },
     output: 'standalone',
     webpack(config, options) {
-      const { isServer } = options;
-      const remoteDir = isServer ? "ssr" : "chunks";
+    const { isServer } = options;
+    const remoteDir = isServer ? "ssr" : "chunks";
+    config.experiments = { topLevelAwait: true, layers: true };
 
-      config.plugins.push(
+    config.plugins.push(
         new NextFederationPlugin({
           name: "openmaps",
           filename: `static/${remoteDir}/remoteEntry.js`,

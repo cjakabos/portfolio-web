@@ -1,155 +1,198 @@
-'use client';
-import React, {useState} from "react";
-import axios from "axios";
-//import {Store, STORE_KEY} from "@/Store";
-import {useRouter} from "next/navigation";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import Image from "next/image";
-import imgLogo from "../../../public/drawing.svg";
 
-
-
+import React, { useState } from 'react';
+import { useRouter } from 'next/router';
+import { Cloud, Lock, User } from 'lucide-react';
+import { useLogin } from "../../hooks/useLogin";
+import { useRegister } from "../../hooks/useRegister";
 
 const initialValues = {
+    firstname: "",
+    lastname: "",
     username: "",
     password: "",
-    feedback: "defaultFeedback",
+    confirmPassword: "",
 };
 
-export default function Index() {
+const Login: React.FC = () => {
+  // Use the custom hook
+  const { login, error: loginError } = useLogin();
+  // Use the custom hook
+  const { register, errorType: registerError } = useRegister();
+  const [values, setValues] = useState(initialValues);
 
-    const router = useRouter()
+  const [isRegister, setIsRegister] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-    const [values, setValues] = useState(initialValues);
-    const [Username, setUsername] = useState("")
-    const [LoginFeedback, setLoginFeedback] = useState("")
-
-    const handleChange = (event: { target: any }) => {
-        const {name, value} = event.target;
-        setValues({
-            ...values,
-            [name]: value,
-        });
-    };
-
-    const handleClick = (event: { preventDefault: () => void; }) => {
-        event.preventDefault();
-
-        // 👇️ value of input field
-        //console.log('handleClick 👉️', values);
-        //values.feedback = useThisApi()
-    };
-
-    const handleSubmit = (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-
-        var postData = {
-            username: values.username,
-            password: values.password
-        };
-
-        let axiosConfig = {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8',
-            }
-        };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setValues({
+          ...values,
+          [name]: value,
+      });
+  };
 
 
-        axios.post('http://localhost:80/cloudapp/user/user-login', postData, axiosConfig)
-            .then((response) => {
-                console.log("RESPONSE RECEIVED: ", response.status);
-                //get token from response
-                const token = response.headers.authorization;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (isRegister) {
+        await register(values);
+        await login(values);
+      } else {
+        await login(values);
+      }
+      router.push('/');
+      localStorage.setItem('cloud_user', JSON.stringify(values.username));
+    } catch (err: any) {
+      (err.message || 'Authentication failed');
+    }
+  };
 
-                try {
-                    if (typeof window !== "undefined") {
-                        localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", postData.username)
-                        //set JWT token to local
-                        localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
-
-                        setLoginFeedback("OK")
-                        router.push("/home")
-                        window.location.reload()
-                    }
-                } catch (error) {
-                    console.log(error)
-                }
-
-            })
-            .catch((error) => {
-                console.log("AXIOS ERROR: ", error.response);
-                setLoginFeedback("ERROR")
-            })
-
-    };
-
-    return (
-        <div>
-            <div className="flex items-center justify-center">
-                <Image
-                    src={imgLogo}
-                    width={200}
-                    height={200}
-                    alt="Logo"
-                    className="dark:invert mb-6 transition ease-in-out duration-300 hover:transform hover:scale-105 cursor-pointer"
-                    quality={100}
-                />
-            </div>
-            <div className="flex items-center justify-center">
-                <form onSubmit={handleSubmit}>
-                    <table>
-                        <tbody>
-                        <tr>
-                            <th>Username</th>
-                            <td>
-                                <input
-                                    type="text"
-                                    name="username"
-                                    id="inputUsername"
-                                    placeholder="Enter Username"
-                                    onChange={handleChange}
-                                    value={values.username}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Password</th>
-                            <td>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    id="inputPassword"
-                                    placeholder="Enter Password"
-                                    onChange={handleChange}
-                                    value={values.password}
-                                    maxLength={20}
-                                    required
-                                />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th></th>
-                            <td>
-                                <input className="submitbutton" id="loginButton" type="submit"
-                                       value="Submit"/>
-                                <div>
-                                    <button className="menubutton"
-                                            onClick={() => router.push("/register")}>
-                                        <h1 style={{color: 'red'}}>{("New user?")} Signup </h1>
-                                    </button>
-                                </div>
-                                <div className="login-error">
-                                    {LoginFeedback === 'ERROR' &&
-                                        <h1 style={{color: 'red'}}>{("Something went wrong")}</h1>}
-                                </div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </form>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+        <div className="bg-gray-900 p-8 text-center border-b border-gray-700">
+          <div className="mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center border border-gray-600 mb-4 shadow-inner">
+            <Cloud className="text-blue-500" size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-white">CloudApp</h2>
+          <p className="text-gray-400 mt-2">Please sign in to continue</p>
         </div>
-    )
-}
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                  {error && (
+                    <div className="bg-red-900/30 border border-red-800 text-red-300 px-4 py-3 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
+          {loginError && (
+            <div className="bg-red-900/30 border border-red-800 text-red-300 px-4 py-3 rounded-lg text-sm">
+              {loginError}
+            </div>
+          )}
+          {isRegister ? 'Create Account' : 'Sign In'}
+          {isRegister && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">First name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="text-gray-500" size={18} />
+                    </div>
+                    <input
+                      className="block w-full pl-10 bg-gray-700 border border-gray-600 rounded-lg py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            type="text"
+                            name="firstname"
+                            id="firstname"
+                            placeholder="Enter First Name"
+                            onChange={handleChange}
+                            value={values.firstname}
+                            maxLength={20}
+                            required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Last name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="text-gray-500" size={18} />
+                    </div>
+                    <input
+                      className="block w-full pl-10 bg-gray-700 border border-gray-600 rounded-lg py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            type="text"
+                            name="lastname"
+                            id="lastname"
+                            placeholder="Enter Last Name"
+                            onChange={handleChange}
+                            value={values.lastname}
+                            maxLength={20}
+                            required
+                    />
+                  </div>
+                </div>
+              </div>
+          )}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Username</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="text-gray-500" size={18} />
+                </div>
+                <input
+                  className="block w-full pl-10 bg-gray-700 border border-gray-600 rounded-lg py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            type="text"
+                            name="username"
+                            id="username"
+                            placeholder="Enter Username"
+                            onChange={handleChange}
+                            value={values.username}
+                            maxLength={20}
+                            required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="text-gray-500" size={18} />
+                </div>
+                <input
+                  className="block w-full pl-10 bg-gray-700 border border-gray-600 rounded-lg py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            type="password"
+                            name="password"
+                            id="password"
+                            placeholder="Enter Password"
+                            onChange={handleChange}
+                            value={values.password}
+                            maxLength={20}
+                            required
+                />
+              </div>
+            </div>
+          </div>
+          {isRegister && (
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Confirm password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="text-gray-500" size={18} />
+                </div>
+                <input
+                  className="block w-full pl-10 bg-gray-700 border border-gray-600 rounded-lg py-2.5 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            type="password"
+                            name="confirmPassword"
+                            id="confirmPassword"
+                            placeholder="••••••••"
+                            onChange={handleChange}
+                            value={values.confirmPassword}
+                            maxLength={20}
+                            required
+                />
+              </div>
+            </div>
+          )}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg"
+          >
+            {isRegister ? 'Create Account' : 'Sign In'}
+          </button>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsRegister(!isRegister)}
+              className="text-sm text-gray-400 hover:text-white transition"
+            >
+              {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Register"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Login;

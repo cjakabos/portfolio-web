@@ -16,7 +16,7 @@ const nextConfig = {
           name: "petstore",
           filename: `static/${remoteDir}/remoteEntry.js`,
           exposes: {
-            "./petstore": "./pages/index",
+            "./petstore": "./components/PetStoreApp",
           },
           shared: {
             tailwindcss: {

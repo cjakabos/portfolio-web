@@ -1,173 +1,143 @@
-"use client"
-import {useRouter} from "next/navigation";
-import React, {useEffect, useState} from 'react'
-import { motion } from "framer-motion";
-import SwitchTheme from "@/components/switch-theme";
-import {
-    HowToReg,
-    Login,
-    Home,
-    ShoppingCart,
-    Pets,
-    Map,
-    Assistant,
-    TrendingUp,
-    Checklist,
-    AttachFile,
-    MarkUnreadChatAlt,
-    Logout,
-} from '@mui/icons-material';
+import React, { useContext } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { Cloud, LogOut, User as UserIcon, LayoutGrid, FileText, Folder, ShoppingCart, MessageSquare, Cat, Trello, Sun, Moon, Map, Brain, Bot } from 'lucide-react';
+import { ThemeContext } from '../context/ThemeContext';
 
-const Layout = ({
-                    children,
-                }: {
-    children: React.ReactNode;
-}) => {
-
-    const router = useRouter();
-
-    const [userToken, setUserToken] = useState('');
-
-    let token = 'placeholder';
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            token = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '';
-            setUserToken(token);
-            if (token === '') {
-                router.push("/");
-            }
-        }
-    }, []);
-
-    const authedRoutes = (
-        <>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/home")}>
-                    <Home fontSize="medium" style={{ color: 'white' }} />  Home
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/home")}>
-                    <Home fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/shop")}>
-                    <ShoppingCart fontSize="medium" style={{ color: 'white' }} />  Shop
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/shop")}>
-                    <ShoppingCart fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/petstore")}>
-                    <Pets fontSize="medium" style={{ color: 'white' }} />  Pets
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/petstore")}>
-                    <Pets fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/maps")}>
-                    <Map fontSize="medium" style={{ color: 'white' }} />  Maps
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/maps")}>
-                    <Map fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/chatllm")}>
-                    <Assistant fontSize="medium" style={{ color: 'white' }} />  GPT
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/chatllm")}>
-                    <Assistant fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/jira")}>
-                    <Checklist fontSize="medium" style={{ color: 'white' }} />  Jira
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/jira")}>
-                    <Checklist fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/mlops")}>
-                    <TrendingUp fontSize="medium" style={{ color: 'white' }} />  MLOps
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/mlops")}>
-                    <TrendingUp fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/notefile")}>
-                    <AttachFile fontSize="medium" style={{ color: 'white' }} />  Files
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/notefile")}>
-                    <AttachFile fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/chat")}>
-                    <MarkUnreadChatAlt fontSize="medium" style={{ color: 'white' }} />  Chat
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/chat")}>
-                    <MarkUnreadChatAlt fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-            <div className="layoutLinksFormat">
-                <button className="layoutLinksButtonFormat" onClick={()=> router.push("/logout")}>
-                    <Logout fontSize="medium" style={{ color: 'white' }} />  Logout
-                </button>
-                <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/logout")}>
-                    <Logout fontSize="medium" style={{ color: 'white' }} /> 
-                </div>
-            </div>
-        </>
-    );
-    //<aside className="z-[1001] px-4 pb-4 pt-2 gap-10">
-
-    return (
-        <>
-            <motion.main
-                initial={{opacity: 0, y: -15}}
-                animate={{opacity: 1, y: 0}}
-                exit={{opacity: 0}}
-                transition={{duration: 0.5}}
-                className="min-h-[100vh] flex-col m-auto lg:flex"
-            >
-                <aside className="sticky top-0 z-40 flex justify-center h-[80px] w-full text-2xl lg:sticky bg-black dark:bg-black">
-                    {(userToken === null || userToken === '') ? (
-                            <>
-                                <div className="layoutLinksFormat">
-                                    <button className="layoutLinksButtonFormat" onClick={()=> router.push("/register")}>
-                                        <HowToReg fontSize="medium" style={{ color: 'white' }} />  Register
-                                    </button>
-                                    <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/register")}>
-                                        <HowToReg fontSize="medium" style={{ color: 'white' }} /> 
-                                    </div>
-                                </div>
-                                <div className="layoutLinksFormat">
-                                    <button className="layoutLinksButtonFormat" onClick={()=> router.push("/login")}>
-                                        <Login fontSize="medium" style={{ color: 'white' }} />  Login
-                                    </button>
-                                    <div className="layoutLinksButtonOnlyFormat" onClick={()=> router.push("/login")}>
-                                        <Login fontSize="medium" style={{ color: 'white' }} /> 
-                                    </div>
-                                </div>
-                            </>
-                        ) :
-                        <>
-                            {authedRoutes}
-                        </>
-                    }
-                    <SwitchTheme></SwitchTheme>
-                </aside>
-                <section className="px-4 pb-4 pt-6 flex items-center justify-center flex-col">
-                    {children}
-                </section>
-            </motion.main>
-        </>
-    )
+interface LayoutProps {
+  children?: React.ReactNode;
 }
+
+const Layout = ({ children }: LayoutProps) => {
+  const router = useRouter();
+  const { isDark, toggleTheme } = useContext(ThemeContext);
+
+  const userStr = typeof window !== 'undefined' ? localStorage.getItem('cloud_user') : null;
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem('cloud_user');
+    router.push('/login');
+  };
+
+  const navItems = [
+    { label: 'Dashboard', path: '/', icon: <LayoutGrid size={20} /> },
+    { label: 'Jira', path: '/jira', icon: <Trello size={20} /> },
+    { label: 'Notes', path: '/notes', icon: <FileText size={20} /> },
+    { label: 'Files', path: '/files', icon: <Folder size={20} /> },
+    { label: 'Shop', path: '/shop', icon: <ShoppingCart size={20} /> },
+    { label: 'Chat', path: '/chat', icon: <MessageSquare size={20} /> },
+    { label: 'Maps', path: '/maps', icon: <Map size={20} /> },
+    { label: 'MLOps', path: '/mlops', icon: <Brain size={20} /> },
+    { label: 'GPT', path: '/chatllm', icon: <Bot size={20} /> },
+    { label: 'PetStore', path: '/petstore', icon: <Cat size={20} /> },
+  ];
+
+  const isDashboard = router.pathname === '/';
+
+  return (
+    <div className={`flex flex-col h-screen transition-colors duration-200 overflow-hidden ${isDashboard ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
+
+      {/* Background patterns */}
+      {isDashboard && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <div className="absolute -inset-[100%] w-[300%] h-[300%] leaf-pattern animate-leaf opacity-60"></div>
+        </div>
+      )}
+
+      {/* Top Navigation Bar */}
+      <header className="bg-gray-900 dark:bg-gray-950 text-white shadow-lg z-30 shrink-0 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+                <Cloud className="h-8 w-8 text-blue-400" />
+                <span className="font-bold text-xl tracking-tight">CloudApp</span>
+              </Link>
+              <div className="hidden md:block ml-6 lg:ml-10">
+                <div className="flex items-baseline space-x-2">
+                  {navItems.map((item) => {
+                     const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                     return (
+                      <Link
+                        key={item.path}
+                        href={item.path}
+                        className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                          isActive
+                            ? 'bg-gray-800 text-blue-400'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                        }`}
+                      >
+                        {item.icon}
+                        <span className="hidden xl:inline">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-gray-400 hover:text-yellow-400 hover:bg-gray-800 transition"
+              >
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+
+              {user ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition group"
+                  >
+                    <div className="bg-gray-700 group-hover:bg-gray-600 p-1.5 rounded-full transition">
+                      <UserIcon size={16} />
+                    </div>
+                    <span className="hidden sm:inline max-w-[100px] truncate">{user.username}</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition"
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className="text-sm text-blue-400 hover:text-blue-300">Login</Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Nav */}
+        <div className="md:hidden border-t border-gray-800 bg-gray-900 dark:bg-gray-950 overflow-x-auto">
+           <div className="flex gap-1 px-2 py-2 min-w-max">
+             {navItems.map(item => {
+                const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                return (
+                   <Link
+                    key={item.path}
+                    href={item.path}
+                    className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
+                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                   >
+                     {item.icon}
+                   </Link>
+                )
+             })}
+           </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <div className={`flex-1 overflow-y-auto relative z-10 custom-scrollbar ${isDashboard ? '' : 'bg-gray-100 dark:bg-gray-900'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Layout;
