@@ -159,7 +159,7 @@ class AIOrchestrationLayer:
         self.enable_error_handling = enable_error_handling and ERROR_HANDLING_AVAILABLE
 
         # LLM
-        self.llm = get_llm()
+        #self.llm = get_llm()
 
         # Initialize capabilities
         self._init_capabilities()
@@ -198,12 +198,11 @@ class AIOrchestrationLayer:
         # Streaming
         if self.enable_streaming:
             self.streaming_manager = StreamingOrchestrationManager()
-            self.streaming_llm = get_streaming_llm()
+            # We fetch it dynamically when needed or use the manager
             self.response_builders: Dict[str, ChunkedResponseBuilder] = {}
             self.logger.info("streaming_enabled")
         else:
             self.streaming_manager = None
-            self.streaming_llm = None
 
         # Error Handling
         if self.enable_error_handling:

@@ -1,7 +1,7 @@
 // ============================================================================
 // File: frontend-ai/src/components/RAGDashboard.tsx
 // RAG Dashboard - Document Management and Query Interface
-// UPDATED: With async upload and detailed progress tracking
+// UPDATED: Added model selector for RAG queries
 // ============================================================================
 
 import React, { useState, useCallback, useRef } from 'react';
@@ -28,9 +28,12 @@ import {
   Loader2,
   Sparkles,
   XCircle,
+  Settings,
 } from 'lucide-react';
 
 import { useRAGDocuments, useRAGUpload, useRAGQuery, useRAGStats, useRAGHealth } from '../hooks/useRAG';
+import { ModelSelector, OllamaSetupGuide, NoModelsGuide } from './ModelSelector';
+import { useOllamaModels } from '../hooks/useOllamaModels';
 import type { RAGDocument, RAGSource, UploadProgress, UploadJobStatus, RAGQueryResponse } from '../types/rag';
 
 // =============================================================================
@@ -101,7 +104,7 @@ const StatsCard: React.FC<{
 );
 
 // =============================================================================
-// Upload Progress Item - Shows detailed stage progress
+// Upload Progress Item
 // =============================================================================
 
 interface StageInfo {
@@ -169,7 +172,6 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
       isReconnecting ? 'border-yellow-200 bg-yellow-50' :
       'border-slate-200 bg-white'
     } p-4`}>
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${isReconnecting ? 'bg-yellow-100' : stage.bgColor}`}>
           {isReconnecting ? (
@@ -185,10 +187,7 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
             {upload.file.name}
           </p>
           <p className={`text-xs ${isReconnecting ? 'text-yellow-600' : stage.color}`}>
-            {isReconnecting
-              ? 'Upload is in progress...'
-              : upload.message || stage.label
-            }
+            {isReconnecting ? 'Upload is in progress...' : upload.message || stage.label}
           </p>
         </div>
         {upload.status === 'completed' && (
@@ -199,15 +198,12 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
         )}
       </div>
 
-      {/* Simple Progress Bar for active uploads */}
       {isActive && (
         <div className="mt-3">
           <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
             <div
               className={`h-1.5 rounded-full transition-all duration-500 ${
-                isReconnecting
-                  ? 'bg-yellow-400'
-                  : 'bg-blue-500'
+                isReconnecting ? 'bg-yellow-400' : 'bg-blue-500'
               } ${isActive ? 'animate-pulse' : ''}`}
               style={{ width: isReconnecting ? '100%' : `${Math.max(upload.progress, 5)}%` }}
             />
@@ -215,7 +211,6 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
         </div>
       )}
 
-      {/* Error Message */}
       {upload.status === 'failed' && upload.error && (
         <div className="flex items-start gap-2 mt-3 p-2 bg-red-100 rounded text-sm text-red-700">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -223,7 +218,6 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
         </div>
       )}
 
-      {/* Completion Info */}
       {upload.status === 'completed' && upload.result && (
         <div className="mt-3 text-sm text-green-700">
           ✓ Created {upload.result.chunks_created} chunks ({upload.result.word_count.toLocaleString()} words)
@@ -234,7 +228,7 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
 };
 
 // =============================================================================
-// Upload Zone - With async progress tracking
+// Upload Zone
 // =============================================================================
 
 interface UploadZoneProps {
@@ -282,7 +276,6 @@ const UploadZone: React.FC<UploadZoneProps> = ({
     if (e.target.files) {
       const files = Array.from(e.target.files);
       onFilesSelected(files);
-      // Reset input so same file can be selected again
       e.target.value = '';
     }
   }, [onFilesSelected]);
@@ -293,7 +286,6 @@ const UploadZone: React.FC<UploadZoneProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Drop Zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -334,7 +326,6 @@ const UploadZone: React.FC<UploadZoneProps> = ({
         </p>
       </div>
 
-      {/* Active Uploads */}
       {hasActiveUploads && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -352,17 +343,13 @@ const UploadZone: React.FC<UploadZoneProps> = ({
         </div>
       )}
 
-      {/* Completed Uploads */}
       {hasCompletedUploads && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-green-700">
               ✓ Completed ({completedUploads.length})
             </h3>
-            <button
-              onClick={onClearCompleted}
-              className="text-xs text-slate-500 hover:text-slate-700"
-            >
+            <button onClick={onClearCompleted} className="text-xs text-slate-500 hover:text-slate-700">
               Clear
             </button>
           </div>
@@ -372,17 +359,13 @@ const UploadZone: React.FC<UploadZoneProps> = ({
         </div>
       )}
 
-      {/* Failed Uploads */}
       {hasFailedUploads && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-red-700">
               ✗ Failed ({failedUploads.length})
             </h3>
-            <button
-              onClick={onClearFailed}
-              className="text-xs text-slate-500 hover:text-slate-700"
-            >
+            <button onClick={onClearFailed} className="text-xs text-slate-500 hover:text-slate-700">
               Clear
             </button>
           </div>
@@ -392,7 +375,6 @@ const UploadZone: React.FC<UploadZoneProps> = ({
         </div>
       )}
 
-      {/* Tip - Show only when no uploads are in progress */}
       {!hasActiveUploads && !hasCompletedUploads && !hasFailedUploads && (
         <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
           <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -510,7 +492,7 @@ const DocumentList: React.FC<{
 };
 
 // =============================================================================
-// Query Interface
+// Query Interface - Checks for BOTH embedding AND chat models
 // =============================================================================
 
 const QueryInterface: React.FC<{
@@ -523,10 +505,73 @@ const QueryInterface: React.FC<{
 }> = ({ query, setQuery, onSubmit, isQuerying, result, error }) => {
   const [showSources, setShowSources] = useState(false);
 
+  // Get embedding model status (models WITH "embed" in name)
+  const {
+    embeddingModel,
+    isConnected: ollamaConnected,
+    isLoading: ollamaLoading,
+    filteredModels: embeddingModels,
+    ollamaUrl,
+    fetchModels,
+  } = useOllamaModels({ autoFetch: true, filter: 'embed' });
+
+  // Also check for chat models (models WITHOUT "embed" in name)
+  const {
+    filteredModels: chatModels,
+    currentRagModel,
+  } = useOllamaModels({ autoFetch: true, excludeFilter: 'embed' });
+
+  const hasEmbeddingModels = embeddingModels.length > 0;
+  const hasChatModels = chatModels.length > 0;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
   };
+
+  // ============================================================
+  // FULL-PAGE ERROR: Ollama not connected
+  // ============================================================
+  if (!ollamaConnected && !ollamaLoading) {
+    return (
+      <OllamaSetupGuide
+        ollamaUrl={ollamaUrl}
+        onRetry={fetchModels}
+        isRetrying={ollamaLoading}
+        modelType="embedding"
+        fullPage={true}
+      />
+    );
+  }
+
+  // ============================================================
+  // FULL-PAGE ERROR: No embedding models available
+  // ============================================================
+  if (ollamaConnected && !hasEmbeddingModels && !ollamaLoading) {
+    return (
+      <NoModelsGuide
+        onRetry={fetchModels}
+        isRetrying={ollamaLoading}
+        modelType="embedding"
+        fullPage={true}
+      />
+    );
+  }
+
+  // ============================================================
+  // FULL-PAGE ERROR: No chat/LLM models available (only embedding)
+  // RAG needs BOTH: embedding for search, chat for answers
+  // ============================================================
+  if (ollamaConnected && hasEmbeddingModels && !hasChatModels && !ollamaLoading) {
+    return (
+      <NoModelsGuide
+        onRetry={fetchModels}
+        isRetrying={ollamaLoading}
+        modelType="chat"
+        fullPage={true}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -573,7 +618,6 @@ const QueryInterface: React.FC<{
       {/* Result */}
       {result && (
         <div className="bg-slate-50 rounded-xl border border-slate-200">
-          {/* Answer */}
           <div className="p-6">
             <div className="flex items-start gap-3 mb-4">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -585,7 +629,6 @@ const QueryInterface: React.FC<{
               </div>
             </div>
 
-            {/* Result Metadata */}
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span>
                 {result.documents_searched} document{result.documents_searched !== 1 ? 's' : ''} matched
@@ -615,7 +658,6 @@ const QueryInterface: React.FC<{
             )}
           </div>
 
-          {/* Sources */}
           {showSources && result.sources.length > 0 && (
             <div className="border-t border-slate-100 divide-y divide-slate-100">
               {result.sources.map((source: RAGSource, index: number) => (
@@ -679,7 +721,10 @@ const RAGDashboard: React.FC = () => {
     refresh: refreshDocs
   } = useRAGDocuments({ autoRefresh: false });
 
-  // Updated upload hook with async support
+  // Model hook for stats display - get both embedding and LLM models
+  const { currentRagModel, embeddingModel } = useOllamaModels({ autoFetch: true });
+
+  // Upload hook
   const {
     uploads,
     activeUploads,
@@ -726,18 +771,38 @@ const RAGDashboard: React.FC = () => {
             <p className="text-slate-500 text-sm mt-1">Upload documents and ask questions using RAG</p>
           </div>
 
-          {/* Status Badge */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
-            isHealthy ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
-          }`}>
-            {isHealthy ? (
-              <CheckCircle2 className="w-4 h-4" />
-            ) : (
-              <Clock className="w-4 h-4" />
-            )}
-            <span className="text-sm font-medium">
-              {isHealthy ? 'Ready' : 'Initializing'}
-            </span>
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full`}>
+              <span className="text-sm font-medium">
+                Settings:
+              </span>
+            </div>
+            {/* Compact Embedding Model Selector in Header - filtered to "embed" models only */}
+            <ModelSelector
+              target="embedding"
+              compact={true}
+              showSetupGuide={false}
+              filter="embed"
+            />
+            <ModelSelector
+              target="rag"
+              compact={true}
+              showSetupGuide={false}
+              excludeFilter="embed"
+            />
+            {/* Status Badge */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+              isHealthy ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
+            }`}>
+              {isHealthy ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <Clock className="w-4 h-4" />
+              )}
+              <span className="text-sm font-medium">
+                {isHealthy ? 'Ready' : 'Initializing'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -751,7 +816,6 @@ const RAGDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <StatsCard
             icon={FileText}
@@ -772,13 +836,13 @@ const RAGDashboard: React.FC = () => {
           <StatsCard
             icon={Cpu}
             label="Embedding Model"
-            value={stats?.embedding_model || 'qwen3-embedding:4b'}
+            value={embeddingModel || stats?.embedding_model || 'Not set'}
             color="green"
           />
           <StatsCard
             icon={HardDrive}
-            label="Collection"
-            value={stats?.collection_name || 'user_documents'}
+            label="LLM Model"
+            value={currentRagModel || stats?.rag_llm_model || 'Not set'}
             color="orange"
           />
         </div>
@@ -856,7 +920,7 @@ const RAGDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Processing Toast - Shows when uploads are active but user is on different tab */}
+        {/* Processing Toast */}
         {activeTab !== 'upload' && activeUploads.length > 0 && (
           <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg border border-slate-200 p-4 max-w-sm">
             <div className="flex items-start gap-3">

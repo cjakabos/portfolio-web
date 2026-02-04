@@ -1,6 +1,6 @@
 # backend/ai-orchestration-layer/src/capabilities/rag_engine.py
-# FIXED VERSION - Addresses hardcoded values, missing method, and persistent registry
-# UPDATED: Use new langchain-ollama and langchain-chroma packages
+# FIXED VERSION - Uses LLMManager for embeddings (correct Ollama URL)
+# UPDATED: Embeddings now respect dynamic model selection
 
 import os
 import json
@@ -29,7 +29,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 # Framework imports
 from capabilities.base_capability import BaseCapability, CapabilityError
-from core.llm_manager import get_llm
+from core.llm_manager import get_llm_manager  # FIXED: Use LLMManager
 from core.state import UnifiedState
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,7 @@ class RAGEngine(BaseCapability):
     2. Confidence is calculated from actual similarity scores
     3. documents_searched now shows unique documents, not top_k
     4. Added proper initialize() method
+    5. FIXED: Now uses LLMManager for embeddings (correct Ollama URL)
     """
 
     # Class-level shared resources (singleton pattern)
@@ -76,6 +77,7 @@ class RAGEngine(BaseCapability):
     _embeddings: Optional[OllamaEmbeddings] = None
     _initialized: bool = False
     _initialization_lock: asyncio.Lock = None
+    _current_embedding_model: Optional[str] = None  # Track which model we initialized with
 
     # Document tracking registry - NOW LOADED FROM DISK
     _document_registry: Dict[str, DocumentInfo] = {}
@@ -86,12 +88,13 @@ class RAGEngine(BaseCapability):
         super().__init__(capability_name="rag_engine")
         self.logger = logging.getLogger(__name__)
 
-        # Configuration
+        # Configuration - persist directory and collection from env
         self.persist_directory = os.getenv("CHROMA_PERSIST_DIR", "/data/chroma")
         self.collection_name = os.getenv("CHROMA_COLLECTION", "user_documents")
-        self.embedding_model = os.getenv("RAG_EMBEDDING_MODEL", "qwen3-embedding:4b")
-        self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
         self.search_k = int(os.getenv("RAG_SEARCH_K", "5"))
+
+        # FIXED: Get LLMManager instance for embeddings
+        self.llm_manager = get_llm_manager()
 
         # FIX: Set registry file path for persistence
         RAGEngine._registry_file = Path(self.persist_directory) / "document_registry.json"
@@ -142,6 +145,17 @@ class RAGEngine(BaseCapability):
 
     async def _ensure_initialized(self):
         """Thread-safe initialization."""
+        # FIXED: Check if embedding model changed (supports dynamic model switching)
+        current_model = self.llm_manager.embedding_model
+        model_changed = (
+            RAGEngine._initialized and
+            RAGEngine._current_embedding_model != current_model
+        )
+
+        if model_changed:
+            self.logger.info(f"Embedding model changed from '{RAGEngine._current_embedding_model}' to '{current_model}', reinitializing...")
+            RAGEngine._initialized = False
+
         if RAGEngine._initialized:
             return
 
@@ -151,15 +165,18 @@ class RAGEngine(BaseCapability):
 
             try:
                 self.logger.info("rag_initialization_started", extra={
-                    "persist_directory": self.persist_directory
+                    "persist_directory": self.persist_directory,
+                    "embedding_model": current_model,
+                    "ollama_url": self.llm_manager.base_url  # FIXED: Log the URL being used
                 })
 
                 os.makedirs(self.persist_directory, exist_ok=True)
 
-                RAGEngine._embeddings = OllamaEmbeddings(
-                    model=self.embedding_model,
-                    base_url=self.ollama_base_url
+                # FIXED: Use LLMManager for embeddings - this uses the correct OLLAMA_URL!
+                RAGEngine._embeddings = self.llm_manager.get_embeddings(
+                    cache_key="rag_embeddings"
                 )
+                RAGEngine._current_embedding_model = current_model
 
                 RAGEngine._vectorstore = Chroma(
                     persist_directory=self.persist_directory,
@@ -174,7 +191,7 @@ class RAGEngine(BaseCapability):
                 await self._sync_registry_with_vectorstore()
 
                 RAGEngine._initialized = True
-                self.logger.info("rag_initialization_completed")
+                self.logger.info(f"rag_initialization_completed - using {current_model} at {self.llm_manager.base_url}")
 
             except Exception as e:
                 self.logger.error(f"RAG Init Failed: {e}")
@@ -377,7 +394,10 @@ class RAGEngine(BaseCapability):
             "documents_by_type": doc_types,
             "persist_directory": self.persist_directory,
             "collection_name": self.collection_name,
-            "embedding_model": self.embedding_model
+            # RAG uses TWO models:
+            "embedding_model": self.llm_manager.embedding_model,  # For vector search
+            "rag_llm_model": self.llm_manager.rag_model,          # For answer generation
+            "ollama_url": self.llm_manager.base_url
         }
 
     # =========================================================================
@@ -442,18 +462,107 @@ class RAGEngine(BaseCapability):
         answer = "Answer generation disabled."
         if generate_answer:
             try:
-                llm = get_llm()
-                messages = [
-                    SystemMessage(content="""Answer the user's question based ONLY on the provided context.
+                # Check if we have a valid RAG model before trying to generate
+                rag_model = self.llm_manager.rag_model
+
+                # Validate the model exists by checking available models
+                models, connected, _ = await self.llm_manager.fetch_available_models()
+
+                if not connected:
+                    self.logger.warning("Cannot generate answer: Ollama not connected")
+                    answer = "Retrieved relevant documents but cannot generate answer: Ollama not connected."
+                elif not models:
+                    self.logger.warning("Cannot generate answer: No models available")
+                    answer = "Retrieved relevant documents but cannot generate answer: No models installed in Ollama."
+                else:
+                    # Check if the configured RAG model exists and is not an embedding model
+                    available_model_names = [m.name for m in models]
+                    model_exists = any(
+                        rag_model == m or rag_model.split(":")[0] == m.split(":")[0]
+                        for m in available_model_names
+                    )
+                    is_embedding_model = 'embed' in rag_model.lower()
+
+                    if not model_exists:
+                        # Try to find any non-embedding model to use
+                        non_embed_models = [m for m in available_model_names if 'embed' not in m.lower()]
+                        if non_embed_models:
+                            fallback_model = non_embed_models[0]
+                            self.logger.info(f"RAG model '{rag_model}' not found, using fallback: {fallback_model}")
+                            self.llm_manager.set_rag_model(fallback_model)
+                        else:
+                            self.logger.warning(f"Cannot generate answer: No chat models available (only embedding models found)")
+                            answer = (
+                                "Found relevant documents but cannot generate answer.\n\n"
+                                "RAG requires two types of models:\n"
+                                "• Embedding model (for search) - installed ✓\n"
+                                "• Chat/LLM model (for answers) - not installed ✗\n\n"
+                                "Please install a chat model using: ollama pull <model-name>\n"
+                                "Then refresh this page."
+                            )
+                            # Return early with documents but no generated answer
+                            return RAGQueryResult(
+                                answer=answer,
+                                sources=[{
+                                    "content": d.page_content,
+                                    "doc_id": d.metadata.get("doc_id"),
+                                    "filename": d.metadata.get("filename"),
+                                    "chunk_index": d.metadata.get("chunk_index"),
+                                    "doc_type": d.metadata.get("doc_type"),
+                                    "similarity_score": scores[i]
+                                } for i, d in enumerate(docs)],
+                                query=query,
+                                documents_searched=len(unique_doc_ids),
+                                chunks_retrieved=len(docs),
+                                confidence=round(avg_confidence, 3)
+                            )
+                    elif is_embedding_model:
+                        # Current model is an embedding model, try to find a chat model
+                        non_embed_models = [m for m in available_model_names if 'embed' not in m.lower()]
+                        if non_embed_models:
+                            fallback_model = non_embed_models[0]
+                            self.logger.info(f"RAG model '{rag_model}' is embedding model, using fallback: {fallback_model}")
+                            self.llm_manager.set_rag_model(fallback_model)
+                        else:
+                            self.logger.warning(f"Cannot generate answer: Only embedding models available")
+                            answer = (
+                                "Found relevant documents but cannot generate answer.\n\n"
+                                "RAG requires two types of models:\n"
+                                "• Embedding model (for search) - installed ✓\n"
+                                "• Chat/LLM model (for answers) - not installed ✗\n\n"
+                                "Please install a chat model using: ollama pull <model-name>\n"
+                                "Then refresh this page."
+                            )
+                            return RAGQueryResult(
+                                answer=answer,
+                                sources=[{
+                                    "content": d.page_content,
+                                    "doc_id": d.metadata.get("doc_id"),
+                                    "filename": d.metadata.get("filename"),
+                                    "chunk_index": d.metadata.get("chunk_index"),
+                                    "doc_type": d.metadata.get("doc_type"),
+                                    "similarity_score": scores[i]
+                                } for i, d in enumerate(docs)],
+                                query=query,
+                                documents_searched=len(unique_doc_ids),
+                                chunks_retrieved=len(docs),
+                                confidence=round(avg_confidence, 3)
+                            )
+
+                    # Now generate the answer with validated model
+                    llm = self.llm_manager.get_rag_llm()
+                    messages = [
+                        SystemMessage(content="""Answer the user's question based ONLY on the provided context.
 Be concise and direct. If the context doesn't contain relevant information, say so clearly.
 Do NOT list or cite sources in your answer - sources are displayed separately in the UI."""),
-                    HumanMessage(content=f"Context:\n{context}\n\nQuestion: {query}")
-                ]
-                response = await llm.ainvoke(messages)
-                answer = response.content if hasattr(response, 'content') else str(response)
+                        HumanMessage(content=f"Context:\n{context}\n\nQuestion: {query}")
+                    ]
+                    response = await llm.ainvoke(messages)
+                    answer = response.content if hasattr(response, 'content') else str(response)
+
             except Exception as e:
                 self.logger.error(f"LLM Error: {e}")
-                answer = "Error generating answer from LLM."
+                answer = f"Retrieved relevant documents but error generating answer: {str(e)}"
 
         return RAGQueryResult(
             answer=answer,

@@ -1,21 +1,19 @@
 // =============================================================================
 // StreamingInterface - Real-time Chat with WebSocket Streaming
 // =============================================================================
-// Fully integrated with backend - with restored UI functionality
-// FIXED: Memoized callbacks to prevent WebSocket reconnection loop
-// FIXED: Proper conversation sync with message merging
-// FIXED: User messages persist during approval flow
+// UPDATED: Added model selector dropdown with full-page error states
 // =============================================================================
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Send, Bot, User, Zap, Activity, Brain, Database,
   Workflow, RefreshCw, Wifi, WifiOff, Loader2, X,
-  AlertCircle, Settings, Trash2, Copy, Check, Clock
+  AlertCircle, Settings, Trash2, Copy, Check, Clock, Cpu
 } from 'lucide-react';
 import { useStreaming } from '../hooks/useOrchestrationHooks';
 import { useConversationSync, SyncedMessage } from '../hooks/useConversationSync';
 import { getPersistentSessionId } from '../utils/sessionUtils';
+import { ModelSelector } from './ModelSelector';
 import type { ChatMessage } from '../types';
 
 interface StreamingInterfaceProps {
@@ -33,7 +31,6 @@ export default function StreamingInterface({
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   // FIX: Use persistent session ID if none provided
-  // This ensures all chat instances use the same session for proper message sync
   const effectiveSessionId = sessionId || getPersistentSessionId();
   const [localSessionId, setLocalSessionId] = useState(effectiveSessionId);
   const [error, setError] = useState<string | null>(null);
@@ -48,11 +45,10 @@ export default function StreamingInterface({
 
   // ==========================================================================
   // FIX: Pending user messages with sessionStorage persistence
-  // These survive navigation between tabs (e.g., to Approvals and back)
   // ==========================================================================
   const [pendingUserMessages, setPendingUserMessages] = useState<ChatMessage[]>([]);
 
-  // Load pending messages from sessionStorage on mount and when sessionId changes
+  // Load pending messages from sessionStorage on mount
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(`pending_messages_${localSessionId}`);
@@ -96,7 +92,7 @@ export default function StreamingInterface({
   const {
     isConnected,
     isStreaming,
-    messages: streamingMessages,  // Renamed for clarity
+    messages: streamingMessages,
     activeNodes,
     currentStreamingContent,
     connect,
@@ -111,60 +107,45 @@ export default function StreamingInterface({
   });
 
   // ==========================================================================
-  // FIX: Merge all message sources with proper deduplication
-  // Pending messages stay visible until they appear in synced messages
-  // (which means the full approval + response flow completed)
+  // Merge all message sources with proper deduplication
   // ==========================================================================
   const messages = useMemo(() => {
     console.log('[StreamingInterface] Merging messages - streaming:', streamingMessages.length,
                 'synced:', syncedMessages.length, 'pending:', pendingUserMessages.length);
 
-    // Create sets for deduplication by ID
     const streamingIds = new Set(streamingMessages.map(m => m.id));
     const syncedIds = new Set(syncedMessages.map(m => m.id));
 
-    // Get user message contents that have been synced (flow completed)
     const syncedUserContents = new Set(
       syncedMessages.filter(m => m.role === 'user').map(m => m.content)
     );
 
-    // Get user message contents currently in streaming
     const streamingUserContents = new Set(
       streamingMessages.filter(m => m.role === 'user').map(m => m.content)
     );
 
-    // Filter synced messages that don't already exist in streaming
     const uniqueSyncedMessages = syncedMessages.filter(
       m => !streamingIds.has(m.id)
     );
 
-    // Filter pending messages:
-    // - Remove if already in streaming or synced by ID
-    // - Remove if the content matches a synced user message (flow completed)
-    // - Remove if content is currently showing in streaming (avoid duplicates)
     const uniquePendingMessages = pendingUserMessages.filter(pending => {
-      // Check by ID
       if (streamingIds.has(pending.id) || syncedIds.has(pending.id)) {
         console.log('[StreamingInterface] Filtering pending (by ID):', pending.content.slice(0, 30));
         return false;
       }
-      // Check if this message's content has been synced (flow completed)
       if (syncedUserContents.has(pending.content)) {
         console.log('[StreamingInterface] Filtering pending (synced):', pending.content.slice(0, 30));
         return false;
       }
-      // Check if content is currently in streaming (avoid showing twice)
       if (streamingUserContents.has(pending.content)) {
         console.log('[StreamingInterface] Filtering pending (in streaming):', pending.content.slice(0, 30));
         return false;
       }
-      // Keep the pending message
       return true;
     });
 
     console.log('[StreamingInterface] After filtering - unique pending:', uniquePendingMessages.length);
 
-    // Merge and sort by timestamp
     const allMessages = [...streamingMessages, ...uniqueSyncedMessages, ...uniquePendingMessages];
 
     return allMessages.sort(
@@ -173,106 +154,66 @@ export default function StreamingInterface({
   }, [streamingMessages, syncedMessages, pendingUserMessages]);
 
   // ==========================================================================
-  // FIX: Clean up pending messages only when a RESPONSE has been received
-  // Don't clean just because the message appears in streaming (it might get lost)
+  // Clean up pending messages when response received
   // ==========================================================================
   useEffect(() => {
     if (pendingUserMessages.length === 0) return;
 
-    // Get all assistant messages from streaming and synced
     const allAssistantMessages = [
       ...streamingMessages.filter(m => m.role === 'assistant'),
       ...syncedMessages.filter(m => m.role === 'assistant')
     ];
 
-    // Get user messages that have been synced (these have completed the full flow)
-    const syncedUserContents = new Set(
-      syncedMessages.filter(m => m.role === 'user').map(m => m.content)
-    );
+    if (allAssistantMessages.length > 0) {
+      const latestResponse = allAssistantMessages[allAssistantMessages.length - 1];
+      const latestResponseTime = new Date(latestResponse.timestamp).getTime();
 
-    // Only remove a pending message if:
-    // 1. It has been synced (appears in syncedMessages as user message), OR
-    // 2. There's at least one assistant response after it was sent
-    setPendingUserMessages(prev => {
-      return prev.filter(pending => {
-        // If it's in synced messages, remove it
-        if (syncedUserContents.has(pending.content)) {
-          return false;
-        }
-
-        // If there's an assistant message with a later timestamp, we got a response
-        const pendingTime = new Date(pending.timestamp).getTime();
-        const hasResponse = allAssistantMessages.some(
-          assistant => new Date(assistant.timestamp).getTime() > pendingTime
-        );
-
-        // Keep it if no response yet
-        return !hasResponse;
-      });
-    });
-  }, [streamingMessages, syncedMessages]);
-
-  // Scroll to bottom on new messages
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, currentStreamingContent, scrollToBottom]);
-
-  // Calculate metrics
-  const [metrics, setMetrics] = useState({
-    tokensPerSecond: 0,
-    totalTokens: 0,
-    latency: 0
-  });
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'assistant' && lastMessage.metrics) {
-        setMetrics({
-          tokensPerSecond: Math.round(lastMessage.metrics.tokensPerSecond) || 0,
-          totalTokens: lastMessage.metrics.totalTokens || 0,
-          latency: Math.round(lastMessage.metrics.latency) || 0
-        });
-      }
+      setPendingUserMessages(prev =>
+        prev.filter(pending => {
+          const pendingTime = new Date(pending.timestamp).getTime();
+          return pendingTime > latestResponseTime;
+        })
+      );
     }
-  }, [messages]);
+  }, [streamingMessages, syncedMessages, pendingUserMessages.length]);
 
-  // ==========================================================================
-  // FIX: Handle sending messages - store locally BEFORE sending
-  // ==========================================================================
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, currentStreamingContent]);
+
+  // Handle send message
   const handleSend = useCallback(async () => {
-    if (!input.trim() || isStreaming) return;
-    const message = input.trim();
-    setInput('');
-    setError(null);
+    if (!input.trim() || isStreaming || !isConnected) return;
 
-    // Create the user message object
     const userMessage: ChatMessage = {
-      id: `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
-      content: message,
+      content: input.trim(),
       timestamp: new Date().toISOString(),
-      metadata: {
-        pending: true
-      }
+      metadata: { pending: true }
     };
 
-    // Add to pending messages IMMEDIATELY (before WebSocket)
     setPendingUserMessages(prev => [...prev, userMessage]);
+    const messageContent = input.trim();
+    setInput('');
 
     try {
-      await sendStreamingMessage(message);
+      await sendStreamingMessage(messageContent);
+      setPendingUserMessages(prev =>
+        prev.map(msg =>
+          msg.id === userMessage.id
+            ? { ...msg, metadata: { ...msg.metadata, pending: false } }
+            : msg
+        )
+      );
     } catch (err) {
       console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
-      // Don't remove the pending message - it shows what the user tried to send
     }
-  }, [input, isStreaming, sendStreamingMessage]);
+  }, [input, isStreaming, isConnected, sendStreamingMessage]);
 
+  // Handle key press
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -280,52 +221,40 @@ export default function StreamingInterface({
     }
   }, [handleSend]);
 
-  const handleResetSession = useCallback(() => {
-    disconnect();
-    clearMessages();
-    setSyncedMessages([]);
-    setPendingUserMessages([]);
-    // Clear from sessionStorage too
-    try {
-      sessionStorage.removeItem(`pending_messages_${localSessionId}`);
-    } catch (e) {
-      console.warn('Failed to clear pending messages from storage:', e);
-    }
-    setLocalSessionId(`session_${Date.now()}`);
-    setError(null);
-    setTimeout(() => connect(), 100);
-  }, [disconnect, clearMessages, connect, localSessionId]);
-
+  // Copy session ID
   const copySessionId = useCallback(() => {
     navigator.clipboard.writeText(localSessionId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [localSessionId]);
 
-  // ==========================================================================
-  // FIX: Handle synced messages from approval resumes
-  // Now uses setSyncedMessages instead of non-existent setMessages
-  // ==========================================================================
-  const handleSyncedMessages = useCallback((newSyncedMessages: SyncedMessage[]) => {
+  // Reset session
+  const handleResetSession = useCallback(() => {
+    clearMessages();
+    setSyncedMessages([]);
+    setPendingUserMessages([]);
+    sessionStorage.removeItem(`pending_messages_${localSessionId}`);
+  }, [clearMessages, localSessionId]);
+
+  // Handle synced messages from approval flow
+  const handleSyncedMessages = useCallback((syncedData: SyncedMessage[]) => {
     setSyncedMessages(prev => {
       const existingIds = new Set(prev.map(m => m.id));
-
       const newChatMessages: ChatMessage[] = [];
 
-      for (const synced of newSyncedMessages) {
-        // Add user message if not exists
-        const userMsgId = `user-${synced.request_id}`;
-        if (!existingIds.has(userMsgId) && synced.user_message) {
+      for (const synced of syncedData) {
+        const userMsgId = `synced-user-${synced.request_id}`;
+        if (!existingIds.has(userMsgId) && synced.original_message) {
           newChatMessages.push({
             id: userMsgId,
             role: 'user',
-            content: synced.user_message,
+            content: synced.original_message,
             timestamp: synced.timestamp,
+            metadata: { approvalId: synced.approval_id }
           });
         }
 
-        // Add assistant response if not exists
-        const assistantMsgId = `assistant-${synced.request_id}`;
+        const assistantMsgId = `synced-assistant-${synced.request_id}`;
         if (!existingIds.has(assistantMsgId)) {
           newChatMessages.push({
             id: assistantMsgId,
@@ -342,7 +271,6 @@ export default function StreamingInterface({
 
       if (newChatMessages.length === 0) return prev;
 
-      // Merge and sort by timestamp
       return [...prev, ...newChatMessages].sort(
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
@@ -396,6 +324,16 @@ export default function StreamingInterface({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* ============================================================ */}
+            {/* MODEL SELECTOR - COMPACT VERSION IN HEADER */}
+            {/* Only show non-embedding models for chat */}
+            {/* ============================================================ */}
+            <ModelSelector
+              target="chat"
+              compact={true}
+              excludeFilter="embed"
+            />
+
             {/* Refresh Sync Button */}
             <button
               onClick={refreshSync}
@@ -444,7 +382,7 @@ export default function StreamingInterface({
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto">
         <div className={`${embedded ? 'p-4' : 'max-w-3xl mx-auto p-6'} space-y-4`}>
-          {/* Welcome Message */}
+          {/* Welcome Message with Model Selector - shows full-page errors when needed */}
           {messages.length === 0 && !currentStreamingContent && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -453,10 +391,23 @@ export default function StreamingInterface({
               <h2 className="text-xl font-bold text-gray-900 mb-2">
                 AI Orchestration Ready
               </h2>
-              <p className="text-gray-500 max-w-md mx-auto text-sm">
+              <p className="text-gray-500 max-w-md mx-auto text-sm mb-6">
                 I can help with data analysis, API integrations, workflow automation, and more.
                 Start by typing your message below.
               </p>
+
+              {/* ============================================================ */}
+              {/* MODEL SELECTOR - with fullPageErrors to show setup guide */}
+              {/* ============================================================ */}
+              <div className="max-w-md mx-auto">
+                <ModelSelector
+                  target="chat"
+                  compact={false}
+                  fullPageErrors={true}
+                  excludeFilter="embed"
+                />
+              </div>
+
               {!isConnected && (
                 <button
                   onClick={connect}
@@ -468,7 +419,7 @@ export default function StreamingInterface({
             </div>
           )}
 
-          {/* Messages */}
+          {/* Messages - ALWAYS show */}
           {messages.map((message) => (
             <div
               key={message.id}
@@ -478,7 +429,7 @@ export default function StreamingInterface({
                 className={`max-w-[85%] rounded-2xl px-5 py-4 ${
                   message.role === 'user'
                     ? message.metadata?.pending
-                      ? 'bg-blue-400 text-white shadow-md'  // Lighter for pending
+                      ? 'bg-blue-400 text-white shadow-md'
                       : 'bg-blue-600 text-white shadow-md'
                     : 'bg-white text-gray-800 shadow-sm border border-gray-200'
                 }`}
@@ -615,7 +566,18 @@ export default function StreamingInterface({
             </div>
 
             <div className="space-y-4">
-              <div>
+              {/* ============================================================ */}
+              {/* MODEL SELECTOR IN SETTINGS MODAL */}
+              {/* Only show non-embedding models for chat */}
+              {/* ============================================================ */}
+              <ModelSelector
+                target="chat"
+                label="Chat Model"
+                compact={false}
+                excludeFilter="embed"
+              />
+
+              <div className="border-t border-gray-100 pt-4">
                 <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Session ID</label>
                 <div className="flex items-center space-x-2">
                   <code className="flex-1 bg-gray-50 px-3 py-2 rounded-lg text-sm text-gray-700 border border-gray-200 font-mono break-all">

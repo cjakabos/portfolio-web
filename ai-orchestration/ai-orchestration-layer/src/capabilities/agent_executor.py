@@ -25,21 +25,23 @@ class AgentExecutor(BaseCapability):
     Uses supervisor pattern for complex queries
     NOW INCLUDES: Notes, Cart, and Room management tools
     """
-    
+
     def __init__(self):
         super().__init__(capability_name="agent_executor")
-        
+
         self.tool_manager = get_tool_manager()
         self.logger = get_logger()
-        
+
         # Initialize specialized agents (using shared tools from tool manager)
+        # Note: These are created once. If you need dynamic model switching for agents,
+        # you would need to recreate these on model change.
         self.agents: Dict[AgentType, Optional[LangChainAgentExecutor]] = {
             "shop": self._create_shop_agent(),
             "petstore": self._create_petstore_agent(),
             "vehicle": self._create_vehicle_agent(),
             "none": None
         }
-        
+
         # Track agent usage
         self.agent_usage: Dict[AgentType, int] = {
             "shop": 0,
@@ -47,7 +49,7 @@ class AgentExecutor(BaseCapability):
             "vehicle": 0,
             "none": 0
         }
-        
+
         # Log tool counts for verification
         shop_tools = self.tool_manager.get_tools_for_agent("shop")
         self.logger.info("agent_executor_initialized", {
@@ -56,7 +58,12 @@ class AgentExecutor(BaseCapability):
             "vehicle_tools_count": len(self.tool_manager.get_tools_for_agent("vehicle")),
             "total_tools": len(self.tool_manager.registry.get_all_tools())
         })
-    
+
+    # Helper to get the current LLM dynamically
+    @property
+    def current_llm(self):
+        return self.llm_manager.get_chat_llm()
+
     def _create_shop_agent(self) -> LangChainAgentExecutor:
         """
         Create shop specialist agent with ALL shopping tools
@@ -64,7 +71,7 @@ class AgentExecutor(BaseCapability):
         """
         # Get comprehensive shop tools (cloudapp + cart + notes)
         tools = self.tool_manager.get_tools_for_agent("shop")
-        
+
         prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a comprehensive shopping assistant for cloudapp store.
 
@@ -95,22 +102,23 @@ CAPABILITIES:
    - Look up user information
    - View user profiles
 
-Use the available tools to complete requests efficiently. Be helpful and concise.
+Use the available tools to complete requests efficiently.
+Be helpful and concise.
 Always confirm actions with the user before making changes."""),
             ("human", "{input}"),
             ("placeholder", "{agent_scratchpad}")
         ])
-        
-        agent = create_tool_calling_agent(self.llm, tools, prompt)
+
+        agent = create_tool_calling_agent(self.current_llm, tools, prompt)
         return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
-    
+
     def _create_petstore_agent(self) -> LangChainAgentExecutor:
         """
         Create petstore specialist agent
         Handles: Employee (3) + Schedule (4) = 7 tools
         """
         tools = self.tool_manager.get_tools_for_agent("petstore")
-        
+
         prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a pet care scheduling assistant.
 
@@ -134,20 +142,19 @@ Use the available tools to help with pet care scheduling and employee management
             ("human", "{input}"),
             ("placeholder", "{agent_scratchpad}")
         ])
-        
-        agent = create_tool_calling_agent(self.llm, tools, prompt)
+
+        agent = create_tool_calling_agent(self.current_llm, tools, prompt)
         return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
-    
+
     def _create_vehicle_agent(self) -> LangChainAgentExecutor:
         """
         Create vehicle specialist agent
         Handles: Vehicle inventory (7) tools
         """
         tools = self.tool_manager.get_tools_for_agent("vehicle")
-        
+
         prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a vehicle inventory assistant.
-
 CAPABILITIES:
 🚗 Vehicle Search:
    - Browse all vehicles
@@ -172,17 +179,17 @@ CRITICAL INSTRUCTIONS:
             ("human", "{input}"),
             ("placeholder", "{agent_scratchpad}")
         ])
-        
-        agent = create_tool_calling_agent(self.llm, tools, prompt)
+
+        agent = create_tool_calling_agent(self.current_llm, tools, prompt)
         return LangChainAgentExecutor(agent=agent, tools=tools, verbose=False, handle_parsing_errors=True)
-    
+
     async def _execute_internal(self, state: UnifiedState) -> Dict[str, Any]:
         """
         Internal execution logic - uses supervisor for routing
-        
+
         Args:
             state: Current unified state
-        
+
         Returns:
             Agent execution results
         """
@@ -190,25 +197,25 @@ CRITICAL INSTRUCTIONS:
         if "capabilities_used" not in state:
             state["capabilities_used"] = []
         state["capabilities_used"].append("Agent Execution")
-        
+
         query: str = state["input_data"]
-        
+
         # Use supervisor to determine best agent
         agent_type: AgentType = await self._supervisor_route(query, state)
-        
+
         self.logger.info("agent_routing_decision", {
             "query": query[:100],
             "selected_agent": agent_type,
             "query_keywords": self._extract_keywords(query)
         })
-        
+
         # Track usage
         self.agent_usage[agent_type] += 1
-        
+
         # Execute with selected agent
         if agent_type == "none":
             return self._handle_no_agent_match(query)
-        
+
         agent = self.agents[agent_type]
         if not agent:
             raise CapabilityError(
@@ -217,22 +224,22 @@ CRITICAL INSTRUCTIONS:
                 error_code=f"AGENT_{agent_type.upper()}_NOT_FOUND",
                 recoverable=False
             )
-        
+
         try:
             # Track Tool Invocation capability
             state["capabilities_used"].append("Tool Invocation")
-            
+
             # Execute agent (async invoke)
             result = await agent.ainvoke({"input": query})
-            
+
             output: str = result.get("output", "No result from agent")
-            
+
             self.logger.log_tool_call(
                 tool_name=f"{agent_type}_agent",
                 args={"query": query},
                 result=output
             )
-            
+
             return {
                 "agent_used": agent_type,
                 "result": output,
@@ -240,13 +247,13 @@ CRITICAL INSTRUCTIONS:
                 "routing": "success",
                 "confidence": self._calculate_routing_confidence(query, agent_type)
             }
-            
+
         except Exception as e:
             self.logger.error("agent_execution_failed", {
                 "agent": agent_type,
                 "query": query
             }, error=e)
-            
+
             raise CapabilityError(
                 message=f"Agent '{agent_type}' execution failed: {str(e)}",
                 capability_name=self.capability_name,
@@ -254,7 +261,7 @@ CRITICAL INSTRUCTIONS:
                 recoverable=True,
                 original_error=e
             )
-    
+
     async def _supervisor_route(
         self,
         query: str,
@@ -263,16 +270,16 @@ CRITICAL INSTRUCTIONS:
         """
         Supervisor agent decides which specialist to use
         NOW INCLUDES: note, cart, and room keyword detection
-        
+
         Args:
             query: User query
             state: Current state
-        
+
         Returns:
             Selected agent type
         """
         query_lower = query.lower()
-        
+
         # Fast path: Clear keyword matches
         # Shop agent handles: shopping, cart, orders, items, notes
         shop_keywords = [
@@ -287,29 +294,29 @@ CRITICAL INSTRUCTIONS:
             # User
             "user", "account", "profile"
         ]
-        
+
         if any(word in query_lower for word in shop_keywords):
             return "shop"
-        
+
         # Petstore agent keywords
         petstore_keywords = [
-            "pet", "groom", "grooming", "schedule", "appointment", 
+            "pet", "groom", "grooming", "schedule", "appointment",
             "vet", "veterinary", "animal", "employee", "staff"
         ]
-        
+
         if any(word in query_lower for word in petstore_keywords):
             return "petstore"
-        
+
         # Vehicle agent keywords
         vehicle_keywords = [
             "car", "vehicle", "auto", "truck", "suv", "sedan",
             "toyota", "honda", "ford", "chevrolet", "bmw", "mercedes",
             "price", "mileage", "year", "model", "make"
         ]
-        
+
         if any(word in query_lower for word in vehicle_keywords):
             return "vehicle"
-        
+
         # Ambiguous query - use LLM supervisor
         try:
             agent_type = await self._llm_supervisor_decision(query)
@@ -333,7 +340,6 @@ CRITICAL INSTRUCTIONS:
             Agent type decision
         """
         supervisor_prompt = f"""You are a routing supervisor for a multi-agent system.
-
 Available agents:
 - shop: Handles shopping, inventory, carts (add/remove/view), orders, notes, user accounts
 - petstore: Handles pet care, grooming, appointments, employee schedules, veterinary services
@@ -350,7 +356,7 @@ Agent:"""
             HumanMessage(content=supervisor_prompt)
         ]
 
-        response = await self.llm.ainvoke(messages)
+        response = await self.current_llm.ainvoke(messages)
         decision = response.content.strip().lower()
 
         # Validate decision
@@ -359,7 +365,7 @@ Agent:"""
             return decision  # type: ignore
 
         return "none"
-    
+
     def _handle_no_agent_match(self, query: str) -> Dict[str, Any]:
         """
         Handle queries that don't match any agent
@@ -399,38 +405,38 @@ What would you like to do?""",
                 "Find Toyota vehicles under $30,000"
             ]
         }
-    
+
     def _extract_keywords(self, query: str) -> list:
         """Extract keywords from query for logging"""
         words = query.lower().split()
         keywords = [w for w in words if len(w) > 3]
         return keywords[:5]
-    
+
     def _calculate_routing_confidence(self, query: str, agent_type: AgentType) -> float:
         """Calculate confidence score for routing decision"""
         query_lower = query.lower()
-        
+
         confidence_map = {
             "shop": ["shop", "buy", "cart", "order", "item", "note"],
             "petstore": ["pet", "groom", "schedule", "appointment"],
             "vehicle": ["car", "vehicle", "auto", "price"]
         }
-        
+
         if agent_type == "none":
             return 0.0
-        
+
         keywords = confidence_map.get(agent_type, [])
         matches = sum(1 for keyword in keywords if keyword in query_lower)
-        
+
         return min(matches / len(keywords), 1.0) if keywords else 0.5
-    
+
     async def _execute_fallback(self, state: UnifiedState) -> Dict[str, Any]:
         """
         Fallback when agent execution fails
-        
+
         Args:
             state: Current state
-        
+
         Returns:
             Fallback response
         """
@@ -440,16 +446,16 @@ What would you like to do?""",
             "routing": "fallback",
             "confidence": 0.0
         }
-    
+
     def get_agent_stats(self) -> Dict[str, Any]:
         """
         Get agent usage statistics
-        
+
         Returns:
             Statistics dictionary
         """
         total_uses = sum(self.agent_usage.values())
-        
+
         # Get tool counts per agent
         tool_counts = {
             "shop": len(self.tool_manager.get_tools_for_agent("shop")),
@@ -457,7 +463,7 @@ What would you like to do?""",
             "vehicle": len(self.tool_manager.get_tools_for_agent("vehicle")),
             "total": len(self.tool_manager.all_tools)
         }
-        
+
         return {
             "total_executions": total_uses,
             "agent_usage": self.agent_usage.copy(),

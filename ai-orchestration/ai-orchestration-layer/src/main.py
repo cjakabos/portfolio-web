@@ -44,7 +44,8 @@ from routers import (
     system_router,
     tools_router,
     conversation_sync,
-    rag_router
+    rag_router,
+    llm_router
 )
 
 # =============================================================================
@@ -285,6 +286,7 @@ app.include_router(system_router.router)
 app.include_router(tools_router.router)
 app.include_router(conversation_sync.router)
 app.include_router(rag_router.router)
+app.include_router(llm_router.router)
 
 # =============================================================================
 # Root Endpoints

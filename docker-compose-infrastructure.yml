@@ -91,12 +91,15 @@ services:
       - backend
     restart: unless-stopped
 
-#Local install on Apple Silicon to use GPU acceleration
-  #  brew install ollama
-  # ollama pull qwen3:1.7b
-  # ollama pull qwen3-embedding:4b
-  # ollama serve
-  #  # ===========================================================================
+# Local install on Apple Silicon to use GPU acceleration
+# brew install ollama
+# Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
+# ollama pull qwen3:1.7b
+# ollama pull deepseek-r1:1.5b
+# Get an embedding model for RAG at ollama.com/search?c=embedding
+# ollama pull qwen3-embedding:4b
+# ollama serve
+#  # ===========================================================================
 #  # LLM Provider - Internal only
 #  # ===========================================================================
 #  ollama:
@@ -201,7 +204,6 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-development}
 
       # LLM Configuration
-      LLM_MODEL: ${LLM_MODEL:-qwen3:1.7b}
       OLLAMA_URL: http://host.docker.internal:11434
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}

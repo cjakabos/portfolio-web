@@ -37,7 +37,18 @@ Build and start the Java based services, the Python based ml-pipeline and the Ne
 ```bash
 docker-compose -f docker-compose-app.yml up -d
 ```
-Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was qwen3 with 1.7B parameter, good enough for local testing purposes.
+Note 1: For Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
+```bash
+brew install ollama
+# Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
+ollama pull qwen3:1.7b
+ollama pull deepseek-r1:1.5b
+# Get an embedding model for RAG at ollama.com/search?c=embedding
+ollama pull qwen3-embedding:4b
+ollama serve
+```
+
+Note 2: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was qwen3 with 1.7B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama

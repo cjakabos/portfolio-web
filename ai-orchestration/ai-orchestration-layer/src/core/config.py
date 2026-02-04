@@ -24,8 +24,8 @@ class Environment(Enum):
 @dataclass
 class LLMConfiguration:
     """LLM configuration"""
-    model: str = "qwen3:1.7b"
-    base_url: str = "http://host.docker.internal:11434"
+    model: str = "not-added"
+    base_url: str = "http://localhost:11434"
     temperature: float = 0.7
     max_tokens: int = 2000
     streaming: bool = False
@@ -35,8 +35,8 @@ class LLMConfiguration:
     def from_env(cls) -> 'LLMConfiguration':
         """Create configuration from environment variables"""
         return cls(
-            model=os.getenv("LLM_MODEL", "qwen3:1.7b"),
-            base_url=os.getenv("OLLAMA_URL", "http://host.docker.internal:11434"),
+            model=os.getenv("LLM_MODEL", "not-added"),
+            base_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
             temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", "2000")),
             streaming=os.getenv("LLM_STREAMING", "false").lower() == "true",
@@ -136,7 +136,7 @@ class RAGConfiguration:
     """RAG engine configuration"""
     persist_directory: str = "./chroma_db"
     collection_name: str = "user_documents"
-    embedding_model: str = "qwen3-embedding:4b"
+    embedding_model: str = "not-added"
     chunk_size: int = 1000
     chunk_overlap: int = 200
     search_k: int = 3
@@ -148,7 +148,7 @@ class RAGConfiguration:
         return cls(
             persist_directory=os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
             collection_name=os.getenv("CHROMA_COLLECTION", "user_documents"),
-            embedding_model=os.getenv("EMBEDDING_MODEL", "qwen3-embedding:4b"),
+            embedding_model=os.getenv("EMBEDDING_MODEL", "not-added"),
             chunk_size=int(os.getenv("RAG_CHUNK_SIZE", "1000")),
             chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP", "200")),
             search_k=int(os.getenv("RAG_SEARCH_K", "3")),
