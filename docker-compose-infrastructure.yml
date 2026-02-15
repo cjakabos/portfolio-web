@@ -10,14 +10,23 @@ services:
       POSTGRES_DB: cloudappdb
     ports:
       - "5433:5432"
+    volumes:
+      - postgres_cloudapp:/var/lib/postgresql/data
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U websitemaster -d cloudappdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   postgres-ml:
     image: postgres:15
     volumes:
       - "./init-ml.sql:/docker-entrypoint-initdb.d/init-ml.sql"
+      - postgres_ml:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: segmentmaster
       POSTGRES_PASSWORD: segment
@@ -26,6 +35,12 @@ services:
       - "5434:5432"
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U segmentmaster -d segmentationdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   mysql:
@@ -40,6 +55,12 @@ services:
       MYSQL_DATABASE: petstore
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   mongo:
@@ -51,8 +72,15 @@ services:
       MONGO_INITDB_ROOT_USERNAME: websitemaster
       MONGO_INITDB_ROOT_PASSWORD: local
       MONGO_INITDB_DATABASE: cloudappdb
+    volumes:
+      - mongo_chat:/data/db
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   # ===========================================================================
@@ -66,18 +94,22 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   broker:
     image: confluentinc/cp-kafka:7.2.3
     container_name: kafka
     ports:
-      # To learn about configuring Kafka for access across networks see
-      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
       - "9092:9092"
       - "9093:9093"
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -89,32 +121,68 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9093 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
-# Local install on Apple Silicon to use GPU acceleration
-# brew install ollama
-# Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
-# ollama pull qwen3:1.7b
-# ollama pull deepseek-r1:1.5b
-# Get an embedding model for RAG at ollama.com/search?c=embedding
-# ollama pull qwen3-embedding:4b
-# ollama serve
-#  # ===========================================================================
-#  # LLM Provider - Internal only
-#  # ===========================================================================
-#  ollama:
-#    container_name: ollama
-#    build:
-#      context: ./
-#      dockerfile: Dockerfile_OLLAMA
-#      args:
-#        NEXT_PUBLIC_LLM_MODEL: 'qwen3:1.7b'
-#        NEXT_PUBLIC_LLM_MODEL_EMBEDDING: 'qwen3-embedding:4b'
-#    restart: unless-stopped
-#    ports:
-#      - 11434:11434
-#    networks:
-#      - backend
+  # Local install on Apple Silicon to use GPU acceleration
+  # brew install ollama
+  # Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
+  # ollama pull qwen3:1.7b
+  # ollama pull deepseek-r1:1.5b
+  # Get an embedding model for RAG at ollama.com/search?c=embedding
+  # ollama pull qwen3-embedding:4b
+  # ollama serve
+  #  # ===========================================================================
+  #  # LLM Provider - Internal only
+  #  # ===========================================================================
+  #  ollama:
+  #    container_name: ollama
+  #    build:
+  #      context: ./
+  #      dockerfile: Dockerfile_OLLAMA
+  #      args:
+  #        NEXT_PUBLIC_LLM_MODEL: 'qwen3:1.7b'
+  #        NEXT_PUBLIC_LLM_MODEL_EMBEDDING: 'qwen3-embedding:4b'
+  #    restart: unless-stopped
+  #    ports:
+  #      - 11434:11434
+  #    networks:
+  #      - backend
+
+  # ===========================================================================
+  # OBSERVABILITY — Distributed Tracing
+  # ===========================================================================
+  # Jaeger all-in-one: collector (OTLP gRPC :4317, OTLP HTTP :4318),
+  #                    query/UI (:16686), agent (:6831)
+  # All Spring Boot services send traces via the OTel Java agent.
+  # The Flask ML pipeline sends traces via the OTel Python SDK.
+  # NGINX propagates the W3C traceparent header to all backends.
+  #
+  # Access the Jaeger UI at http://localhost:16686
+  # ===========================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.62
+    container_name: jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC receiver
+      - "4318:4318"     # OTLP HTTP receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:16687/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ===========================================================================
   # AI ORCHESTRATION INFRASTRUCTURE - Internal only
@@ -181,71 +249,46 @@ services:
   # APPLICATION SERVICES
   # ===========================================================================
 
-  # ---------------------------------------------------------------------------
-  # AI Orchestration Layer - Main API
-  # ---------------------------------------------------------------------------
   ai-orchestration-layer:
     build:
       context: ./ai-orchestration/ai-orchestration-layer
       dockerfile: Dockerfile
-      # Only keep build-time args that affect the image build itself
       args:
         PYTHONPATH: /app/src
         PYTHONUNBUFFERED: 1
     container_name: ai-orchestration-layer
     restart: unless-stopped
-    # Runtime environment variables - these are read by os.getenv() in Python
     environment:
-      # Python
       PYTHONPATH: /app/src
       PYTHONUNBUFFERED: 1
-
-      # Environment
       ENVIRONMENT: ${ENVIRONMENT:-development}
-
-      # LLM Configuration
       OLLAMA_URL: http://host.docker.internal:11434
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}
-
-      # Service URLs (via NGINX gateway)
       CLOUDAPP_URL: ${CLOUDAPP_URL:-http://next-nginx-jwt:80/cloudapp}
       PETSTORE_URL: ${PETSTORE_URL:-http://next-nginx-jwt:80/petstore}
       VEHICLES_URL: ${VEHICLES_URL:-http://next-nginx-jwt:80/vehicles}
       ML_URL: ${ML_URL:-http://next-nginx-jwt:80/mlops-segmentation}
       POSTGRES_URL: postgresql://websitemaster:local@postgres:5432/cloudappdb
-
-      # Redis Configuration
       REDIS_URL: redis://redis:6379/0
       REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-50}
-
-      # MongoDB Configuration
       MONGODB_URL: mongodb://orchestration_user:orchestration_pass@mongodb-abtest:27017/ai_orchestration?authSource=ai_orchestration
       MONGODB_DATABASE: ai_orchestration
-
-      # HTTP Client Configuration
       HTTP_TIMEOUT: ${HTTP_TIMEOUT:-10}
       HTTP_MAX_CONNECTIONS: ${HTTP_MAX_CONNECTIONS:-100}
       HTTP_MAX_KEEPALIVE: ${HTTP_MAX_KEEPALIVE:-20}
-
-      # RAG Configuration
       CHROMA_HOST: chromadb
       CHROMA_PORT: 8123
       CHROMA_COLLECTION: ${CHROMA_COLLECTION:-user_documents}
       CHROMA_PERSIST_DIR: /data/chroma
       RAG_SEARCH_K: ${RAG_SEARCH_K:-3}
-
-      # Feature Flags
       ENABLE_CHECKPOINTING: ${ENABLE_CHECKPOINTING:-true}
       ENABLE_HITL: ${ENABLE_HITL:-true}
       ENABLE_PARALLEL: ${ENABLE_PARALLEL:-true}
       ENABLE_ERROR_HANDLING: ${ENABLE_ERROR_HANDLING:-true}
       ENABLE_AB_TESTING: ${ENABLE_AB_TESTING:-true}
-
-      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_FORMAT: ${LOG_FORMAT:-json}
-    # NO ports exposed - only accessible via NGINX
     volumes:
       - chroma_data:/data/chroma
       - ./logs:/app/logs
@@ -254,8 +297,6 @@ services:
         condition: service_started
       chromadb:
         condition: service_started
-#      ollama:
-#        condition: service_started
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8700/health || exit 1" ]
       interval: 30s
@@ -289,6 +330,12 @@ services:
 # ===========================================================================
 volumes:
   petstore:
+  postgres_cloudapp:
+    name: postgres-cloudapp-data
+  postgres_ml:
+    name: postgres-ml-data
+  mongo_chat:
+    name: mongo-chat-data
   redis_data:
     name: ai-orchestration-redis
   mongodb_data:

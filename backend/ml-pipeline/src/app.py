@@ -6,6 +6,8 @@ This script used to create the app Flask API
 import os
 import re
 import subprocess
+import logging
+import sys
 import pandas as pd
 import psycopg as pg
 import base64
@@ -16,6 +18,8 @@ from flask import Flask, jsonify, request, make_response
 from sqlalchemy import create_engine
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Set up variables for use in our script
 app = Flask(__name__)
@@ -23,6 +27,12 @@ default_prefix = '/mlops-segmentation'
 host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
 
 app.config['APPLICATION_ROOT'] = default_prefix
+
+# ===========================================================================
+# OpenTelemetry — initialize tracing (no-op if OTEL_ENABLED != "true")
+# ===========================================================================
+from otel_setup import init_telemetry
+init_telemetry(app)
 
 # Spectral_r colormap colors for 5 clusters - matches plt.get_cmap("Spectral_r", 5)
 SPECTRAL_R_COLORS = {
@@ -33,6 +43,105 @@ SPECTRAL_R_COLORS = {
     4: "#9e0142"   # Dark red/maroon
 }
 
+# =========================================================================
+# Input Validation
+# =========================================================================
+
+# Valid range for sampleSize parameter
+SAMPLE_SIZE_MIN = -2
+SAMPLE_SIZE_MAX = 10000
+
+
+def validate_sample_size(value) -> int:
+    """
+    Validate and sanitize the sampleSize parameter.
+    Returns a safe integer value or raises ValueError.
+    """
+    if value is None:
+        raise ValueError("sampleSize is required")
+
+    try:
+        sample_size = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"sampleSize must be an integer, got: {type(value).__name__}")
+
+    if sample_size < SAMPLE_SIZE_MIN or sample_size > SAMPLE_SIZE_MAX:
+        raise ValueError(
+            f"sampleSize must be between {SAMPLE_SIZE_MIN} and {SAMPLE_SIZE_MAX}, got: {sample_size}"
+        )
+
+    return sample_size
+
+
+def run_script(script_name: str, args: list = None):
+    """
+    Safely run a Python script as a subprocess.
+    Uses subprocess.run() with explicit argument list to prevent command injection.
+    """
+    cmd = [sys.executable, script_name]
+    if args:
+        cmd.extend([str(a) for a in args])
+
+    logger.info(f"Running subprocess: {' '.join(cmd)}")
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,  # 5 minute timeout
+            check=False
+        )
+        if result.returncode != 0:
+            logger.error(f"Script {script_name} failed with return code {result.returncode}")
+            logger.error(f"stderr: {result.stderr}")
+            return False
+        if result.stdout:
+            logger.info(f"Script {script_name} output: {result.stdout[:500]}")
+        return True
+    except subprocess.TimeoutExpired:
+        logger.error(f"Script {script_name} timed out after 300 seconds")
+        return False
+    except Exception as e:
+        logger.error(f"Failed to run script {script_name}: {e}")
+        return False
+
+
+# =========================================================================
+# Database Connection Helper
+# =========================================================================
+
+def get_db_connection():
+    """Create a psycopg connection to the segmentation database."""
+    return pg.connect(
+        f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'"
+    )
+
+
+def get_sqlalchemy_connection():
+    """Create a SQLAlchemy connection to the segmentation database."""
+    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
+    db = create_engine(conn_string)
+    return db.connect()
+
+
+# =========================================================================
+# Health Check Endpoint
+# =========================================================================
+
+@app.route('/health')
+def health():
+    """Health check endpoint for Docker and load balancer probes."""
+    health_status = {"status": "healthy", "service": "ml-pipeline"}
+    try:
+        conn = get_db_connection()
+        conn.close()
+        health_status["database"] = "connected"
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["database"] = f"unavailable: {str(e)}"
+        return jsonify(health_status), 503
+    return jsonify(health_status), 200
+
 
 @app.route('/')
 def index():
@@ -40,13 +149,25 @@ def index():
 
 @app.route('/getSegmentationCustomers', methods=['GET'])
 def getSegmentationCustomers(pg=pg):
-    connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
-    data_df = pd.read_sql('select * from test', connection)
-    return data_df.to_json(orient='records')
+    connection = get_db_connection()
+    try:
+        data_df = pd.read_sql('select * from test', connection)
+        return data_df.to_json(orient='records')
+    finally:
+        connection.close()
 
 @app.route('/getMLInfo', methods=['POST'])
 def getMLInfo(pg=pg):
     data = request.json
+
+    if data is None:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    # Validate sampleSize input
+    try:
+        sample_size = validate_sample_size(data.get("sampleSize"))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
     '''
     General logic for 1. reinit and 2. resegment and 3. read segment results:
@@ -56,104 +177,62 @@ def getMLInfo(pg=pg):
     '''
 
     # 1. reinit DB, if needed
-    #if sampleSize is specific to non-zero, sample only that set of database, otherwise run on full DB
-    if data.get("sampleSize") > 0:
-        os.system("python3 init_segmentationdb.py " + str(data.get("sampleSize")))
-    #if sampleSize is 0, reset db
-    elif data.get("sampleSize") == 0:
-        os.system("python3 init_segmentationdb.py")
+    if sample_size > 0:
+        if not run_script("init_segmentationdb.py", [sample_size]):
+            logger.error("init_segmentationdb.py failed")
+            return jsonify({"error": "Database initialization failed"}), 500
+    elif sample_size == 0:
+        if not run_script("init_segmentationdb.py"):
+            logger.error("init_segmentationdb.py failed")
+            return jsonify({"error": "Database initialization failed"}), 500
 
     # 2. resegment DB, if needed
-    '''
-    if sampleSize is >= 0, we reinit with a set of data point from original csv, thus we should resegment
-    if sampleSize is -1, means new datapoint from UI, thus we should resegment
-    if sampleSize is below -2, skip resegment, only read data from previous segmentation
-    '''
-    if data.get("sampleSize") >= -1:
-        os.system("python3 segmentation_process.py")
+    if sample_size >= -1:
+        if not run_script("segmentation_process.py"):
+            logger.error("segmentation_process.py failed")
+            return jsonify({"error": "Segmentation process failed"}), 500
 
-    # 3. read segment results: Connect to db and read latest segmentation results
-    connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
+    # 3. read segment results
+    connection = get_db_connection()
 
-    # Read customer data
-    customers_df = pd.read_sql('select * from test', connection)
-
-    # Read ML info (raw data) from mlinfo_raw table
     try:
-        mlinfo_df = pd.read_sql('select * from mlinfo_raw', connection)
-    except Exception as e:
-        # Table might not exist yet on first run with sampleSize=-2
-        mlinfo_df = pd.DataFrame(columns=['customer_id', 'pca_component_1', 'pca_component_2', 'segment'])
+        customers_df = pd.read_sql('select * from test', connection)
 
-    # Get segment metadata
-    segment_metadata = _get_segment_metadata(connection)
+        try:
+            mlinfo_df = pd.read_sql('select * from mlinfo_raw', connection)
+        except Exception as e:
+            mlinfo_df = pd.DataFrame(columns=['customer_id', 'pca_component_1', 'pca_component_2', 'segment'])
 
-    # =====================================================================
-    # IMAGE 2: Spending Score Histogram (sns.distplot)
-    # Reference: sns.distplot(spending, bins=10, kde=True)
-    # Frontend: Creates histogram with 10 bins + KDE overlay
-    # =====================================================================
-    spending_data = customers_df["spending_score"].tolist()
+        segment_metadata = _get_segment_metadata(connection)
 
-    # =====================================================================
-    # IMAGE 3: Pairplot (sns.pairplot)
-    # Reference: sns.pairplot with x_vars/y_vars = [age, annual_income, spending_score]
-    #            hue="gender", kind="scatter", palette="YlGnBu"
-    #
-    # This creates a 3x3 grid:
-    # - Diagonal: KDE/histogram of each variable (NOT scatter)
-    # - Off-diagonal: Scatter plots of variable pairs
-    # - Points colored by gender using YlGnBu palette
-    #
-    # Frontend: Creates 3x3 grid of subplots using pairplot_data arrays
-    # =====================================================================
+        spending_data = customers_df["spending_score"].tolist()
 
-    # =====================================================================
-    # IMAGE 4: Cluster Scatter Plot (plt.scatter with PCA components)
-    # Reference: plt.scatter(pca_2d[:, 0], pca_2d[:, 1], c=y_means, cmap="Spectral_r")
-    #
-    # IMPORTANT: This plots PCA-transformed coordinates, NOT raw features!
-    # - X-axis: PCA Component 1 (linear combination of age, income, spending)
-    # - Y-axis: PCA Component 2 (linear combination of age, income, spending)
-    # - Color: Segment assignment (0-4) using Spectral_r colormap
-    #
-    # Frontend: Creates SINGLE scatter plot of PCA components
-    # =====================================================================
+        response_data = {
+            "spending_histogram": {
+                "data": spending_data,
+                "bins": 10,
+                "title": "spending_score"
+            },
+            "pairplot_data": {
+                "age": customers_df["age"].tolist(),
+                "annual_income": customers_df["annual_income"].tolist(),
+                "spending_score": customers_df["spending_score"].tolist(),
+                "gender": customers_df["gender"].tolist()
+            },
+            "cluster_scatter": {
+                "pca_component_1": mlinfo_df["pca_component_1"].tolist() if "pca_component_1" in mlinfo_df.columns else [],
+                "pca_component_2": mlinfo_df["pca_component_2"].tolist() if "pca_component_2" in mlinfo_df.columns else [],
+                "segment": mlinfo_df["segment"].tolist() if "segment" in mlinfo_df.columns else [],
+                "customer_id": mlinfo_df["customer_id"].tolist() if "customer_id" in mlinfo_df.columns else [],
+                "n_clusters": 5,
+                "title": "Domains grouped into 5 clusters"
+            },
+            "segment_metadata": segment_metadata
+        }
 
-    response_data = {
-        # ===== IMAGE 2: Spending Score Histogram =====
-        "spending_histogram": {
-            "data": spending_data,
-            "bins": 10,
-            "title": "spending_score"
-        },
-
-        # ===== IMAGE 3: Pairplot =====
-        # Arrays format matching frontend expectations
-        "pairplot_data": {
-            "age": customers_df["age"].tolist(),
-            "annual_income": customers_df["annual_income"].tolist(),
-            "spending_score": customers_df["spending_score"].tolist(),
-            "gender": customers_df["gender"].tolist()
-        },
-
-        # ===== IMAGE 4: Cluster Scatter Plot =====
-        # Arrays format matching frontend expectations
-        "cluster_scatter": {
-            "pca_component_1": mlinfo_df["pca_component_1"].tolist() if "pca_component_1" in mlinfo_df.columns else [],
-            "pca_component_2": mlinfo_df["pca_component_2"].tolist() if "pca_component_2" in mlinfo_df.columns else [],
-            "segment": mlinfo_df["segment"].tolist() if "segment" in mlinfo_df.columns else [],
-            "customer_id": mlinfo_df["customer_id"].tolist() if "customer_id" in mlinfo_df.columns else [],
-            "n_clusters": 5,
-            "title": "Domains grouped into 5 clusters"
-        },
-
-        # Segment metadata (colors and centroids)
-        "segment_metadata": segment_metadata
-    }
-
-    connection.close()
-    return json.dumps(response_data)
+        return json.dumps(response_data)
+    finally:
+        connection.close()
 
 
 def _get_segment_metadata(connection):
@@ -171,13 +250,12 @@ def _get_segment_metadata(connection):
             }
         return metadata
     except Exception as e:
-        # Return Spectral_r colors if metadata table doesn't exist yet
         return {
-            0: {"color": "#5e4fa2"},  # Dark purple
-            1: {"color": "#3288bd"},  # Blue
-            2: {"color": "#66c2a5"},  # Teal/Green
-            3: {"color": "#fdae61"},  # Orange
-            4: {"color": "#9e0142"}   # Dark red/maroon
+            0: {"color": "#5e4fa2"},
+            1: {"color": "#3288bd"},
+            2: {"color": "#66c2a5"},
+            3: {"color": "#fdae61"},
+            4: {"color": "#9e0142"}
         }
 
 
@@ -185,26 +263,21 @@ def _get_segment_metadata(connection):
 def addCustomer(pg=pg):
     data = request.json
 
-    # for psycopg3 you need to use it with postgresql+psycopg manner, simple postgresql will use only psycopg2
-    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
+    if data is None or 'fields' not in data:
+        return jsonify({"error": "Request body must contain 'fields'"}), 400
 
-    db = create_engine(conn_string)
-    connection = db.connect()
+    connection = get_sqlalchemy_connection()
 
-    # our dataframe
-    ingestion = data['fields']
+    try:
+        ingestion = data['fields']
+        df = pd.DataFrame([ingestion])
+        df.to_sql('test', con=connection, if_exists='append', index=False)
+    finally:
+        connection.close()
 
-    # Create DataFrame
-    df = pd.DataFrame([ingestion])
-    print(df)
-    #connection.execute(text("SELECT setval(pg_get_serial_sequence('test', 'id'), (SELECT MAX(id) FROM test)+1);"))
-    df.to_sql('test', con=connection, if_exists='append', index=False)
-    connection = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
-    connection.autocommit = True
-    connection.close()
-
-    # Initiate the full process after each ingestion to check for drift
-    #os.system("python3 fullprocess.py apitrigger")
+    conn = get_db_connection()
+    conn.autocommit = True
+    conn.close()
 
     return jsonify(data['fields'])
 

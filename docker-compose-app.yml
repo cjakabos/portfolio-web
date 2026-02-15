@@ -1,6 +1,10 @@
 services:
   # ===========================================================================
   # BACKEND SERVICES - Internal only (no ports exposed to host)
+  #
+  # OpenTelemetry: Each Spring Boot service activates the Java agent via
+  # JAVA_TOOL_OPTIONS. The agent auto-instruments Spring MVC, WebClient,
+  # JPA, Kafka, and Resilience4j. Set OTEL_ENABLED=false to disable.
   # ===========================================================================
   jiraproxy:
     image: jiraproxy:latest
@@ -10,7 +14,16 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/web-proxy
-    # NO ports exposed - only accessible via NGINX
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
+      # OpenTelemetry Java agent — auto-instruments at JVM startup
+      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
+      - OTEL_SERVICE_NAME=jiraproxy
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
     networks:
       - backend
     restart: unless-stopped
@@ -23,7 +36,16 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/vehicles-api
-    # NO ports exposed - only accessible via NGINX
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
+      # OpenTelemetry
+      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
+      - OTEL_SERVICE_NAME=vehicles-api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
     networks:
       - backend
     restart: unless-stopped
@@ -36,9 +58,17 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/petstore
-    # NO ports exposed - only accessible via NGINX
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - HEALTH_CHECK_URL=http://localhost:8083/petstore/actuator/health
+      # OpenTelemetry
+      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
+      - OTEL_SERVICE_NAME=petstore
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
     networks:
       - backend
     restart: unless-stopped
@@ -51,10 +81,19 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/cloudapp
-    # NO ports exposed - only accessible via NGINX
     environment:
       - DOCKER_HOST_IP=host.docker.internal
       - DOCKER_HOST_KAFKA_PORT=9092
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - JWT_SECRET=${JWT_SECRET:-oursecretkey}
+      - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
+      # OpenTelemetry
+      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
+      - OTEL_SERVICE_NAME=cloudapp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
     networks:
       - backend
     restart: unless-stopped
@@ -67,9 +106,12 @@ services:
         SERVICE_PATH: backend/ml-pipeline
         SERVICE_PORT: 8600
     container_name: mlops-segmentation
-    # NO ports exposed - only accessible via NGINX
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      # OpenTelemetry for Flask/Python (activated by otel_setup.py when true)
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      - OTEL_SERVICE_NAME=ml-pipeline
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     networks:
       - backend
     restart: unless-stopped
@@ -80,10 +122,16 @@ services:
   next-nginx-jwt:
     container_name: next-nginx-jwt
     ports:
-      - "80:80"  # Only NGINX is exposed to host
+      - "80:80"
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/nginx_health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - frontend
       - backend
@@ -106,6 +154,12 @@ services:
         SERVICE_PATH: frontend/cloudapp-shell
         SERVICE_PORT: 5001
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        # Module Federation remote URLs — configurable per environment
+        NEXT_PUBLIC_REMOTE_OPENMAPS_URL: ${NEXT_PUBLIC_REMOTE_OPENMAPS_URL:-http://localhost:5002}
+        NEXT_PUBLIC_REMOTE_JIRA_URL: ${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
+        NEXT_PUBLIC_REMOTE_CHATLLM_URL: ${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
+        NEXT_PUBLIC_REMOTE_MLOPS_URL: ${NEXT_PUBLIC_REMOTE_MLOPS_URL:-http://localhost:5005}
+        NEXT_PUBLIC_REMOTE_PETSTORE_URL: ${NEXT_PUBLIC_REMOTE_PETSTORE_URL:-http://localhost:5006}
     container_name: next-cloudapp-shell
     ports:
       - 5001:5001

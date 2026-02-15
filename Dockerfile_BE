@@ -1,3 +1,14 @@
+# ===========================================================================
+# Dockerfile_BE — Spring Boot Backend Services
+#
+# FIX (4.6): Added HEALTHCHECK using Spring Boot Actuator.
+# NEW (OpenTelemetry): Downloads the OTel Java agent at build time.
+#   The agent auto-instruments Spring MVC, WebClient, JPA, Kafka, and
+#   Resilience4j with zero code changes. Activation is controlled by
+#   JAVA_TOOL_OPTIONS env var set in docker-compose — if not set, the
+#   agent is present but inactive.
+# ===========================================================================
+
 FROM docker.io/library/maven:3-eclipse-temurin-21 AS builder
 ARG SERVICE_PATH
 
@@ -13,6 +24,14 @@ RUN mvn package
 FROM eclipse-temurin:21-jdk-alpine AS run
 ARG SERVICE_PATH
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Download OpenTelemetry Java agent
+ARG OTEL_AGENT_VERSION=2.12.0
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v${OTEL_AGENT_VERSION}/opentelemetry-javaagent.jar /opt/opentelemetry-javaagent.jar
+RUN chmod 644 /opt/opentelemetry-javaagent.jar
+
 RUN mkdir -p /home/run
 WORKDIR /home/run
 COPY --from=builder /home/root/target/*-SNAPSHOT.jar /home/run/app.jar
@@ -23,4 +42,12 @@ COPY localhost+3-key.pub /home/run/localhost+3-key.pub
 ARG DOCKER_HOST_IP
 ENV DOCKER_HOST_IP=host.docker.internal
 
+# Health check URL is set per-service in docker-compose via HEALTH_CHECK_URL env var.
+ENV HEALTH_CHECK_URL="http://localhost:8080/actuator/health"
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -sf $HEALTH_CHECK_URL || exit 1
+
+# The OTel agent is activated via JAVA_TOOL_OPTIONS in docker-compose.
+# When JAVA_TOOL_OPTIONS is not set, the app starts normally without tracing.
 ENTRYPOINT ["java", "-jar", "/home/run/app.jar"]

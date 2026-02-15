@@ -13,3 +13,15 @@ psycopg==3.1.14
 psycopg-binary==3.1.14
 sqlalchemy==2.0.23
 werkzeug==3.0.1
+
+# ===========================================================================
+# OpenTelemetry — Distributed Tracing
+# Auto-instruments Flask, psycopg, SQLAlchemy, and requests
+# ===========================================================================
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp==1.29.0
+opentelemetry-instrumentation-flask==0.50b0
+opentelemetry-instrumentation-psycopg==0.50b0
+opentelemetry-instrumentation-sqlalchemy==0.50b0
+opentelemetry-instrumentation-requests==0.50b0
