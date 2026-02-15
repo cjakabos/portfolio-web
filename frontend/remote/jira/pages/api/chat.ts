@@ -2,11 +2,37 @@
 import { createOllama } from "ollama-ai-provider-v2";
 import { streamText, convertToModelMessages, createUIMessageStream, JsonToSseTransformStream } from "ai";
 
-const ollama = createOllama({
-    baseURL: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":11434/api",
-});
+const OLLAMA_BASE = "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":11434/api";
+
+const ollama = createOllama({ baseURL: OLLAMA_BASE });
 
 export const runtime = "edge";
+
+const thinkingCache = new Map<string, boolean>();
+
+async function supportsThinking(model: string): Promise<boolean> {
+    if (thinkingCache.has(model)) return thinkingCache.get(model)!;
+
+    try {
+        const res = await fetch(`${OLLAMA_BASE}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model,
+                messages: [{ role: "user", content: "." }],
+                think: true,
+                stream: false,
+                options: { num_predict: 1 },
+            }),
+        });
+        // 400 = "does not support thinking", anything else = it works
+        const canThink = res.status !== 400;
+        thinkingCache.set(model, canThink);
+        return canThink;
+    } catch {
+        return false;
+    }
+}
 
 export default async function POST(req: Request) {
     //  CORS for shell use
@@ -20,6 +46,7 @@ export default async function POST(req: Request) {
     }
     const body = await req.json();
     const { messages, model } = body;
+    const canThink = await supportsThinking(model);
 
     console.log('Received model:', model);
     console.log('Received messages:', JSON.stringify(messages, null, 2));
@@ -57,18 +84,16 @@ export default async function POST(req: Request) {
             const result = streamText({
                 model: ollama(model),
                 messages: modelMessages,
-                providerOptions: {
-                    ollama: {
-                        think: true
-                    }
-                }
+                ...(canThink && {
+                    providerOptions: { ollama: { think: true } }
+                })
             });
 
             result.consumeStream();
 
             dataStream.merge(
                 result.toUIMessageStream({
-                    sendReasoning: true,
+                    ...(canThink && { sendReasoning: true }),
                 }),
             );
         },
@@ -76,9 +101,6 @@ export default async function POST(req: Request) {
             console.error('Stream error:', error);
             return 'Oops, an error occurred!';
         },
-        onFinish: ({ messages, isContinuation, responseMessage }) => {
-            console.log('Stream finished with messages:', messages);
-        }
     });
 
     return new Response(stream.pipeThrough(new JsonToSseTransformStream()));

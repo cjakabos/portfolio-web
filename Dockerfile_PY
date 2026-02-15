@@ -1,8 +1,19 @@
-FROM python:3.12
+# ===========================================================================
+# Dockerfile_PY — Python ML Pipeline Service
+#
+# Replaced two CMD instructions (only last CMD ran) with a
+#   single entrypoint script that runs init_segmentationdb.py first,
+#   then exec's app.py.
+# Added HEALTHCHECK using the Flask /health endpoint.
+# Use --no-cache-dir for reproducible installs.
+# ===========================================================================
+
+FROM python:3.12-slim
 ARG SERVICE_PORT
 ARG SERVICE_PATH
 
-RUN apt-get update
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY ./$SERVICE_PATH/requirements.txt /requirements.txt
 COPY ./$SERVICE_PATH/config.json /config.json
@@ -12,9 +23,19 @@ COPY ./$SERVICE_PATH/customers /customers
 RUN pip3 install --upgrade pip && pip3 install --no-cache-dir -r ./requirements.txt
 
 WORKDIR /src
-CMD [ "python3", "init_segmentationdb.py"]
-CMD [ "python3", "app.py"]
 
-ENV LISTEN_PORT $SERVICE_PORT
+# Create an entrypoint script that:
+#   1. Runs the DB initialization script
+#   2. exec's the Flask app so it becomes PID 1
+RUN printf '#!/bin/sh\nset -e\necho "Running database initialization..."\npython3 init_segmentationdb.py\necho "Starting Flask application..."\nexec python3 app.py\n' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+
+# Health check against the Flask /health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -sf http://localhost:${SERVICE_PORT:-8600}/mlops-segmentation/health || exit 1
+
+ENV LISTEN_PORT=$SERVICE_PORT
 
 EXPOSE $SERVICE_PORT
+
+ENTRYPOINT ["/entrypoint.sh"]

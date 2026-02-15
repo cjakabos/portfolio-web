@@ -1,6 +1,6 @@
 // components/PetStoreApp.tsx
 import React, { useState, createContext, useContext } from 'react';
-import { useRouter } from 'next/router';
+import Router from 'next/router';
 import PetStoreLayout from './PetStoreLayout';
 import PetStoreDashboard from './petstore/PetStoreDashboard';
 import Schedule from './petstore/Schedule';
@@ -21,15 +21,21 @@ export const PetStoreNavigationContext = createContext<NavigationContextType>({
 
 export const usePetStoreNavigation = () => useContext(PetStoreNavigationContext);
 
+const useSafeRouter = () => {
+  try {
+    return Router.router ? Router : null;
+  } catch {
+    return null;
+  }
+};
+
 const PetStoreApp = () => {
-  const router = useRouter();
-  const pathname = router.asPath.split('?')[0];
+  const router = useSafeRouter();
+  const pathname = router?.asPath?.split('?')[0] ?? '';
+  const isStandalone = pathname.startsWith('/petstore') || pathname === '/';
 
   // Internal state for microfrontend navigation
   const [internalPage, setInternalPage] = useState('dashboard');
-
-  // Detect if running standalone or embedded
-  const isStandalone = pathname.startsWith('/petstore') || pathname === '/';
 
   // Get page from URL when standalone
   const getPageFromUrl = () => {

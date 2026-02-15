@@ -1,5 +1,15 @@
+# ===========================================================================
+# Dockerfile_OLLAMA — Ollama LLM Service
+#
+# Added HEALTHCHECK against the Ollama API endpoint.
+# ===========================================================================
+
 # Use the latest Ollama image as the base
 FROM ollama/ollama:latest
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Start the Ollama server in the background and pull the model from docker-compose NEXT_PUBLIC_LLM_MODEL variable
 ARG NEXT_PUBLIC_LLM_MODEL
@@ -12,6 +22,10 @@ ENTRYPOINT ["/bin/ollama"]
 
 # Expose the port that Ollama serves on
 EXPOSE 11434
+
+# Health check against Ollama's API
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -sf http://localhost:11434/api/tags || exit 1
 
 # Default command to start the Ollama service
 CMD ["serve"]

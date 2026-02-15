@@ -55,7 +55,10 @@ def init_telemetry(flask_app):
         trace.set_tracer_provider(provider)
 
         # Auto-instrument Flask (adds spans for every request)
-        FlaskInstrumentor().instrument_app(flask_app)
+        FlaskInstrumentor().instrument_app(
+            flask_app,
+            excluded_urls="health"
+        )
 
         # Auto-instrument psycopg (adds spans for every DB query)
         PsycopgInstrumentor().instrument()

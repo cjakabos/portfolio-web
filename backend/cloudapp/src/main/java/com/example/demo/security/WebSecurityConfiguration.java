@@ -1,6 +1,20 @@
 package com.example.demo.security;
 
+// ===========================================================================
+// Replaced IP-based internal auth bypass with service-to-service
+// token validation. The old approach granted unauthenticated access to any
+// request from 172.x.x.x or 10.x.x.x — which would bypass JWT in any cloud
+// VPC where all traffic originates from private IPs.
+//
+// New approach: Internal services must send a shared secret in the
+// X-Internal-Auth header. The token is read from the INTERNAL_SERVICE_TOKEN
+// environment variable at startup. If the env var is not set, internal auth
+// is disabled (all requests go through normal JWT validation).
+// ===========================================================================
+
+import com.example.demo.model.persistence.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -28,6 +42,15 @@ public class WebSecurityConfiguration {
     @Autowired
     private final UserDetailsServiceImpl userDetailsService;
 
+    // Service-to-service token from environment variable.
+    // Set INTERNAL_SERVICE_TOKEN in docker-compose for all services that need
+    // to communicate internally without JWT (e.g., NGINX health checks,
+    // inter-service calls). If not set, this filter chain is effectively disabled.
+    @Value("${INTERNAL_SERVICE_TOKEN:}")
+    private String internalServiceToken;
+
+    private static final String INTERNAL_AUTH_HEADER = "X-Internal-Auth";
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -48,15 +71,21 @@ public class WebSecurityConfiguration {
             "/actuator/**"
     };
 
-    // Check if request comes from internal Docker network
+    // Check for service-to-service token instead of IP address.
+    // This is safe in cloud VPCs because it requires a secret that only
+    // authorized services possess, rather than relying on network topology.
     private boolean isInternalRequest(jakarta.servlet.http.HttpServletRequest request) {
-        String remoteAddr = request.getRemoteAddr();
-        return remoteAddr.startsWith("172.") ||
-                remoteAddr.startsWith("10.") ||
-                remoteAddr.equals("127.0.0.1");
+        if (internalServiceToken == null || internalServiceToken.isBlank()) {
+            // No token configured — disable internal auth bypass entirely.
+            // All requests must go through JWT validation.
+            return false;
+        }
+        String authHeader = request.getHeader(INTERNAL_AUTH_HEADER);
+        return internalServiceToken.equals(authHeader);
     }
 
-    // This filter chain handles internal Docker network requests - no JWT required
+    // This filter chain handles internal service-to-service requests - no JWT required
+    // Services must present the shared token in the X-Internal-Auth header.
     @Bean
     @Order(1)
     public SecurityFilterChain internalNetworkFilterChain(HttpSecurity http) throws Exception {

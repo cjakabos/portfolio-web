@@ -166,7 +166,7 @@ services:
   # Access the Jaeger UI at http://localhost:16686
   # ===========================================================================
   jaeger:
-    image: jaegertracing/all-in-one:1.62
+    image: jaegertracing/jaeger:latest
     container_name: jaeger
     restart: unless-stopped
     ports:

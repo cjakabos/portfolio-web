@@ -1,3 +1,13 @@
+# ===========================================================================
+# Dockerfile_FE — Next.js Frontend Services (Shell + Remotes)
+#
+# FIX (4.9): Replaced `npm install -f` with `npm ci` for deterministic,
+#   reproducible builds. Requires package-lock.json to be present.
+# FIX (4.6): Added HEALTHCHECK for the Next.js server.
+# FIX (4.5): NEXT_PUBLIC_REMOTE_* env vars are now passed at build time
+#   so Module Federation remotes are configurable per environment.
+# ===========================================================================
+
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
@@ -7,24 +17,40 @@ ARG SERVICE_PATH
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY ./$SERVICE_PATH/package.json ./
-RUN npm install -f
+# Copy both package.json AND package-lock.json, use npm ci
+# npm ci is the production-grade approach: it installs from the lockfile
+# exactly, fails if lockfile is out of sync, and is faster than npm install.
+COPY ./$SERVICE_PATH/package.json ./$SERVICE_PATH/package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci; else echo "Warning: No package-lock.json found, falling back to npm install" && npm install; fi
 
 
 # Rebuild the source code only when needed
 FROM base AS builder
 
 ARG NEXT_PRIVATE_LOCAL_WEBPACK
-ENV NEXT_PRIVATE_LOCAL_WEBPACK $NEXT_PRIVATE_LOCAL_WEBPACK
+ENV NEXT_PRIVATE_LOCAL_WEBPACK=$NEXT_PRIVATE_LOCAL_WEBPACK
 ARG NEXT_PUBLIC_JIRA_DOMAIN
-ENV NEXT_PUBLIC_JIRA_DOMAIN $NEXT_PUBLIC_JIRA_DOMAIN
+ENV NEXT_PUBLIC_JIRA_DOMAIN=$NEXT_PUBLIC_JIRA_DOMAIN
 ARG NEXT_PUBLIC_JIRA_API_TOKEN
-ENV NEXT_PUBLIC_JIRA_API_TOKEN $NEXT_PUBLIC_JIRA_API_TOKEN
+ENV NEXT_PUBLIC_JIRA_API_TOKEN=$NEXT_PUBLIC_JIRA_API_TOKEN
 ARG NEXT_PUBLIC_JIRA_PROJECT_KEY
-ENV NEXT_PUBLIC_JIRA_PROJECT_KEY $NEXT_PUBLIC_JIRA_PROJECT_KEY
+ENV NEXT_PUBLIC_JIRA_PROJECT_KEY=$NEXT_PUBLIC_JIRA_PROJECT_KEY
 ARG NEXT_PUBLIC_JIRA_EMAIL
-ENV NEXT_PUBLIC_JIRA_EMAIL $NEXT_PUBLIC_JIRA_EMAIL
+ENV NEXT_PUBLIC_JIRA_EMAIL=$NEXT_PUBLIC_JIRA_EMAIL
+
+# Module Federation remote URLs are now configurable via env vars.
+# These are baked into the Next.js build, so they must be set at build time.
+# Default values point to localhost for local development.
+ARG NEXT_PUBLIC_REMOTE_OPENMAPS_URL
+ENV NEXT_PUBLIC_REMOTE_OPENMAPS_URL=${NEXT_PUBLIC_REMOTE_OPENMAPS_URL:-http://localhost:5002}
+ARG NEXT_PUBLIC_REMOTE_JIRA_URL
+ENV NEXT_PUBLIC_REMOTE_JIRA_URL=${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
+ARG NEXT_PUBLIC_REMOTE_CHATLLM_URL
+ENV NEXT_PUBLIC_REMOTE_CHATLLM_URL=${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
+ARG NEXT_PUBLIC_REMOTE_MLOPS_URL
+ENV NEXT_PUBLIC_REMOTE_MLOPS_URL=${NEXT_PUBLIC_REMOTE_MLOPS_URL:-http://localhost:5005}
+ARG NEXT_PUBLIC_REMOTE_PETSTORE_URL
+ENV NEXT_PUBLIC_REMOTE_PETSTORE_URL=${NEXT_PUBLIC_REMOTE_PETSTORE_URL:-http://localhost:5006}
 
 ARG SERVICE_PATH
 WORKDIR /app
@@ -45,20 +71,23 @@ RUN \
 FROM base AS runner
 ARG SERVICE_PORT
 ARG NEXT_PRIVATE_LOCAL_WEBPACK
-ENV NEXT_PRIVATE_LOCAL_WEBPACK $NEXT_PRIVATE_LOCAL_WEBPACK
+ENV NEXT_PRIVATE_LOCAL_WEBPACK=$NEXT_PRIVATE_LOCAL_WEBPACK
 ARG NEXT_PUBLIC_JIRA_DOMAIN
-ENV NEXT_PUBLIC_JIRA_DOMAIN $NEXT_PUBLIC_JIRA_DOMAIN
+ENV NEXT_PUBLIC_JIRA_DOMAIN=$NEXT_PUBLIC_JIRA_DOMAIN
 ARG NEXT_PUBLIC_JIRA_API_TOKEN
-ENV NEXT_PUBLIC_JIRA_API_TOKEN $NEXT_PUBLIC_JIRA_API_TOKEN
+ENV NEXT_PUBLIC_JIRA_API_TOKEN=$NEXT_PUBLIC_JIRA_API_TOKEN
 
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 COPY --from=builder /app/public* ./public
 
@@ -76,7 +105,11 @@ USER nextjs
 
 EXPOSE $SERVICE_PORT
 
-ENV PORT $SERVICE_PORT
+ENV PORT=$SERVICE_PORT
+
+# Health check against the Next.js server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -sf http://localhost:${PORT:-3000}/ || exit 1
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
