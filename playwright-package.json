@@ -1,0 +1,22 @@
+{
+  "name": "cloudapp-e2e",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:auth": "playwright test auth.spec.ts",
+    "test:shop": "playwright test shop.spec.ts",
+    "test:chat": "playwright test chat.spec.ts",
+    "test:mlops": "playwright test mlops.spec.ts",
+    "test:modfed": "playwright test module-federation.spec.ts",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}

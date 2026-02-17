@@ -16,7 +16,7 @@ public class UpdateNoteRequest {
         return title;
     }
 
-    public void settitle(String title) {
+    public void setTitle(String title) {
         this.title = title;
     }
 

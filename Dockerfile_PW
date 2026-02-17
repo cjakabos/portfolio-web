@@ -1,0 +1,27 @@
+# ===========================================================================
+# Dockerfile_PW — Headless Playwright E2E runner for Docker
+#
+# Usage (standalone):
+#   docker build -f Dockerfile_PW -t pw-e2e .
+#   docker run --rm --network test-frontend pw-e2e
+#
+# Usage (via docker-compose.test.yml):
+#   docker compose -f docker-compose.test.yml up --build test-e2e
+# ===========================================================================
+
+FROM mcr.microsoft.com/playwright:v1.58.0-noble
+
+WORKDIR /e2e
+
+# Copy package manifests and install
+COPY playwright-package.json ./package.json
+RUN npm install
+
+# Copy config and test files
+COPY playwright.config.ts ./
+COPY e2e/ ./e2e/
+
+# Set CI mode for headless defaults
+ENV CI=true
+
+ENTRYPOINT ["npx", "playwright", "test"]

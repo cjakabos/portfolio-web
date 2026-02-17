@@ -9,18 +9,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.security.core.Authentication;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.KeyFactory;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
@@ -33,53 +35,54 @@ public class JwtUtilities {
     @Autowired
     public UserRepository userRepository;
 
-    private static final String PUBLIC_KEY_FILE_RSA = "localhost+3-key.pub";
-    private static final String PRIVATE_KEY_FILE_RSA = "localhost+3-key.pem";
+    // -------------------------------------------------------------------------
+    // Configurable key paths — override in application-{profile}.properties.
+    //
+    // Supports two formats:
+    //   "classpath:some-key.pem"   → loaded from src/main/resources (or test/resources)
+    //   "localhost+3-key.pem"      → loaded from the filesystem (relative to WORKDIR)
+    //   "/absolute/path/key.pem"   → loaded from the filesystem (absolute)
+    //
+    // Defaults match the existing production file names so nothing breaks
+    // for the Docker image where keys are copied into WORKDIR (/home/run).
+    // -------------------------------------------------------------------------
+    @Value("${jwt.private-key-path:localhost+3-key.pem}")
+    private String privateKeyPath;
+
+    @Value("${jwt.public-key-path:localhost+3-key.pub}")
+    private String publicKeyPath;
 
     private static final String PEM_PUBLIC_START = "-----BEGIN PUBLIC KEY-----";
     private static final String PEM_PUBLIC_END = "-----END PUBLIC KEY-----";
-
     private static final String PEM_PRIVATE_START = "-----BEGIN PRIVATE KEY-----";
     private static final String PEM_PRIVATE_END = "-----END PRIVATE KEY-----";
 
-    public String generateToken(Authentication auth) {
+    private RSAPrivateKey cachedPrivateKey;
+    private RSAPublicKey cachedPublicKey;
 
-        RSAPrivateKey key;
-
+    @PostConstruct
+    void loadKeys() {
         try {
-            String privateKeyPem = new String(Files.readAllBytes(Paths.get(PRIVATE_KEY_FILE_RSA)));
-            privateKeyPem = privateKeyPem.replace(PEM_PRIVATE_START, "").replace(PEM_PRIVATE_END, "");
-            privateKeyPem = privateKeyPem.replaceAll("\\s", "");
-            byte[] pkcs8EncodedKey = Base64.getDecoder().decode(privateKeyPem);
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(pkcs8EncodedKey);
-            key = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
-            throw new IllegalArgumentException(e);
+            cachedPrivateKey = loadPrivateKey();
+            cachedPublicKey = loadPublicKey();
+            logger.info("JWT keys loaded successfully (private={}, public={})", privateKeyPath, publicKeyPath);
+        } catch (Exception e) {
+            logger.error("Failed to load JWT keys on startup: {}", e.getMessage());
+            throw new IllegalStateException("Cannot start without valid JWT keys", e);
         }
+    }
 
+    public String generateToken(Authentication auth) {
         return JWT.create()
                 .withIssuer("cloudapp")
                 .withSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername())
                 .withExpiresAt(new Date(System.currentTimeMillis() + 864_000_000))
-                .sign(Algorithm.RSA512(key));
+                .sign(Algorithm.RSA512(cachedPrivateKey));
     }
 
     public String getSubject(String token) {
-
-        RSAPublicKey key;
         try {
-            String publicKeyPem = new String(Files.readAllBytes(Paths.get(PUBLIC_KEY_FILE_RSA)));
-            publicKeyPem = publicKeyPem.replace(PEM_PUBLIC_START, "").replace(PEM_PUBLIC_END, "");
-            publicKeyPem = publicKeyPem.replaceAll("\\s", "");
-            X509EncodedKeySpec data = new X509EncodedKeySpec(Base64.getDecoder().decode((publicKeyPem)));
-            key = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(data);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
-            logger.error("Failed to load public key: {}", e.getMessage());
-            throw new IllegalArgumentException("Failed to load public key", e);
-        }
-
-        try {
-            Algorithm algorithm = Algorithm.RSA512(key);
+            Algorithm algorithm = Algorithm.RSA512(cachedPublicKey);
             DecodedJWT decodedJWT = JWT.require(algorithm)
                     .withIssuer("cloudapp")
                     .build()
@@ -90,5 +93,44 @@ public class JwtUtilities {
             throw new IllegalArgumentException("Invalid JWT token", exception);
         }
     }
-}
 
+    // -------------------------------------------------------------------------
+    // Internal helpers
+    // -------------------------------------------------------------------------
+
+    private byte[] readKeyBytes(String path) throws IOException {
+        if (path.startsWith("classpath:")) {
+            String resource = path.substring("classpath:".length());
+            try (InputStream is = new ClassPathResource(resource).getInputStream()) {
+                return is.readAllBytes();
+            }
+        }
+        return Files.readAllBytes(Paths.get(path));
+    }
+
+    private RSAPrivateKey loadPrivateKey() {
+        try {
+            String pem = new String(readKeyBytes(privateKeyPath));
+            pem = pem.replace(PEM_PRIVATE_START, "").replace(PEM_PRIVATE_END, "");
+            pem = pem.replaceAll("\\s", "");
+            byte[] encoded = Base64.getDecoder().decode(pem);
+            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
+            return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
+            throw new IllegalArgumentException("Failed to load private key from: " + privateKeyPath, e);
+        }
+    }
+
+    private RSAPublicKey loadPublicKey() {
+        try {
+            String pem = new String(readKeyBytes(publicKeyPath));
+            pem = pem.replace(PEM_PUBLIC_START, "").replace(PEM_PUBLIC_END, "");
+            pem = pem.replaceAll("\\s", "");
+            byte[] encoded = Base64.getDecoder().decode(pem);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(encoded);
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
+            throw new IllegalArgumentException("Failed to load public key from: " + publicKeyPath, e);
+        }
+    }
+}

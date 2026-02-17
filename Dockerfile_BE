@@ -19,7 +19,8 @@ ARG DOCKER_HOST_IP
 ENV DOCKER_HOST_IP=host.docker.internal
 
 WORKDIR /home/root
-RUN mvn package
+# Build artifact only; test suites run later in dedicated docker-compose test services.
+RUN mvn -DskipTests package
 
 FROM eclipse-temurin:21-jdk-alpine AS run
 ARG SERVICE_PATH

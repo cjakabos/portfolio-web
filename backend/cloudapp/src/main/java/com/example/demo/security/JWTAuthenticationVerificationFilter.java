@@ -40,12 +40,12 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
         var authHeader = request.getHeader(SecurityConstants.HEADER_STRING);
 
         // Skip if no header or doesn't start with Bearer
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null) {
             chain.doFilter(request, response);
             return;
         }
 
-        var token = authHeader.substring(7); // Use substring instead of replace
+        var token = authHeader.replace("Bearer ", "");
 
         // Skip if token is empty
         if (token.isEmpty()) {

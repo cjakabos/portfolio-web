@@ -1,0 +1,626 @@
+# ===========================================================================
+# docker-compose.test.yml — Comprehensive Integration Test Composition
+#
+# Usage:
+#   # Run ALL tests (backend + Flask + NGINX + frontend E2E):
+#   docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+#
+#   # Run only backend integration tests:
+#   docker compose -f docker-compose.test.yml up --build test-backend --abort-on-container-exit
+#
+#   # Run only ML Pipeline pytest:
+#   docker compose -f docker-compose.test.yml up --build test-ml-pipeline --abort-on-container-exit
+#
+#   # Run only frontend unit/hook tests:
+#   docker compose -f docker-compose.test.yml up --build test-frontend-unit --abort-on-container-exit
+#
+#   # Run only NGINX gateway tests:
+#   docker compose -f docker-compose.test.yml up --build test-nginx-gateway --abort-on-container-exit
+#
+#   # Run only Playwright E2E tests:
+#   docker compose -f docker-compose.test.yml up --build test-e2e --abort-on-container-exit
+#
+#   # Run ALL suites in proper order with one command:
+#   docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+#
+#   # Run host-accessible test stack for Playwright UI (keeps CI stack unchanged):
+#   docker compose -f docker-compose.test.yml --profile host-ui up -d \
+#     test-shell-host test-nginx-host
+# ===========================================================================
+
+services:
+  # =========================================================================
+  # EPHEMERAL DATABASES — no volumes, destroyed on docker compose down
+  # =========================================================================
+  test-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: cloudappdb_test
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d cloudappdb_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  test-postgres-ml:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: segmentationdb_test
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d segmentationdb_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  test-mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: testpass
+      MYSQL_DATABASE: petstore_test
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -uroot -ptestpass -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    tmpfs:
+      - /var/lib/mysql
+
+  test-mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testuser
+      MONGO_INITDB_ROOT_PASSWORD: testpass
+      MONGO_INITDB_DATABASE: cloudappdb_test
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /data/db
+
+  test-kafka:
+    image: confluentinc/cp-kafka:7.2.3
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: test-zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://test-kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      test-zookeeper:
+        condition: service_healthy
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  test-zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.3
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=ruok,srvr,stat"
+    networks:
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # =========================================================================
+  # BACKEND INTEGRATION TESTS (Spring Boot — CloudApp)
+  # =========================================================================
+  test-backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/cloudapp
+      target: builder
+    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://test-postgres:5432/cloudappdb_test
+      - SPRING_DATASOURCE_USERNAME=testuser
+      - SPRING_DATASOURCE_PASSWORD=testpass
+      - SPRING_DATA_MONGODB_URI=mongodb://testuser:testpass@test-mongo:27017/cloudappdb_test?authSource=admin
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=test-kafka:29092
+      - JWT_SECRET=test-secret-key-for-integration-tests-only-change-me
+      - JWT_EXPIRATION_MS=3600000
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-mongo:
+        condition: service_healthy
+      test-kafka:
+        condition: service_healthy
+    networks:
+      - test-backend
+
+  # =========================================================================
+  # BACKEND INTEGRATION TESTS (Spring Boot — Petstore)
+  # =========================================================================
+  test-backend-petstore:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/petstore
+      target: builder
+    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://test-mysql:3306/petstore_test?serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=testpass
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+    depends_on:
+      test-mysql:
+        condition: service_healthy
+    networks:
+      - test-backend
+
+  # =========================================================================
+  # BACKEND INTEGRATION TESTS (Spring Boot — Vehicles API)
+  # =========================================================================
+  test-backend-vehicles:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/vehicles-api
+      target: builder
+    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+    networks:
+      - test-backend
+
+  # =========================================================================
+  # BACKEND INTEGRATION TESTS (Spring Boot — Web Proxy)
+  # =========================================================================
+  test-backend-webproxy:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/web-proxy
+      target: builder
+    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+    networks:
+      - test-backend
+
+  # =========================================================================
+  # ML PIPELINE TESTS (Flask/pytest)
+  # =========================================================================
+  test-ml-pipeline:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PY
+      args:
+        SERVICE_PATH: backend/ml-pipeline
+        SERVICE_PORT: 8600
+    entrypoint: ["sh", "-c", "pip install pytest pytest-cov pytest-timeout && cd /src && pytest /tests -v --tb=short --timeout=120"]
+    environment:
+      - ML_DB_USER=testuser
+      - ML_DB_PASSWORD=testpass
+      - ML_DB_HOST=test-postgres-ml
+      - ML_DB_PORT=5432
+      - ML_DB_NAME=segmentationdb_test
+      - OTEL_ENABLED=false
+    volumes:
+      - ./tests/ml-pipeline:/tests:ro
+    depends_on:
+      test-postgres-ml:
+        condition: service_healthy
+    networks:
+      - test-backend
+
+  # =========================================================================
+  # FRONTEND UNIT TESTS (Jest + React Testing Library)
+  # =========================================================================
+  test-frontend-unit:
+    image: node:20-alpine
+    working_dir: /app
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "npm ci && npm install --save-dev @testing-library/react @testing-library/jest-dom axios-mock-adapter jest jest-environment-jsdom ts-jest @types/jest && npx jest --config jest.config.cjs --coverage",
+      ]
+    environment:
+      - CI=true
+    volumes:
+      - ./frontend/cloudapp-shell:/app
+
+  # =========================================================================
+  # TEST ORCHESTRATOR (single-command full matrix)
+  #
+  # Runs all test suites sequentially via nested docker compose commands
+  # to guarantee infra ordering and deterministic exits.
+  # =========================================================================
+  test-all:
+    image: docker:27.5.1-cli
+    working_dir: ${PWD:-/workspace}
+    volumes:
+      - ./:${PWD:-/workspace}
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "set -eu; PROJECT=portfolio_test_all; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-frontend-unit test-nginx-gateway test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do echo ''; echo \"=== Running $$svc ===\"; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --abort-on-container-exit $$svc; cleanup; done; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+      ]
+
+  # =========================================================================
+  # NGINX GATEWAY TESTS
+  # =========================================================================
+  test-nginx-gateway:
+    image: python:3.12-slim
+    entrypoint: ["sh", "-c", "pip install pytest requests pytest-timeout && pytest /tests -v --tb=short --timeout=30"]
+    environment:
+      - NGINX_URL=http://test-nginx:80
+      - BACKEND_URL=http://test-nginx:80
+    volumes:
+      - ./tests/nginx-gateway:/tests:ro
+    depends_on:
+      test-nginx:
+        condition: service_healthy
+      test-cloudapp:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+
+  # =========================================================================
+  # PLAYWRIGHT E2E TESTS
+  #
+  # Runs headless Chromium inside the official Playwright Docker image.
+  # Test results and traces are written to ./playwright-report on the host.
+  #
+  # Run locally with a browser instead:
+  #   cd frontend/cloudapp-shell
+  #   BASE_URL=http://localhost:5001 BACKEND_URL=http://localhost:80 \
+  #     npx playwright test --headed
+  # =========================================================================
+  test-e2e:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PW
+    environment:
+      - CI=true
+      - BASE_URL=http://test-shell:5001
+      - BACKEND_URL=http://test-nginx:80
+    volumes:
+      # Mount report output so it's accessible on the host after the run
+      - ./playwright-report:/e2e/playwright-report
+      - ./test-results:/e2e/test-results
+    depends_on:
+      test-shell:
+        condition: service_healthy
+      test-nginx:
+        condition: service_healthy
+      test-mlops-frontend:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+
+  # =========================================================================
+  # APP SERVICES FOR E2E (minimal stack)
+  # =========================================================================
+  test-cloudapp:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/cloudapp
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal
+      - SPRING_DATASOURCE_USERNAME=testuser
+      - SPRING_DATASOURCE_PASSWORD=testpass
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://test-postgres:5432/cloudappdb_test
+      - SPRING_DATA_MONGODB_URI=mongodb://testuser:testpass@test-mongo:27017/cloudappdb_test?authSource=admin
+      - DOCKER_HOST_KAFKA_PORT=29092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=test-kafka:29092
+      - JWT_SECRET=test-secret-key-for-integration-tests-only-change-me
+      - JWT_EXPIRATION_MS=3600000
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-mongo:
+        condition: service_healthy
+      test-kafka:
+        condition: service_healthy
+    networks:
+      test-backend:
+        aliases:
+          - cloudapp
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8099/cloudapp/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: "no"
+
+  test-petstore:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/petstore
+    environment:
+      - DOCKER_HOST_IP=host.docker.internal
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=testpass
+      - SPRING_DATASOURCE_URL=jdbc:mysql://test-mysql:3306/petstore_test?serverTimezone=UTC
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - HEALTH_CHECK_URL=http://localhost:8083/petstore/actuator/health
+    depends_on:
+      test-mysql:
+        condition: service_healthy
+    networks:
+      test-backend:
+        aliases:
+          - petstore
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/petstore/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: "no"
+
+  test-vehicles:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/vehicles-api
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
+    networks:
+      test-backend:
+        aliases:
+          - vehicles-api
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8880/vehicles/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: "no"
+
+  test-jiraproxy:
+    build:
+      context: ./
+      dockerfile: Dockerfile_BE
+      args:
+        SERVICE_PATH: backend/web-proxy
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
+    networks:
+      test-backend:
+        aliases:
+          - jiraproxy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8501/jiraproxy/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: "no"
+
+  test-mlops:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PY
+      args:
+        SERVICE_PATH: backend/ml-pipeline
+        SERVICE_PORT: 8600
+    environment:
+      - ML_DB_USER=testuser
+      - ML_DB_PASSWORD=testpass
+      - ML_DB_HOST=test-postgres-ml
+      - ML_DB_PORT=5432
+      - ML_DB_NAME=segmentationdb_test
+      - OTEL_ENABLED=false
+    depends_on:
+      test-postgres-ml:
+        condition: service_healthy
+    networks:
+      test-backend:
+        aliases:
+          - mlops-segmentation
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8600/mlops-segmentation/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: "no"
+
+  test-nginx:
+    build:
+      context: ./frontend/nginx
+      dockerfile: Dockerfile
+    depends_on:
+      test-cloudapp:
+        condition: service_healthy
+      test-petstore:
+        condition: service_healthy
+      test-vehicles:
+        condition: service_healthy
+      test-jiraproxy:
+        condition: service_healthy
+      test-mlops:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -4sf http://localhost/nginx_health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: "no"
+
+  test-mlops-frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/mlops
+        SERVICE_PORT: 5005
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5005/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  test-shell:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/cloudapp-shell
+        SERVICE_PORT: 5001
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
+    depends_on:
+      test-mlops-frontend:
+        condition: service_healthy
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5001/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  # =========================================================================
+  # HOST-UI PROFILE SERVICES
+  #
+  # Optional host-exposed variants for local Playwright UI/debug runs.
+  # They are excluded from CI unless --profile host-ui is explicitly enabled.
+  # =========================================================================
+  test-nginx-host:
+    profiles: ["host-ui"]
+    build:
+      context: ./frontend/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      test-cloudapp:
+        condition: service_healthy
+      test-petstore:
+        condition: service_healthy
+      test-vehicles:
+        condition: service_healthy
+      test-jiraproxy:
+        condition: service_healthy
+      test-mlops:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -4sf http://localhost/nginx_health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: "no"
+
+  test-mlops-frontend-host:
+    profiles: ["host-ui"]
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/mlops
+        SERVICE_PORT: 5005
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    ports:
+      - "5005:5005"
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5005/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  test-shell-host:
+    profiles: ["host-ui"]
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/cloudapp-shell
+        SERVICE_PORT: 5001
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_MLOPS_URL: http://localhost:5005
+    ports:
+      - "5001:5001"
+    depends_on:
+      test-mlops-frontend-host:
+        condition: service_healthy
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5001/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+# ===========================================================================
+# NETWORKS — isolated from production
+# ===========================================================================
+networks:
+  test-frontend: {}
+  test-backend: {}

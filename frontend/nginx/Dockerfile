@@ -13,7 +13,7 @@ ENV LD_LIBRARY_PATH=/usr/local/lib
 ENV NGINX_VERSION 1.25.4
 RUN <<`
 	set -e
-	apt-get install -y libjwt-dev libjwt0 libjansson-dev libjansson4 libpcre2-dev zlib1g-dev libpcre3-dev libssl-dev
+	apt-get install -y libjwt-dev libjwt0 libjansson-dev libjansson4 libpcre2-dev zlib1g-dev libpcre3-dev libssl-dev curl
 	mkdir -p /root/build/ngx-http-auth-jwt-module
 `
 WORKDIR /root/build/ngx-http-auth-jwt-module

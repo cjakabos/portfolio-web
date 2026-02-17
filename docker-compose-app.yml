@@ -172,7 +172,7 @@ services:
       context: ./frontend/nginx
       dockerfile: Dockerfile
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost/nginx_health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost/nginx_health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3

@@ -78,21 +78,22 @@ public class UserController {
 
     @PostMapping(value = "/user-login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        String token = jwtUtilities.generateToken(authentication);
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Authorization",
-                token);
-
-        return ResponseEntity.ok()
-                .headers(responseHeaders)
-                .body("Response with header using ResponseEntity");
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
+            String token = jwtUtilities.generateToken(authentication);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("Authorization",
+                    token);
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body("Response with header using ResponseEntity");
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
     }
 }

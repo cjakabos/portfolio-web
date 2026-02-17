@@ -8,7 +8,7 @@
 #   so Module Federation remotes are configurable per environment.
 # ===========================================================================
 
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -20,8 +20,16 @@ WORKDIR /app
 # Copy both package.json AND package-lock.json, use npm ci
 # npm ci is the production-grade approach: it installs from the lockfile
 # exactly, fails if lockfile is out of sync, and is faster than npm install.
+# Some npm versions intermittently skip optional native bindings in containers;
+# if Tailwind's native binding is missing, retry with a clean npm install.
 COPY ./$SERVICE_PATH/package.json ./$SERVICE_PATH/package-lock.json* ./
-RUN if [ -f package-lock.json ]; then npm ci; else echo "Warning: No package-lock.json found, falling back to npm install" && npm install; fi
+RUN if [ -f package-lock.json ]; then npm ci; else echo "Warning: No package-lock.json found, falling back to npm install" && npm install; fi \
+ && if ! node -e "require('@tailwindcss/oxide')"; then \
+      echo "Retrying dependency install to restore optional native bindings..."; \
+      rm -rf node_modules; \
+      npm install; \
+      node -e "require('@tailwindcss/oxide')"; \
+    fi
 
 
 # Rebuild the source code only when needed
