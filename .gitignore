@@ -33,4 +33,9 @@ package-lock.json
 .next
 node_modules
 .env
+.env.local
+.env.production
 next-env.d.ts
+
+.DS_Store
+**/.DS_Store

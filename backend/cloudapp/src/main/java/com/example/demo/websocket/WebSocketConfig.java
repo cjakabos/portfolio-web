@@ -12,7 +12,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+        // FIX 4.8: Restrict WebSocket CORS to match NGINX's origin map.
+        // The wildcard "*" allowed any origin to bypass NGINX's CORS layer
+        // during the WebSocket upgrade handshake.
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(
+                        "http://localhost:*",
+                        "https://localhost:*",
+                        "http://127.0.0.1:*",
+                        "https://127.0.0.1:*"
+                )
+                .withSockJS();
     }
 
     @Override

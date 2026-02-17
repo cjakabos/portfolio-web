@@ -13,7 +13,7 @@ ENV LD_LIBRARY_PATH=/usr/local/lib
 ENV NGINX_VERSION 1.25.4
 RUN <<`
 	set -e
-	apt-get install -y libjwt-dev libjwt0 libjansson-dev libjansson4 libpcre2-dev zlib1g-dev libpcre3-dev
+	apt-get install -y libjwt-dev libjwt0 libjansson-dev libjansson4 libpcre2-dev zlib1g-dev libpcre3-dev libssl-dev
 	mkdir -p /root/build/ngx-http-auth-jwt-module
 `
 WORKDIR /root/build/ngx-http-auth-jwt-module
@@ -27,6 +27,8 @@ RUN <<`
 	tar -xzf nginx-${NGINX_VERSION}.tar.gz --strip-components 1 -C nginx
 `
 WORKDIR /root/build/nginx
+# FIX 4.2: Build with --user=nginx instead of --user=root
+# FIX 4.3: Added --with-http_ssl_module for TLS termination
 RUN <<`
 	set -e
 	BUILD_FLAGS=''
@@ -34,7 +36,6 @@ RUN <<`
 	MIN=$(echo ${NGINX_VERSION} | cut -f2 -d.)
 	REV=$(echo ${NGINX_VERSION} | cut -f3 -d.)
 
-	# NGINX 1.23.0+ changes cookies to use a linked list, and renames `cookies` to `cookie`
 	BUILD_FLAGS="${BUILD_FLAGS} --with-cc-opt='-DNGX_LINKED_LIST_COOKIES=1'"
 
 	./configure \
@@ -44,14 +45,14 @@ RUN <<`
 		--conf-path=/etc/nginx/nginx.conf \
 		--error-log-path=/var/log/nginx/error.log \
 		--http-log-path=/var/log/nginx/access.log \
-		--pid-path=/var/run/nginx.pid \
-		--lock-path=/var/run/nginx.lock \
-		--http-client-body-temp-path=/var/cache/nginx/client_temp \
-		--http-proxy-temp-path=/var/cache/nginx/proxy_temp \
-		--http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
-		--http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
-		--http-scgi-temp-path=/var/cache/nginx/scgi_temp \
-		--user=root \
+		--pid-path=/tmp/nginx.pid \
+		--lock-path=/tmp/nginx.lock \
+		--http-client-body-temp-path=/tmp/client_body \
+		--http-proxy-temp-path=/tmp/proxy \
+		--http-fastcgi-temp-path=/tmp/fastcgi \
+		--http-uwsgi-temp-path=/tmp/uwsgi \
+		--http-scgi-temp-path=/tmp/scgi \
+		--user=nginx \
 		--with-compat \
 		--with-debug \
 		--with-file-aio \
@@ -67,6 +68,7 @@ RUN <<`
 		--with-http_realip_module \
 		--with-http_secure_link_module \
 		--with-http_slice_module \
+		--with-http_ssl_module \
 		--with-http_stub_status_module \
 		--with-http_sub_module \
 		--with-http_v2_module \
@@ -74,7 +76,6 @@ RUN <<`
 		--with-ld-opt='-Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
 		--add-dynamic-module=../ngx-http-auth-jwt-module \
 		${BUILD_FLAGS}
-		# --with-openssl=/usr/local \
 `
 RUN make modules
 RUN make install
@@ -91,14 +92,27 @@ RUN <<`
 	set -e
 
 	apt-get update
-	apt-get install -y libjansson4 libjwt0
+	apt-get install -y libjansson4 libjwt0 libssl1.1
 	apt-get clean
 `
 
+# FIX 4.2: Create dedicated nginx user and group
+RUN groupadd -r nginx && useradd -r -g nginx -d /var/cache/nginx -s /sbin/nologin nginx
+
+# Copy configuration files
 COPY conf/nginx.conf /etc/nginx/nginx.conf
+COPY conf/locations.conf /etc/nginx/locations.conf
 COPY localhost+3-key.pub /etc/nginx/localhost+3-key.pub
 
+# FIX 4.3: Copy TLS certificates for HTTPS
+RUN mkdir -p /etc/nginx/ssl
+COPY localhost+3.pem /etc/nginx/ssl/localhost+3.pem
+COPY localhost+3-key.pem /etc/nginx/ssl/localhost+3-key.pem
+
+# FIX 4.2: Set ownership for non-root operation
+RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/ssl /tmp \
+    && chmod 600 /etc/nginx/ssl/localhost+3-key.pem
 
 CMD ["nginx", "-g", "daemon off;"]
 
-EXPOSE 80
+EXPOSE 80 443

@@ -18,13 +18,15 @@ from flask import Flask, jsonify, request, make_response
 from sqlalchemy import create_engine
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
+# Import centralized DB config instead of hardcoding credentials
+from db_config import get_db_connection, get_sqlalchemy_connection
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Set up variables for use in our script
 app = Flask(__name__)
 default_prefix = '/mlops-segmentation'
-host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
 
 app.config['APPLICATION_ROOT'] = default_prefix
 
@@ -104,24 +106,6 @@ def run_script(script_name: str, args: list = None):
     except Exception as e:
         logger.error(f"Failed to run script {script_name}: {e}")
         return False
-
-
-# =========================================================================
-# Database Connection Helper
-# =========================================================================
-
-def get_db_connection():
-    """Create a psycopg connection to the segmentation database."""
-    return pg.connect(
-        f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'"
-    )
-
-
-def get_sqlalchemy_connection():
-    """Create a SQLAlchemy connection to the segmentation database."""
-    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
-    db = create_engine(conn_string)
-    return db.connect()
 
 
 # =========================================================================

@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { FileText, Folder, ShoppingCart, MessageSquare, Cat, ArrowRight, Filter, Activity, Trello, Map, Brain, Bot } from 'lucide-react';
 
 const Home: React.FC = () => {
-  const userStr = localStorage.getItem('cloud_user');
-  const user = userStr ? JSON.parse(userStr) : { username: 'Guest' };
+  const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
   const [activityFilter, setActivityFilter] = useState<'ALL' | 'SYSTEM' | 'LOGIN' | 'FILE'>('ALL');
 
   const cards = [

@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { User, Mail, Shield, Lock, Save } from 'lucide-react';
 
 const CloudProfile: React.FC = () => {
-  const userStr = localStorage.getItem('cloud_user');
-  const user = userStr ? JSON.parse(userStr) : { username: 'Guest', id: 0 };
+  const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
   const [loading, setLoading] = useState(false);
 
   // Mock stats
@@ -40,8 +39,8 @@ const CloudProfile: React.FC = () => {
                         <User size={40} />
                    </div>
                    <div className="mb-1">
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{user.username}</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">@{user.username.toLowerCase()}</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{user}</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">@{user.toLowerCase()}</p>
                    </div>
                </div>
                <div className="hidden sm:block">
@@ -73,7 +72,7 @@ const CloudProfile: React.FC = () => {
                            <input
                                 type="text"
                                 disabled
-                                value={user.username}
+                                value={user}
                                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                            />
                        </div>
@@ -84,7 +83,7 @@ const CloudProfile: React.FC = () => {
                            <Mail className="absolute left-3 top-2.5 text-gray-400" size={18} />
                            <input
                                 type="email"
-                                defaultValue={`${user.username.toLowerCase()}@example.com`}
+                                defaultValue={`${user.toLowerCase()}@example.com`}
                                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                            />
                        </div>

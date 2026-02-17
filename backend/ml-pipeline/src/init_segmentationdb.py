@@ -12,7 +12,8 @@ import psycopg as pg
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 
-host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
+# Import centralized DB config instead of hardcoding credentials
+from db_config import get_postgres_uri, get_sqlalchemy_url, get_psycopg_dsn
 
 def to_sql_seq(df,table_name, engine):
 
@@ -33,7 +34,7 @@ def to_sql_seq(df,table_name, engine):
 
 def main():
     # Connect to an existing database
-    with psycopg.connect(f"postgres://segmentmaster:segment@{host_ip}:5434/segmentationdb") as conn:
+    with psycopg.connect(get_postgres_uri()) as conn:
 
         # Open a cursor to perform database operations
         with conn.cursor() as cur:
@@ -62,9 +63,7 @@ def main():
     # for psycopg3 you need to use it with postgresql+psycopg manner, simple postgresql will use only psycopg2
     # TODO: another pro tip: https://stackoverflow.com/a/63178240/1026
 
-    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
-
-    db = create_engine(conn_string)
+    db = create_engine(get_sqlalchemy_url())
     conn = db.connect()
 
     if len(sys.argv) > 1:
@@ -81,15 +80,10 @@ def main():
     #to_sql_seq(df, 'test', db)
     conn.execute(text("SELECT setval(pg_get_serial_sequence('test', 'id'), (SELECT MAX(id) FROM test));"))
 
-    conn = pg.connect(f"dbname='segmentationdb' user='segmentmaster' host='{host_ip}' port='5434' password='segment'")
+    conn = pg.connect(get_psycopg_dsn())
     conn.autocommit = True
 
     conn.close()
-
-
-
-
-
 
 
 if __name__ == '__main__':

@@ -9,8 +9,7 @@ import { useCustomers } from '../../hooks/useCustomers';
 const Pets: React.FC = () => {
   const { allPets } = usePets();
   const { allCustomers } = useCustomers();
-  const router = useRouter();
-  
+
   const [showForm, setShowForm] = React.useState(false);
   const [formData, setFormData] = React.useState({
     name: '',
@@ -20,11 +19,18 @@ const Pets: React.FC = () => {
     notes: ''
   });
 
+  let router: ReturnType<typeof useRouter> | null = null;
+  try {
+    router = useRouter();
+  } catch {
+    // Router not available in federated module context
+  }
+
   useEffect(() => {
-    if (router.query.action === 'new') {
+    if (router?.query?.action === 'new') {
       setShowForm(true);
     }
-  }, [router.query]);
+  }, [router?.query]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

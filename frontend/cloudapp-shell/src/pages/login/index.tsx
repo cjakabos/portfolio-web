@@ -43,7 +43,6 @@ const Login: React.FC = () => {
         await login(values);
       }
       router.push('/');
-      localStorage.setItem('cloud_user', JSON.stringify(values.username));
     } catch (err: any) {
       (err.message || 'Authentication failed');
     }

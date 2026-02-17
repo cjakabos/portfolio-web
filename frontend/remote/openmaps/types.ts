@@ -73,7 +73,6 @@ export interface AvailabilityRequest {
 export interface CloudUser {
   id: number;
   username: string;
-  password?: string; // In real app, don't store this on client
   token?: string;
   joinedRooms?: string[]; // List of room codes
 }

@@ -14,13 +14,19 @@ const PetStoreCustomers: React.FC = () => {
   } = useCustomers();
   
   const [showForm, setShowForm] = React.useState(false);
-  const router = useRouter();
+
+  let router: ReturnType<typeof useRouter> | null = null;
+  try {
+    router = useRouter();
+  } catch {
+    // Router not available in federated module context
+  }
 
   useEffect(() => {
-    if (router.query.action === 'new') {
+    if (router?.query?.action === 'new') {
       setShowForm(true);
     }
-  }, [router.query]);
+  }, [router?.query]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     await handleCustomerSubmit(e);

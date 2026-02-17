@@ -40,7 +40,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   // Auth Guard Logic
   useEffect(() => {
     if (isClient) {
-      const user = localStorage.getItem('cloud_user');
+      const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
       // Added simple check to prevent loop if already on /login
       if (!user && router.pathname !== '/login') {
         router.push('/login');

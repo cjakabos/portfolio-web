@@ -2,9 +2,11 @@ services:
   # ===========================================================================
   # BACKEND SERVICES - Internal only (no ports exposed to host)
   #
-  # OpenTelemetry: Each Spring Boot service activates the Java agent via
-  # JAVA_TOOL_OPTIONS. The agent auto-instruments Spring MVC, WebClient,
-  # JPA, Kafka, and Resilience4j. Set OTEL_ENABLED=false to disable.
+  # FIX 4.1: Credentials externalized to .env; JWT_SECRET fail-fast (no fallback).
+  # FIX 4.4: Cross-file depends_on with service_healthy for infra services.
+  #          Run with: docker compose -f docker-compose-infrastructure.yml \
+  #                                   -f docker-compose-app.yml up -d
+  # FIX 4.9: Metrics exported to Prometheus via OTel agent + Actuator.
   # ===========================================================================
   jiraproxy:
     image: jiraproxy:latest
@@ -15,15 +17,17 @@ services:
       args:
         SERVICE_PATH: backend/web-proxy
     environment:
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
-      # OpenTelemetry Java agent — auto-instruments at JVM startup
+      # OpenTelemetry Java agent
       - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=jiraproxy
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=none
+      # FIX 4.9: Export metrics to Prometheus via OTel
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
       - OTEL_LOGS_EXPORTER=none
     networks:
       - backend
@@ -38,7 +42,7 @@ services:
       args:
         SERVICE_PATH: backend/vehicles-api
     environment:
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
       # OpenTelemetry
       - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
@@ -46,7 +50,8 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
       - OTEL_LOGS_EXPORTER=none
     networks:
       - backend
@@ -62,16 +67,24 @@ services:
         SERVICE_PATH: backend/petstore
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8083/petstore/actuator/health
+      # FIX 4.1: DB credentials from .env
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_ROOT_USERNAME:?Set MYSQL_ROOT_USERNAME in .env}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       # OpenTelemetry
       - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=petstore
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
       - OTEL_LOGS_EXPORTER=none
+    # FIX 4.4: Wait for MySQL to be healthy before starting
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - backend
     restart: unless-stopped
@@ -87,8 +100,14 @@ services:
     environment:
       - DOCKER_HOST_IP=host.docker.internal
       - DOCKER_HOST_KAFKA_PORT=9092
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-}
-      - JWT_SECRET=${JWT_SECRET:-oursecretkey}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      # FIX 4.1: JWT_SECRET with no fallback — fails fast if missing
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
+      # FIX 4.1: DB credentials from .env
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin
       - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
       # OpenTelemetry
       - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
@@ -96,8 +115,17 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
       - OTEL_LOGS_EXPORTER=none
+    # FIX 4.4: Wait for Postgres, Mongo, and Kafka
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
     networks:
       - backend
     restart: unless-stopped
@@ -112,21 +140,34 @@ services:
     container_name: mlops-segmentation
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-      # OpenTelemetry for Flask/Python (activated by otel_setup.py when true)
-      - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      # FIX 4.1: DB credentials from .env
+      - ML_DB_USER=${POSTGRES_ML_USER}
+      - ML_DB_PASSWORD=${POSTGRES_ML_PASSWORD}
+      - ML_DB_HOST=postgres-ml
+      - ML_DB_PORT=5432
+      - ML_DB_NAME=${POSTGRES_ML_DB}
+      # OpenTelemetry for Flask/Python
+      - OTEL_ENABLED=${OTEL_ENABLED}
       - OTEL_SERVICE_NAME=ml-pipeline
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_PYTHON_EXCLUDED_URLS=health
+    # FIX 4.4: Wait for ML Postgres
+    depends_on:
+      postgres-ml:
+        condition: service_healthy
     networks:
       - backend
     restart: unless-stopped
 
   # ===========================================================================
   # NGINX GATEWAY - The ONLY entry point to backends
+  # FIX 4.3: Now listens on both :80 (HTTP) and :443 (HTTPS).
   # ===========================================================================
   next-nginx-jwt:
     container_name: next-nginx-jwt
     ports:
       - "80:80"
+      - "443:443"
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
@@ -148,7 +189,7 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
-  # FRONTEND SERVICES - Exposed to host (users access these directly)
+  # FRONTEND SERVICES
   # ===========================================================================
   next-cloudapp-shell:
     build:
@@ -158,7 +199,6 @@ services:
         SERVICE_PATH: frontend/cloudapp-shell
         SERVICE_PORT: 5001
         NEXT_PRIVATE_LOCAL_WEBPACK: true
-        # Module Federation remote URLs — configurable per environment
         NEXT_PUBLIC_REMOTE_OPENMAPS_URL: ${NEXT_PUBLIC_REMOTE_OPENMAPS_URL:-http://localhost:5002}
         NEXT_PUBLIC_REMOTE_JIRA_URL: ${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: ${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
@@ -198,11 +238,12 @@ services:
         SERVICE_PATH: frontend/remote/jira
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
-        NEXT_PUBLIC_LLM_MODEL: 'qwen3:1.7b'
-        #NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
-        #NEXT_PUBLIC_JIRA_API_TOKEN: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
-        #NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
-        #NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
+        NEXT_PUBLIC_LLM_MODEL: ${LLM_MODEL}
+        # FIX 4.1: Jira credentials from .env — no more plaintext API tokens
+        NEXT_PUBLIC_JIRA_DOMAIN: ${JIRA_DOMAIN}
+        NEXT_PUBLIC_JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY}
+        NEXT_PUBLIC_JIRA_EMAIL: ${JIRA_EMAIL}
+        NEXT_PUBLIC_JIRA_API_TOKEN: ${JIRA_API_TOKEN}
     container_name: next-jira
     ports:
       - 5003:5003
@@ -254,7 +295,7 @@ services:
         SERVICE_PATH: frontend/remote/chatllm
         SERVICE_PORT: 5333
         NEXT_PRIVATE_LOCAL_WEBPACK: true
-        NEXT_PUBLIC_LLM_MODEL: 'qwen3:1.7b'
+        NEXT_PUBLIC_LLM_MODEL: ${LLM_MODEL}
     container_name: next-chatllm
     ports:
       - 5333:5333

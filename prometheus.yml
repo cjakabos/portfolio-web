@@ -1,0 +1,82 @@
+# ===========================================================================
+# Prometheus Configuration — CloudApp Platform
+#
+# FIX 4.9: Scrapes metrics from Spring Boot Actuator (via /actuator/prometheus)
+# and OTel agent Prometheus exporters (port 9464).
+#
+# Place in project root as prometheus.yml
+# ===========================================================================
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # -----------------------------------------------------------------------
+  # Spring Boot Actuator Metrics (via micrometer-prometheus)
+  # Requires management.endpoints.web.exposure.include=prometheus in
+  # application.properties (already added in the fix).
+  # -----------------------------------------------------------------------
+  - job_name: 'cloudapp'
+    metrics_path: '/cloudapp/actuator/prometheus'
+    static_configs:
+      - targets: ['cloudapp:8099']
+
+  - job_name: 'petstore'
+    metrics_path: '/petstore/actuator/prometheus'
+    static_configs:
+      - targets: ['petstore:8083']
+
+  - job_name: 'vehicles-api'
+    metrics_path: '/vehicles/actuator/prometheus'
+    static_configs:
+      - targets: ['vehicles-api:8880']
+
+  - job_name: 'jiraproxy'
+    metrics_path: '/jiraproxy/actuator/prometheus'
+    static_configs:
+      - targets: ['jiraproxy:8501']
+
+  # -----------------------------------------------------------------------
+  # OTel Java Agent Prometheus Exporter (port 9464)
+  # Exports JVM metrics, HTTP server metrics, DB connection pool metrics.
+  # -----------------------------------------------------------------------
+  - job_name: 'otel-cloudapp'
+    static_configs:
+      - targets: ['cloudapp:9464']
+
+  - job_name: 'otel-petstore'
+    static_configs:
+      - targets: ['petstore:9464']
+
+  - job_name: 'otel-vehicles-api'
+    static_configs:
+      - targets: ['vehicles-api:9464']
+
+  - job_name: 'otel-jiraproxy'
+    static_configs:
+      - targets: ['jiraproxy:9464']
+
+  # -----------------------------------------------------------------------
+  # ML Pipeline (Flask)
+  # If flask-prometheus-metrics or opentelemetry-exporter-prometheus is
+  # added to the Python service, uncomment:
+  # -----------------------------------------------------------------------
+  # - job_name: 'ml-pipeline'
+  #   metrics_path: '/mlops-segmentation/metrics'
+  #   static_configs:
+  #     - targets: ['mlops-segmentation:8600']
+
+  # -----------------------------------------------------------------------
+  # AI Orchestration Layer
+  # -----------------------------------------------------------------------
+  # - job_name: 'ai-orchestration'
+  #   metrics_path: '/metrics'
+  #   static_configs:
+  #     - targets: ['ai-orchestration-layer:8700']
+
+  # -----------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # -----------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

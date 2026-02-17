@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Cloud, LogOut, User as UserIcon, LayoutGrid, FileText, Folder, ShoppingCart, MessageSquare, Cat, Trello, Sun, Moon, Map, Brain, Bot } from 'lucide-react';
@@ -12,15 +12,38 @@ const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
-  const userStr = typeof window !== 'undefined' ? localStorage.getItem('cloud_user') : null;
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user = typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_MY_USERNAME') : null;
+
+  const [userToken, setUserToken] = useState('');
+
+  let token = 'placeholder';
+
+  useEffect(() => {
+      const checkToken = () => {
+          if (typeof window !== "undefined") {
+              const t = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '';
+              setUserToken(t);
+              if (t === '') {
+                  router.push("/login");
+              }
+          }
+      };
+
+      checkToken();
+
+      router.events.on('routeChangeComplete', checkToken);
+      return () => {
+          router.events.off('routeChangeComplete', checkToken);
+      };
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('cloud_user');
+    localStorage.removeItem("NEXT_PUBLIC_MY_USERNAME")
+    localStorage.removeItem("NEXT_PUBLIC_MY_TOKEN")
     router.push('/login');
   };
 
-  const navItems = [
+  const authedRoutes = [
     { label: 'Dashboard', path: '/', icon: <LayoutGrid size={20} /> },
     { label: 'Jira', path: '/jira', icon: <Trello size={20} /> },
     { label: 'Notes', path: '/notes', icon: <FileText size={20} /> },
@@ -31,6 +54,10 @@ const Layout = ({ children }: LayoutProps) => {
     { label: 'MLOps', path: '/mlops', icon: <Brain size={20} /> },
     { label: 'GPT', path: '/chatllm', icon: <Bot size={20} /> },
     { label: 'PetStore', path: '/petstore', icon: <Cat size={20} /> },
+  ];
+
+  const publicRoutes = [
+    { label: 'Login', path: '/login', icon: <LayoutGrid size={20} /> }
   ];
 
   const isDashboard = router.pathname === '/';
@@ -56,23 +83,47 @@ const Layout = ({ children }: LayoutProps) => {
               </Link>
               <div className="hidden md:block ml-6 lg:ml-10">
                 <div className="flex items-baseline space-x-2">
-                  {navItems.map((item) => {
-                     const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
-                     return (
-                      <Link
-                        key={item.path}
-                        href={item.path}
-                        className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
-                          isActive
-                            ? 'bg-gray-800 text-blue-400'
-                            : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                        }`}
-                      >
-                        {item.icon}
-                        <span className="hidden xl:inline">{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                  {(userToken === null || userToken === '') ? (
+                          <>
+                             {publicRoutes.map((item) => {
+                                const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                                return (
+                                 <Link
+                                   key={item.path}
+                                   href={item.path}
+                                   className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                                     isActive
+                                       ? 'bg-gray-800 text-blue-400'
+                                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                   }`}
+                                 >
+                                   {item.icon}
+                                   <span className="hidden xl:inline">{item.label}</span>
+                                 </Link>
+                               );
+                             })}
+                          </>
+                      ) :
+                      <>
+                          {authedRoutes.map((item) => {
+                             const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                             return (
+                              <Link
+                                key={item.path}
+                                href={item.path}
+                                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                                  isActive
+                                    ? 'bg-gray-800 text-blue-400'
+                                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                                }`}
+                              >
+                                {item.icon}
+                                <span className="hidden xl:inline">{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                      </>
+                  }
                 </div>
               </div>
             </div>
@@ -93,7 +144,7 @@ const Layout = ({ children }: LayoutProps) => {
                     <div className="bg-gray-700 group-hover:bg-gray-600 p-1.5 rounded-full transition">
                       <UserIcon size={16} />
                     </div>
-                    <span className="hidden sm:inline max-w-[100px] truncate">{user.username}</span>
+                    <span className="hidden sm:inline max-w-[100px] truncate">{user}</span>
                   </Link>
                   <button
                     onClick={handleLogout}
@@ -112,20 +163,41 @@ const Layout = ({ children }: LayoutProps) => {
         {/* Mobile Nav */}
         <div className="md:hidden border-t border-gray-800 bg-gray-900 dark:bg-gray-950 overflow-x-auto">
            <div className="flex gap-1 px-2 py-2 min-w-max">
-             {navItems.map(item => {
-                const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
-                return (
-                   <Link
-                    key={item.path}
-                    href={item.path}
-                    className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
-                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
-                    }`}
-                   >
-                     {item.icon}
-                   </Link>
-                )
-             })}
+             {(userToken === null || userToken === '') ? (
+                     <>
+                         {publicRoutes.map(item => {
+                            const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                            return (
+                               <Link
+                                key={item.path}
+                                href={item.path}
+                                className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
+                                    isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
+                                }`}
+                               >
+                                 {item.icon}
+                               </Link>
+                            )
+                         })}
+                     </>
+                 ) :
+                 <>
+                     {authedRoutes.map(item => {
+                        const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                        return (
+                           <Link
+                            key={item.path}
+                            href={item.path}
+                            className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
+                                isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
+                            }`}
+                           >
+                             {item.icon}
+                           </Link>
+                        )
+                     })}
+                 </>
+             }
            </div>
         </div>
       </header>

@@ -19,8 +19,13 @@ import heapq
 
 from config import MODEL_PATH
 
+# Import centralized DB config instead of hardcoding credentials
+from db_config import (
+    get_db_connection, get_sqlalchemy_engine, get_sqlalchemy_url,
+    get_psycopg_dsn
+)
+
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-host_ip = os.getenv('DOCKER_HOST_IP', 'localhost')
 
 # Spectral_r colormap colors for 5 clusters (extracted from matplotlib)
 # These match plt.get_cmap("Spectral_r", 5) used in the reference
@@ -38,7 +43,7 @@ def ensure_tables_exist():
     Ensure that the required tables (segment_metadata, mlinfo_raw) exist.
     Creates them if they don't exist.
     """
-    with pg.connect(f"dbname=segmentationdb user=segmentmaster host='{host_ip}' port='5434' password='segment'") as conn:
+    with pg.connect(get_psycopg_dsn()) as conn:
         with conn.cursor() as cur:
             # Create segment_metadata table if not exists
             cur.execute("""
@@ -146,8 +151,7 @@ def get_previous_segment_metadata(connection):
     try:
         # Use a separate connection to check for metadata table
         # This avoids putting the main connection in a failed transaction state
-        check_conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
-        check_engine = create_engine(check_conn_string)
+        check_engine = create_engine(get_sqlalchemy_url())
         with check_engine.connect() as check_conn:
             metadata_df = pd.read_sql('select * from segment_metadata', check_conn)
 
@@ -227,7 +231,7 @@ def save_segment_metadata(connection, centroids, colors, segment_mapping):
         colors: dictionary mapping segment IDs to colors
         segment_mapping: dictionary mapping original cluster indices to segment IDs
     """
-    with pg.connect(f"dbname=segmentationdb user=segmentmaster host='{host_ip}' port='5434' password='segment'") as conn:
+    with pg.connect(get_psycopg_dsn()) as conn:
         with conn.cursor() as cur:
             # Clear existing metadata
             cur.execute("DELETE FROM segment_metadata;")
@@ -253,7 +257,7 @@ def save_raw_mlinfo(connection, customer_ids, pca_2d, segments):
         pca_2d: numpy array of PCA-transformed data (n_samples, 2)
         segments: list of segment assignments
     """
-    with pg.connect(f"dbname=segmentationdb user=segmentmaster host='{host_ip}' port='5434' password='segment'") as conn:
+    with pg.connect(get_psycopg_dsn()) as conn:
         with conn.cursor() as cur:
             # Create table if not exists
             cur.execute("""
@@ -290,8 +294,7 @@ def main():
     logging.info("Checking for new data")
 
     # First, read customers from DB
-    conn_string = f"postgresql+psycopg://segmentmaster:segment@{host_ip}:5434/segmentationdb"
-    db = create_engine(conn_string)
+    db = get_sqlalchemy_engine()
     connection = db.connect()
     customers = pd.read_sql('select * from test', connection)
     mlinfo = pd.read_sql('select * from mlinfo', connection)
@@ -423,8 +426,8 @@ def main():
     connection.close()
 
     # Update mlinfo (keep for backwards compatibility)
-    print('updating report', {host_ip})
-    with pg.connect(f"dbname=segmentationdb user=segmentmaster host='{host_ip}' port='5434' password='segment'") as conn:
+    logging.info('Updating report')
+    with pg.connect(get_psycopg_dsn()) as conn:
         # Open a cursor to perform database operations
         with conn.cursor() as cur:
             cur.execute("DELETE FROM mlinfo;")
