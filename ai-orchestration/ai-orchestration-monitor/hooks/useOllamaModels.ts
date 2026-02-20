@@ -56,6 +56,23 @@ const getApiBaseUrl = (): string => {
   return 'http://localhost:8700';
 };
 
+const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
+const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
+
+const sleep = async (ms: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+const getRetryDelayMs = (attempt: number, retryAfterHeader?: string | null): number => {
+  if (retryAfterHeader) {
+    const retryAfterSeconds = Number(retryAfterHeader);
+    if (!Number.isNaN(retryAfterSeconds) && retryAfterSeconds > 0) {
+      return retryAfterSeconds * 1000;
+    }
+  }
+  return Math.min(300 * (2 ** attempt), 3000);
+};
+
 // ============================================================================
 // HOOK: useOllamaModels
 // ============================================================================
@@ -110,13 +127,56 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
 
   const apiBaseUrl = getApiBaseUrl();
 
+  const buildHeaders = useCallback((baseHeaders?: HeadersInit): Headers => {
+    const headers = new Headers(baseHeaders || {});
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem(CLOUDAPP_TOKEN_STORAGE_KEY);
+      if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', token);
+      }
+    }
+
+    return headers;
+  }, []);
+
+  const fetchWithRetry = useCallback(async (
+    url: string,
+    options: RequestInit = {},
+    maxAttempts: number = 3
+  ): Promise<Response> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const response = await fetch(url, {
+        ...options,
+        headers: buildHeaders(options.headers),
+      });
+
+      if (response.ok) {
+        return response;
+      }
+
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxAttempts - 1) {
+        const delayMs = getRetryDelayMs(attempt, response.headers.get('Retry-After'));
+        await sleep(delayMs);
+        continue;
+      }
+
+      return response;
+    }
+
+    throw new Error('Request retries exhausted');
+  }, [buildHeaders]);
+
   // Fetch available models from Ollama
   const fetchModels = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/llm/models`);
+      const response = await fetchWithRetry(`${apiBaseUrl}/llm/models`);
 
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status}`);
@@ -138,12 +198,12 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
     } finally {
       setIsLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, fetchWithRetry]);
 
   // Fetch current model settings
   const fetchCurrentSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/llm/current`);
+      const response = await fetchWithRetry(`${apiBaseUrl}/llm/current`);
 
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status}`);
@@ -158,16 +218,13 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
     } catch (err) {
       console.error('Failed to fetch current model settings:', err);
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, fetchWithRetry]);
 
   // Set model for chat/rag/both
   const setModel = useCallback(async (model: string, target: ModelTarget): Promise<boolean> => {
     try {
-      const response = await fetch(`${apiBaseUrl}/llm/current`, {
+      const response = await fetchWithRetry(`${apiBaseUrl}/llm/current`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ model, target }),
       });
 
@@ -191,7 +248,7 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
       setError(err instanceof Error ? err.message : 'Failed to set model');
       return false;
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, fetchWithRetry]);
 
   // Auto-fetch on mount
   useEffect(() => {

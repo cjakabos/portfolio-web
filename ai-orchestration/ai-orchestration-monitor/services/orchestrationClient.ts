@@ -13,7 +13,7 @@
 //   - WebSocket: ws://localhost:8700/ws/*
 //
 // - Nginx Gateway (localhost:80):
-//   - /cloudapp/*           → CloudApp service
+//   - /cloudapp-admin/*     → CloudApp admin monitor routes
 //   - /petstore/*           → Petstore service
 //   - /vehicles/*           → Vehicles service
 //   - /mlops-segmentation/* → ML Pipeline service
@@ -83,7 +83,7 @@ interface ClientConfig {
     ai: string;            // '' (root) or '/api'
 
     // Gateway paths (relative to gatewayUrl)
-    cloudapp: string;      // /cloudapp
+    cloudapp: string;      // /cloudapp-admin
     petstore: string;      // /petstore
     vehicles: string;      // /vehicles
     mlPipeline: string;    // /mlops-segmentation
@@ -113,13 +113,17 @@ const getConfig = (): ClientConfig => {
     timeout,
     paths: {
       ai: import.meta.env?.VITE_AI_PATH || '',  // AI endpoints are at root of aiBaseUrl
-      cloudapp: import.meta.env?.VITE_CLOUDAPP_PATH || '/cloudapp',
+      cloudapp: import.meta.env?.VITE_CLOUDAPP_PATH || '/cloudapp-admin',
       petstore: import.meta.env?.VITE_PETSTORE_PATH || '/petstore',
       vehicles: import.meta.env?.VITE_VEHICLES_PATH || '/vehicles',
       mlPipeline: import.meta.env?.VITE_ML_PATH || '/mlops-segmentation',
     },
   };
 };
+
+const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
+const CLOUDAPP_USERNAME_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_USERNAME';
+const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
 // =============================================================================
 // Custom Error Types
@@ -168,67 +172,141 @@ export class OrchestrationClient {
   // Core HTTP Methods
   // ===========================================================================
 
+  private getStoredCloudAppToken(): string | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    const token = localStorage.getItem(CLOUDAPP_TOKEN_STORAGE_KEY);
+    return token?.trim() || null;
+  }
+
+  private getStoredCloudAppUsername(): string | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    const username = localStorage.getItem(CLOUDAPP_USERNAME_STORAGE_KEY);
+    return username?.trim() || null;
+  }
+
+  private storeCloudAppAuth(token: string, username: string): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    localStorage.setItem(CLOUDAPP_TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(CLOUDAPP_USERNAME_STORAGE_KEY, username);
+  }
+
+  private buildHeaders(
+    baseHeaders?: HeadersInit,
+    includeJsonContentType: boolean = true
+  ): Headers {
+    const headers = new Headers(baseHeaders || {});
+    if (includeJsonContentType && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    const token = this.getStoredCloudAppToken();
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', token);
+    }
+
+    return headers;
+  }
+
+  private getRetryDelayMs(attempt: number, retryAfterHeader?: string | null): number {
+    if (retryAfterHeader) {
+      const retryAfterSeconds = Number(retryAfterHeader);
+      if (!Number.isNaN(retryAfterSeconds) && retryAfterSeconds > 0) {
+        return retryAfterSeconds * 1000;
+      }
+    }
+    return Math.min(300 * (2 ** attempt), 3000);
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   private async request<T>(
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+    const maxAttempts = 3;
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-      clearTimeout(timeoutId);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: this.buildHeaders(options.headers, true),
+        });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        let details: unknown;
-        try {
-          details = JSON.parse(errorBody);
-        } catch {
-          details = errorBody;
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxAttempts - 1) {
+            const delayMs = this.getRetryDelayMs(attempt, response.headers.get('Retry-After'));
+            await this.sleep(delayMs);
+            continue;
+          }
+
+          const errorBody = await response.text();
+          let details: unknown;
+          try {
+            details = JSON.parse(errorBody);
+          } catch {
+            details = errorBody;
+          }
+          throw new ApiError(
+            `API request failed: ${response.statusText}`,
+            response.status,
+            url,
+            details
+          );
         }
-        throw new ApiError(
-          `API request failed: ${response.statusText}`,
-          response.status,
-          url,
-          details
-        );
-      }
 
-      if (response.status === 204) {
+        if (response.status === 204) {
+          return {} as T;
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          return response.json();
+        }
+
         return {} as T;
-      }
+      } catch (error) {
+        clearTimeout(timeoutId);
 
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
-        return response.json();
-      }
+        if (error instanceof ApiError) {
+          throw error;
+        }
 
-      return {} as T;
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof ApiError) {
-        throw error;
-      }
-
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
+          if (attempt < maxAttempts - 1) {
+            await this.sleep(this.getRetryDelayMs(attempt));
+            continue;
+          }
           throw new TimeoutError(url);
         }
-        throw new NetworkError(error.message, url);
-      }
 
-      throw new NetworkError('Unknown error occurred', url);
+        if (attempt < maxAttempts - 1) {
+          await this.sleep(this.getRetryDelayMs(attempt));
+          continue;
+        }
+
+        if (error instanceof Error) {
+          throw new NetworkError(error.message, url);
+        }
+
+        throw new NetworkError('Unknown error occurred', url);
+      }
     }
+
+    throw new NetworkError('Request retries exhausted', url);
   }
 
   private async get<T>(url: string): Promise<T> {
@@ -254,47 +332,76 @@ export class OrchestrationClient {
   }
 
   private async postFormData<T>(url: string, formData: FormData): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+    const maxAttempts = 3;
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-      clearTimeout(timeoutId);
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+          headers: this.buildHeaders(undefined, false),
+        });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new ApiError(
-          `API request failed: ${response.statusText}`,
-          response.status,
-          url,
-          errorBody
-        );
-      }
+        clearTimeout(timeoutId);
 
-      if (response.status === 204) {
+        if (!response.ok) {
+          if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxAttempts - 1) {
+            const delayMs = this.getRetryDelayMs(attempt, response.headers.get('Retry-After'));
+            await this.sleep(delayMs);
+            continue;
+          }
+
+          const errorBody = await response.text();
+          throw new ApiError(
+            `API request failed: ${response.statusText}`,
+            response.status,
+            url,
+            errorBody
+          );
+        }
+
+        if (response.status === 204) {
+          return {} as T;
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          return response.json();
+        }
+
         return {} as T;
-      }
+      } catch (error) {
+        clearTimeout(timeoutId);
 
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
-        return response.json();
-      }
+        if (error instanceof ApiError) {
+          throw error;
+        }
 
-      return {} as T;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof ApiError) throw error;
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') throw new TimeoutError(url);
-        throw new NetworkError(error.message, url);
+        if (error instanceof Error && error.name === 'AbortError') {
+          if (attempt < maxAttempts - 1) {
+            await this.sleep(this.getRetryDelayMs(attempt));
+            continue;
+          }
+          throw new TimeoutError(url);
+        }
+
+        if (attempt < maxAttempts - 1) {
+          await this.sleep(this.getRetryDelayMs(attempt));
+          continue;
+        }
+
+        if (error instanceof Error) {
+          throw new NetworkError(error.message, url);
+        }
+        throw new NetworkError('Unknown error occurred', url);
       }
-      throw new NetworkError('Unknown error occurred', url);
     }
+
+    throw new NetworkError('Request retries exhausted', url);
   }
 
   // ===========================================================================
@@ -672,6 +779,27 @@ export class OrchestrationClient {
   // CloudApp Service - Users (via Nginx Gateway)
   // ===========================================================================
 
+  isCloudAppAuthenticated(): boolean {
+    return Boolean(this.getStoredCloudAppToken());
+  }
+
+  getCloudAppUsername(): string | null {
+    return this.getStoredCloudAppUsername();
+  }
+
+  clearCloudAppAuth(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    localStorage.removeItem(CLOUDAPP_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(CLOUDAPP_USERNAME_STORAGE_KEY);
+  }
+
+  async listCloudAppUsers(): Promise<string[]> {
+    const response = await this.get<string[] | { users: string[] }>(this.cloudappUrl('/user/admin/users'));
+    return Array.isArray(response) ? response : response.users || [];
+  }
+
   async getCloudAppUser(username: string): Promise<CloudAppUser> {
     return this.get<CloudAppUser>(this.cloudappUrl(`/user/${encodeURIComponent(username)}`));
   }
@@ -685,7 +813,55 @@ export class OrchestrationClient {
   }
 
   async loginUser(username: string, password: string): Promise<AuthResponse> {
-    return this.post<AuthResponse>(this.cloudappUrl('/user/user-login'), { username, password });
+    const url = this.cloudappUrl('/user/user-login');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: this.buildHeaders(undefined, true),
+        body: JSON.stringify({ username, password }),
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new ApiError(
+          `API request failed: ${response.statusText}`,
+          response.status,
+          url,
+          errorBody
+        );
+      }
+
+      const token = response.headers.get('Authorization') || response.headers.get('authorization');
+      if (!token) {
+        throw new ApiError('CloudApp login succeeded but no Authorization token was returned', 500, url);
+      }
+
+      this.storeCloudAppAuth(token, username);
+      return {
+        username,
+        token,
+        message: 'Login successful',
+        success: true,
+      } as AuthResponse;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new TimeoutError(url);
+      }
+      if (error instanceof Error) {
+        throw new NetworkError(error.message, url);
+      }
+      throw new NetworkError('Unknown error occurred', url);
+    }
   }
 
   // ===========================================================================
@@ -827,7 +1003,9 @@ export class OrchestrationClient {
 
   async getFile(fileId: number): Promise<Blob> {
     const url = this.cloudappUrl(`/file/get-file/${fileId}`);
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: this.buildHeaders(undefined, false),
+    });
     if (!response.ok) {
       throw new ApiError('Failed to download file', response.status, url);
     }

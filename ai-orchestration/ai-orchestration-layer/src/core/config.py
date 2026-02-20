@@ -52,6 +52,7 @@ class ServiceConfiguration:
     vehicles_url: str = "http://next-nginx-jwt:80/vehicles"
     ml_url: str = "http://next-nginx-jwt:80/mlops-segmentation"
     postgres_url: str = ""
+    internal_service_token: str = ""
 
     # HTTP client settings
     http_timeout: int = 10
@@ -73,6 +74,7 @@ class ServiceConfiguration:
             vehicles_url=os.getenv("VEHICLES_URL", "http://next-nginx-jwt:80/vehicles"),
             ml_url=os.getenv("ML_URL", "http://mlops-segmentation:80/mlops-segmentation"),
             postgres_url=os.getenv("POSTGRES_URL", ""),
+            internal_service_token=os.getenv("INTERNAL_SERVICE_TOKEN", ""),
             http_timeout=int(os.getenv("HTTP_TIMEOUT", "10")),
             ml_timeout=int(os.getenv("ML_TIMEOUT", "30")),
             http_max_connections=int(os.getenv("HTTP_MAX_CONNECTIONS", "100")),

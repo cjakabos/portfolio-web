@@ -4,6 +4,7 @@ import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.CreateUserRequest;
+import com.example.demo.security.InternalRequestAuthorizer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +33,7 @@ public class UserControllerTest {
     private CartRepository cartRepository = mock(CartRepository.class);
 
     private PasswordEncoder encoder = mock(PasswordEncoder.class);
+    private InternalRequestAuthorizer internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
 
     private CreateUserRequest r = new CreateUserRequest();
 
@@ -49,6 +52,8 @@ public class UserControllerTest {
         TestUtils.injectObjects(userController, "userRepository", userRepository);
         TestUtils.injectObjects(userController, "cartRepository", cartRepository);
         TestUtils.injectObjects(userController, "passwordEncoder", encoder);
+        TestUtils.injectObjects(userController, "internalRequestAuthorizer", internalRequestAuthorizer);
+        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
 
 
         when(encoder.encode("testpassword")).thenReturn("thisIsHashed");
@@ -84,7 +89,7 @@ public class UserControllerTest {
 
         //when
         when(userRepository.findById((long) 1)).thenReturn(Optional.of(user));
-        response = userController.findById(1L, authFor("testuser"));
+        response = userController.findById(1L, authFor("testuser"), new MockHttpServletRequest());
 
         //then
         assertNotNull(response);
@@ -101,7 +106,7 @@ public class UserControllerTest {
 
         //when
         when(userRepository.findByUsername("test")).thenReturn(user);
-        response = userController.findByUserName("test", authFor("test"));
+        response = userController.findByUserName("test", authFor("test"), new MockHttpServletRequest());
 
         //then
         assertNotNull(response);

@@ -484,6 +484,8 @@ services:
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
     depends_on:
       test-cloudapp:
         condition: service_healthy
@@ -557,6 +559,8 @@ services:
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
     ports:
       - "80:80"
     depends_on:

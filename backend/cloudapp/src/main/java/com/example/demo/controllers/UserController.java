@@ -1,6 +1,8 @@
 package com.example.demo.controllers;
 
+import com.example.demo.security.InternalRequestAuthorizer;
 import com.example.demo.utilities.JwtUtilities;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("user")
@@ -41,6 +46,9 @@ public class UserController {
     @Autowired
     private JwtUtilities jwtUtilities;
 
+    @Autowired
+    private InternalRequestAuthorizer internalRequestAuthorizer;
+
     private String getAuthenticatedUsername(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
             return null;
@@ -55,12 +63,19 @@ public class UserController {
         return null;
     }
 
+    private boolean isAuthorizedUserAccess(Authentication auth, String username, HttpServletRequest request) {
+        if (internalRequestAuthorizer.isInternalRequest(request)) {
+            return true;
+        }
+        String authenticated = getAuthenticatedUsername(auth);
+        return authenticated != null && authenticated.equals(username);
+    }
+
     @GetMapping("/id/{id}")
-    public ResponseEntity<User> findById(@PathVariable Long id, Authentication auth) {
+    public ResponseEntity<User> findById(@PathVariable Long id, Authentication auth, HttpServletRequest request) {
         return userRepository.findById(id)
                 .map(found -> {
-                    String authenticated = getAuthenticatedUsername(auth);
-                    if (authenticated == null || !authenticated.equals(found.getUsername())) {
+                    if (!isAuthorizedUserAccess(auth, found.getUsername(), request)) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).<User>build();
                     }
                     return ResponseEntity.ok(found);
@@ -69,17 +84,34 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<User> findByUserName(@PathVariable String username, Authentication auth) {
+    public ResponseEntity<User> findByUserName(
+            @PathVariable String username,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(username)) {
+        if (!isAuthorizedUserAccess(auth, username, request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(user);
     }
+
+    @GetMapping("/admin/users")
+    public ResponseEntity<List<String>> listUsernames(HttpServletRequest request) {
+        if (!internalRequestAuthorizer.isInternalRequest(request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        List<String> usernames = userRepository.findAll().stream()
+                .map(User::getUsername)
+                .sorted()
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(usernames);
+    }
+
     @PostMapping("/user-register")
     public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
         if (createUserRequest.getUsername() == null || createUserRequest.getUsername().isBlank()) {
