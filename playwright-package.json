@@ -13,6 +13,7 @@
     "test:shop": "playwright test shop.spec.ts",
     "test:chat": "playwright test chat.spec.ts",
     "test:mlops": "playwright test mlops.spec.ts",
+    "test:monitor": "playwright test monitor.spec.ts",
     "test:modfed": "playwright test module-federation.spec.ts",
     "report": "playwright show-report"
   },
