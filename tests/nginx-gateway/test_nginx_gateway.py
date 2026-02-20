@@ -223,9 +223,9 @@ class TestRouting:
         assert resp.status_code == 200
 
     def test_jiraproxy_routing(self):
-        """Requests to /jiraproxy/ should route to the web-proxy backend."""
+        """Jira proxy endpoint should be protected by JWT at the gateway."""
         resp = requests.get(f"{BACKEND_URL}/jiraproxy/actuator/health", timeout=5)
-        assert resp.status_code == 200
+        assert resp.status_code in (401, 403)
 
     def test_mlops_routing(self):
         """Requests to /mlops-segmentation/ should route to the ML pipeline."""

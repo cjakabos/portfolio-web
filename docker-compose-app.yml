@@ -3,9 +3,10 @@ services:
   # BACKEND SERVICES - Internal only (no ports exposed to host)
   #
   # FIX 4.1: Credentials externalized to .env; JWT_SECRET fail-fast (no fallback).
-  # FIX 4.4: Cross-file depends_on with service_healthy for infra services.
-  #          Run with: docker compose -f docker-compose-infrastructure.yml \
-  #                                   -f docker-compose-app.yml up -d
+  # Compose limitation: depends_on cannot target services from another compose file.
+  # Start infra first, then run this file separately:
+  #   docker compose -f docker-compose-infrastructure.yml up -d
+  #   docker compose -f docker-compose-app.yml up -d
   # FIX 4.9: Metrics exported to Prometheus via OTel agent + Actuator.
   # ===========================================================================
   jiraproxy:
@@ -19,6 +20,9 @@ services:
     environment:
       - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
+      - JIRA_DOMAIN=${JIRA_DOMAIN}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
       # OpenTelemetry Java agent
       - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=jiraproxy
@@ -81,10 +85,6 @@ services:
       - OTEL_METRICS_EXPORTER=prometheus
       - OTEL_EXPORTER_PROMETHEUS_PORT=9464
       - OTEL_LOGS_EXPORTER=none
-    # FIX 4.4: Wait for MySQL to be healthy before starting
-    depends_on:
-      mysql:
-        condition: service_healthy
     networks:
       - backend
     restart: unless-stopped
@@ -104,6 +104,8 @@ services:
       # FIX 4.1: JWT_SECRET with no fallback — fails fast if missing
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
+      - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
+      - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
       # FIX 4.1: DB credentials from .env
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:?Set POSTGRES_USER in .env}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -118,16 +120,11 @@ services:
       - OTEL_METRICS_EXPORTER=prometheus
       - OTEL_EXPORTER_PROMETHEUS_PORT=9464
       - OTEL_LOGS_EXPORTER=none
-    # FIX 4.4: Wait for Postgres, Mongo, and Kafka
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-      broker:
-        condition: service_healthy
     networks:
       - backend
+    volumes:
+      - ${JWT_PRIVATE_KEY_FILE:?Set JWT_PRIVATE_KEY_FILE in .env}:/run/secrets/jwt-private-key.pem:ro
+      - ${JWT_PUBLIC_KEY_FILE:?Set JWT_PUBLIC_KEY_FILE in .env}:/run/secrets/jwt-public-key.pub:ro
     restart: unless-stopped
 
   mlops-segmentation:
@@ -151,10 +148,6 @@ services:
       - OTEL_SERVICE_NAME=ml-pipeline
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_PYTHON_EXCLUDED_URLS=health
-    # FIX 4.4: Wait for ML Postgres
-    depends_on:
-      postgres-ml:
-        condition: service_healthy
     networks:
       - backend
     restart: unless-stopped
@@ -180,6 +173,8 @@ services:
     networks:
       - frontend
       - backend
+    volumes:
+      - ${JWT_PUBLIC_KEY_FILE:?Set JWT_PUBLIC_KEY_FILE in .env}:/etc/nginx/localhost+3-key.pub:ro
     depends_on:
       - cloudapp
       - petstore
@@ -239,11 +234,7 @@ services:
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
         NEXT_PUBLIC_LLM_MODEL: ${LLM_MODEL}
-        # FIX 4.1: Jira credentials from .env — no more plaintext API tokens
-        NEXT_PUBLIC_JIRA_DOMAIN: ${JIRA_DOMAIN}
         NEXT_PUBLIC_JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY}
-        NEXT_PUBLIC_JIRA_EMAIL: ${JIRA_EMAIL}
-        NEXT_PUBLIC_JIRA_API_TOKEN: ${JIRA_API_TOKEN}
     container_name: next-jira
     ports:
       - 5003:5003

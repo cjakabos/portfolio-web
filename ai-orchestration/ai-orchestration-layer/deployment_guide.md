@@ -99,14 +99,14 @@ CLOUDAPP_URL=http://cloudapp:8099
 PETSTORE_URL=http://petstore:8083
 VEHICLES_URL=http://vehicles-api:8880
 ML_URL=http://mlops-segmentation:8600
-POSTGRES_URL=postgresql://websitemaster:local@postgres:5432/cloudappdb
+POSTGRES_URL=postgresql://<user>:<password>@postgres:5432/cloudappdb
 
 # Redis
 REDIS_URL=redis://redis:6379/0
 REDIS_MAX_CONNECTIONS=50
 
 # MongoDB
-MONGODB_URL=mongodb://orchestration_user:orchestration_pass@mongodb:27017/ai_orchestration
+MONGODB_URL=mongodb://mongodb:27017/ai_orchestration
 MONGODB_DATABASE=ai_orchestration
 
 # HTTP Client

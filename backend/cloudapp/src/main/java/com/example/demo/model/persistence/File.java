@@ -1,6 +1,7 @@
 package com.example.demo.model.persistence;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 
@@ -25,7 +26,7 @@ public class File {
     @JsonProperty
     private Long userid;
     @Column(nullable = false)
-    @JsonProperty
+    @JsonIgnore
     private byte[] fileData;
 
     public File() {

@@ -51,7 +51,7 @@ class ServiceConfiguration:
     petstore_url: str = "http://next-nginx-jwt:80/petstore"
     vehicles_url: str = "http://next-nginx-jwt:80/vehicles"
     ml_url: str = "http://next-nginx-jwt:80/mlops-segmentation"
-    postgres_url: str = "postgresql://websitemaster:local@postgres:5432/cloudappdb"
+    postgres_url: str = ""
 
     # HTTP client settings
     http_timeout: int = 10
@@ -72,7 +72,7 @@ class ServiceConfiguration:
             petstore_url=os.getenv("PETSTORE_URL", "http://next-nginx-jwt:80/petstore"),
             vehicles_url=os.getenv("VEHICLES_URL", "http://next-nginx-jwt:80/vehicles"),
             ml_url=os.getenv("ML_URL", "http://mlops-segmentation:80/mlops-segmentation"),
-            postgres_url=os.getenv("POSTGRES_URL", "postgresql://websitemaster:local@postgres:5432/cloudappdb"),
+            postgres_url=os.getenv("POSTGRES_URL", ""),
             http_timeout=int(os.getenv("HTTP_TIMEOUT", "10")),
             ml_timeout=int(os.getenv("ML_TIMEOUT", "30")),
             http_max_connections=int(os.getenv("HTTP_MAX_CONNECTIONS", "100")),

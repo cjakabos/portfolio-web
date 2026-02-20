@@ -200,21 +200,20 @@ If Jira functionality is to be used, follow the instructions below:
 
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-Comment out these in the [docker-compose-app.yml](./docker-compose-app.yml) file in root directory:
+Set these in your root `.env` file:
 
 ```bash
-NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
-NEXT_PUBLIC_JIRA_API_TOKEN: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
-NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
-NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
+JIRA_DOMAIN='https://your-jira-instance.atlassian.net'
+JIRA_API_TOKEN='your-api-token'
+JIRA_PROJECT_KEY='yourjiraprojectkey'
+JIRA_EMAIL='youremail'
 ```
-NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.
+Only `JIRA_PROJECT_KEY` is exposed to the browser. Credentials stay server-side in `jiraproxy`.
 
 ## Certificates
 [Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)  
 
 [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
-
 
 
 

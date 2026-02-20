@@ -15,9 +15,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import com.example.demo.model.persistence.repositories.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.*;
 
 public class CartControllerTest {
@@ -29,6 +32,14 @@ public class CartControllerTest {
     private CartRepository cartRepository = mock(CartRepository.class);
 
     private ItemRepository itemRepository = mock(ItemRepository.class);
+
+    private Authentication authFor(String username) {
+        return new UsernamePasswordAuthenticationToken(
+                new User(1L, username, "hashed"),
+                null,
+                Collections.emptyList()
+        );
+    }
 
     @BeforeEach
     public void setUp() {
@@ -52,7 +63,7 @@ public class CartControllerTest {
         when(itemRepository.findById((long) 1)).thenReturn(Optional.of(item));
 
         ModifyCartRequest modifyCartRequest = new ModifyCartRequest(user.getUsername(), 1L, 1);
-        ResponseEntity<Cart> cartResponse = cartController.addToCart(modifyCartRequest);
+        ResponseEntity<Cart> cartResponse = cartController.addToCart(modifyCartRequest, authFor(user.getUsername()));
         assertNotNull(cartResponse);
         assertEquals(HttpStatus.OK.value(), cartResponse.getStatusCodeValue());
         assertEquals(3, cartResponse.getBody().getItems().size());
@@ -72,8 +83,8 @@ public class CartControllerTest {
         when(itemRepository.findById((long) 1)).thenReturn(Optional.of(item));
 
         ModifyCartRequest modifyCartRequest = new ModifyCartRequest(user.getUsername(), 1L, 1);
-        ResponseEntity<Cart> cartResponse = cartController.addToCart(modifyCartRequest);
-        ResponseEntity<Cart> cartRemovedResponse = cartController.removeFromCart(modifyCartRequest);
+        ResponseEntity<Cart> cartResponse = cartController.addToCart(modifyCartRequest, authFor(user.getUsername()));
+        ResponseEntity<Cart> cartRemovedResponse = cartController.removeFromCart(modifyCartRequest, authFor(user.getUsername()));
         assertNotNull(cartRemovedResponse);
         assertEquals(HttpStatus.OK.value(), cartRemovedResponse.getStatusCodeValue());
     }

@@ -64,8 +64,10 @@ public class CloudAppIntegrationTest {
     private NoteRepository noteRepository;
 
     private String jwtToken;
+    private String jwtTokenOtherUser;
     private static final String TEST_USERNAME = "integrationuser";
     private static final String TEST_PASSWORD = "securePass123";
+    private static final String OTHER_USERNAME = "integrationuser2";
 
     // =========================================================================
     // USER REGISTRATION & AUTHENTICATION
@@ -169,7 +171,8 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(get("/user/" + TEST_USERNAME)
                         .header("Authorization", jwtToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(TEST_USERNAME));
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andExpect(jsonPath("$.password").doesNotExist());
     }
 
     @Test
@@ -179,6 +182,44 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(get("/user/nonexistentuser")
                         .header("Authorization", jwtToken))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("POST /user/user-register + /user/user-login — create second user for authz tests")
+    void createAndLoginSecondUser() throws Exception {
+        CreateUserRequest register = new CreateUserRequest();
+        register.setUsername(OTHER_USERNAME);
+        register.setPassword(TEST_PASSWORD);
+        register.setConfirmPassword(TEST_PASSWORD);
+
+        mockMvc.perform(post("/user/user-register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk());
+
+        LoginRequest login = new LoginRequest();
+        login.setUsername(OTHER_USERNAME);
+        login.setPassword(TEST_PASSWORD);
+
+        MvcResult result = mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Authorization"))
+                .andReturn();
+
+        jwtTokenOtherUser = result.getResponse().getHeader("Authorization");
+        assertNotNull(jwtTokenOtherUser);
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("GET /user/{username} — other authenticated user gets 403")
+    void findByUsername_forbiddenForOtherUser() throws Exception {
+        mockMvc.perform(get("/user/" + TEST_USERNAME)
+                        .header("Authorization", jwtTokenOtherUser))
+                .andExpect(status().isForbidden());
     }
 
     // =========================================================================
@@ -343,6 +384,20 @@ public class CloudAppIntegrationTest {
                 .andExpect(jsonPath("$.items").isArray());
     }
 
+    @Test
+    @Order(25)
+    @DisplayName("POST /cart/getCart — other authenticated user gets 403")
+    void getCart_forbiddenForOtherUser() throws Exception {
+        ModifyCartRequest request = new ModifyCartRequest();
+        request.setUsername(TEST_USERNAME);
+
+        mockMvc.perform(post("/cart/getCart")
+                        .header("Authorization", jwtTokenOtherUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
     // =========================================================================
     // ORDER SUBMISSION
     // =========================================================================
@@ -381,6 +436,15 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(post("/order/submit/ghostuser")
                         .header("Authorization", jwtToken))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(33)
+    @DisplayName("GET /order/history/{username} — other authenticated user gets 403")
+    void getOrderHistory_forbiddenForOtherUser() throws Exception {
+        mockMvc.perform(get("/order/history/" + TEST_USERNAME)
+                        .header("Authorization", jwtTokenOtherUser))
+                .andExpect(status().isForbidden());
     }
 
     // =========================================================================
@@ -451,6 +515,22 @@ public class CloudAppIntegrationTest {
 
     @Test
     @Order(53)
+    @DisplayName("POST /note/addNote — other authenticated user gets 403")
+    void addNote_forbiddenForOtherUser() throws Exception {
+        CreateNoteRequest request = new CreateNoteRequest();
+        request.setTitle("Should Fail");
+        request.setDescription("Cross-user write should be blocked");
+        request.setUser(TEST_USERNAME);
+
+        mockMvc.perform(post("/note/addNote")
+                        .header("Authorization", jwtTokenOtherUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(54)
     @DisplayName("POST /note/updateNote — should update note title and description")
     void updateNote() throws Exception {
         User user = userRepository.findByUsername(TEST_USERNAME);
@@ -479,8 +559,8 @@ public class CloudAppIntegrationTest {
     }
 
     @Test
-    @Order(54)
-    @DisplayName("GET /note/delete/{id} — should delete note")
+    @Order(55)
+    @DisplayName("DELETE /note/delete/{id} — should delete note")
     void deleteNote() throws Exception {
         User user = userRepository.findByUsername(TEST_USERNAME);
         Note target = noteRepository.findByUserid(user.getId()).stream()
@@ -488,7 +568,7 @@ public class CloudAppIntegrationTest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Expected updated note not found"));
 
-        mockMvc.perform(get("/note/delete/" + target.getId())
+        mockMvc.perform(delete("/note/delete/" + target.getId())
                         .header("Authorization", jwtToken))
                 .andExpect(status().isOk());
 

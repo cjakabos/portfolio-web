@@ -52,7 +52,7 @@ export const useNotes = (username: string, token: string) => {
 
     const deleteNote = async (id: number) => {
         try {
-            await axios.get(`${API_URL}/note/delete/${id}`, { headers: getHeaders() });
+            await axios.delete(`${API_URL}/note/delete/${id}`, { headers: getHeaders() });
             await fetchNotes();
         } catch (error) {
             console.error("Delete Note Error", error);

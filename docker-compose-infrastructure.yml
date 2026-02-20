@@ -98,7 +98,8 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      # cp-zookeeper enables only "srvr" by default; "ruok" is disabled.
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Mode:'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -178,7 +179,8 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:14269/ || exit 1"]
+      # jaeger:2.x image includes wget (not curl); health extension responds on /status.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:13133/status >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -276,14 +278,15 @@ services:
     container_name: chromadb
     restart: unless-stopped
     ports:
-      - "8123:8123"
+      - "8123:8000"
     volumes:
       - chroma_data:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
       - ANONYMIZED_TELEMETRY=FALSE
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8123/api/v1/heartbeat || exit 1"]
+      # chromadb image has no curl/wget/nc; probe v2 heartbeat via bash /dev/tcp.
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8000; printf \"GET /api/v2/heartbeat HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200\" <&3'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -324,7 +327,7 @@ services:
       HTTP_MAX_CONNECTIONS: ${HTTP_MAX_CONNECTIONS}
       HTTP_MAX_KEEPALIVE: ${HTTP_MAX_KEEPALIVE}
       CHROMA_HOST: chromadb
-      CHROMA_PORT: 8123
+      CHROMA_PORT: 8000
       CHROMA_COLLECTION: ${CHROMA_COLLECTION}
       CHROMA_PERSIST_DIR: /data/chroma
       RAG_SEARCH_K: ${RAG_SEARCH_K}

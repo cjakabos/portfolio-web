@@ -7,6 +7,7 @@ import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,11 +34,33 @@ public class CartController {
     @Autowired
     public ItemRepository itemRepository;
 
+    private String getAuthenticatedUsername(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof User user) {
+            return user.getUsername();
+        }
+        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
+            return springUser.getUsername();
+        }
+        return null;
+    }
+
+    private boolean isAuthorized(Authentication auth, String usernameFromRequest) {
+        String authenticated = getAuthenticatedUsername(auth);
+        return authenticated != null && authenticated.equals(usernameFromRequest);
+    }
+
     @PostMapping("/addToCart")
-    public ResponseEntity<Cart> addToCart(@RequestBody ModifyCartRequest request) {
+    public ResponseEntity<Cart> addToCart(@RequestBody ModifyCartRequest request, Authentication auth) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        if (!isAuthorized(auth, user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Item> item = itemRepository.findById(request.getItemId());
         if (!item.isPresent()) {
@@ -51,10 +74,13 @@ public class CartController {
     }
 
     @PostMapping("/removeFromCart")
-    public ResponseEntity<Cart> removeFromCart(@RequestBody ModifyCartRequest request) {
+    public ResponseEntity<Cart> removeFromCart(@RequestBody ModifyCartRequest request, Authentication auth) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        if (!isAuthorized(auth, user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Item> item = itemRepository.findById(request.getItemId());
         if (!item.isPresent()) {
@@ -68,17 +94,26 @@ public class CartController {
     }
 
     @PostMapping("/getCart")
-    public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request) {
+    public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request, Authentication auth) {
         User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        if (!isAuthorized(auth, user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         Cart cart = cartRepository.findByUser(user);
         return ResponseEntity.ok(cart);
     }
 
     @PostMapping("/clearCart")
-    public ResponseEntity<Cart> clearCart(@RequestBody ModifyCartRequest request) {
+    public ResponseEntity<Cart> clearCart(@RequestBody ModifyCartRequest request, Authentication auth) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        if (!isAuthorized(auth, user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Cart cart = user.getCart();
         cart.removeAllItems();

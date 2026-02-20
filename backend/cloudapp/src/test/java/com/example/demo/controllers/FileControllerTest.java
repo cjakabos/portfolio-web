@@ -10,8 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +27,14 @@ class FileControllerTest {
     private FileController fileController;
     private FileRepository fileRepository;
     private UserRepository userRepository;
+
+    private Authentication authFor(String username, Long userId) {
+        return new UsernamePasswordAuthenticationToken(
+                new User(userId, username, "hashed"),
+                null,
+                Collections.emptyList()
+        );
+    }
 
     @BeforeEach
     void setup() {
@@ -41,7 +52,7 @@ class FileControllerTest {
         when(userRepository.findByUsername("alice")).thenReturn(user);
         when(fileRepository.findByUserid(10L)).thenReturn(List.of(new File()));
 
-        ResponseEntity<List<File>> resp = fileController.getNotes("alice");
+        ResponseEntity<List<File>> resp = fileController.getNotes("alice", authFor("alice", 10L));
         assertEquals(HttpStatus.OK, resp.getStatusCode());
         assertNotNull(resp.getBody());
         assertEquals(1, resp.getBody().size());
@@ -52,9 +63,13 @@ class FileControllerTest {
         byte[] payload = "hello".getBytes(StandardCharsets.UTF_8);
         File file = new File("greeting.txt", "text/plain", "5", 1L, payload);
         when(fileRepository.findById(11L)).thenReturn(Optional.of(file));
+        User user = new User();
+        user.setId(1L);
+        when(userRepository.findByUsername("alice")).thenReturn(user);
 
-        byte[] data = fileController.getFile(11L);
-        assertArrayEquals(payload, data);
+        ResponseEntity<byte[]> response = fileController.getFile(11L, authFor("alice", 1L));
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertArrayEquals(payload, response.getBody());
     }
 
     @Test
@@ -67,7 +82,7 @@ class FileControllerTest {
                 "abc".getBytes(StandardCharsets.UTF_8)
         );
 
-        ResponseEntity resp = fileController.uploadFile(file, "ghost");
+        ResponseEntity<?> resp = fileController.uploadFile(file, "ghost", authFor("ghost", 99L));
         assertEquals(HttpStatus.NOT_FOUND, resp.getStatusCode());
         verify(fileRepository, never()).save(any(File.class));
     }
@@ -85,7 +100,7 @@ class FileControllerTest {
                 "abc".getBytes(StandardCharsets.UTF_8)
         );
 
-        ResponseEntity resp = fileController.uploadFile(file, "alice");
+        ResponseEntity<?> resp = fileController.uploadFile(file, "alice", authFor("alice", 2L));
         assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
         verify(fileRepository, never()).save(any(File.class));
     }
@@ -103,14 +118,20 @@ class FileControllerTest {
                 "hello".getBytes(StandardCharsets.UTF_8)
         );
 
-        ResponseEntity resp = fileController.uploadFile(file, "alice");
+        ResponseEntity<?> resp = fileController.uploadFile(file, "alice", authFor("alice", 3L));
         assertEquals(HttpStatus.OK, resp.getStatusCode());
         verify(fileRepository, times(1)).save(any(File.class));
     }
 
     @Test
     void deleteFile_happyPath() {
-        ResponseEntity resp = fileController.deleteFile(99L);
+        File file = new File("x.txt", "text/plain", "1", 4L, "x".getBytes(StandardCharsets.UTF_8));
+        when(fileRepository.findById(99L)).thenReturn(Optional.of(file));
+        User user = new User();
+        user.setId(4L);
+        when(userRepository.findByUsername("alice")).thenReturn(user);
+
+        ResponseEntity<?> resp = fileController.deleteFile(99L, authFor("alice", 4L));
         assertEquals(HttpStatus.OK, resp.getStatusCode());
         verify(fileRepository, times(1)).deleteById(99L);
     }

@@ -283,12 +283,7 @@ const CloudJira: React.FC = () => {
 
   function validateJiraConfig(): string[] {
     const missingVars: string[] = [];
-    if (!process.env.NEXT_PUBLIC_JIRA_DOMAIN) missingVars.push("NEXT_PUBLIC_JIRA_DOMAIN");
     if (!process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY) missingVars.push("NEXT_PUBLIC_JIRA_PROJECT_KEY");
-    if (!process.env.NEXT_PUBLIC_JIRA_EMAIL) missingVars.push("NEXT_PUBLIC_JIRA_EMAIL");
-    if (!process.env.NEXT_PUBLIC_JIRA_API_TOKEN && !process.env.NEXT_PUBLIC_JIRA_API_TOKEN_LOCAL) {
-      missingVars.push("NEXT_PUBLIC_JIRA_API_TOKEN");
-    }
     return missingVars;
   }
 
@@ -421,8 +416,7 @@ const CloudJira: React.FC = () => {
 
   function getTickets() {
     const postData = {
-      webDomain: process.env.NEXT_PUBLIC_JIRA_DOMAIN + "/rest/api/latest/search/jql?jql=project=" + process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY + "&maxResults=1000&fields=key,summary,description,issuetype,parent",
-      webApiKey: "Basic " + Buffer.from(`${process.env.NEXT_PUBLIC_JIRA_EMAIL}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN || process.env.NEXT_PUBLIC_JIRA_API_TOKEN_LOCAL}`).toString("base64"),
+      jiraPath: "/rest/api/latest/search/jql?jql=project=" + process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY + "&maxResults=1000&fields=key,summary,description,issuetype,parent",
     };
 
     const axiosConfig = {
@@ -458,8 +452,7 @@ const CloudJira: React.FC = () => {
 
   function getTicketTypes() {
     const postData = {
-      webDomain: process.env.NEXT_PUBLIC_JIRA_DOMAIN + "/rest/api/latest/issuetype/project?projectId=10000",
-      webApiKey: "Basic " + Buffer.from(`${process.env.NEXT_PUBLIC_JIRA_EMAIL}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN || process.env.NEXT_PUBLIC_JIRA_API_TOKEN_LOCAL}`).toString("base64"),
+      jiraPath: "/rest/api/latest/issuetype/project?projectId=10000",
     };
 
     const axiosConfig = { headers: { "Content-Type": "application/json", Authorization: userToken } };
@@ -475,8 +468,7 @@ const CloudJira: React.FC = () => {
         summary: [{ set: (ticket.summary || reference.fields.summary) }],
         description: [{ set: (ticket.description || reference.fields.description) }]
       },
-      webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/issue/" + reference.id,
-      webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN}`).toString("base64")
+      jiraPath: "/rest/api/latest/issue/" + reference.id
     };
 
     const axiosConfig = {
@@ -493,8 +485,7 @@ const CloudJira: React.FC = () => {
 
   function deleteTicket(ticketKey: string) {
     const postData = {
-      webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/issue/" + ticketKey,
-      webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN}`).toString("base64")
+      jiraPath: "/rest/api/latest/issue/" + ticketKey
     };
 
     const axiosConfig = {
@@ -518,8 +509,7 @@ const CloudJira: React.FC = () => {
         issuetype: { name: ticketInput.issuetype || "Task" },
         ...(ticketInput.parentKey && { parent: { key: ticketInput.parentKey } }),
       },
-      webDomain: (process.env.NEXT_PUBLIC_JIRA_DOMAIN) + "/rest/api/latest/issue",
-      webApiKey: "Basic " + Buffer.from(`${(process.env.NEXT_PUBLIC_JIRA_EMAIL)}:${process.env.NEXT_PUBLIC_JIRA_API_TOKEN}`).toString("base64")
+      jiraPath: "/rest/api/latest/issue"
     };
 
     const axiosConfig = {
@@ -757,22 +747,11 @@ const CloudJira: React.FC = () => {
               <li>Create a <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">.env.local</code> file in your project root</li>
               <li>Add the following variables:
                 <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 text-xs overflow-x-auto">
-{`NEXT_PUBLIC_JIRA_DOMAIN=https://your-domain.atlassian.net
-NEXT_PUBLIC_JIRA_PROJECT_KEY=YOUR_PROJECT_KEY
-NEXT_PUBLIC_JIRA_EMAIL=your-email@example.com
-NEXT_PUBLIC_JIRA_API_TOKEN=your-api-token-here`}
+{`NEXT_PUBLIC_JIRA_PROJECT_KEY=YOUR_PROJECT_KEY`}
                 </pre>
               </li>
               <li>Restart the development server</li>
             </ol>
-            <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded">
-              <p className="font-medium text-blue-800 dark:text-blue-300">How to get a Jira API Token:</p>
-              <ol className="list-decimal ml-4 mt-1 text-blue-700 dark:text-blue-400 text-sm">
-                <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="underline">Atlassian API Tokens</a></li>
-                <li>Click "Create API token"</li>
-                <li>Copy the generated token</li>
-              </ol>
-            </div>
           </Alert>
           <button
             onClick={() => window.location.reload()}
@@ -829,12 +808,11 @@ NEXT_PUBLIC_JIRA_API_TOKEN=your-api-token-here`}
                   <RefreshCw size={14} className="inline mr-1" /> Retry
                 </button>
               }>
-                <p className="mb-2">Your Jira credentials are invalid or expired.</p>
+                <p className="mb-2">The server-side Jira credentials are invalid or expired.</p>
                 <ol className="list-decimal ml-4 text-sm">
-                  <li>Verify your <code>NEXT_PUBLIC_JIRA_EMAIL</code> is correct</li>
-                  <li>Generate a new API token at Atlassian</li>
-                  <li>Update <code>NEXT_PUBLIC_JIRA_API_TOKEN</code></li>
-                  <li>Restart the development server</li>
+                  <li>Verify <code>JIRA_EMAIL</code> and <code>JIRA_API_TOKEN</code> in backend environment</li>
+                  <li>Generate a new API token at Atlassian if needed</li>
+                  <li>Restart the Jira proxy container</li>
                 </ol>
               </Alert>
             )}

@@ -355,6 +355,8 @@ services:
       - SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS=test-kafka:29092
       - JWT_SECRET=test-secret-key-for-integration-tests-only-change-me
       - JWT_EXPIRATION_MS=3600000
+      - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
+      - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
       - INTERNAL_SERVICE_TOKEN=test-internal-token
       - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
     depends_on:
@@ -368,6 +370,9 @@ services:
       test-backend:
         aliases:
           - cloudapp
+    volumes:
+      - ./backend/cloudapp/src/test/resources/test-private-key.pem:/run/secrets/jwt-private-key.pem:ro
+      - ./backend/cloudapp/src/test/resources/test-public-key.pub:/run/secrets/jwt-public-key.pub:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8099/cloudapp/actuator/health || exit 1"]
       interval: 10s

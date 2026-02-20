@@ -13,9 +13,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class OrderControllerTest {
@@ -24,6 +27,14 @@ public class OrderControllerTest {
 
     private OrderRepository orderRepository = mock(OrderRepository.class);
     private UserRepository userRepository = mock(UserRepository.class);
+
+    private Authentication authFor(String username) {
+        return new UsernamePasswordAuthenticationToken(
+                new User(1L, username, "hashed"),
+                null,
+                Collections.emptyList()
+        );
+    }
 
     @BeforeEach
     public void setup() {
@@ -41,7 +52,7 @@ public class OrderControllerTest {
         user.setCart(cart);
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
-        ResponseEntity<UserOrder> response = orderController.submit(user.getUsername());
+        ResponseEntity<UserOrder> response = orderController.submit(user.getUsername(), authFor(user.getUsername()));
         UserOrder userOrder = response.getBody();
 
         assertNotNull(response);
@@ -62,7 +73,7 @@ public class OrderControllerTest {
         when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
         when(orderRepository.findByUser(user)).thenReturn(userOrderResponse);
 
-        ResponseEntity<List<UserOrder>> ordersForUser = orderController.getOrdersForUser(user.getUsername());
+        ResponseEntity<List<UserOrder>> ordersForUser = orderController.getOrdersForUser(user.getUsername(), authFor(user.getUsername()));
         assertNotNull(ordersForUser);
         assertEquals(BigDecimal.valueOf(50000), ordersForUser.getBody().get(0).getTotal());
 
