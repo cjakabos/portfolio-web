@@ -18,6 +18,14 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "
 ```
 - Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e`.
 
+## Nightly AI Integrations
+- Workflow: `.github/workflows/nightly-ai-integrations.yml`
+- Scope: ChatLLM (live Ollama), AI Monitor model selectors (`chat` / `rag` / `embedding`), Jira AI refine + child proposal flow with cleanup.
+- Required models:
+  - `qwen3:1.7b`
+  - `qwen3-embedding:4b`
+- Jira nightly spec auto-skips when Jira secrets are missing.
+
 ## Cleanup
 ```bash
 docker compose -p portfolio_test_all -f docker-compose.test.yml down -v --remove-orphans

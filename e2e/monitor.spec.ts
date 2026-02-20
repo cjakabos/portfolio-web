@@ -1,4 +1,5 @@
-import { test, expect, type Page, type Route } from "@playwright/test";
+import { type Page, type Route } from "@playwright/test";
+import { test, expect } from "./fixtures/test-base";
 
 const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
 const MONITOR_TOKEN = "Bearer monitor-e2e-token";

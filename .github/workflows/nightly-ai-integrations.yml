@@ -1,0 +1,234 @@
+name: Nightly - AI Integrations
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-ai-integrations
+  cancel-in-progress: true
+
+jobs:
+  nightly-ai-e2e:
+    name: Nightly AI E2E (ChatLLM + Monitor + Jira)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Create .env for nightly stack
+        shell: bash
+        env:
+          JIRA_DOMAIN: ${{ secrets.JIRA_DOMAIN }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+        run: |
+          cat > .env <<EOF
+          JWT_SECRET=nightly-ci-jwt-secret-change-me
+          JWT_EXPIRATION_MS=3600000
+          JWT_PRIVATE_KEY_FILE=${GITHUB_WORKSPACE}/localhost+3-key.pem
+          JWT_PUBLIC_KEY_FILE=${GITHUB_WORKSPACE}/localhost+3-key.pub
+
+          INTERNAL_SERVICE_TOKEN=nightly-internal-token
+
+          POSTGRES_USER=nightly_user
+          POSTGRES_PASSWORD=nightly_pass
+          POSTGRES_DB=cloudappdb
+
+          POSTGRES_ML_USER=nightly_ml_user
+          POSTGRES_ML_PASSWORD=nightly_ml_pass
+          POSTGRES_ML_DB=segmentationdb
+
+          MYSQL_ROOT_USERNAME=root
+          MYSQL_ROOT_PASSWORD=nightly_mysql_pass
+          MYSQL_DATABASE=petstore
+
+          MONGO_USER=nightly_mongo_user
+          MONGO_PASSWORD=nightly_mongo_pass
+          MONGO_DB=cloudappdb
+
+          MONGO_ABTEST_USER=admin
+          MONGO_ABTEST_PASSWORD=nightly_abtest_admin_pass
+          MONGO_ABTEST_ORCH_USER=orchestration_user
+          MONGO_ABTEST_ORCH_PASSWORD=nightly_abtest_orch_pass
+
+          JIRA_DOMAIN=${JIRA_DOMAIN:-https://example.atlassian.net}
+          JIRA_API_TOKEN=${JIRA_API_TOKEN:-missing-token}
+          JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY:-PROJ}
+          JIRA_EMAIL=${JIRA_EMAIL:-missing@example.com}
+
+          LLM_MODEL=qwen3:1.7b
+          LLM_MODEL_EMBEDDING=qwen3-embedding:4b
+
+          OTEL_ENABLED=false
+          GRAFANA_PASSWORD=nightly-grafana-pass
+
+          CLOUDAPP_URL=http://next-nginx-jwt:80/cloudapp
+          PETSTORE_URL=http://next-nginx-jwt:80/petstore
+          VEHICLES_URL=http://next-nginx-jwt:80/vehicles
+          ML_URL=http://next-nginx-jwt:80/mlops-segmentation
+
+          CHROMA_HOST=chromadb
+          CHROMA_PORT=8000
+          CHROMA_COLLECTION=user_documents
+          CHROMA_PERSIST_DIR=/data/chroma
+
+          ENABLE_CHECKPOINTING=true
+          ENABLE_HITL=true
+          ENABLE_PARALLEL=true
+          ENABLE_ERROR_HANDLING=true
+          ENABLE_AB_TESTING=true
+
+          REDIS_MAX_CONNECTIONS=50
+          ENVIRONMENT=development
+
+          LLM_TEMPERATURE=0.7
+          LLM_MAX_TOKENS=2000
+          RAG_SEARCH_K=3
+
+          HTTP_TIMEOUT=10
+          HTTP_MAX_CONNECTIONS=100
+          HTTP_MAX_KEEPALIVE=20
+
+          LOG_LEVEL=INFO
+          LOG_FORMAT=json
+          EOF
+
+      - name: Start infrastructure stack (with Ollama profile)
+        run: |
+          docker compose -f docker-compose-infrastructure.yml --profile ollama up -d --build
+
+      - name: Wait for infrastructure readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..60}; do
+            if curl -sf http://localhost:11434/api/tags >/dev/null; then
+              echo "Ollama is ready"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Ollama did not become ready in time"
+          exit 1
+
+      - name: Pull nightly AI models in Ollama
+        run: |
+          docker exec ollama ollama pull qwen3:1.7b
+          docker exec ollama ollama pull qwen3-embedding:4b
+          docker exec ollama ollama list
+
+      - name: Start application stack
+        run: |
+          docker compose -f docker-compose-app.yml up -d --build
+
+      - name: Wait for app endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          wait_for() {
+            local url="$1"
+            local name="$2"
+            for i in {1..90}; do
+              if curl -sf "$url" >/dev/null; then
+                echo "$name is ready"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "$name failed readiness: $url"
+            return 1
+          }
+          wait_for "http://localhost/nginx_health" "Nginx gateway"
+          wait_for "http://localhost:5001" "CloudApp shell"
+          wait_for "http://localhost:5003" "Jira remote"
+          wait_for "http://localhost:5333" "ChatLLM remote"
+          wait_for "http://localhost:5010" "AI monitor"
+          wait_for "http://localhost:80/ai/health" "AI orchestration layer"
+
+      - name: Resolve Jira nightly flag
+        id: jira
+        shell: bash
+        env:
+          JIRA_DOMAIN: ${{ secrets.JIRA_DOMAIN }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+        run: |
+          if [[ -n "${JIRA_DOMAIN}" && -n "${JIRA_EMAIL}" && -n "${JIRA_API_TOKEN}" && -n "${JIRA_PROJECT_KEY}" ]]; then
+            echo "enabled=1" >> "$GITHUB_OUTPUT"
+            echo "project_key=${JIRA_PROJECT_KEY}" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=0" >> "$GITHUB_OUTPUT"
+            echo "project_key=" >> "$GITHUB_OUTPUT"
+            echo "Jira secrets are missing; Jira nightly spec will be skipped."
+          fi
+
+      - name: Install Playwright dependencies
+        working-directory: frontend/cloudapp-shell
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        working-directory: frontend/cloudapp-shell
+        run: npx playwright install --with-deps chromium
+
+      - name: Run nightly AI integration specs
+        working-directory: frontend/cloudapp-shell
+        env:
+          BASE_URL: http://localhost:5001
+          BACKEND_URL: http://localhost:80
+          MONITOR_URL: http://localhost:5010
+          NIGHTLY_AI_E2E: "1"
+          NIGHTLY_CHAT_MODEL: qwen3:1.7b
+          NIGHTLY_RAG_MODEL: qwen3:1.7b
+          NIGHTLY_EMBEDDING_MODEL: qwen3-embedding:4b
+          NIGHTLY_ENABLE_JIRA_E2E: ${{ steps.jira.outputs.enabled }}
+          NIGHTLY_JIRA_PROJECT_KEY: ${{ steps.jira.outputs.project_key }}
+        run: |
+          NODE_PATH=./node_modules npx playwright test \
+            nightly-chatllm-ollama.spec.ts \
+            nightly-monitor-models.spec.ts \
+            nightly-jira-ai.spec.ts \
+            --project=chromium \
+            -c ../../playwright.config.ts
+
+      - name: Collect Playwright artifacts
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p playwright-artifacts
+          cp -R playwright-report playwright-artifacts/playwright-report-root 2>/dev/null || true
+          cp -R test-results playwright-artifacts/test-results-root 2>/dev/null || true
+          cp -R frontend/cloudapp-shell/playwright-report playwright-artifacts/playwright-report-shell 2>/dev/null || true
+          cp -R frontend/cloudapp-shell/test-results playwright-artifacts/test-results-shell 2>/dev/null || true
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-ai-playwright-artifacts
+          path: playwright-artifacts/
+          retention-days: 14
+
+      - name: Dump Docker logs on failure
+        if: failure()
+        run: |
+          docker compose -f docker-compose-app.yml ps || true
+          docker compose -f docker-compose-infrastructure.yml ps || true
+          docker compose -f docker-compose-app.yml logs --tail=300 || true
+          docker compose -f docker-compose-infrastructure.yml logs --tail=300 || true
+
+      - name: Teardown stacks
+        if: always()
+        run: |
+          docker compose -f docker-compose-app.yml down -v --remove-orphans || true
+          docker compose -f docker-compose-infrastructure.yml --profile ollama down -v --remove-orphans || true
