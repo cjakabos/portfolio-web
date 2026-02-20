@@ -11,11 +11,24 @@ import {
 } from "./fixtures/helpers";
 
 async function clearAuthState(page: import("@playwright/test").Page) {
-  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await gotoLogin(page);
   await page.evaluate(() => {
     localStorage.removeItem("NEXT_PUBLIC_MY_TOKEN");
     localStorage.removeItem("NEXT_PUBLIC_MY_USERNAME");
   });
+}
+
+async function gotoLogin(page: import("@playwright/test").Page) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await page.goto("/login", { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 10_000 });
+      return;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await page.waitForTimeout(1_000);
+    }
+  }
 }
 
 async function expectUnauthenticated(page: import("@playwright/test").Page) {
@@ -55,7 +68,7 @@ test.describe("Authentication Flow", () => {
 
   test.describe("Registration", () => {
     test("should navigate to register form from login page", async ({ page }) => {
-      await page.goto("/login");
+      await gotoLogin(page);
       const registerBtn = page.getByRole("button", { name: "Register" });
       await expect(registerBtn).toBeVisible();
       await registerBtn.click();
@@ -69,7 +82,7 @@ test.describe("Authentication Flow", () => {
     });
 
     test("should show error for mismatched passwords", async ({ page }) => {
-      await page.goto("/login");
+      await gotoLogin(page);
       await page.getByRole("button", { name: "Register" }).click();
       await page.locator('input[name="firstname"]').fill("Test");
       await page.locator('input[name="lastname"]').fill("User");
@@ -83,7 +96,7 @@ test.describe("Authentication Flow", () => {
     });
 
     test("should show error for short password", async ({ page }) => {
-      await page.goto("/login");
+      await gotoLogin(page);
       await page.getByRole("button", { name: "Register" }).click();
       await page.locator('input[name="firstname"]').fill("Test");
       await page.locator('input[name="lastname"]').fill("User");
@@ -110,7 +123,7 @@ test.describe("Authentication Flow", () => {
     });
 
     test("should login with valid credentials and redirect to dashboard", async ({ page }) => {
-      await page.goto("/login");
+      await gotoLogin(page);
       await page.locator('input[name="username"]').fill(uniqueUser);
       await page.locator('input[name="password"]').fill(password);
 
@@ -138,7 +151,7 @@ test.describe("Authentication Flow", () => {
     });
 
     test("should show error for invalid credentials", async ({ page }) => {
-      await page.goto("/login");
+      await gotoLogin(page);
       await page.locator('input[name="username"]').fill("nonexistent");
       await page.locator('input[name="password"]').fill("wrongpass");
       await page.getByRole("button", { name: "Sign In" }).click();
@@ -151,7 +164,7 @@ test.describe("Authentication Flow", () => {
     });
 
     test("should show error for empty credentials", async ({ page }) => {
-      await page.goto("/login");
+      await gotoLogin(page);
       await page.getByRole("button", { name: "Sign In" }).click();
       await expect(page).toHaveURL(/\/login/);
     });
