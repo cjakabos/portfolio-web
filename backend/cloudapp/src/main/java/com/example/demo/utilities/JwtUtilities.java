@@ -36,21 +36,23 @@ public class JwtUtilities {
     public UserRepository userRepository;
 
     // -------------------------------------------------------------------------
-    // Configurable key paths — override in application-{profile}.properties.
+    // Key paths are provided by configuration (environment variables in prod,
+    // classpath test keys in test profile).
     //
     // Supports two formats:
     //   "classpath:some-key.pem"   → loaded from src/main/resources (or test/resources)
     //   "localhost+3-key.pem"      → loaded from the filesystem (relative to WORKDIR)
     //   "/absolute/path/key.pem"   → loaded from the filesystem (absolute)
     //
-    // Defaults match the existing production file names so nothing breaks
-    // for the Docker image where keys are copied into WORKDIR (/home/run).
     // -------------------------------------------------------------------------
-    @Value("${jwt.private-key-path:localhost+3-key.pem}")
+    @Value("${jwt.private-key-path}")
     private String privateKeyPath;
 
-    @Value("${jwt.public-key-path:localhost+3-key.pub}")
+    @Value("${jwt.public-key-path}")
     private String publicKeyPath;
+
+    @Value("${jwt.expiration.ms}")
+    private long jwtExpirationMs;
 
     private static final String PEM_PUBLIC_START = "-----BEGIN PUBLIC KEY-----";
     private static final String PEM_PUBLIC_END = "-----END PUBLIC KEY-----";
@@ -76,7 +78,7 @@ public class JwtUtilities {
         return JWT.create()
                 .withIssuer("cloudapp")
                 .withSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 864_000_000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .sign(Algorithm.RSA512(cachedPrivateKey));
     }
 

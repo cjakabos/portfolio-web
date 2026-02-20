@@ -1,10 +1,7 @@
 package com.example.demo.controllers;
 
-import java.util.Optional;
-
 import com.example.demo.utilities.JwtUtilities;
 import jakarta.validation.Valid;
-import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,18 +41,57 @@ public class UserController {
     @Autowired
     private JwtUtilities jwtUtilities;
 
+    private String getAuthenticatedUsername(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof User user) {
+            return user.getUsername();
+        }
+        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
+            return springUser.getUsername();
+        }
+        return null;
+    }
+
     @GetMapping("/id/{id}")
-    public ResponseEntity<User> findById(@PathVariable Long id) {
-        return ResponseEntity.of(userRepository.findById(id));
+    public ResponseEntity<User> findById(@PathVariable Long id, Authentication auth) {
+        return userRepository.findById(id)
+                .map(found -> {
+                    String authenticated = getAuthenticatedUsername(auth);
+                    if (authenticated == null || !authenticated.equals(found.getUsername())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<User>build();
+                    }
+                    return ResponseEntity.ok(found);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<User> findByUserName(@PathVariable String username) {
+    public ResponseEntity<User> findByUserName(@PathVariable String username, Authentication auth) {
         User user = userRepository.findByUsername(username);
-        return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        String authenticated = getAuthenticatedUsername(auth);
+        if (authenticated == null || !authenticated.equals(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(user);
     }
     @PostMapping("/user-register")
     public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
+        if (createUserRequest.getUsername() == null || createUserRequest.getUsername().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (createUserRequest.getPassword() == null || createUserRequest.getConfirmPassword() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (userRepository.findByUsername(createUserRequest.getUsername()) != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
         User user = new User();
 
         if (createUserRequest.getPassword().length() < 8) {

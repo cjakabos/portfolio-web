@@ -178,7 +178,7 @@ class ExperimentStorage:
         try:
             from motor.motor_asyncio import AsyncIOMotorClient
             
-            mongo_url = os.getenv("MONGODB_URL", "mongodb://orchestration_user:orchestration_pass@mongodb-abtest:27017/ai_orchestration")
+            mongo_url = os.getenv("MONGODB_URL", "mongodb://mongodb-abtest:27017")
             self._mongo_client = AsyncIOMotorClient(mongo_url)
             await self._mongo_client.admin.command('ping')
             self._db = self._mongo_client.ai_orchestration

@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.model.persistence.*;
@@ -25,13 +27,30 @@ public class OrderController {
     @Autowired
     public OrderRepository orderRepository;
 
+    private String getAuthenticatedUsername(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof User user) {
+            return user.getUsername();
+        }
+        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
+            return springUser.getUsername();
+        }
+        return null;
+    }
 
     @PostMapping("/submit/{username}")
-    public ResponseEntity<UserOrder> submit(@PathVariable String username) {
+    public ResponseEntity<UserOrder> submit(@PathVariable String username, Authentication auth) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             log.error("User not found during order submit: " + username);
             return ResponseEntity.notFound().build();
+        }
+        String authenticated = getAuthenticatedUsername(auth);
+        if (authenticated == null || !authenticated.equals(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         UserOrder order = UserOrder.createFromCart(user.getCart());
         orderRepository.save(order);
@@ -40,11 +59,15 @@ public class OrderController {
     }
 
     @GetMapping("/history/{username}")
-    public ResponseEntity<List<UserOrder>> getOrdersForUser(@PathVariable String username) {
+    public ResponseEntity<List<UserOrder>> getOrdersForUser(@PathVariable String username, Authentication auth) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             log.error("User not found during order history: " + username);
             return ResponseEntity.notFound().build();
+        }
+        String authenticated = getAuthenticatedUsername(auth);
+        if (authenticated == null || !authenticated.equals(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         log.info("User order history fetch is successful for : " + user.getUsername());
         return ResponseEntity.ok(orderRepository.findByUser(user));

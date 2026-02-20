@@ -43,7 +43,7 @@ export const useFiles = (username: string, token: string) => {
 
     const deleteFile = async (id: number) => {
         try {
-            await axios.get(`${API_URL}/file/delete-file/${id}`, {
+            await axios.delete(`${API_URL}/file/delete-file/${id}`, {
                 headers: { 'Authorization': token }
             });
             await fetchFiles();

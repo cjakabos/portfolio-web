@@ -14,8 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +33,14 @@ public class UserControllerTest {
     private PasswordEncoder encoder = mock(PasswordEncoder.class);
 
     private CreateUserRequest r = new CreateUserRequest();
+
+    private Authentication authFor(String username) {
+        return new UsernamePasswordAuthenticationToken(
+                new User(1L, username, "hashed"),
+                null,
+                Collections.emptyList()
+        );
+    }
 
 
     @BeforeEach
@@ -73,7 +84,7 @@ public class UserControllerTest {
 
         //when
         when(userRepository.findById((long) 1)).thenReturn(Optional.of(user));
-        response = userController.findById(1L);
+        response = userController.findById(1L, authFor("testuser"));
 
         //then
         assertNotNull(response);
@@ -90,7 +101,7 @@ public class UserControllerTest {
 
         //when
         when(userRepository.findByUsername("test")).thenReturn(user);
-        response = userController.findByUserName("test");
+        response = userController.findByUserName("test", authFor("test"));
 
         //then
         assertNotNull(response);

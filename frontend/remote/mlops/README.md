@@ -175,18 +175,15 @@ If Jira functionality is to be used, follow the instructions below:
 ## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
 Two options:
-1. Out of the box: edit this in docker-compose-app.yml:
+1. Out of the box: set these in root `.env`:
 ```
-#NEXT_PUBLIC_JIRA_DOMAIN: 'https://your-jira-instance.atlassian.net'
-#NEXT_PUBLIC_JIRA_API_TOKEN: Y3NhYmFqYWthYm-------YOUR-API-KEY------SDA9REUzRjY4N0M=
-#NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
-#NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
+JIRA_DOMAIN='https://your-jira-instance.atlassian.net'
+JIRA_API_TOKEN='your-api-token'
+JIRA_PROJECT_KEY='yourjiraprojectkey'
+JIRA_EMAIL='youremail'
 ```
-2. Local run: Add .env file at frontend/remote/jira directory in this format:
+2. For local frontend-only overrides, set:
 ```bash
-NEXT_PUBLIC_JIRA_DOMAIN = 'https://xxxx.atlassian.net'
-NEXT_PUBLIC_JIRA_API_TOKEN = Y3......2edd (note: no single quotation)
-NEXT_PUBLIC_JIRA_PROJECT_KEY: 'yourjiraprojectkey'
-NEXT_PUBLIC_JIRA_EMAIL: 'youremail'
+NEXT_PUBLIC_JIRA_PROJECT_KEY='yourjiraprojectkey'
 ```
-NOTE: the next-frontend Docker image needs to be rebuilt after editing the .env file.
+NOTE: credentials are now server-side only via `jiraproxy`.

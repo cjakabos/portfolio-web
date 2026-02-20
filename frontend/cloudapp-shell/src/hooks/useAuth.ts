@@ -7,7 +7,8 @@ export const useAuth = () => {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const t = `Bearer ${localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")}` || "";
+            const rawToken = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN");
+            const t = rawToken ? `Bearer ${rawToken}` : "";
             const u = localStorage.getItem("NEXT_PUBLIC_MY_USERNAME") || "";
             setToken(t);
             setUsername(u);

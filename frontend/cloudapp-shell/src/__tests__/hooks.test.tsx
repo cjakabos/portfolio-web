@@ -115,7 +115,7 @@ describe("cloudapp hooks", () => {
     });
     expect(result.current.notes).toEqual(updated);
 
-    mock.onGet(`${API_URL}/note/delete/1`).reply(200, {});
+    mock.onDelete(`${API_URL}/note/delete/1`).reply(200, {});
     mock.onGet(`${API_URL}/note/user/alice`).replyOnce(200, empty);
     await act(async () => {
       await result.current.deleteNote(1);

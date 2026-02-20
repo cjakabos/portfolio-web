@@ -20,15 +20,17 @@ WORKDIR /app
 # Copy both package.json AND package-lock.json, use npm ci
 # npm ci is the production-grade approach: it installs from the lockfile
 # exactly, fails if lockfile is out of sync, and is faster than npm install.
-# Some npm versions intermittently skip optional native bindings in containers;
-# if Tailwind's native binding is missing, retry with a clean npm install.
+# Some npm versions intermittently skip optional native bindings in containers.
+# For Tailwind v4 services (which use @tailwindcss/oxide), retry with a clean install if missing.
 COPY ./$SERVICE_PATH/package.json ./$SERVICE_PATH/package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else echo "Warning: No package-lock.json found, falling back to npm install" && npm install; fi \
- && if ! node -e "require('@tailwindcss/oxide')"; then \
-      echo "Retrying dependency install to restore optional native bindings..."; \
-      rm -rf node_modules; \
-      npm install; \
-      node -e "require('@tailwindcss/oxide')"; \
+ && if node -e "const p=require('./package.json');const d={...(p.dependencies||{}),...(p.devDependencies||{})};const t=d.tailwindcss||'';const needsOxide=Boolean(d['@tailwindcss/postcss'])||/^(\\^|~)?4(\\.|$)/.test(t);process.exit(needsOxide?0:1)"; then \
+      if ! node -e "require('@tailwindcss/oxide')"; then \
+        echo "Retrying dependency install to restore optional native bindings..."; \
+        rm -rf node_modules; \
+        npm install; \
+        node -e "require('@tailwindcss/oxide')"; \
+      fi; \
     fi
 
 
@@ -37,14 +39,8 @@ FROM base AS builder
 
 ARG NEXT_PRIVATE_LOCAL_WEBPACK
 ENV NEXT_PRIVATE_LOCAL_WEBPACK=$NEXT_PRIVATE_LOCAL_WEBPACK
-ARG NEXT_PUBLIC_JIRA_DOMAIN
-ENV NEXT_PUBLIC_JIRA_DOMAIN=$NEXT_PUBLIC_JIRA_DOMAIN
-ARG NEXT_PUBLIC_JIRA_API_TOKEN
-ENV NEXT_PUBLIC_JIRA_API_TOKEN=$NEXT_PUBLIC_JIRA_API_TOKEN
 ARG NEXT_PUBLIC_JIRA_PROJECT_KEY
 ENV NEXT_PUBLIC_JIRA_PROJECT_KEY=$NEXT_PUBLIC_JIRA_PROJECT_KEY
-ARG NEXT_PUBLIC_JIRA_EMAIL
-ENV NEXT_PUBLIC_JIRA_EMAIL=$NEXT_PUBLIC_JIRA_EMAIL
 
 # Module Federation remote URLs are now configurable via env vars.
 # These are baked into the Next.js build, so they must be set at build time.
@@ -80,10 +76,6 @@ FROM base AS runner
 ARG SERVICE_PORT
 ARG NEXT_PRIVATE_LOCAL_WEBPACK
 ENV NEXT_PRIVATE_LOCAL_WEBPACK=$NEXT_PRIVATE_LOCAL_WEBPACK
-ARG NEXT_PUBLIC_JIRA_DOMAIN
-ENV NEXT_PUBLIC_JIRA_DOMAIN=$NEXT_PUBLIC_JIRA_DOMAIN
-ARG NEXT_PUBLIC_JIRA_API_TOKEN
-ENV NEXT_PUBLIC_JIRA_API_TOKEN=$NEXT_PUBLIC_JIRA_API_TOKEN
 
 WORKDIR /app
 

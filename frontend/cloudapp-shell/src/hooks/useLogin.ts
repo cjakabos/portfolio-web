@@ -19,7 +19,6 @@ export const useLogin = () => {
     try {
       // Ideally, use an environment variable for the base URL
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-      console.log("login try", { username: values.username, password: values.password })
       const response = await axios.post(
         `${API_URL}/user/user-login`,
         { username: values.username, password: values.password },
@@ -28,7 +27,6 @@ export const useLogin = () => {
 
 
       const token = response.headers.authorization;
-      console.log(localStorage.getItem("NEXT_PUBLIC_MY_USERNAME"))
       if (typeof window !== "undefined") {
         localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", values.username);
         localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
@@ -38,7 +36,6 @@ export const useLogin = () => {
       console.error("Login Error:", err);
       setError("Something went wrong. Please check your credentials.");
     } finally {
-        console.log("login response ok")
       setLoading(false);
     }
   };
