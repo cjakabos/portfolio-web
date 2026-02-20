@@ -1,21 +1,23 @@
-FROM debian:bullseye-slim as ngx_http_auth_jwt_builder_base
+FROM debian:bullseye-slim AS ngx_http_auth_jwt_builder_base
 LABEL stage=ngx_http_auth_jwt_builder
-RUN <<`
-apt-get update
-apt-get install -y curl build-essential
-`
+RUN set -eux; \
+    apt-get update -o Acquire::Retries=5; \
+    apt-get install -y --no-install-recommends curl build-essential; \
+    rm -rf /var/lib/apt/lists/*
 
 
-FROM ngx_http_auth_jwt_builder_base as ngx_http_auth_jwt_builder_module
+FROM ngx_http_auth_jwt_builder_base AS ngx_http_auth_jwt_builder_module
 LABEL stage=ngx_http_auth_jwt_builder
 ENV PATH "${PATH}:/etc/nginx"
 ENV LD_LIBRARY_PATH=/usr/local/lib
 ENV NGINX_VERSION 1.25.4
-RUN <<`
-	set -e
-	apt-get install -y libjwt-dev libjwt0 libjansson-dev libjansson4 libpcre2-dev zlib1g-dev libpcre3-dev libssl-dev curl
-	mkdir -p /root/build/ngx-http-auth-jwt-module
-`
+RUN set -eux; \
+    apt-get update -o Acquire::Retries=5; \
+    apt-get install -y --no-install-recommends \
+      libjwt-dev libjwt0 libjansson-dev libjansson4 \
+      libpcre2-dev zlib1g-dev libpcre3-dev libssl-dev curl; \
+    mkdir -p /root/build/ngx-http-auth-jwt-module; \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /root/build/ngx-http-auth-jwt-module
 ADD config ./
 ADD src/*.h src/*.c ./src/
@@ -88,13 +90,11 @@ WORKDIR /etc/nginx
 FROM ngx_http_auth_jwt_builder_module AS ngx_http_auth_jwt_nginx
 LABEL maintainer="TeslaGov" email="developers@teslagov.com"
 ENV NGINX_VERSION 1.25.5
-RUN <<`
-	set -e
-
-	apt-get update
-	apt-get install -y libjansson4 libjwt0 libssl1.1
-	apt-get clean
-`
+RUN set -eux; \
+    apt-get update -o Acquire::Retries=5; \
+    apt-get install -y --no-install-recommends libjansson4 libjwt0 libssl1.1; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/*
 
 # FIX 4.2: Create dedicated nginx user and group
 RUN groupadd -r nginx && useradd -r -g nginx -d /var/cache/nginx -s /sbin/nologin nginx

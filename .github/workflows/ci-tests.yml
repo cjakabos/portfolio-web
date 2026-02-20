@@ -141,16 +141,21 @@ jobs:
 
       - name: Start backend services
         run: |
-          docker compose -f docker-compose.test.yml up -d \
+          set -euo pipefail
+          if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 360 \
             test-postgres test-postgres-ml test-mysql test-mongo \
             test-zookeeper test-kafka \
-            test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops test-nginx
+            test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops test-nginx; then
+            docker compose -f docker-compose.test.yml ps || true
+            docker compose -f docker-compose.test.yml logs --tail=300 \
+              test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+              test-postgres test-postgres-ml test-mysql test-mongo test-kafka test-zookeeper test-nginx || true
+            exit 1
+          fi
 
       - name: Wait for services to be healthy
         run: |
-          echo "Waiting for services..."
-          timeout 180 bash -c 'until docker compose -f docker-compose.test.yml ps test-nginx | grep -q "healthy"; do sleep 5; echo "waiting..."; done'
-          echo "All services healthy!"
+          docker compose -f docker-compose.test.yml ps
 
       - name: Run NGINX gateway tests
         run: |
@@ -205,19 +210,23 @@ jobs:
 
       - name: Start full stack
         run: |
-          docker compose -f docker-compose.test.yml up -d \
+          set -euo pipefail
+          if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 420 \
             test-postgres test-postgres-ml test-mysql test-mongo \
             test-zookeeper test-kafka \
             test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
-            test-nginx test-shell
+            test-nginx test-shell; then
+            docker compose -f docker-compose.test.yml ps || true
+            docker compose -f docker-compose.test.yml logs --tail=300 \
+              test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+              test-postgres test-postgres-ml test-mysql test-mongo test-kafka test-zookeeper \
+              test-nginx test-shell || true
+            exit 1
+          fi
 
       - name: Wait for services
         run: |
-          echo "Waiting for frontend shell..."
-          timeout 300 bash -c 'until docker compose -f docker-compose.test.yml ps test-shell | grep -q "healthy"; do sleep 10; echo "waiting..."; done'
-          echo "Waiting for NGINX..."
-          timeout 300 bash -c 'until docker compose -f docker-compose.test.yml ps test-nginx | grep -q "healthy"; do sleep 5; echo "waiting..."; done'
-          echo "All services ready!"
+          docker compose -f docker-compose.test.yml ps
 
       - name: Run Playwright E2E tests
         run: |
