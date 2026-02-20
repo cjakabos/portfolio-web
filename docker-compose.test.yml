@@ -91,7 +91,11 @@ services:
     networks:
       - test-backend
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh \"mongodb://testuser:testpass@localhost:27017/admin?authSource=admin\" --quiet --eval \"db.adminCommand('ping').ok\" | grep 1",
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -342,13 +346,13 @@ services:
       args:
         SERVICE_PATH: backend/cloudapp
     environment:
-      - DOCKER_HOST_IP=host.docker.internal
       - SPRING_DATASOURCE_USERNAME=testuser
       - SPRING_DATASOURCE_PASSWORD=testpass
       - SPRING_DATASOURCE_URL=jdbc:postgresql://test-postgres:5432/cloudappdb_test
       - SPRING_DATA_MONGODB_URI=mongodb://testuser:testpass@test-mongo:27017/cloudappdb_test?authSource=admin
-      - DOCKER_HOST_KAFKA_PORT=29092
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=test-kafka:29092
+      - SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS=test-kafka:29092
+      - SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS=test-kafka:29092
       - JWT_SECRET=test-secret-key-for-integration-tests-only-change-me
       - JWT_EXPIRATION_MS=3600000
       - INTERNAL_SERVICE_TOKEN=test-internal-token
