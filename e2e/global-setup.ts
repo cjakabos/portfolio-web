@@ -10,8 +10,30 @@ import { test as setup, expect } from "@playwright/test";
 import { apiRegister, apiLogin, injectAuth, TEST_USER } from "./fixtures/helpers";
 
 const authFile = "e2e/.auth/user.json";
+const LOG_BROWSER_CONSOLE = process.env.PW_LOG_BROWSER_CONSOLE !== "0";
+const LOG_REQUEST_FAILURES = process.env.PW_LOG_REQUEST_FAILURES !== "0";
 
 setup("authenticate", async ({ page, request }) => {
+  const logPrefix = "[pw][setup][authenticate]";
+  page.on("console", (message) => {
+    if (!LOG_BROWSER_CONSOLE) {
+      return;
+    }
+    console.log(`${logPrefix} [browser:${message.type()}] ${message.text()}`);
+  });
+  page.on("pageerror", (error) => {
+    console.error(`${logPrefix} [pageerror] ${error.stack || error.message}`);
+  });
+  page.on("requestfailed", (failedRequest) => {
+    if (!LOG_REQUEST_FAILURES) {
+      return;
+    }
+    const failureText = failedRequest.failure()?.errorText || "unknown";
+    console.warn(
+      `${logPrefix} [requestfailed] ${failedRequest.method()} ${failedRequest.url()} -> ${failureText}`
+    );
+  });
+
   const { username, password } = TEST_USER;
 
   // Register (ignore failures — user may already exist)
