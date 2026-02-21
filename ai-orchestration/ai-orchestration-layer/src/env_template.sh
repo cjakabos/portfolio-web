@@ -24,6 +24,7 @@ PETSTORE_URL=http://localhost:8083
 VEHICLES_URL=http://localhost:8880
 ML_URL=http://localhost:8600
 POSTGRES_URL=postgresql://<user>:<password>@localhost:5432/cloudappdb
+INTERNAL_SERVICE_TOKEN=<shared-internal-token>
 
 # ============================================================================
 # HTTP CLIENT CONFIGURATION

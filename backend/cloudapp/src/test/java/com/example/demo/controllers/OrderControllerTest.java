@@ -5,6 +5,7 @@ import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.*;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.CreateUserRequest;
+import com.example.demo.security.InternalRequestAuthorizer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
@@ -27,6 +29,7 @@ public class OrderControllerTest {
 
     private OrderRepository orderRepository = mock(OrderRepository.class);
     private UserRepository userRepository = mock(UserRepository.class);
+    private InternalRequestAuthorizer internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
 
     private Authentication authFor(String username) {
         return new UsernamePasswordAuthenticationToken(
@@ -41,6 +44,8 @@ public class OrderControllerTest {
         orderController = new OrderController();
         TestUtils.injectObjects(orderController, "userRepository", userRepository);
         TestUtils.injectObjects(orderController, "orderRepository", orderRepository);
+        TestUtils.injectObjects(orderController, "internalRequestAuthorizer", internalRequestAuthorizer);
+        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
     }
 
     @Test
@@ -52,7 +57,11 @@ public class OrderControllerTest {
         user.setCart(cart);
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
-        ResponseEntity<UserOrder> response = orderController.submit(user.getUsername(), authFor(user.getUsername()));
+        ResponseEntity<UserOrder> response = orderController.submit(
+                user.getUsername(),
+                authFor(user.getUsername()),
+                new MockHttpServletRequest()
+        );
         UserOrder userOrder = response.getBody();
 
         assertNotNull(response);
@@ -73,7 +82,11 @@ public class OrderControllerTest {
         when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
         when(orderRepository.findByUser(user)).thenReturn(userOrderResponse);
 
-        ResponseEntity<List<UserOrder>> ordersForUser = orderController.getOrdersForUser(user.getUsername(), authFor(user.getUsername()));
+        ResponseEntity<List<UserOrder>> ordersForUser = orderController.getOrdersForUser(
+                user.getUsername(),
+                authFor(user.getUsername()),
+                new MockHttpServletRequest()
+        );
         assertNotNull(ordersForUser);
         assertEquals(BigDecimal.valueOf(50000), ordersForUser.getBody().get(0).getTotal());
 

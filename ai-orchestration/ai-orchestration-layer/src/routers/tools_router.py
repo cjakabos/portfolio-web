@@ -12,8 +12,9 @@ import json
 import inspect
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Request
 from pydantic import BaseModel, Field
+from tools.http_client import HTTPClient
 
 # Configure Router
 router = APIRouter(prefix="/tools", tags=["Tools"])
@@ -247,6 +248,22 @@ def _tool_to_info(tool) -> ToolInfo:
     )
 
 
+def _extract_downstream_headers(request: Request) -> Dict[str, str]:
+    """
+    Forward auth-related headers to downstream service calls made by tools.
+    """
+    headers: Dict[str, str] = {}
+    auth = request.headers.get("authorization")
+    if auth:
+        headers["Authorization"] = auth
+
+    internal_auth = request.headers.get("x-internal-auth")
+    if internal_auth:
+        headers["X-Internal-Auth"] = internal_auth
+
+    return headers
+
+
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
@@ -356,7 +373,11 @@ async def get_tool_info(tool_name: str):
 
 
 @router.post("/{tool_name}/invoke", response_model=ToolInvocationResponse)
-async def invoke_tool(tool_name: str, request: ToolInvocationRequest = Body(...)):
+async def invoke_tool(
+    tool_name: str,
+    request: Request,
+    body: ToolInvocationRequest = Body(...)
+):
     """
     Invoke a tool with the provided parameters.
     
@@ -386,22 +407,24 @@ async def invoke_tool(tool_name: str, request: ToolInvocationRequest = Body(...)
             detail=f"Tool '{tool_name}' not found"
         )
     
+    header_ctx_token = HTTPClient.set_request_context_headers(_extract_downstream_headers(request))
+
     try:
-        logger.info(f"Invoking tool '{tool_name}' with params: {request.parameters}")
+        logger.info(f"Invoking tool '{tool_name}' with params: {body.parameters}")
         
         # Invoke the tool (handle both sync and async tools)
         if hasattr(tool, 'ainvoke'):
             # Async tool
-            result = await tool.ainvoke(request.parameters)
+            result = await tool.ainvoke(body.parameters)
         elif hasattr(tool, 'invoke'):
             # Sync tool wrapped
-            result = tool.invoke(request.parameters)
+            result = tool.invoke(body.parameters)
         elif hasattr(tool, '_arun'):
             # LangChain async run
-            result = await tool._arun(**request.parameters)
+            result = await tool._arun(**body.parameters)
         elif hasattr(tool, '_run'):
             # LangChain sync run
-            result = tool._run(**request.parameters)
+            result = tool._run(**body.parameters)
         else:
             raise HTTPException(
                 status_code=500,
@@ -440,6 +463,8 @@ async def invoke_tool(tool_name: str, request: ToolInvocationRequest = Body(...)
             latency_ms=latency_ms,
             error=str(e)
         )
+    finally:
+        HTTPClient.reset_request_context_headers(header_ctx_token)
 
 
 @router.get("/stats/summary")

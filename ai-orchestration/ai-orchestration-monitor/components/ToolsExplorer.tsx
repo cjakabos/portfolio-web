@@ -176,6 +176,10 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
         </div>
       )}
 
+      <div className="mb-6 p-4 bg-white border border-gray-200 rounded-lg text-sm text-gray-600">
+        CloudApp tools run in admin monitor mode. Provide the target username in tool parameters when required.
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tools List */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

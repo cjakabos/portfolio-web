@@ -6,17 +6,17 @@ public class TestUtils {
 
     public static void injectObjects(Object target, String fieldName, Object toInject) {
 
-        boolean wasPrivate = false;
+        boolean changedAccess = false;
 
         try {
             Field f = target.getClass().getDeclaredField(fieldName);
-            if (f.canAccess(target)) {
+            if (!f.canAccess(target)) {
                 f.setAccessible(true);
-                wasPrivate = true;
+                changedAccess = true;
             }
             f.set(target, toInject);
 
-            if (wasPrivate) {
+            if (changedAccess) {
                 f.setAccessible(false);
             }
         } catch (NoSuchFieldException e) {

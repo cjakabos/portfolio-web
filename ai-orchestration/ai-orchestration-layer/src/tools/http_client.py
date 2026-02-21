@@ -6,6 +6,7 @@
 import asyncio
 import json
 from typing import Dict, Any, Optional
+from contextvars import ContextVar, Token
 
 try:
     import httpx
@@ -15,6 +16,14 @@ except ImportError:
     import aiohttp
 
 from core.config import get_config
+
+
+# Request-scoped headers propagated from incoming FastAPI requests.
+# ContextVar keeps values isolated per async task/request.
+_request_context_headers: ContextVar[Dict[str, str]] = ContextVar(
+    "request_context_headers",
+    default={}
+)
 
 
 class HTTPClient:
@@ -28,17 +37,41 @@ class HTTPClient:
         timeout: int = 10,
         max_retries: int = 3,
         max_connections: int = 100,
-        max_keepalive_connections: int = 20
+        max_keepalive_connections: int = 20,
+        default_headers: Optional[Dict[str, str]] = None
     ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries
         self.max_connections = max_connections
         self.max_keepalive_connections = max_keepalive_connections
+        self.default_headers = default_headers or {}
         self._client: Optional['httpx.AsyncClient'] = None
         self._session: Optional['aiohttp.ClientSession'] = None
         self._use_httpx = HTTPX_AVAILABLE
         self._client_lock = asyncio.Lock()
+
+    @staticmethod
+    def set_request_context_headers(headers: Optional[Dict[str, str]] = None) -> Token:
+        """
+        Set request-scoped headers for downstream service calls.
+        Returns a token that must be reset in a finally block.
+        """
+        cleaned_headers: Dict[str, str] = {}
+        for key, value in (headers or {}).items():
+            if value:
+                cleaned_headers[key] = value
+        return _request_context_headers.set(cleaned_headers)
+
+    @staticmethod
+    def reset_request_context_headers(token: Token) -> None:
+        """Reset request-scoped headers using token returned by set_request_context_headers()."""
+        _request_context_headers.reset(token)
+
+    @staticmethod
+    def get_request_context_headers() -> Dict[str, str]:
+        """Get current request-scoped headers."""
+        return dict(_request_context_headers.get())
 
     async def _get_client(self) -> 'httpx.AsyncClient':
         """Get or create httpx client with connection pooling"""
@@ -82,6 +115,12 @@ class HTTPClient:
     ) -> Dict[str, Any]:
         """Perform HTTP request with retry logic"""
         last_error = None
+        merged_headers: Dict[str, str] = {}
+        merged_headers.update(self.default_headers)
+        merged_headers.update(self.get_request_context_headers())
+        if headers:
+            merged_headers.update(headers)
+        request_headers = merged_headers or None
 
         for attempt in range(self.max_retries):
             try:
@@ -93,7 +132,7 @@ class HTTPClient:
                         params=params,
                         data=data,
                         json=json_data,
-                        headers=headers
+                        headers=request_headers
                     )
                     response.raise_for_status()
                     try:
@@ -109,7 +148,7 @@ class HTTPClient:
                         params=params,
                         data=data,
                         json=json_data,
-                        headers=headers
+                        headers=request_headers
                     ) as response:
                         response.raise_for_status()
                         try:
@@ -173,9 +212,13 @@ class ServiceHTTPClients:
     def get_cloudapp_client(cls) -> HTTPClient:
         if "cloudapp" not in cls._clients:
             config = get_config()
+            default_headers: Dict[str, str] = {}
+            if config.services.internal_service_token:
+                default_headers["X-Internal-Auth"] = config.services.internal_service_token
             cls._clients["cloudapp"] = HTTPClient(
                 base_url=config.services.cloudapp_url,
-                timeout=config.services.http_timeout
+                timeout=config.services.http_timeout,
+                default_headers=default_headers
             )
         return cls._clients["cloudapp"]
 

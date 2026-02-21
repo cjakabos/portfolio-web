@@ -1,5 +1,7 @@
 package com.example.demo.controllers;
 
+import com.example.demo.security.InternalRequestAuthorizer;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -34,6 +36,9 @@ public class CartController {
     @Autowired
     public ItemRepository itemRepository;
 
+    @Autowired
+    private InternalRequestAuthorizer internalRequestAuthorizer;
+
     private String getAuthenticatedUsername(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
             return null;
@@ -48,18 +53,25 @@ public class CartController {
         return null;
     }
 
-    private boolean isAuthorized(Authentication auth, String usernameFromRequest) {
+    private boolean isAuthorized(Authentication auth, String usernameFromRequest, HttpServletRequest request) {
+        if (internalRequestAuthorizer.isInternalRequest(request)) {
+            return true;
+        }
         String authenticated = getAuthenticatedUsername(auth);
         return authenticated != null && authenticated.equals(usernameFromRequest);
     }
 
     @PostMapping("/addToCart")
-    public ResponseEntity<Cart> addToCart(@RequestBody ModifyCartRequest request, Authentication auth) {
+    public ResponseEntity<Cart> addToCart(
+            @RequestBody ModifyCartRequest request,
+            Authentication auth,
+            HttpServletRequest servletRequest
+    ) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername())) {
+        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Item> item = itemRepository.findById(request.getItemId());
@@ -74,12 +86,16 @@ public class CartController {
     }
 
     @PostMapping("/removeFromCart")
-    public ResponseEntity<Cart> removeFromCart(@RequestBody ModifyCartRequest request, Authentication auth) {
+    public ResponseEntity<Cart> removeFromCart(
+            @RequestBody ModifyCartRequest request,
+            Authentication auth,
+            HttpServletRequest servletRequest
+    ) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername())) {
+        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Item> item = itemRepository.findById(request.getItemId());
@@ -94,12 +110,16 @@ public class CartController {
     }
 
     @PostMapping("/getCart")
-    public ResponseEntity<Cart> getCart(@RequestBody ModifyCartRequest request, Authentication auth) {
+    public ResponseEntity<Cart> getCart(
+            @RequestBody ModifyCartRequest request,
+            Authentication auth,
+            HttpServletRequest servletRequest
+    ) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername())) {
+        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Cart cart = cartRepository.findByUser(user);
@@ -107,12 +127,16 @@ public class CartController {
     }
 
     @PostMapping("/clearCart")
-    public ResponseEntity<Cart> clearCart(@RequestBody ModifyCartRequest request, Authentication auth) {
+    public ResponseEntity<Cart> clearCart(
+            @RequestBody ModifyCartRequest request,
+            Authentication auth,
+            HttpServletRequest servletRequest
+    ) {
         User user = userRepository.findByUsername(request.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername())) {
+        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Cart cart = user.getCart();

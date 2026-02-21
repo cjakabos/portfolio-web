@@ -6,6 +6,8 @@ import com.example.demo.model.persistence.repositories.NoteRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateNoteRequest;
 import com.example.demo.model.requests.UpdateNoteRequest;
+import com.example.demo.security.InternalRequestAuthorizer;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,9 @@ public class NoteController {
     @Autowired
     public UserRepository userRepository;
 
+    @Autowired
+    private InternalRequestAuthorizer internalRequestAuthorizer;
+
     private String getAuthenticatedUsername(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
             return null;
@@ -37,10 +42,21 @@ public class NoteController {
         return null;
     }
 
-    @GetMapping("/user/{username}")
-    public ResponseEntity<List<Note>> getNotes(@PathVariable String username, Authentication auth) {
+    private boolean isAuthorized(Authentication auth, String username, HttpServletRequest request) {
+        if (internalRequestAuthorizer.isInternalRequest(request)) {
+            return true;
+        }
         String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(username)) {
+        return authenticated != null && authenticated.equals(username);
+    }
+
+    @GetMapping("/user/{username}")
+    public ResponseEntity<List<Note>> getNotes(
+            @PathVariable String username,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
+        if (!isAuthorized(auth, username, request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         User user = userRepository.findByUsername(username);
@@ -50,12 +66,15 @@ public class NoteController {
         return ResponseEntity.ok(noteRepository.findByUserid(user.getId().longValue()));
     }
     @PostMapping("/addNote")
-    public ResponseEntity<Note> insertOrUpdateNote(@RequestBody CreateNoteRequest note, Authentication auth) {
+    public ResponseEntity<Note> insertOrUpdateNote(
+            @RequestBody CreateNoteRequest note,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
         if (note.getUser() == null || note.getTitle() == null || note.getDescription() == null) {
             return ResponseEntity.badRequest().build();
         }
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(note.getUser())) {
+        if (!isAuthorized(auth, note.getUser(), request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (note.getDescription().length() < 1000) {
@@ -72,13 +91,13 @@ public class NoteController {
     }
 
     @PostMapping("/updateNote")
-    public ResponseEntity<Note> insertOrUpdateNote(@RequestBody UpdateNoteRequest noteRequest, Authentication auth) {
+    public ResponseEntity<Note> insertOrUpdateNote(
+            @RequestBody UpdateNoteRequest noteRequest,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
         if (noteRequest.getId() == null || noteRequest.getTitle() == null || noteRequest.getDescription() == null) {
             return ResponseEntity.badRequest().build();
-        }
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         Note existingNote = noteRepository.findById(noteRequest.getId()).orElse(null);
@@ -86,9 +105,15 @@ public class NoteController {
             return ResponseEntity.notFound().build();
         }
 
-        User authenticatedUser = userRepository.findByUsername(authenticated);
-        if (authenticatedUser == null || !authenticatedUser.getId().equals(existingNote.getUserid())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!internalRequestAuthorizer.isInternalRequest(request)) {
+            String authenticated = getAuthenticatedUsername(auth);
+            if (authenticated == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            User authenticatedUser = userRepository.findByUsername(authenticated);
+            if (authenticatedUser == null || !authenticatedUser.getId().equals(existingNote.getUserid())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
 
         if (noteRequest.getDescription().length() < 1000) {
@@ -102,20 +127,21 @@ public class NoteController {
     }
 
     @DeleteMapping(value = "/delete/{id}")
-    public ResponseEntity<?> deleteNote(@PathVariable Long id, Authentication auth) {
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
+    public ResponseEntity<?> deleteNote(@PathVariable Long id, Authentication auth, HttpServletRequest request) {
         Note existingNote = noteRepository.findById(id).orElse(null);
         if (existingNote == null) {
             return ResponseEntity.notFound().build();
         }
 
-        User authenticatedUser = userRepository.findByUsername(authenticated);
-        if (authenticatedUser == null || !authenticatedUser.getId().equals(existingNote.getUserid())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!internalRequestAuthorizer.isInternalRequest(request)) {
+            String authenticated = getAuthenticatedUsername(auth);
+            if (authenticated == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            User authenticatedUser = userRepository.findByUsername(authenticated);
+            if (authenticatedUser == null || !authenticatedUser.getId().equals(existingNote.getUserid())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
 
         noteRepository.deleteById(id);

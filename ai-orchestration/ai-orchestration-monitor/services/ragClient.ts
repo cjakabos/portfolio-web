@@ -31,6 +31,9 @@ const getConfig = () => {
   return { baseUrl, timeout };
 };
 
+const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
+const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
+
 // =============================================================================
 // Error Types
 // =============================================================================
@@ -62,6 +65,36 @@ export class RAGClient {
     return `${this.config.baseUrl}/rag${endpoint}`;
   }
 
+  private buildHeaders(baseHeaders?: HeadersInit, includeJsonContentType: boolean = true): Headers {
+    const headers = new Headers(baseHeaders || {});
+    if (includeJsonContentType && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem(CLOUDAPP_TOKEN_STORAGE_KEY);
+      if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', token);
+      }
+    }
+
+    return headers;
+  }
+
+  private getRetryDelayMs(attempt: number, retryAfterHeader?: string | null): number {
+    if (retryAfterHeader) {
+      const retryAfterSeconds = Number(retryAfterHeader);
+      if (!Number.isNaN(retryAfterSeconds) && retryAfterSeconds > 0) {
+        return retryAfterSeconds * 1000;
+      }
+    }
+    return Math.min(300 * (2 ** attempt), 3000);
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   // ===========================================================================
   // Core HTTP Methods
   // ===========================================================================
@@ -71,55 +104,72 @@ export class RAGClient {
     options: RequestInit = {},
     customTimeout?: number
   ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutMs = customTimeout ?? this.config.timeout;
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const maxAttempts = 3;
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutMs = customTimeout ?? this.config.timeout;
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      clearTimeout(timeoutId);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: this.buildHeaders(options.headers, true),
+        });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        let details: unknown;
-        try {
-          details = JSON.parse(errorBody);
-        } catch {
-          details = errorBody;
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxAttempts - 1) {
+            const delayMs = this.getRetryDelayMs(attempt, response.headers.get('Retry-After'));
+            await this.sleep(delayMs);
+            continue;
+          }
+
+          const errorBody = await response.text();
+          let details: unknown;
+          try {
+            details = JSON.parse(errorBody);
+          } catch {
+            details = errorBody;
+          }
+          throw new RAGApiError(
+            `RAG API request failed: ${response.statusText}`,
+            response.status,
+            url,
+            details
+          );
+        }
+
+        if (response.status === 204) {
+          return {} as T;
+        }
+
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof RAGApiError) throw error;
+        if (error instanceof Error && error.name === 'AbortError') {
+          if (attempt < maxAttempts - 1) {
+            await this.sleep(this.getRetryDelayMs(attempt));
+            continue;
+          }
+          throw new RAGApiError('Request timeout', 408, url);
+        }
+        if (attempt < maxAttempts - 1) {
+          await this.sleep(this.getRetryDelayMs(attempt));
+          continue;
         }
         throw new RAGApiError(
-          `RAG API request failed: ${response.statusText}`,
-          response.status,
-          url,
-          details
+          error instanceof Error ? error.message : 'Unknown error',
+          0,
+          url
         );
       }
-
-      if (response.status === 204) {
-        return {} as T;
-      }
-
-      return response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof RAGApiError) throw error;
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new RAGApiError('Request timeout', 408, url);
-      }
-      throw new RAGApiError(
-        error instanceof Error ? error.message : 'Unknown error',
-        0,
-        url
-      );
     }
+
+    throw new RAGApiError('Request retries exhausted', 0, url);
   }
 
   private async get<T>(url: string, timeout?: number): Promise<T> {
@@ -166,45 +216,68 @@ export class RAGClient {
       formData.append('category', options.category);
     }
 
-    const controller = new AbortController();
-    // Short timeout - just for the initial upload, not processing
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const maxAttempts = 3;
 
-    try {
-      const response = await fetch(this.ragUrl('/documents/upload'), {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      // Short timeout - just for the initial upload, not processing
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      clearTimeout(timeoutId);
+      try {
+        const response = await fetch(this.ragUrl('/documents/upload'), {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+          headers: this.buildHeaders(undefined, false),
+        });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        let details: unknown;
-        try {
-          details = JSON.parse(errorBody);
-        } catch {
-          details = errorBody;
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxAttempts - 1) {
+            const delayMs = this.getRetryDelayMs(attempt, response.headers.get('Retry-After'));
+            await this.sleep(delayMs);
+            continue;
+          }
+
+          const errorBody = await response.text();
+          let details: unknown;
+          try {
+            details = JSON.parse(errorBody);
+          } catch {
+            details = errorBody;
+          }
+          throw new RAGApiError(
+            `Upload failed: ${response.statusText}`,
+            response.status,
+            '/documents/upload',
+            details
+          );
+        }
+
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof RAGApiError) throw error;
+        if (error instanceof Error && error.name === 'AbortError') {
+          if (attempt < maxAttempts - 1) {
+            await this.sleep(this.getRetryDelayMs(attempt));
+            continue;
+          }
+        }
+        if (attempt < maxAttempts - 1) {
+          await this.sleep(this.getRetryDelayMs(attempt));
+          continue;
         }
         throw new RAGApiError(
-          `Upload failed: ${response.statusText}`,
-          response.status,
-          '/documents/upload',
-          details
+          error instanceof Error ? error.message : 'Upload failed',
+          0,
+          '/documents/upload'
         );
       }
-
-      return response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof RAGApiError) throw error;
-      throw new RAGApiError(
-        error instanceof Error ? error.message : 'Upload failed',
-        0,
-        '/documents/upload'
-      );
     }
+
+    throw new RAGApiError('Upload retries exhausted', 0, '/documents/upload');
   }
 
   /**

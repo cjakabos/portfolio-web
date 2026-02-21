@@ -2,7 +2,7 @@ import uuid
 import time
 import logging
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Request
 from starlette.websockets import WebSocketState
 import json
 import uuid
@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from core.orchestrator import AIOrchestrationLayer, UnifiedState, OrchestrationType
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
+from tools.http_client import HTTPClient
 
 # Import metrics collector for recording real metrics
 from routers.metrics_router import collector
@@ -54,12 +55,29 @@ class OrchestrationRequest(BaseModel):
     context: Optional[Dict[str, Any]] = None
     orchestration_type: Optional[str] = "conversational"
 
+
+def _extract_downstream_headers(request: Request) -> Dict[str, str]:
+    """
+    Forward auth-related headers from incoming orchestration requests to
+    downstream tool HTTP calls.
+    """
+    headers: Dict[str, str] = {}
+    auth = request.headers.get("authorization")
+    if auth:
+        headers["Authorization"] = auth
+
+    internal_auth = request.headers.get("x-internal-auth")
+    if internal_auth:
+        headers["X-Internal-Auth"] = internal_auth
+
+    return headers
+
 # =============================================================================
 # Endpoints
 # =============================================================================
 
 @router.post("/orchestrate")
-async def orchestrate(request: OrchestrationRequest):
+async def orchestrate(http_request: Request, request: OrchestrationRequest):
     """
     Main orchestration endpoint.
     Routes the request through the LangGraph workflow.
@@ -79,6 +97,7 @@ async def orchestrate(request: OrchestrationRequest):
 
     # Mark orchestration as active
     collector.start_orchestration(request_id)
+    header_ctx_token = HTTPClient.set_request_context_headers(_extract_downstream_headers(http_request))
 
     try:
         # 1. Load User Context
@@ -179,6 +198,7 @@ async def orchestrate(request: OrchestrationRequest):
     finally:
         # Mark orchestration as complete
         collector.end_orchestration(request_id)
+        HTTPClient.reset_request_context_headers(header_ctx_token)
 
 
 def _derive_capabilities_from_path(execution_path: list) -> list:

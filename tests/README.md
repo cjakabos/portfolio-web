@@ -209,4 +209,4 @@ Artifacts collected: JUnit XML reports, Cypress screenshots/videos, frontend cov
 
 3. **Layered approach**: Unit tests catch logic bugs fast (~seconds), integration tests catch DB/config issues (~minutes), E2E tests catch UI/workflow regressions (~minutes).
 
-4. **AI orchestration excluded**: Per requirements, the AI orchestration layer tests are deferred. The infrastructure (Redis, ChromaDB, MongoDB for A/B tests) is not started in test compose.
+4. **AI orchestration layer covered**: `test-ai-orchestration-layer` now validates request-header propagation and internal token wiring via pytest unit tests.
