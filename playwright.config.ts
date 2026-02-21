@@ -33,8 +33,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
 
   reporter: isCI
-    ? [["html", { open: "never" }], ["junit", { outputFile: "results/junit.xml" }]]
-    : [["html", { open: "on-failure" }]],
+    ? [["line"], ["html", { open: "never" }], ["junit", { outputFile: "results/junit.xml" }]]
+    : [["list"], ["html", { open: "on-failure" }]],
 
   use: {
     baseURL,

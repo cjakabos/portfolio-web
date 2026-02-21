@@ -92,7 +92,7 @@ LABEL maintainer="TeslaGov" email="developers@teslagov.com"
 ENV NGINX_VERSION 1.25.5
 RUN set -eux; \
     apt-get update -o Acquire::Retries=5; \
-    apt-get install -y --no-install-recommends libjansson4 libjwt0 libssl1.1; \
+    apt-get install -y --no-install-recommends libjansson4 libjwt0 libssl1.1 gettext-base wget; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
@@ -101,7 +101,7 @@ RUN groupadd -r nginx && useradd -r -g nginx -d /var/cache/nginx -s /sbin/nologi
 
 # Copy configuration files
 COPY conf/nginx.conf /etc/nginx/nginx.conf
-COPY conf/locations.conf /etc/nginx/locations.conf
+COPY conf/locations.conf /etc/nginx/locations.conf.template
 COPY localhost+3-key.pub /etc/nginx/localhost+3-key.pub
 
 # FIX 4.3: Copy TLS certificates for HTTPS
@@ -113,6 +113,6 @@ COPY localhost+3-key.pem /etc/nginx/ssl/localhost+3-key.pem
 RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/ssl /tmp \
     && chmod 600 /etc/nginx/ssl/localhost+3-key.pem
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "envsubst '${INTERNAL_SERVICE_TOKEN}' < /etc/nginx/locations.conf.template > /etc/nginx/locations.conf && exec nginx -g 'daemon off;'"]
 
 EXPOSE 80 443

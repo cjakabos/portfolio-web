@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.requests.ModifyCartRequest;
+import com.example.demo.security.InternalRequestAuthorizer;
 
 import static org.mockito.Mockito.*;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import com.example.demo.model.persistence.repositories.*;
@@ -32,6 +34,7 @@ public class CartControllerTest {
     private CartRepository cartRepository = mock(CartRepository.class);
 
     private ItemRepository itemRepository = mock(ItemRepository.class);
+    private InternalRequestAuthorizer internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
 
     private Authentication authFor(String username) {
         return new UsernamePasswordAuthenticationToken(
@@ -47,6 +50,8 @@ public class CartControllerTest {
         TestUtils.injectObjects(cartController, "cartRepository", cartRepository);
         TestUtils.injectObjects(cartController, "itemRepository", itemRepository);
         TestUtils.injectObjects(cartController, "userRepository", userRepository);
+        TestUtils.injectObjects(cartController, "internalRequestAuthorizer", internalRequestAuthorizer);
+        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
     }
 
     @Test
@@ -63,7 +68,11 @@ public class CartControllerTest {
         when(itemRepository.findById((long) 1)).thenReturn(Optional.of(item));
 
         ModifyCartRequest modifyCartRequest = new ModifyCartRequest(user.getUsername(), 1L, 1);
-        ResponseEntity<Cart> cartResponse = cartController.addToCart(modifyCartRequest, authFor(user.getUsername()));
+        ResponseEntity<Cart> cartResponse = cartController.addToCart(
+                modifyCartRequest,
+                authFor(user.getUsername()),
+                new MockHttpServletRequest()
+        );
         assertNotNull(cartResponse);
         assertEquals(HttpStatus.OK.value(), cartResponse.getStatusCodeValue());
         assertEquals(3, cartResponse.getBody().getItems().size());
@@ -83,8 +92,16 @@ public class CartControllerTest {
         when(itemRepository.findById((long) 1)).thenReturn(Optional.of(item));
 
         ModifyCartRequest modifyCartRequest = new ModifyCartRequest(user.getUsername(), 1L, 1);
-        ResponseEntity<Cart> cartResponse = cartController.addToCart(modifyCartRequest, authFor(user.getUsername()));
-        ResponseEntity<Cart> cartRemovedResponse = cartController.removeFromCart(modifyCartRequest, authFor(user.getUsername()));
+        ResponseEntity<Cart> cartResponse = cartController.addToCart(
+                modifyCartRequest,
+                authFor(user.getUsername()),
+                new MockHttpServletRequest()
+        );
+        ResponseEntity<Cart> cartRemovedResponse = cartController.removeFromCart(
+                modifyCartRequest,
+                authFor(user.getUsername()),
+                new MockHttpServletRequest()
+        );
         assertNotNull(cartRemovedResponse);
         assertEquals(HttpStatus.OK.value(), cartRemovedResponse.getStatusCodeValue());
     }

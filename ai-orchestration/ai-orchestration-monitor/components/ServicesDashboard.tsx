@@ -7,8 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Store, Users, ShoppingCart, Package, PawPrint, Calendar,
-  Car, RefreshCw, Loader2, AlertCircle, CheckCircle, Plus,
-  Trash2, Eye, Search, Filter
+  Car, RefreshCw, Loader2, AlertCircle
 } from 'lucide-react';
 import { orchestrationClient } from '../services/orchestrationClient';
 import type {
@@ -42,10 +41,34 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   // Form states
-  const [username, setUsername] = useState('demo_user');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [username, setUsername] = useState('');
+  const [cloudAppUsers, setCloudAppUsers] = useState<string[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [hasLoadedCloudAppUsers, setHasLoadedCloudAppUsers] = useState(false);
 
   // Fetch functions
+  const fetchCloudAppUsers = useCallback(async () => {
+    setIsLoadingUsers(true);
+    setError(null);
+    try {
+      const users = await orchestrationClient.listCloudAppUsers();
+      setCloudAppUsers(users);
+      setUsername((current) => {
+        if (current && users.includes(current)) {
+          return current;
+        }
+        return users[0] || '';
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      setCloudAppUsers([]);
+      setUsername('');
+    } finally {
+      setHasLoadedCloudAppUsers(true);
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -60,7 +83,10 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
   }, []);
 
   const fetchCart = useCallback(async () => {
-    if (!username) return;
+    if (!username) {
+      setCart(null);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -74,7 +100,10 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
   }, [username]);
 
   const fetchOrders = useCallback(async () => {
-    if (!username) return;
+    if (!username) {
+      setOrders([]);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -88,7 +117,10 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
   }, [username]);
 
   const fetchNotes = useCallback(async () => {
-    if (!username) return;
+    if (!username) {
+      setNotes([]);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -169,6 +201,9 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
   // Load data based on active view
   useEffect(() => {
     if (activeService === 'cloudapp') {
+      if (!hasLoadedCloudAppUsers && !isLoadingUsers) {
+        fetchCloudAppUsers();
+      }
       switch (cloudAppSection) {
         case 'items': fetchItems(); break;
         case 'cart': fetchCart(); break;
@@ -185,26 +220,23 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
     } else if (activeService === 'vehicles') {
       fetchVehicles();
     }
-  }, [activeService, cloudAppSection, petstoreSection, fetchItems, fetchCart, fetchOrders, fetchNotes, fetchEmployees, fetchCustomers, fetchPets, fetchSchedules, fetchVehicles]);
-
-  // Cart actions
-  const handleAddToCart = async (itemId: number) => {
-    try {
-      const updatedCart = await orchestrationClient.addToCart(username, itemId, 1);
-      setCart(updatedCart);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add to cart');
-    }
-  };
-
-  const handleRemoveFromCart = async (itemId: number) => {
-    try {
-      const updatedCart = await orchestrationClient.removeFromCart(username, itemId, 1);
-      setCart(updatedCart);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove from cart');
-    }
-  };
+  }, [
+    activeService,
+    cloudAppSection,
+    petstoreSection,
+    fetchCloudAppUsers,
+    fetchItems,
+    fetchCart,
+    fetchOrders,
+    fetchNotes,
+    fetchEmployees,
+    fetchCustomers,
+    fetchPets,
+    fetchSchedules,
+    fetchVehicles,
+    hasLoadedCloudAppUsers,
+    isLoadingUsers
+  ]);
 
   // Service tabs
   const ServiceTab = ({ id, icon: Icon, label }: { id: ServiceTab; icon: React.ElementType; label: string }) => (
@@ -256,15 +288,29 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
         <div className="space-y-6">
           {/* User Context */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-gray-700">Username:</label>
-              <input
-                type="text"
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-sm font-medium text-gray-700">Inspect User:</label>
+              <select
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm w-48"
-                placeholder="Enter username"
-              />
+                disabled={isLoadingUsers || cloudAppUsers.length === 0}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[220px]"
+              >
+                <option value="">{isLoadingUsers ? 'Loading users...' : 'Select user'}</option>
+                {cloudAppUsers.map((user) => (
+                  <option key={user} value={user}>
+                    {user}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={fetchCloudAppUsers}
+                disabled={isLoadingUsers}
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 mr-1 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+                Refresh users
+              </button>
             </div>
           </div>
 
@@ -301,14 +347,8 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
                       {item.description && (
                         <p className="text-sm text-gray-500 mt-1">{item.description}</p>
                       )}
-                      <div className="flex items-center justify-between mt-3">
+                      <div className="mt-3">
                         <span className="font-bold text-blue-600">${item.price.toFixed(2)}</span>
-                        <button
-                          onClick={() => handleAddToCart(item.id)}
-                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                        >
-                          Add to Cart
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -321,7 +361,11 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
               </div>
             ) : cloudAppSection === 'cart' ? (
               <div className="p-6">
-                {cart && cart.items.length > 0 ? (
+                {!username ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Select a user to inspect cart data
+                  </div>
+                ) : cart && cart.items.length > 0 ? (
                   <div className="space-y-4">
                     {cart.items.map(item => (
                       <div key={item.itemId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -329,15 +373,7 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
                           <span className="font-medium text-gray-900">{item.itemName}</span>
                           <span className="text-sm text-gray-500 ml-2">x{item.quantity}</span>
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="font-medium">${item.price.toFixed(2)}</span>
-                          <button
-                            onClick={() => handleRemoveFromCart(item.itemId)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <span className="font-medium">${item.price.toFixed(2)}</span>
                       </div>
                     ))}
                     <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
@@ -354,7 +390,11 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
               </div>
             ) : cloudAppSection === 'orders' ? (
               <div className="p-6">
-                {orders.length > 0 ? (
+                {!username ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Select a user to inspect order history
+                  </div>
+                ) : orders.length > 0 ? (
                   <div className="space-y-4">
                     {orders.map(order => (
                       <div key={order.id} className="border border-gray-200 rounded-lg p-4">
@@ -380,7 +420,11 @@ export default function ServicesDashboard({ embedded = false }: ServicesDashboar
               </div>
             ) : (
               <div className="p-6">
-                {notes.length > 0 ? (
+                {!username ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Select a user to inspect notes
+                  </div>
+                ) : notes.length > 0 ? (
                   <div className="space-y-3">
                     {notes.map(note => (
                       <div key={note.id} className="border border-gray-200 rounded-lg p-4">

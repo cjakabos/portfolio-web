@@ -247,6 +247,22 @@ services:
       - test-backend
 
   # =========================================================================
+  # AI ORCHESTRATION LAYER UNIT TESTS (pytest)
+  # =========================================================================
+  test-ai-orchestration-layer:
+    image: python:3.12-slim
+    working_dir: /app
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "pip install --no-cache-dir pytest pytest-asyncio pytest-timeout httpx fastapi pydantic && PYTHONPATH=/app/src:/app/src/tools AI_ORCH_SRC=/app/src pytest /tests -v --tb=short --timeout=60 -p no:cacheprovider",
+      ]
+    volumes:
+      - ./ai-orchestration/ai-orchestration-layer/src:/app/src:ro
+      - ./tests/ai-orchestration-layer:/tests:ro
+
+  # =========================================================================
   # FRONTEND UNIT TESTS (Jest + React Testing Library)
   # =========================================================================
   test-frontend-unit:
@@ -279,7 +295,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; PROJECT=portfolio_test_all; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-frontend-unit test-nginx-gateway test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do echo ''; echo \"=== Running $$svc ===\"; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --abort-on-container-exit $$svc; cleanup; done; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; PROJECT=portfolio_test_all; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-unit test-nginx-gateway test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do echo ''; echo \"=== Running $$svc ===\"; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --abort-on-container-exit $$svc; cleanup; done; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================
@@ -321,6 +337,7 @@ services:
       - CI=true
       - BASE_URL=http://test-shell:5001
       - BACKEND_URL=http://test-nginx:80
+      - MONITOR_URL=http://test-ai-monitor:5010
     volumes:
       # Mount report output so it's accessible on the host after the run
       - ./playwright-report:/e2e/playwright-report
@@ -332,6 +349,8 @@ services:
         condition: service_healthy
       test-mlops-frontend:
         condition: service_healthy
+      test-ai-monitor:
+        condition: service_healthy
     networks:
       - test-frontend
       - test-backend
@@ -339,6 +358,28 @@ services:
   # =========================================================================
   # APP SERVICES FOR E2E (minimal stack)
   # =========================================================================
+  test-ai-monitor:
+    build:
+      context: ./ai-orchestration/ai-orchestration-monitor
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://test-nginx:80
+        VITE_AI_BASE_URL: http://test-nginx:80/ai
+        VITE_AI_WS_URL: ws://test-nginx:80/ai
+        NODE_ENV: production
+    depends_on:
+      test-nginx:
+        condition: service_healthy
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5010/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: "no"
+
   test-cloudapp:
     build:
       context: ./
@@ -484,6 +525,8 @@ services:
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
     depends_on:
       test-cloudapp:
         condition: service_healthy
@@ -557,6 +600,8 @@ services:
     build:
       context: ./frontend/nginx
       dockerfile: Dockerfile
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
     ports:
       - "80:80"
     depends_on:

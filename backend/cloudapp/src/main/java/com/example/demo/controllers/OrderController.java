@@ -1,5 +1,7 @@
 package com.example.demo.controllers;
 
+import com.example.demo.security.InternalRequestAuthorizer;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,9 @@ public class OrderController {
     @Autowired
     public OrderRepository orderRepository;
 
+    @Autowired
+    private InternalRequestAuthorizer internalRequestAuthorizer;
+
     private String getAuthenticatedUsername(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
             return null;
@@ -41,15 +46,26 @@ public class OrderController {
         return null;
     }
 
+    private boolean isAuthorized(Authentication auth, String username, HttpServletRequest request) {
+        if (internalRequestAuthorizer.isInternalRequest(request)) {
+            return true;
+        }
+        String authenticated = getAuthenticatedUsername(auth);
+        return authenticated != null && authenticated.equals(username);
+    }
+
     @PostMapping("/submit/{username}")
-    public ResponseEntity<UserOrder> submit(@PathVariable String username, Authentication auth) {
+    public ResponseEntity<UserOrder> submit(
+            @PathVariable String username,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             log.error("User not found during order submit: " + username);
             return ResponseEntity.notFound().build();
         }
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(username)) {
+        if (!isAuthorized(auth, username, request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         UserOrder order = UserOrder.createFromCart(user.getCart());
@@ -59,14 +75,17 @@ public class OrderController {
     }
 
     @GetMapping("/history/{username}")
-    public ResponseEntity<List<UserOrder>> getOrdersForUser(@PathVariable String username, Authentication auth) {
+    public ResponseEntity<List<UserOrder>> getOrdersForUser(
+            @PathVariable String username,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             log.error("User not found during order history: " + username);
             return ResponseEntity.notFound().build();
         }
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(username)) {
+        if (!isAuthorized(auth, username, request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         log.info("User order history fetch is successful for : " + user.getUsername());

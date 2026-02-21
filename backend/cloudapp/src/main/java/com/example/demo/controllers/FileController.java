@@ -4,6 +4,8 @@ import com.example.demo.model.persistence.File;
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.FileRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
+import com.example.demo.security.InternalRequestAuthorizer;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
@@ -29,11 +31,24 @@ public class FileController {
     public FileRepository fileRepository;
     @Autowired
     public UserRepository userRepository;
+    @Autowired
+    private InternalRequestAuthorizer internalRequestAuthorizer;
+
+    private boolean isAuthorized(Authentication auth, String username, HttpServletRequest request) {
+        if (internalRequestAuthorizer.isInternalRequest(request)) {
+            return true;
+        }
+        String authenticated = getAuthenticatedUsername(auth);
+        return authenticated != null && authenticated.equals(username);
+    }
 
     @GetMapping("/user/{username}")
-    public ResponseEntity<List<File>> getNotes(@PathVariable String username, Authentication auth) {
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(username)) {
+    public ResponseEntity<List<File>> getNotes(
+            @PathVariable String username,
+            Authentication auth,
+            HttpServletRequest request
+    ) {
+        if (!isAuthorized(auth, username, request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -47,20 +62,22 @@ public class FileController {
             value = "/get-file/{fileId}",
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
     )
-    public ResponseEntity<byte[]> getFile(@PathVariable Long fileId, Authentication auth) {
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
+    public ResponseEntity<byte[]> getFile(@PathVariable Long fileId, Authentication auth, HttpServletRequest request) {
         Optional<File> file = fileRepository.findById(fileId);
         if (file.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        User authenticatedUser = userRepository.findByUsername(authenticated);
-        if (authenticatedUser == null || !authenticatedUser.getId().equals(file.get().getUserid())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!internalRequestAuthorizer.isInternalRequest(request)) {
+            String authenticated = getAuthenticatedUsername(auth);
+            if (authenticated == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            User authenticatedUser = userRepository.findByUsername(authenticated);
+            if (authenticatedUser == null || !authenticatedUser.getId().equals(file.get().getUserid())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
 
         return ResponseEntity.ok()
@@ -74,9 +91,9 @@ public class FileController {
     public ResponseEntity<?> uploadFile(
             @RequestParam("fileUpload") MultipartFile file,
             @RequestParam("username") String username,
-            Authentication auth) {
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null || !authenticated.equals(username)) {
+            Authentication auth,
+            HttpServletRequest request) {
+        if (!isAuthorized(auth, username, request)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -127,20 +144,22 @@ public class FileController {
     }
 
     @DeleteMapping("/delete-file/{fileId}")
-    public ResponseEntity<?> deleteFile(@PathVariable Long fileId, Authentication auth) {
-        String authenticated = getAuthenticatedUsername(auth);
-        if (authenticated == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
+    public ResponseEntity<?> deleteFile(@PathVariable Long fileId, Authentication auth, HttpServletRequest request) {
         Optional<File> file = fileRepository.findById(fileId);
         if (file.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        User authenticatedUser = userRepository.findByUsername(authenticated);
-        if (authenticatedUser == null || !authenticatedUser.getId().equals(file.get().getUserid())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!internalRequestAuthorizer.isInternalRequest(request)) {
+            String authenticated = getAuthenticatedUsername(auth);
+            if (authenticated == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            User authenticatedUser = userRepository.findByUsername(authenticated);
+            if (authenticatedUser == null || !authenticatedUser.getId().equals(file.get().getUserid())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
 
         fileRepository.deleteById(fileId);

@@ -13,6 +13,8 @@
     "test:shop": "playwright test shop.spec.ts",
     "test:chat": "playwright test chat.spec.ts",
     "test:mlops": "playwright test mlops.spec.ts",
+    "test:monitor": "playwright test monitor.spec.ts",
+    "test:nightly-ai": "NIGHTLY_AI_E2E=1 playwright test e2e/nightly-chatllm-ollama.spec.ts e2e/nightly-monitor-models.spec.ts e2e/nightly-jira-ai.spec.ts --project=chromium -c playwright.config.ts",
     "test:modfed": "playwright test module-federation.spec.ts",
     "report": "playwright show-report"
   },
