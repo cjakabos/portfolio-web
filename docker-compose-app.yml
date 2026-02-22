@@ -300,8 +300,11 @@ services:
       - 5333:5333
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      # CI/Linux: route server-side /api/chat to Ollama over the shared Docker network.
+      - OLLAMA_URL=http://ollama:11434
     networks:
       - frontend
+      - backend
     restart: unless-stopped
 
 # ===========================================================================

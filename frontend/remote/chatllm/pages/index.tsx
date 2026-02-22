@@ -87,7 +87,7 @@ const ChatLLM: React.FC = () => {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
         method: 'GET',
@@ -161,7 +161,7 @@ const ChatLLM: React.FC = () => {
     // Quick health check before sending - verify Ollama is still running
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
         method: 'GET',
         signal: controller.signal,

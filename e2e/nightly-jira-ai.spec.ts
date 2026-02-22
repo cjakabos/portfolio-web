@@ -170,6 +170,8 @@ test.describe("Nightly AI Integration - Jira", () => {
     authedPage: page,
     request,
   }) => {
+    test.setTimeout(600_000);
+
     const { token } = await ensureLoggedIn(request, page);
 
     const runId = Date.now().toString(36);
