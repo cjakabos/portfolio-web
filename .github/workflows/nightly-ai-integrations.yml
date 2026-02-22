@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: nightly-ai-integrations
+  group: nightly-ai-integrations-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,6 +23,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Prepare CI bind mounts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          chmod 0777 logs
+          ls -ld logs
 
       - name: Create .env for nightly stack
         shell: bash
@@ -102,6 +110,7 @@ jobs:
 
           LOG_LEVEL=INFO
           LOG_FORMAT=json
+          ENABLE_FILE_LOGGING=false
           EOF
 
       - name: Start infrastructure stack (with Ollama profile)
@@ -112,20 +121,83 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for i in {1..60}; do
-            if curl -sf http://localhost:11434/api/tags >/dev/null; then
-              echo "Ollama is ready"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "Ollama did not become ready in time"
-          exit 1
+
+          wait_for_http() {
+            local url="$1"
+            local name="$2"
+            local attempts="${3:-60}"
+
+            for i in $(seq 1 "$attempts"); do
+              if curl -sf "$url" >/dev/null; then
+                echo "$name is ready"
+                return 0
+              fi
+              sleep 5
+            done
+
+            echo "$name did not become ready in time: $url"
+            docker compose -f docker-compose-infrastructure.yml --profile ollama ps || true
+            docker compose -f docker-compose-infrastructure.yml --profile ollama logs --tail=200 || true
+            return 1
+          }
+
+          wait_for_container_health() {
+            local container="$1"
+            local name="$2"
+            local attempts="${3:-60}"
+
+            for i in $(seq 1 "$attempts"); do
+              local state
+              local health
+              state="$(docker inspect --format '{{.State.Status}}' "$container" 2>/dev/null || true)"
+              health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container" 2>/dev/null || true)"
+
+              if [[ "$state" == "running" && "$health" == "healthy" ]]; then
+                echo "$name is healthy"
+                return 0
+              fi
+
+              if (( i % 12 == 0 )); then
+                echo "$name health attempt $i/$attempts: state=${state:-missing} health=${health:-missing}"
+              fi
+              sleep 5
+            done
+
+            echo "$name failed health check (container=$container)"
+            docker compose -f docker-compose-infrastructure.yml --profile ollama ps || true
+            docker logs --tail=200 "$container" || true
+            return 1
+          }
+
+          wait_for_http "http://localhost:11434/api/tags" "Ollama"
+          wait_for_container_health "redis-cache" "Redis"
+          wait_for_container_health "mongodb-abtest" "MongoDB AB Test"
+          wait_for_container_health "chromadb" "ChromaDB"
 
       - name: Pull nightly AI models in Ollama
         run: |
-          docker exec ollama ollama pull qwen3:1.7b
-          docker exec ollama ollama pull qwen3-embedding:4b
+          set -euo pipefail
+
+          pull_model() {
+            local model="$1"
+            local attempts="${2:-3}"
+
+            for i in $(seq 1 "$attempts"); do
+              if docker exec ollama ollama pull "$model"; then
+                echo "Pulled model: $model"
+                return 0
+              fi
+              echo "Failed to pull $model (attempt $i/$attempts)"
+              sleep 15
+            done
+
+            echo "Giving up on model pull: $model"
+            docker logs --tail=200 ollama || true
+            return 1
+          }
+
+          pull_model qwen3:1.7b
+          pull_model qwen3-embedding:4b
           docker exec ollama ollama list
 
       - name: Start application stack
@@ -140,6 +212,7 @@ jobs:
           wait_for() {
             local url="$1"
             local name="$2"
+            local container="${3:-}"
             for i in {1..90}; do
               if curl -sf "$url" >/dev/null; then
                 echo "$name is ready"
@@ -148,6 +221,11 @@ jobs:
               sleep 5
             done
             echo "$name failed readiness: $url"
+            docker compose -f docker-compose-app.yml ps || true
+            docker compose -f docker-compose-infrastructure.yml --profile ollama ps || true
+            if [[ -n "$container" ]]; then
+              docker logs --tail=200 "$container" || true
+            fi
             return 1
           }
 
@@ -175,16 +253,18 @@ jobs:
             echo "AI orchestration layer failed readiness: $url"
             echo "Last /ai/health response:"
             cat "$body_file" || true
+            docker compose -f docker-compose-app.yml ps || true
+            docker compose -f docker-compose-infrastructure.yml --profile ollama ps || true
             docker inspect --format 'status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' ai-orchestration-layer || true
             docker logs --tail=200 ai-orchestration-layer || true
             return 1
           }
 
-          wait_for "http://localhost/nginx_health" "Nginx gateway"
-          wait_for "http://localhost:5001" "CloudApp shell"
-          wait_for "http://localhost:5003" "Jira remote"
-          wait_for "http://localhost:5333" "ChatLLM remote"
-          wait_for "http://localhost:5010" "AI monitor"
+          wait_for "http://localhost/nginx_health" "Nginx gateway" "next-nginx-jwt"
+          wait_for "http://localhost:5001" "CloudApp shell" "next-cloudapp-shell"
+          wait_for "http://localhost:5003" "Jira remote" "next-jira"
+          wait_for "http://localhost:5333" "ChatLLM remote" "next-chatllm"
+          wait_for "http://localhost:5010" "AI monitor" "ai-orchestration-monitor"
           wait_for_ai_health
 
       - name: Resolve Jira nightly flag

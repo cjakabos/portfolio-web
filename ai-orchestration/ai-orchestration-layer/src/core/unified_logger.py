@@ -108,18 +108,26 @@ class StructuredLogger:
         
         # File handler (if enabled)
         if log_config.enable_file_logging:
-            log_path = Path(log_config.log_file)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            file_handler = RotatingFileHandler(
-                log_config.log_file,
-                maxBytes=log_config.max_file_size,
-                backupCount=log_config.backup_count
-            )
-            file_handler.setLevel(getattr(logging, log_config.level))
-            file_handler.setFormatter(JsonFormatter())
-            
-            self._logger.addHandler(file_handler)
+            try:
+                log_path = Path(log_config.log_file)
+                log_path.parent.mkdir(parents=True, exist_ok=True)
+
+                file_handler = RotatingFileHandler(
+                    log_config.log_file,
+                    maxBytes=log_config.max_file_size,
+                    backupCount=log_config.backup_count
+                )
+                file_handler.setLevel(getattr(logging, log_config.level))
+                file_handler.setFormatter(JsonFormatter())
+
+                self._logger.addHandler(file_handler)
+            except OSError as exc:
+                # Keep the service alive even if a bind-mounted log directory is not writable.
+                self._logger.warning(
+                    "File logging disabled: could not open %s (%s)",
+                    log_config.log_file,
+                    exc
+                )
     
     @classmethod
     def get_instance(cls) -> 'StructuredLogger':
