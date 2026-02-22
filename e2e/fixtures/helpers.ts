@@ -9,6 +9,12 @@
 import { type Page, type APIRequestContext, expect } from "@playwright/test";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:80";
+const AUTH_RETRY_ATTEMPTS = Number(process.env.PW_AUTH_RETRY_ATTEMPTS || "12");
+const AUTH_RETRY_DELAY_MS = Number(process.env.PW_AUTH_RETRY_DELAY_MS || "5000");
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export const TEST_USER = {
   firstname: "E2E",
@@ -49,7 +55,8 @@ export async function apiLogin(
     failOnStatusCode: false,
   });
   if (resp.status() === 200) {
-    return resp.headers()["authorization"] || null;
+    const headers = resp.headers();
+    return headers["authorization"] || headers["Authorization"] || null;
   }
   return null;
 }
@@ -88,14 +95,40 @@ export async function ensureLoggedIn(
 
   const username = TEST_USER.username;
   const password = TEST_USER.password;
+  let lastError: string | null = null;
 
-  await apiRegister(request, username, password);
-  const token = await apiLogin(request, username, password);
-  if (!token) throw new Error("Failed to login test user");
+  for (let attempt = 1; attempt <= AUTH_RETRY_ATTEMPTS; attempt++) {
+    const registerOk = await apiRegister(request, username, password);
+    const loginResp = await request.post(`${BACKEND_URL}/cloudapp/user/user-login`, {
+      data: { username, password },
+      failOnStatusCode: false,
+    });
+    const loginHeaders = loginResp.headers();
+    const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
 
-  cachedAuth = { token, username };
-  await injectAuth(page, token, username);
-  return cachedAuth;
+    if (loginResp.status() === 200 && token) {
+      cachedAuth = { token, username };
+      await injectAuth(page, token, username);
+      return cachedAuth;
+    }
+
+    const bodySnippet = (await loginResp.text().catch(() => ""))
+      .replace(/\s+/g, " ")
+      .slice(0, 300);
+    lastError =
+      `registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
+      `hasAuthHeader=${Boolean(token)} body="${bodySnippet}"`;
+
+    console.warn(
+      `[pw][auth] attempt ${attempt}/${AUTH_RETRY_ATTEMPTS} failed: ${lastError}`
+    );
+
+    if (attempt < AUTH_RETRY_ATTEMPTS) {
+      await sleep(AUTH_RETRY_DELAY_MS);
+    }
+  }
+
+  throw new Error(`Failed to login test user after retries (${lastError || "no details"})`);
 }
 
 // ---------------------------------------------------------------------------

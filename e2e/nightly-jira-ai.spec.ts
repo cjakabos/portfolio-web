@@ -111,7 +111,22 @@ async function fetchChildKeys(
 
 async function getTicketRow(page: Page, ticketKey: string): Promise<Locator> {
   const keyLabel = page.locator("span.font-mono", { hasText: ticketKey }).first();
-  await expect(keyLabel).toBeVisible({ timeout: 120_000 });
+  const refreshButton = page.getByTitle("Refresh").first();
+  const deadline = Date.now() + 120_000;
+
+  while (Date.now() < deadline) {
+    if (await keyLabel.isVisible().catch(() => false)) {
+      return keyLabel.locator('xpath=ancestor::div[contains(@class,"group")][1]');
+    }
+
+    // The ticket can exist in Jira before the board list refresh completes.
+    if (await refreshButton.isVisible().catch(() => false)) {
+      await refreshButton.click().catch(() => {});
+    }
+    await page.waitForTimeout(2_000);
+  }
+
+  await expect(keyLabel).toBeVisible({ timeout: 5_000 });
   return keyLabel.locator('xpath=ancestor::div[contains(@class,"group")][1]');
 }
 
@@ -170,6 +185,8 @@ test.describe("Nightly AI Integration - Jira", () => {
     authedPage: page,
     request,
   }) => {
+    test.setTimeout(600_000);
+
     const { token } = await ensureLoggedIn(request, page);
 
     const runId = Date.now().toString(36);

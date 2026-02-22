@@ -2,7 +2,9 @@
 import { createOllama } from "ollama-ai-provider-v2";
 import { streamText, convertToModelMessages, createUIMessageStream, JsonToSseTransformStream } from "ai";
 
-const OLLAMA_BASE = "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":11434/api";
+const OLLAMA_ROOT =
+  process.env.OLLAMA_URL || "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":11434";
+const OLLAMA_BASE = `${OLLAMA_ROOT.replace(/\/+$/, "")}/api`;
 
 const ollama = createOllama({ baseURL: OLLAMA_BASE });
 

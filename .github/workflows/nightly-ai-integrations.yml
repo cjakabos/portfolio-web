@@ -260,7 +260,42 @@ jobs:
             return 1
           }
 
+          wait_for_cloudapp_login() {
+            local url="http://localhost/cloudapp/user/user-login"
+            local attempts=90
+            local body_file="/tmp/nightly-cloudapp-login-probe.json"
+            local payload='{"username":"ci_probe","password":"ci_probe"}'
+
+            for i in $(seq 1 "$attempts"); do
+              local code
+              code="$(curl -sS -o "$body_file" -w '%{http_code}' \
+                -H 'Content-Type: application/json' \
+                -X POST "$url" \
+                --data "$payload" || true)"
+
+              if [[ "$code" == "200" || "$code" == "401" ]]; then
+                echo "CloudApp auth endpoint is ready (HTTP $code)"
+                return 0
+              fi
+
+              if (( i % 12 == 0 )); then
+                echo "CloudApp auth probe attempt $i/$attempts failed (HTTP $code)"
+                docker logs --tail=100 cloudapp || true
+                docker logs --tail=100 next-nginx-jwt || true
+              fi
+              sleep 5
+            done
+
+            echo "CloudApp auth endpoint failed readiness: $url"
+            cat "$body_file" || true
+            docker compose -f docker-compose-app.yml ps || true
+            docker logs --tail=200 cloudapp || true
+            docker logs --tail=200 next-nginx-jwt || true
+            return 1
+          }
+
           wait_for "http://localhost/nginx_health" "Nginx gateway" "next-nginx-jwt"
+          wait_for_cloudapp_login
           wait_for "http://localhost:5001" "CloudApp shell" "next-cloudapp-shell"
           wait_for "http://localhost:5003" "Jira remote" "next-jira"
           wait_for "http://localhost:5333" "ChatLLM remote" "next-chatllm"

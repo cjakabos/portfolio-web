@@ -7,7 +7,7 @@
 // ===========================================================================
 
 import { test as setup, expect } from "@playwright/test";
-import { apiRegister, apiLogin, injectAuth, TEST_USER } from "./fixtures/helpers";
+import { ensureLoggedIn } from "./fixtures/helpers";
 
 const authFile = "e2e/.auth/user.json";
 const LOG_BROWSER_CONSOLE = process.env.PW_LOG_BROWSER_CONSOLE !== "0";
@@ -34,17 +34,8 @@ setup("authenticate", async ({ page, request }) => {
     );
   });
 
-  const { username, password } = TEST_USER;
-
-  // Register (ignore failures — user may already exist)
-  await apiRegister(request, username, password);
-
-  // Login via API to get real JWT token
-  const token = await apiLogin(request, username, password);
-  expect(token, "Login should return a JWT token").toBeTruthy();
-
-  // Inject token into localStorage
-  await injectAuth(page, token!, username);
+  const auth = await ensureLoggedIn(request, page);
+  expect(auth.token, "Login should return a JWT token").toBeTruthy();
 
   // Verify we're no longer on the login page
   await page.goto("/");
