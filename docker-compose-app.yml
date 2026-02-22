@@ -74,6 +74,8 @@ services:
       - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8083/petstore/actuator/health
       # FIX 4.1: DB credentials from .env
+      # Use internal Docker DNS instead of host.docker.internal (not reliable in Linux CI).
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/petstore?serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=${MYSQL_ROOT_USERNAME:?Set MYSQL_ROOT_USERNAME in .env}
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       # OpenTelemetry
@@ -107,6 +109,10 @@ services:
       - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
       - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
       # FIX 4.1: DB credentials from .env
+      # Use internal Docker DNS for CI/Linux compatibility across split compose stacks.
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      - SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS=broker:29092
+      - SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS=broker:29092
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:?Set POSTGRES_USER in .env}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin
