@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -25,7 +26,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtilities {
@@ -75,21 +78,34 @@ public class JwtUtilities {
     }
 
     public String generateToken(Authentication auth) {
+        Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
+        List<String> roles = authorities == null ? List.of() : authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority != null && !authority.isBlank())
+                .distinct()
+                .toList();
+
         return JWT.create()
                 .withIssuer("cloudapp")
                 .withSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername())
+                .withClaim("roles", roles)
                 .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .sign(Algorithm.RSA512(cachedPrivateKey));
     }
 
     public String getSubject(String token) {
         try {
-            Algorithm algorithm = Algorithm.RSA512(cachedPublicKey);
-            DecodedJWT decodedJWT = JWT.require(algorithm)
-                    .withIssuer("cloudapp")
-                    .build()
-                    .verify(token);
-            return decodedJWT.getSubject();
+            return verifyToken(token).getSubject();
+        } catch (JWTVerificationException exception) {
+            logger.error("JWT verification failed: {}", exception.getMessage());
+            throw new IllegalArgumentException("Invalid JWT token", exception);
+        }
+    }
+
+    public List<String> getRoles(String token) {
+        try {
+            List<String> roles = verifyToken(token).getClaim("roles").asList(String.class);
+            return roles == null ? List.of() : roles;
         } catch (JWTVerificationException exception) {
             logger.error("JWT verification failed: {}", exception.getMessage());
             throw new IllegalArgumentException("Invalid JWT token", exception);
@@ -99,6 +115,14 @@ public class JwtUtilities {
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------
+
+    private DecodedJWT verifyToken(String token) {
+        Algorithm algorithm = Algorithm.RSA512(cachedPublicKey);
+        return JWT.require(algorithm)
+                .withIssuer("cloudapp")
+                .build()
+                .verify(token);
+    }
 
     private byte[] readKeyBytes(String path) throws IOException {
         if (path.startsWith("classpath:")) {

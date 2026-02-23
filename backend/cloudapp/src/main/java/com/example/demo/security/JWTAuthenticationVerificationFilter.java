@@ -1,7 +1,7 @@
 package com.example.demo.security;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.UserRepository;
@@ -28,6 +28,9 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserRoleAuthorityService userRoleAuthorityService;
 
     private String extractJwtToken(HttpServletRequest request) {
         String authHeader = request.getHeader(SecurityConstants.HEADER_STRING);
@@ -74,7 +77,11 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
             if (username != null) {
                 User user = userRepository.findByUsername(username);
                 if (user != null) {
-                    var authentication = new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
+                    List<String> tokenRoles = jwtUtilities.getRoles(token);
+                    var authorities = tokenRoles.isEmpty()
+                            ? userRoleAuthorityService.getAuthoritiesForUsername(username)
+                            : userRoleAuthorityService.getAuthoritiesFromRoleNames(tokenRoles);
+                    var authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }

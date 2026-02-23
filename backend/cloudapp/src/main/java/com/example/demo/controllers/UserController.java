@@ -104,11 +104,7 @@ public class UserController {
     }
 
     @GetMapping("/admin/users")
-    public ResponseEntity<List<String>> listUsernames(HttpServletRequest request) {
-        if (!internalRequestAuthorizer.isInternalRequest(request)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
+    public ResponseEntity<List<String>> listUsernames() {
         List<String> usernames = userRepository.findAll().stream()
                 .map(User::getUsername)
                 .sorted()

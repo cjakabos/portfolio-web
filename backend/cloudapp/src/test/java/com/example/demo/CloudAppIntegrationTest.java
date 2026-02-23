@@ -3,6 +3,7 @@ package com.example.demo;
 import com.example.demo.model.persistence.*;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.*;
+import com.example.demo.utilities.JwtUtilities;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.*;
@@ -64,12 +65,17 @@ public class CloudAppIntegrationTest {
     @Autowired
     private NoteRepository noteRepository;
 
+    @Autowired
+    private JwtUtilities jwtUtilities;
+
     private String jwtToken;
     private String jwtCookieToken;
     private String jwtTokenOtherUser;
+    private String adminJwtToken;
     private static final String TEST_USERNAME = "integrationuser";
     private static final String TEST_PASSWORD = "securePass123";
     private static final String OTHER_USERNAME = "integrationuser2";
+    private static final String ADMIN_USERNAME = "integrationadmin";
 
     // =========================================================================
     // USER REGISTRATION & AUTHENTICATION
@@ -305,6 +311,62 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(get("/item/name/NonexistentItem")
                         .header("Authorization", jwtToken))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(15)
+    @DisplayName("JWT tokens include roles claim and admin login gets ROLE_ADMIN")
+    void jwtRolesClaimAndAdminLogin() throws Exception {
+        CreateUserRequest register = new CreateUserRequest();
+        register.setUsername(ADMIN_USERNAME);
+        register.setPassword(TEST_PASSWORD);
+        register.setConfirmPassword(TEST_PASSWORD);
+
+        mockMvc.perform(post("/user/user-register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk());
+
+        LoginRequest login = new LoginRequest();
+        login.setUsername(ADMIN_USERNAME);
+        login.setPassword(TEST_PASSWORD);
+
+        MvcResult result = mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Authorization"))
+                .andReturn();
+
+        adminJwtToken = result.getResponse().getHeader("Authorization");
+        assertNotNull(adminJwtToken);
+
+        List<String> userRoles = jwtUtilities.getRoles(jwtToken);
+        assertTrue(userRoles.contains("ROLE_USER"), "Regular user token should include ROLE_USER");
+        assertFalse(userRoles.contains("ROLE_ADMIN"), "Regular user token should not include ROLE_ADMIN");
+
+        List<String> adminRoles = jwtUtilities.getRoles(adminJwtToken);
+        assertTrue(adminRoles.contains("ROLE_USER"), "Admin user token should include ROLE_USER");
+        assertTrue(adminRoles.contains("ROLE_ADMIN"), "Admin user token should include ROLE_ADMIN");
+    }
+
+    @Test
+    @Order(16)
+    @DisplayName("GET /user/admin/users — non-admin JWT returns 403")
+    void adminUsers_nonAdminForbidden() throws Exception {
+        mockMvc.perform(get("/user/admin/users")
+                        .header("Authorization", jwtToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(17)
+    @DisplayName("GET /user/admin/users — admin JWT returns usernames")
+    void adminUsers_adminAllowed() throws Exception {
+        mockMvc.perform(get("/user/admin/users")
+                        .header("Authorization", adminJwtToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasItems(TEST_USERNAME, OTHER_USERNAME, ADMIN_USERNAME)));
     }
 
     // =========================================================================
