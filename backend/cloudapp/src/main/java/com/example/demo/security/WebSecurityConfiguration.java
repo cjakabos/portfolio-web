@@ -32,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import java.util.Set;
 
@@ -112,6 +113,9 @@ public class WebSecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository())
+                // CloudApp shell sends the raw cookie token value back in X-XSRF-TOKEN.
+                // Use the plain handler so SPA-style submissions validate consistently.
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 // During migration, require CSRF only for cookie-authenticated/browser-style
                 // unsafe requests. Header-auth clients keep working without CSRF.
                 .requireCsrfProtectionMatcher(this::requiresCsrfProtection)
@@ -125,6 +129,8 @@ public class WebSecurityConfiguration {
                 .requestMatchers(AUTH_WHITELIST).permitAll()
                 .requestMatchers("/user/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/item").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/item/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/item/**").hasRole("ADMIN")
                 .anyRequest()
                 .authenticated()
         );
@@ -138,13 +144,24 @@ public class WebSecurityConfiguration {
             return false;
         }
 
+        String requestUri = request.getRequestURI();
         String servletPath = request.getServletPath();
-        if ("/user/user-register".equals(servletPath) || "/user/user-login".equals(servletPath)) {
+        if (endsWithAnyPath(requestUri, servletPath, "/user/user-register", "/user/user-login")) {
             return false;
         }
 
         String authorizationHeader = request.getHeader(SecurityConstants.HEADER_STRING);
         return authorizationHeader == null || authorizationHeader.isBlank();
+    }
+
+    private boolean endsWithAnyPath(String requestUri, String servletPath, String... suffixes) {
+        for (String suffix : suffixes) {
+            if ((requestUri != null && requestUri.endsWith(suffix))
+                    || (servletPath != null && servletPath.endsWith(suffix))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Bean

@@ -133,7 +133,12 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
-        List<String> normalizedRoles = normalizeRoleNames(updateUserRolesRequest.getRoles());
+        final List<String> normalizedRoles;
+        try {
+            normalizedRoles = normalizeAssignableRoleNames(updateUserRolesRequest.getRoles());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
         user.setRoles(normalizedRoles);
         userRepository.save(user);
 
@@ -303,5 +308,12 @@ public class UserController {
             return List.of("ROLE_USER");
         }
         return userRoleAuthorityService.normalizeRoleNames(roles);
+    }
+
+    private List<String> normalizeAssignableRoleNames(List<String> roles) {
+        if (userRoleAuthorityService == null) {
+            return List.of("ROLE_USER");
+        }
+        return userRoleAuthorityService.normalizeAssignableRoleNames(roles);
     }
 }

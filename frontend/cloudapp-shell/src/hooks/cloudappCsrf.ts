@@ -32,9 +32,15 @@ export const ensureCloudAppCsrfToken = async (apiUrl = getCloudAppApiUrl()) => {
     return existingToken;
   }
 
-  await axios.get(`${apiUrl}/user/csrf-token`, {
+  const response = await axios.get(`${apiUrl}/user/csrf-token`, {
     withCredentials: true,
   });
+
+  const responseToken =
+    typeof response?.data?.token === "string" ? response.data.token.trim() : "";
+  if (responseToken) {
+    return responseToken;
+  }
 
   return getCloudAppCsrfTokenFromCookie();
 };
