@@ -132,11 +132,50 @@ class TestJwtAuthentication:
         assert resp.status_code in (401, 403), \
             f"Expected 401/403 for unauthenticated petstore request, got {resp.status_code}"
 
+    def test_petstore_route_with_valid_jwt_header_is_not_blocked(self):
+        """Petstore routes should pass gateway auth when a valid Authorization header is supplied."""
+        if not TEST_JWT:
+            pytest.skip("No JWT available — login failed")
+
+        resp = requests.get(
+            f"{BACKEND_URL}/petstore/pet",
+            headers={"Authorization": TEST_JWT},
+            timeout=5
+        )
+        assert resp.status_code not in (401, 403), \
+            f"Expected Petstore request to pass gateway auth, got {resp.status_code}"
+
+    def test_petstore_route_with_cookie_only_jwt_is_still_blocked(self):
+        """Petstore remains header-auth only at the gateway (cookie-only JWT should not pass)."""
+        if not TEST_AUTH_COOKIE:
+            pytest.skip("No auth cookie available — login failed or cookie not set")
+
+        resp = requests.get(
+            f"{BACKEND_URL}/petstore/pet",
+            cookies={"CLOUDAPP_AUTH": TEST_AUTH_COOKIE},
+            timeout=5
+        )
+        assert resp.status_code in (401, 403), \
+            f"Expected header-only Petstore route to reject cookie-only auth, got {resp.status_code}"
+
     def test_vehicles_route_without_jwt_is_blocked(self):
         """Vehicles application routes should be blocked without JWT at the gateway."""
         resp = requests.get(f"{BACKEND_URL}/vehicles/cars", timeout=5)
         assert resp.status_code in (401, 403), \
             f"Expected 401/403 for unauthenticated vehicles request, got {resp.status_code}"
+
+    def test_vehicles_route_with_valid_jwt_header_is_not_blocked(self):
+        """Vehicles routes should pass gateway auth when a valid Authorization header is supplied."""
+        if not TEST_JWT:
+            pytest.skip("No JWT available — login failed")
+
+        resp = requests.get(
+            f"{BACKEND_URL}/vehicles/cars",
+            headers={"Authorization": TEST_JWT},
+            timeout=5
+        )
+        assert resp.status_code not in (401, 403), \
+            f"Expected Vehicles request to pass gateway auth, got {resp.status_code}"
 
     def test_login_endpoint_is_public(self):
         """The login endpoint should be accessible without JWT."""

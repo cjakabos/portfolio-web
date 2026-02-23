@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
@@ -245,6 +246,24 @@ public class UserController {
                 "token", csrfToken.getToken(),
                 "headerName", csrfToken.getHeaderName(),
                 "parameterName", csrfToken.getParameterName()
+        ));
+    }
+
+    @GetMapping("/auth-check")
+    public ResponseEntity<?> authCheck(Authentication auth) {
+        String authenticatedUsername = getAuthenticatedUsername(auth);
+        if (authenticatedUsername == null || authenticatedUsername.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        List<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .sorted()
+                .toList();
+
+        return ResponseEntity.ok(Map.of(
+                "username", authenticatedUsername,
+                "roles", roles
         ));
     }
 

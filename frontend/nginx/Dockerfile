@@ -14,13 +14,8 @@ ENV NGINX_VERSION 1.25.4
 RUN set -eux; \
     apt-get update -o Acquire::Retries=5; \
     apt-get install -y --no-install-recommends \
-      libjwt-dev libjwt0 libjansson-dev libjansson4 \
       libpcre2-dev zlib1g-dev libpcre3-dev libssl-dev curl; \
-    mkdir -p /root/build/ngx-http-auth-jwt-module; \
     rm -rf /var/lib/apt/lists/*
-WORKDIR /root/build/ngx-http-auth-jwt-module
-ADD config ./
-ADD src/*.h src/*.c ./src/
 WORKDIR /root/build
 RUN <<`
 	set -e
@@ -71,18 +66,15 @@ RUN <<`
 		--with-http_secure_link_module \
 		--with-http_slice_module \
 		--with-http_ssl_module \
-		--with-http_stub_status_module \
-		--with-http_sub_module \
-		--with-http_v2_module \
-		--with-cc-opt='-g -O2 -ffile-prefix-map=/data/builder/debuild/nginx-1.25.4/debian/debuild-base/nginx-1.25.4=. -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' \
-		--with-ld-opt='-Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
-		--add-dynamic-module=../ngx-http-auth-jwt-module \
-		${BUILD_FLAGS}
+			--with-http_stub_status_module \
+			--with-http_sub_module \
+			--with-http_v2_module \
+			--with-cc-opt='-g -O2 -ffile-prefix-map=/data/builder/debuild/nginx-1.25.4/debian/debuild-base/nginx-1.25.4=. -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' \
+			--with-ld-opt='-Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
+			${BUILD_FLAGS}
 `
 RUN make modules
 RUN make install
-WORKDIR /usr/lib64/nginx/modules
-RUN	cp /root/build/nginx/objs/ngx_http_auth_jwt_module.so .
 RUN rm -rf /root/build
 RUN mkdir -p /var/cache/nginx /var/log/nginx
 WORKDIR /etc/nginx
@@ -92,7 +84,7 @@ LABEL maintainer="TeslaGov" email="developers@teslagov.com"
 ENV NGINX_VERSION 1.25.5
 RUN set -eux; \
     apt-get update -o Acquire::Retries=5; \
-    apt-get install -y --no-install-recommends libjansson4 libjwt0 libssl1.1 gettext-base wget; \
+    apt-get install -y --no-install-recommends libssl1.1 gettext-base wget; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
