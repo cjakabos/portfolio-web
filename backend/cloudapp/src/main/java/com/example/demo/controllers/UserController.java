@@ -161,6 +161,20 @@ public class UserController {
                 .toString();
     }
 
+    private String buildClearedAuthCookie(HttpServletRequest request) {
+        boolean secure = request.isSecure()
+                || "https".equalsIgnoreCase(request.getHeader(FORWARDED_PROTO_HEADER));
+
+        return ResponseCookie.from(AUTH_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Lax")
+                .path("/cloudapp")
+                .maxAge(0)
+                .build()
+                .toString();
+    }
+
     @PostMapping(value = "/user-login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         try {
@@ -181,5 +195,14 @@ public class UserController {
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
+    }
+
+    @PostMapping("/user-logout")
+    public ResponseEntity<?> logoutUser(HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.add(HttpHeaders.SET_COOKIE, buildClearedAuthCookie(request));
+        return ResponseEntity.ok()
+                .headers(responseHeaders)
+                .body("Logged out");
     }
 }

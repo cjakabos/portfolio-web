@@ -1,25 +1,24 @@
 'use client';
-import React, {useEffect, useState} from "react";
+import React, {useEffect} from "react";
 import {useRouter} from "next/router";
+import { useLogout } from "../../hooks/useLogout";
 
 
 export default function Index() {
     const router = useRouter()
+    const { logout } = useLogout();
 
     useEffect(() => {
-        console.log('LOGOUT');
-        try {
-            localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", '')
-            localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", '')
-            router.push('/')
+        const runLogout = async () => {
+            await logout();
+            router.push('/');
             if (typeof window !== "undefined") {
-                window.location.reload()
+                window.location.reload();
             }
-        } catch (error) {
-            console.log(error)
-        }
-    }, []);
+        };
+
+        void runLogout();
+    }, [logout, router]);
 
     return <h1>Successfuly logout</h1>;
 }
-

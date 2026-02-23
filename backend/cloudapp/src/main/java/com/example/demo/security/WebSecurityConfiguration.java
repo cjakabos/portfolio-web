@@ -110,7 +110,7 @@ public class WebSecurityConfiguration {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
         http.authorizeHttpRequests(authHttpRequests -> authHttpRequests
-                .requestMatchers(HttpMethod.POST,"/user/user-register", "/user/user-login").permitAll()
+                .requestMatchers(HttpMethod.POST,"/user/user-register", "/user/user-login", "/user/user-logout").permitAll()
                 .requestMatchers(HttpMethod.GET, AUTH_WHITELIST_SWAGGER).permitAll()
                 .requestMatchers(AUTH_WHITELIST).permitAll()
                 .anyRequest()

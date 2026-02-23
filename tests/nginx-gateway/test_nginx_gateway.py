@@ -31,12 +31,14 @@ BACKEND_URL = os.getenv("BACKEND_URL", f"{NGINX_URL}")
 # A valid JWT for testing — obtained from the cloudapp /user/user-login endpoint
 # In CI, this is obtained dynamically. For local testing, use a pre-generated one.
 TEST_JWT = None
+TEST_AUTH_COOKIE = None
 
 
 @pytest.fixture(scope="session", autouse=True)
 def register_and_login():
     """Register a test user and obtain a JWT for subsequent tests."""
     global TEST_JWT
+    global TEST_AUTH_COOKIE
 
     # Register
     reg_url = f"{BACKEND_URL}/cloudapp/user/user-register"
@@ -61,6 +63,7 @@ def register_and_login():
         resp = requests.post(login_url, json=login_payload, timeout=10)
         if resp.status_code == 200:
             TEST_JWT = resp.headers.get("Authorization", "")
+            TEST_AUTH_COOKIE = resp.cookies.get("CLOUDAPP_AUTH")
     except requests.exceptions.ConnectionError:
         pytest.skip("NGINX/backend not reachable")
 
@@ -109,6 +112,19 @@ class TestJwtAuthentication:
         resp = requests.get(f"{BACKEND_URL}/cloudapp/item", headers=headers, timeout=5)
         assert resp.status_code == 200, \
             f"Expected 200 for authenticated request, got {resp.status_code}"
+
+    def test_protected_endpoint_with_cookie_only_jwt(self):
+        """CloudApp protected routes should accept the CLOUDAPP_AUTH cookie without Authorization header."""
+        if not TEST_AUTH_COOKIE:
+            pytest.skip("No auth cookie available — login failed or cookie not set")
+
+        resp = requests.get(
+            f"{BACKEND_URL}/cloudapp/item",
+            cookies={"CLOUDAPP_AUTH": TEST_AUTH_COOKIE},
+            timeout=5
+        )
+        assert resp.status_code == 200, \
+            f"Expected 200 for cookie-authenticated request, got {resp.status_code}"
 
     def test_petstore_route_without_jwt_is_blocked(self):
         """Petstore application routes should be blocked without JWT at the gateway."""

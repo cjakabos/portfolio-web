@@ -527,6 +527,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - INTERNAL_SERVICE_TOKEN=test-internal-token
+    volumes:
+      - ./backend/cloudapp/src/test/resources/test-public-key.pub:/etc/nginx/localhost+3-key.pub:ro
     depends_on:
       test-cloudapp:
         condition: service_healthy

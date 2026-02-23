@@ -590,12 +590,13 @@ static ngx_int_t load_public_key(ngx_conf_t *cf, auth_jwt_conf_t *conf)
     }
     else
     {
-      conf->_keyfile.data = ngx_palloc(cf->pool, keySize);
+      conf->_keyfile.data = ngx_palloc(cf->pool, keySize + 1);
       keySizeRead = fread(conf->_keyfile.data, 1, keySize, keyFile);
       fclose(keyFile);
 
       if (keySizeRead == keySize)
       {
+        conf->_keyfile.data[keySize] = '\0';
         conf->_keyfile.len = (int)keySize;
 
         return NGX_OK;
@@ -609,66 +610,138 @@ static ngx_int_t load_public_key(ngx_conf_t *cf, auth_jwt_conf_t *conf)
   }
 }
 
+static char *get_jwt_from_header(ngx_http_request_t *r, ngx_str_t header_name)
+{
+  ngx_table_elt_t *jwtHeaderVal;
+  char *jwtPtr = NULL;
+
+  jwtHeaderVal = search_headers_in(r, header_name.data, header_name.len);
+
+  if (jwtHeaderVal != NULL)
+  {
+    static const char *BEARER_PREFIX = "Bearer ";
+
+    if (ngx_strncmp(jwtHeaderVal->value.data, BEARER_PREFIX, strlen(BEARER_PREFIX)) == 0)
+    {
+      ngx_str_t jwtHeaderValWithoutBearer = jwtHeaderVal->value;
+
+      jwtHeaderValWithoutBearer.data += strlen(BEARER_PREFIX);
+      jwtHeaderValWithoutBearer.len -= strlen(BEARER_PREFIX);
+
+      jwtPtr = ngx_str_t_to_char_ptr(r->pool, jwtHeaderValWithoutBearer);
+    }
+    else
+    {
+      jwtPtr = ngx_str_t_to_char_ptr(r->pool, jwtHeaderVal->value);
+    }
+  }
+
+  return jwtPtr;
+}
+
+static char *get_jwt_from_cookie(ngx_http_request_t *r, ngx_str_t cookie_name)
+{
+  bool has_cookie = false;
+  ngx_str_t jwtCookieVal;
+  char *jwtPtr = NULL;
+
+#ifndef NGX_LINKED_LIST_COOKIES
+  if (ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &cookie_name, &jwtCookieVal) != NGX_DECLINED)
+  {
+    has_cookie = true;
+  }
+#else
+  if (ngx_http_parse_multi_header_lines(r, r->headers_in.cookie, &cookie_name, &jwtCookieVal) != NULL)
+  {
+    has_cookie = true;
+  }
+#endif
+
+  if (has_cookie == true)
+  {
+    jwtPtr = ngx_str_t_to_char_ptr(r->pool, jwtCookieVal);
+  }
+
+  return jwtPtr;
+}
+
 static char *get_jwt(ngx_http_request_t *r, ngx_str_t jwt_location)
 {
   static const char *HEADER_PREFIX = "HEADER=";
   static const char *COOKIE_PREFIX = "COOKIE=";
+  static const char *HEADER_OR_COOKIE_PREFIX = "HEADER_OR_COOKIE=";
   char *jwtPtr = NULL;
 
   ngx_log_debug(NGX_LOG_DEBUG, r->connection->log, 0, "jwt_location.len %d", jwt_location.len);
 
-  if (jwt_location.len > strlen(HEADER_PREFIX) && ngx_strncmp(jwt_location.data, HEADER_PREFIX, strlen(HEADER_PREFIX)) == 0)
+  if (jwt_location.len > strlen(HEADER_OR_COOKIE_PREFIX) && ngx_strncmp(jwt_location.data, HEADER_OR_COOKIE_PREFIX, strlen(HEADER_OR_COOKIE_PREFIX)) == 0)
   {
-    ngx_table_elt_t *jwtHeaderVal;
+    ngx_str_t combined_location;
+    ngx_str_t header_name;
+    ngx_str_t cookie_name;
+    size_t delimiter_pos = 0;
+    bool has_delimiter = false;
+    size_t i;
 
-    jwt_location.data += strlen(HEADER_PREFIX);
-    jwt_location.len -= strlen(HEADER_PREFIX);
+    combined_location = jwt_location;
+    combined_location.data += strlen(HEADER_OR_COOKIE_PREFIX);
+    combined_location.len -= strlen(HEADER_OR_COOKIE_PREFIX);
 
-    jwtHeaderVal = search_headers_in(r, jwt_location.data, jwt_location.len);
-
-    if (jwtHeaderVal != NULL)
+    for (i = 0; i < combined_location.len; ++i)
     {
-      static const char *BEARER_PREFIX = "Bearer ";
-
-      if (ngx_strncmp(jwtHeaderVal->value.data, BEARER_PREFIX, strlen(BEARER_PREFIX)) == 0)
+      if (combined_location.data[i] == ',')
       {
-        ngx_str_t jwtHeaderValWithoutBearer = jwtHeaderVal->value;
-
-        jwtHeaderValWithoutBearer.data += strlen(BEARER_PREFIX);
-        jwtHeaderValWithoutBearer.len -= strlen(BEARER_PREFIX);
-
-        jwtPtr = ngx_str_t_to_char_ptr(r->pool, jwtHeaderValWithoutBearer);
+        delimiter_pos = i;
+        has_delimiter = true;
+        break;
       }
-      else
+    }
+
+    if (has_delimiter == true && delimiter_pos > 0 && delimiter_pos + 1 < combined_location.len)
+    {
+      u_char *header_name_buf;
+      u_char *cookie_name_buf;
+
+      header_name.data = combined_location.data;
+      header_name.len = delimiter_pos;
+      cookie_name.data = combined_location.data + delimiter_pos + 1;
+      cookie_name.len = combined_location.len - delimiter_pos - 1;
+
+      header_name_buf = ngx_pnalloc(r->pool, header_name.len + 1);
+      cookie_name_buf = ngx_pnalloc(r->pool, cookie_name.len + 1);
+      if (header_name_buf == NULL || cookie_name_buf == NULL)
       {
-        jwtPtr = ngx_str_t_to_char_ptr(r->pool, jwtHeaderVal->value);
+        return NULL;
+      }
+
+      ngx_memcpy(header_name_buf, header_name.data, header_name.len);
+      header_name_buf[header_name.len] = '\0';
+      header_name.data = header_name_buf;
+
+      ngx_memcpy(cookie_name_buf, cookie_name.data, cookie_name.len);
+      cookie_name_buf[cookie_name.len] = '\0';
+      cookie_name.data = cookie_name_buf;
+
+      jwtPtr = get_jwt_from_header(r, header_name);
+      if (jwtPtr == NULL)
+      {
+        jwtPtr = get_jwt_from_cookie(r, cookie_name);
       }
     }
   }
+  else if (jwt_location.len > strlen(HEADER_PREFIX) && ngx_strncmp(jwt_location.data, HEADER_PREFIX, strlen(HEADER_PREFIX)) == 0)
+  {
+    ngx_str_t header_name = jwt_location;
+    header_name.data += strlen(HEADER_PREFIX);
+    header_name.len -= strlen(HEADER_PREFIX);
+    jwtPtr = get_jwt_from_header(r, header_name);
+  }
   else if (jwt_location.len > strlen(COOKIE_PREFIX) && ngx_strncmp(jwt_location.data, COOKIE_PREFIX, strlen(COOKIE_PREFIX)) == 0)
   {
-    bool has_cookie = false;
-    ngx_str_t jwtCookieVal;
-
-    jwt_location.data += strlen(COOKIE_PREFIX);
-    jwt_location.len -= strlen(COOKIE_PREFIX);
-
-#ifndef NGX_LINKED_LIST_COOKIES
-    if (ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &jwt_location, &jwtCookieVal) != NGX_DECLINED)
-    {
-      has_cookie = true;
-    }
-#else
-    if (ngx_http_parse_multi_header_lines(r, r->headers_in.cookie, &jwt_location, &jwtCookieVal) != NULL)
-    {
-      has_cookie = true;
-    }
-#endif
-
-    if (has_cookie == true)
-    {
-      jwtPtr = ngx_str_t_to_char_ptr(r->pool, jwtCookieVal);
-    }
+    ngx_str_t cookie_name = jwt_location;
+    cookie_name.data += strlen(COOKIE_PREFIX);
+    cookie_name.len -= strlen(COOKIE_PREFIX);
+    jwtPtr = get_jwt_from_cookie(r, cookie_name);
   }
 
   return jwtPtr;

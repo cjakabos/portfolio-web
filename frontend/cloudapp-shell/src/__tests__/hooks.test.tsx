@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useCart } from "../hooks/useCart";
 import { useItems } from "../hooks/useItems";
 import { useLogin } from "../hooks/useLogin";
+import { useLogout } from "../hooks/useLogout";
 import { useNotes } from "../hooks/useNotes";
 import { useRegister } from "../hooks/useRegister";
 
@@ -162,6 +163,24 @@ describe("cloudapp hooks", () => {
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("abc123");
     expect(authResult.current.token).toBe("Bearer abc123");
     expect(loginResult.current.error).toBeNull();
+  });
+
+  test("useLogout clears local auth state and calls logout endpoint with credentials", async () => {
+    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
+    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", "abc123");
+    mock.onPost(`${API_URL}/user/user-logout`).reply(200, {});
+
+    const { result } = renderHook(() => useLogout());
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    const lastPost = mock.history.post[mock.history.post.length - 1];
+    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBeNull();
+    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBeNull();
+    expect(lastPost?.withCredentials).toBe(true);
+    expect(result.current.error).toBeNull();
   });
 
   test("useRegister validates password mismatch and API errors", async () => {

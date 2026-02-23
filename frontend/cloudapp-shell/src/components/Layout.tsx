@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Cloud, LogOut, User as UserIcon, LayoutGrid, FileText, Folder, ShoppingCart, MessageSquare, Cat, Trello, Sun, Moon, Map, Brain, Bot } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
+import { useLogout } from '../hooks/useLogout';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -11,6 +12,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const { isDark, toggleTheme } = useContext(ThemeContext);
+  const { logout } = useLogout();
 
   const user = typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_MY_USERNAME') : null;
 
@@ -37,9 +39,8 @@ const Layout = ({ children }: LayoutProps) => {
       };
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("NEXT_PUBLIC_MY_USERNAME")
-    localStorage.removeItem("NEXT_PUBLIC_MY_TOKEN")
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

@@ -610,4 +610,25 @@ public class CloudAppIntegrationTest {
                         .header("Authorization", "Bearer invalid.token.here"))
                 .andExpect(status().is(anyOf(equalTo(401), equalTo(403))));
     }
+
+    @Test
+    @Order(62)
+    @DisplayName("POST /user/user-logout — clears auth cookie and cleared cookie no longer authenticates")
+    void logoutClearsCookie() throws Exception {
+        MvcResult logoutResult = mockMvc.perform(post("/user/user-logout")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Set-Cookie"))
+                .andReturn();
+
+        String clearedCookieHeader = logoutResult.getResponse().getHeader("Set-Cookie");
+        assertNotNull(clearedCookieHeader);
+        assertTrue(clearedCookieHeader.contains("CLOUDAPP_AUTH="), "Logout should clear CLOUDAPP_AUTH cookie");
+        assertTrue(clearedCookieHeader.contains("Max-Age=0"), "Logout cookie should expire immediately");
+        assertTrue(clearedCookieHeader.contains("HttpOnly"), "Logout cookie should remain HttpOnly");
+
+        mockMvc.perform(get("/user/" + TEST_USERNAME)
+                        .cookie(new Cookie("CLOUDAPP_AUTH", "")))
+                .andExpect(status().is(anyOf(equalTo(401), equalTo(403))));
+    }
 }
