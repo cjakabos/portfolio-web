@@ -12,7 +12,8 @@ export const useItems = (token: string) => {
         setLoading(true);
         try {
             const res = await axios.get(`${API_URL}/item`, {
-                headers: { 'Authorization': token }
+                headers: { 'Authorization': token },
+                withCredentials: true,
             });
             setItems(res.data);
         } catch (error) {
@@ -27,7 +28,10 @@ export const useItems = (token: string) => {
         try {
             await axios.post(`${API_URL}/item`,
                 { name, price, description },
-                { headers: { 'Authorization': token, 'Content-Type': 'application/json;charset=UTF-8' } }
+                {
+                    headers: { 'Authorization': token, 'Content-Type': 'application/json;charset=UTF-8' },
+                    withCredentials: true,
+                }
             );
             await fetchItems(); // Refresh list
             return true;

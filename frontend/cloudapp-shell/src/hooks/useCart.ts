@@ -15,13 +15,18 @@ export const useCart = (username: string, token: string) => {
         'Authorization': token
     });
 
+    const getRequestConfig = () => ({
+        headers: getHeaders(),
+        withCredentials: true,
+    });
+
     const fetchCart = useCallback(async () => {
         if (!username || !token) return;
         setLoading(true);
         try {
             const res = await axios.post(`${API_URL}/cart/getCart`,
                 { username },
-                { headers: getHeaders() }
+                getRequestConfig()
             );
             if (res.data) {
                 setCart({ id: res.data.id, items: res.data.items || [], total: res.data.total });
@@ -38,7 +43,7 @@ export const useCart = (username: string, token: string) => {
         try {
             await axios.post(`${API_URL}/cart/addToCart`,
                 { username, itemId: item.id, quantity: 1 },
-                { headers: getHeaders() }
+                getRequestConfig()
             );
             await fetchCart();
         } catch (error) {
@@ -50,7 +55,7 @@ export const useCart = (username: string, token: string) => {
         try {
             const res = await axios.post(`${API_URL}/cart/clearCart`,
                 { username },
-                { headers: getHeaders() }
+                getRequestConfig()
             );
             setCart({ id: res.data.id, items: res.data.items || [], total: res.data.total });
             setTotal(res.data.total);
@@ -61,7 +66,7 @@ export const useCart = (username: string, token: string) => {
 
     const submitOrder = async () => {
         try {
-            await axios.post(`${API_URL}/order/submit/${username}`, '', { headers: getHeaders() });
+            await axios.post(`${API_URL}/order/submit/${username}`, '', getRequestConfig());
             await clearCart();
             await fetchHistory(); // Refresh history immediately
         } catch (error) {
@@ -72,7 +77,7 @@ export const useCart = (username: string, token: string) => {
     const fetchHistory = useCallback(async () => {
         if (!username || !token) return;
         try {
-            const res = await axios.get(`${API_URL}/order/history/${username}`, { headers: getHeaders() });
+            const res = await axios.get(`${API_URL}/order/history/${username}`, getRequestConfig());
             setHistory(res.data);
         } catch (error) {
             console.error("History Error", error);

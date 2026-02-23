@@ -13,11 +13,16 @@ export const useNotes = (username: string, token: string) => {
         'Authorization': token
     });
 
+    const getRequestConfig = () => ({
+        headers: getHeaders(),
+        withCredentials: true,
+    });
+
     const fetchNotes = useCallback(async () => {
         if (!username || !token) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/note/user/${username}`, { headers: getHeaders() });
+            const res = await axios.get(`${API_URL}/note/user/${username}`, getRequestConfig());
             setNotes(res.data);
         } catch (error) {
             console.error("Fetch Notes Error", error);
@@ -30,7 +35,7 @@ export const useNotes = (username: string, token: string) => {
         try {
             await axios.post(`${API_URL}/note/addNote`,
                 { user: username, title, description },
-                { headers: getHeaders() }
+                getRequestConfig()
             );
             await fetchNotes(); // Refresh list
         } catch (error) {
@@ -42,7 +47,7 @@ export const useNotes = (username: string, token: string) => {
         try {
             await axios.post(`${API_URL}/note/updateNote`,
                 { id, title, description },
-                { headers: getHeaders() }
+                getRequestConfig()
             );
             await fetchNotes();
         } catch (error) {
@@ -52,7 +57,7 @@ export const useNotes = (username: string, token: string) => {
 
     const deleteNote = async (id: number) => {
         try {
-            await axios.delete(`${API_URL}/note/delete/${id}`, { headers: getHeaders() });
+            await axios.delete(`${API_URL}/note/delete/${id}`, getRequestConfig());
             await fetchNotes();
         } catch (error) {
             console.error("Delete Note Error", error);

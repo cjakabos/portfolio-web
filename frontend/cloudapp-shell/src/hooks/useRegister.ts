@@ -44,7 +44,10 @@ export const useRegister = () => {
             const response = await axios.post(
                 `${API_URL}/user/user-register`, 
                 postData, 
-                { headers: { 'Content-Type': 'application/json;charset=UTF-8' } }
+                {
+                    headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+                    withCredentials: true,
+                }
             );
             
         } catch (error) {

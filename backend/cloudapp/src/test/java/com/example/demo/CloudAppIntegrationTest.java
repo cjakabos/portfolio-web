@@ -4,6 +4,7 @@ import com.example.demo.model.persistence.*;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -64,6 +65,7 @@ public class CloudAppIntegrationTest {
     private NoteRepository noteRepository;
 
     private String jwtToken;
+    private String jwtCookieToken;
     private String jwtTokenOtherUser;
     private static final String TEST_USERNAME = "integrationuser";
     private static final String TEST_PASSWORD = "securePass123";
@@ -144,6 +146,13 @@ public class CloudAppIntegrationTest {
         jwtToken = result.getResponse().getHeader("Authorization");
         assertNotNull(jwtToken, "JWT token should be returned in Authorization header");
         assertFalse(jwtToken.isEmpty(), "JWT token should not be empty");
+
+        String authCookieHeader = result.getResponse().getHeader("Set-Cookie");
+        assertNotNull(authCookieHeader, "JWT auth cookie should be returned in Set-Cookie header");
+        assertTrue(authCookieHeader.contains("CLOUDAPP_AUTH="), "Set-Cookie should include CLOUDAPP_AUTH");
+        assertTrue(authCookieHeader.contains("HttpOnly"), "Auth cookie should be HttpOnly");
+        jwtCookieToken = authCookieHeader.split(";", 2)[0].substring("CLOUDAPP_AUTH=".length());
+        assertFalse(jwtCookieToken.isEmpty(), "JWT cookie token should not be empty");
     }
 
     @Test
@@ -170,6 +179,12 @@ public class CloudAppIntegrationTest {
     void findByUsername_happyPath() throws Exception {
         mockMvc.perform(get("/user/" + TEST_USERNAME)
                         .header("Authorization", jwtToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andExpect(jsonPath("$.password").doesNotExist());
+
+        mockMvc.perform(get("/user/" + TEST_USERNAME)
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value(TEST_USERNAME))
                 .andExpect(jsonPath("$.password").doesNotExist());

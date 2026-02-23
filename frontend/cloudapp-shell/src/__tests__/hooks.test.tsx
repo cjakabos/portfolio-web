@@ -144,6 +144,7 @@ describe("cloudapp hooks", () => {
 
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBe("alice");
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("abc123");
+    expect(mock.history.post[0]?.withCredentials).toBe(true);
     expect(result.current.error).toBeNull();
   });
 

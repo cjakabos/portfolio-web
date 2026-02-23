@@ -12,7 +12,8 @@ export const useFiles = (username: string, token: string) => {
         setLoading(true);
         try {
             const res = await axios.get(`${API_URL}/file/user/${username}`, {
-                headers: { 'Authorization': token }
+                headers: { 'Authorization': token },
+                withCredentials: true,
             });
             setFiles(res.data);
         } catch (error) {
@@ -34,6 +35,7 @@ export const useFiles = (username: string, token: string) => {
                     "Authorization": token,
                     "Content-type": "multipart/form-data"
                 },
+                withCredentials: true,
             });
             await fetchFiles();
         } catch (error) {
@@ -44,7 +46,8 @@ export const useFiles = (username: string, token: string) => {
     const deleteFile = async (id: number) => {
         try {
             await axios.delete(`${API_URL}/file/delete-file/${id}`, {
-                headers: { 'Authorization': token }
+                headers: { 'Authorization': token },
+                withCredentials: true,
             });
             await fetchFiles();
         } catch (error) {
@@ -56,7 +59,8 @@ export const useFiles = (username: string, token: string) => {
         try {
             const response = await fetch(`${API_URL}/file/get-file/${id}`, {
                 method: 'GET',
-                headers: { 'Authorization': token }
+                headers: { 'Authorization': token },
+                credentials: 'include',
             });
 
             const blob = await response.blob();

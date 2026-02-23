@@ -6,25 +6,22 @@ import java.util.ArrayList;
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.utilities.JwtUtilities;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.stereotype.Component;
-
-import com.auth0.jwt.JWT;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
 @Component
 public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String AUTH_COOKIE_NAME = "CLOUDAPP_AUTH";
 
     @Autowired
     private JwtUtilities jwtUtilities;
@@ -32,23 +29,42 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
     @Autowired
     private UserRepository userRepository;
 
+    private String extractJwtToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(SecurityConstants.HEADER_STRING);
+        if (authHeader != null && !authHeader.isBlank()) {
+            String headerToken = authHeader.trim();
+            if (headerToken.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+                return headerToken.substring(BEARER_PREFIX.length()).trim();
+            }
+            return headerToken;
+        }
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+
+        for (Cookie cookie : cookies) {
+            if (AUTH_COOKIE_NAME.equals(cookie.getName())) {
+                String cookieToken = cookie.getValue();
+                if (cookieToken != null && !cookieToken.isBlank()) {
+                    return cookieToken.trim();
+                }
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        // Get jwt token from header
-        var authHeader = request.getHeader(SecurityConstants.HEADER_STRING);
-
-        // Skip if no header or doesn't start with Bearer
-        if (authHeader == null) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        var token = authHeader.replace("Bearer ", "");
+        var token = extractJwtToken(request);
 
         // Skip if token is empty
-        if (token.isEmpty()) {
+        if (token == null || token.isEmpty()) {
             chain.doFilter(request, response);
             return;
         }

@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,6 +49,9 @@ public class UserController {
 
     @Autowired
     private InternalRequestAuthorizer internalRequestAuthorizer;
+
+    private static final String AUTH_COOKIE_NAME = "CLOUDAPP_AUTH";
+    private static final String FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
 
     private String getAuthenticatedUsername(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
@@ -144,8 +148,21 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    private String buildAuthCookie(HttpServletRequest request, String token) {
+        boolean secure = request.isSecure()
+                || "https".equalsIgnoreCase(request.getHeader(FORWARDED_PROTO_HEADER));
+
+        return ResponseCookie.from(AUTH_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Lax")
+                .path("/cloudapp")
+                .build()
+                .toString();
+    }
+
     @PostMapping(value = "/user-login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -157,6 +174,7 @@ public class UserController {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.set("Authorization",
                     token);
+            responseHeaders.add(HttpHeaders.SET_COOKIE, buildAuthCookie(request, token));
             return ResponseEntity.ok()
                     .headers(responseHeaders)
                     .body("Response with header using ResponseEntity");

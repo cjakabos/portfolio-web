@@ -110,6 +110,18 @@ class TestJwtAuthentication:
         assert resp.status_code == 200, \
             f"Expected 200 for authenticated request, got {resp.status_code}"
 
+    def test_petstore_route_without_jwt_is_blocked(self):
+        """Petstore application routes should be blocked without JWT at the gateway."""
+        resp = requests.get(f"{BACKEND_URL}/petstore/pet", timeout=5)
+        assert resp.status_code in (401, 403), \
+            f"Expected 401/403 for unauthenticated petstore request, got {resp.status_code}"
+
+    def test_vehicles_route_without_jwt_is_blocked(self):
+        """Vehicles application routes should be blocked without JWT at the gateway."""
+        resp = requests.get(f"{BACKEND_URL}/vehicles/cars", timeout=5)
+        assert resp.status_code in (401, 403), \
+            f"Expected 401/403 for unauthenticated vehicles request, got {resp.status_code}"
+
     def test_login_endpoint_is_public(self):
         """The login endpoint should be accessible without JWT."""
         resp = requests.post(
