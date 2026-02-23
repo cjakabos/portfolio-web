@@ -233,6 +233,54 @@ public class UserController {
                 .body("Logged out");
     }
 
+    @PostMapping("/user-change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody ChangePasswordRequest changePasswordRequest,
+            Authentication auth
+    ) {
+        String authenticatedUsername = getAuthenticatedUsername(auth);
+        if (authenticatedUsername == null || authenticatedUsername.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        if (changePasswordRequest == null
+                || changePasswordRequest.getCurrentPassword() == null
+                || changePasswordRequest.getNewPassword() == null
+                || changePasswordRequest.getConfirmNewPassword() == null) {
+            return ResponseEntity.badRequest().body("Current password, new password and confirm password are required");
+        }
+
+        String currentPassword = changePasswordRequest.getCurrentPassword().trim();
+        String newPassword = changePasswordRequest.getNewPassword().trim();
+        String confirmNewPassword = changePasswordRequest.getConfirmNewPassword().trim();
+
+        if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body("Current password, new password and confirm password are required");
+        }
+        if (newPassword.length() < 8) {
+            return ResponseEntity.badRequest().body("New password must be at least 8 characters");
+        }
+        if (!newPassword.equals(confirmNewPassword)) {
+            return ResponseEntity.badRequest().body("New password and confirm password do not match");
+        }
+
+        User user = userRepository.findByUsername(authenticatedUsername);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("password updated for: {}", user.getUsername());
+
+        return ResponseEntity.ok(Map.of(
+                "username", user.getUsername(),
+                "message", "Password updated"
+        ));
+    }
+
     private List<String> defaultRolesForNewUser(String username) {
         if (userRoleAuthorityService == null) {
             return List.of("ROLE_USER");

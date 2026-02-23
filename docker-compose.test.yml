@@ -387,6 +387,7 @@ services:
       args:
         SERVICE_PATH: backend/cloudapp
     environment:
+      - SPRING_PROFILES_ACTIVE=test
       - SPRING_DATASOURCE_USERNAME=testuser
       - SPRING_DATASOURCE_PASSWORD=testpass
       - SPRING_DATASOURCE_URL=jdbc:postgresql://test-postgres:5432/cloudappdb_test
@@ -398,6 +399,7 @@ services:
       - JWT_EXPIRATION_MS=3600000
       - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
       - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
+      - CLOUDAPP_SECURITY_ADMIN_USERNAMES=integrationadmin
       - INTERNAL_SERVICE_TOKEN=test-internal-token
       - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
     depends_on:

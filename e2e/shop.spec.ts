@@ -3,7 +3,7 @@
 // ===========================================================================
 
 import { test, expect } from "./fixtures/test-base";
-import { ensureLoggedIn, waitForPageLoad } from "./fixtures/helpers";
+import { ensureAdminLoggedIn, ensureLoggedIn, waitForPageLoad } from "./fixtures/helpers";
 
 test.describe("Shopping Flow", () => {
   const ITEM_NAME = `Widget ${Date.now()}`;
@@ -118,7 +118,7 @@ test.describe("Shopping Flow", () => {
     });
 
     test("should create a new item via Add Item form and display it", async ({ authedPage: page, request }) => {
-      await ensureLoggedIn(request, page);
+      await ensureAdminLoggedIn(request, page);
       await setupShopStubs(page);
 
       await page.goto("/shop");
@@ -135,6 +135,17 @@ test.describe("Shopping Flow", () => {
       await createPromise;
 
       await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 15_000 });
+    });
+
+    test("should hide Add Item UI for non-admin users", async ({ authedPage: page, request }) => {
+      await ensureLoggedIn(request, page);
+      await setupShopStubs(page);
+
+      await page.goto("/shop");
+      await waitForPageLoad(page);
+
+      await expect(page.getByRole("button", { name: "Add Item" })).toHaveCount(0);
+      await expect(page.getByText("Create New Item")).toHaveCount(0);
     });
   });
 
@@ -273,7 +284,7 @@ test.describe("Shopping Flow", () => {
 
   test.describe("Item Creation Form", () => {
     test("should cancel item creation", async ({ authedPage: page, request }) => {
-      await ensureLoggedIn(request, page);
+      await ensureAdminLoggedIn(request, page);
       await page.goto("/shop");
       await waitForPageLoad(page);
 
@@ -287,7 +298,7 @@ test.describe("Shopping Flow", () => {
 
   test.describe("Real Backend Smoke", () => {
     test("should create a real item and add it to cart without request stubs", async ({ authedPage: page, request }) => {
-      await ensureLoggedIn(request, page);
+      await ensureAdminLoggedIn(request, page);
       const realItemName = `RealWidget_${Date.now()}`;
 
       await page.goto("/shop");

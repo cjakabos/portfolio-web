@@ -10,9 +10,34 @@ const formatAuthorizationToken = (storedToken: string | null) => {
     return token.startsWith(BEARER_PREFIX) ? token : `${BEARER_PREFIX}${token}`;
 };
 
+const decodeBase64Url = (value: string) => {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    if (typeof atob !== "function") return "";
+    return atob(padded);
+};
+
+const extractRolesFromToken = (authorizationToken: string) => {
+    const rawToken = authorizationToken.startsWith(BEARER_PREFIX)
+        ? authorizationToken.slice(BEARER_PREFIX.length)
+        : authorizationToken;
+
+    const parts = rawToken.split(".");
+    if (parts.length < 2) return [] as string[];
+
+    try {
+        const payload = JSON.parse(decodeBase64Url(parts[1]));
+        if (!Array.isArray(payload?.roles)) return [] as string[];
+        return payload.roles.filter((role: unknown): role is string => typeof role === "string");
+    } catch {
+        return [] as string[];
+    }
+};
+
 export const useAuth = () => {
     const [token, setToken] = useState("");
     const [username, setUsername] = useState("");
+    const [roles, setRoles] = useState<string[]>([]);
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
@@ -21,9 +46,12 @@ export const useAuth = () => {
             const u = localStorage.getItem(USERNAME_STORAGE_KEY) || "";
             setToken(t);
             setUsername(u);
+            setRoles(extractRolesFromToken(t));
             setIsReady(!!(t && u));
         }
     }, []);
 
-    return { token, username, isReady };
+    const isAdmin = roles.includes("ROLE_ADMIN");
+
+    return { token, username, roles, isAdmin, isReady };
 };

@@ -23,6 +23,13 @@ export const TEST_USER = {
   password: "SecureE2EPass123",
 };
 
+export const ADMIN_TEST_USER = {
+  firstname: "Integration",
+  lastname: "Admin",
+  username: process.env.PW_ADMIN_USERNAME || "integrationadmin",
+  password: process.env.PW_ADMIN_PASSWORD || "SecureE2EPass123",
+};
+
 // ---------------------------------------------------------------------------
 // API helpers (bypass frontend — go directly to NGINX gateway)
 // ---------------------------------------------------------------------------
@@ -83,6 +90,7 @@ export async function injectAuth(page: Page, token: string, username: string) {
 // ---------------------------------------------------------------------------
 
 let cachedAuth: { token: string; username: string } | null = null;
+let cachedAdminAuth: { token: string; username: string } | null = null;
 
 export async function ensureLoggedIn(
   request: APIRequestContext,
@@ -129,6 +137,53 @@ export async function ensureLoggedIn(
   }
 
   throw new Error(`Failed to login test user after retries (${lastError || "no details"})`);
+}
+
+export async function ensureAdminLoggedIn(
+  request: APIRequestContext,
+  page: Page
+): Promise<{ token: string; username: string }> {
+  if (cachedAdminAuth) {
+    await injectAuth(page, cachedAdminAuth.token, cachedAdminAuth.username);
+    return cachedAdminAuth;
+  }
+
+  const username = ADMIN_TEST_USER.username;
+  const password = ADMIN_TEST_USER.password;
+  let lastError: string | null = null;
+
+  for (let attempt = 1; attempt <= AUTH_RETRY_ATTEMPTS; attempt++) {
+    const registerOk = await apiRegister(request, username, password);
+    const loginResp = await request.post(`${BACKEND_URL}/cloudapp/user/user-login`, {
+      data: { username, password },
+      failOnStatusCode: false,
+    });
+    const loginHeaders = loginResp.headers();
+    const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
+
+    if (loginResp.status() === 200 && token) {
+      cachedAdminAuth = { token, username };
+      await injectAuth(page, token, username);
+      return cachedAdminAuth;
+    }
+
+    const bodySnippet = (await loginResp.text().catch(() => ""))
+      .replace(/\s+/g, " ")
+      .slice(0, 300);
+    lastError =
+      `registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
+      `hasAuthHeader=${Boolean(token)} body="${bodySnippet}"`;
+
+    console.warn(
+      `[pw][auth-admin] attempt ${attempt}/${AUTH_RETRY_ATTEMPTS} failed: ${lastError}`
+    );
+
+    if (attempt < AUTH_RETRY_ATTEMPTS) {
+      await sleep(AUTH_RETRY_DELAY_MS);
+    }
+  }
+
+  throw new Error(`Failed to login admin test user after retries (${lastError || "no details"})`);
 }
 
 // ---------------------------------------------------------------------------

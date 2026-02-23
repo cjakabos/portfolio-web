@@ -18,7 +18,7 @@ const CloudShop: React.FC = () => {
 
 
    // 1. Auth
-    const { token, username, isReady } = useAuth();
+    const { token, username, isReady, isAdmin } = useAuth();
 
     // 2. Logic Hooks
     const { items, fetchItems, createItem } = useItems(token);
@@ -47,13 +47,17 @@ const CloudShop: React.FC = () => {
     // Handle create item submission
     const handleCreateItem = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isAdmin) return;
         await createItem(formValues.name, formValues.price, formValues.description);
         setFormValues(initialFormValues);
         setModals(prev => ({ ...prev, item: false }));
     };
 
     // Open/close modal helpers
-    const openItemModal = () => setModals(prev => ({ ...prev, item: true }));
+    const openItemModal = () => {
+        if (!isAdmin) return;
+        setModals(prev => ({ ...prev, item: true }));
+    };
     const closeItemModal = () => {
         setModals(prev => ({ ...prev, item: false }));
         setFormValues(initialFormValues);
@@ -63,7 +67,7 @@ const CloudShop: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
       {/* Create Item Modal */}
-      {modals.item && (
+      {modals.item && isAdmin && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -161,13 +165,15 @@ const CloudShop: React.FC = () => {
             >
                 My Orders
             </button>
-            <button
-                onClick={openItemModal}
-                className="ml-auto px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition flex items-center gap-2"
-            >
-                <Plus size={16} />
-                Add Item
-            </button>
+            {isAdmin && (
+                <button
+                    onClick={openItemModal}
+                    className="ml-auto px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                >
+                    <Plus size={16} />
+                    Add Item
+                </button>
+            )}
         </div>
 
         {activeTab === 'SHOP' ? (

@@ -114,6 +114,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, AUTH_WHITELIST_SWAGGER).permitAll()
                 .requestMatchers(AUTH_WHITELIST).permitAll()
                 .requestMatchers("/user/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/item").hasRole("ADMIN")
                 .anyRequest()
                 .authenticated()
         );

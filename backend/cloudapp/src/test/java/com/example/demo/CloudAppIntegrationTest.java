@@ -251,7 +251,7 @@ public class CloudAppIntegrationTest {
 
     @Test
     @Order(10)
-    @DisplayName("POST /item — should create item in Postgres")
+    @DisplayName("POST /item — non-admin forbidden, admin can create item in Postgres")
     void createItem() throws Exception {
         CreateItemRequest request = new CreateItemRequest();
         request.setName("Widget A");
@@ -260,6 +260,14 @@ public class CloudAppIntegrationTest {
 
         mockMvc.perform(post("/item")
                         .header("Authorization", jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        String adminToken = ensureAdminJwtToken();
+
+        mockMvc.perform(post("/item")
+                        .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -276,6 +284,7 @@ public class CloudAppIntegrationTest {
     @Order(11)
     @DisplayName("GET /item — should return all items")
     void getItems() throws Exception {
+        ensureWidgetAExists();
         mockMvc.perform(get("/item")
                         .header("Authorization", jwtToken))
                 .andExpect(status().isOk())
@@ -286,6 +295,7 @@ public class CloudAppIntegrationTest {
     @Order(12)
     @DisplayName("GET /item/{id} — should return item by ID")
     void getItemById() throws Exception {
+        ensureWidgetAExists();
         List<Item> items = itemRepository.findByName("Widget A");
         Long itemId = items.get(0).getId();
 
@@ -300,6 +310,7 @@ public class CloudAppIntegrationTest {
     @Order(13)
     @DisplayName("GET /item/name/{name} — should find items by name")
     void getItemsByName() throws Exception {
+        ensureWidgetAExists();
         mockMvc.perform(get("/item/name/Widget A")
                         .header("Authorization", jwtToken))
                 .andExpect(status().isOk())
@@ -319,28 +330,7 @@ public class CloudAppIntegrationTest {
     @Order(15)
     @DisplayName("JWT tokens include roles claim and admin login gets ROLE_ADMIN")
     void jwtRolesClaimAndAdminLogin() throws Exception {
-        CreateUserRequest register = new CreateUserRequest();
-        register.setUsername(ADMIN_USERNAME);
-        register.setPassword(TEST_PASSWORD);
-        register.setConfirmPassword(TEST_PASSWORD);
-
-        mockMvc.perform(post("/user/user-register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(register)))
-                .andExpect(status().isOk());
-
-        LoginRequest login = new LoginRequest();
-        login.setUsername(ADMIN_USERNAME);
-        login.setPassword(TEST_PASSWORD);
-
-        MvcResult result = mockMvc.perform(post("/user/user-login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(login)))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
-                .andReturn();
-
-        adminJwtToken = result.getResponse().getHeader("Authorization");
+        adminJwtToken = ensureAdminJwtToken();
         assertNotNull(adminJwtToken);
 
         List<String> userRoles = jwtUtilities.getRoles(jwtToken);
@@ -714,6 +704,60 @@ public class CloudAppIntegrationTest {
         assertFalse(noteRepository.findById(target.getId()).isPresent());
     }
 
+    @Test
+    @Order(56)
+    @DisplayName("POST /user/user-change-password — requires current password and updates password")
+    void changePasswordRequiresCurrentPasswordAndUpdatesPassword() throws Exception {
+        String updatedPassword = "securePass456";
+
+        ChangePasswordRequest wrongCurrentPasswordRequest = new ChangePasswordRequest();
+        wrongCurrentPasswordRequest.setCurrentPassword("wrongPassword");
+        wrongCurrentPasswordRequest.setNewPassword(updatedPassword);
+        wrongCurrentPasswordRequest.setConfirmNewPassword(updatedPassword);
+
+        mockMvc.perform(post("/user/user-change-password")
+                        .header("Authorization", jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(wrongCurrentPasswordRequest)))
+                .andExpect(status().isUnauthorized());
+
+        ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+        changePasswordRequest.setCurrentPassword(TEST_PASSWORD);
+        changePasswordRequest.setNewPassword(updatedPassword);
+        changePasswordRequest.setConfirmNewPassword(updatedPassword);
+
+        mockMvc.perform(post("/user/user-change-password")
+                        .header("Authorization", jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changePasswordRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(TEST_USERNAME))
+                .andExpect(jsonPath("$.message").value("Password updated"));
+
+        LoginRequest oldPasswordLogin = new LoginRequest();
+        oldPasswordLogin.setUsername(TEST_USERNAME);
+        oldPasswordLogin.setPassword(TEST_PASSWORD);
+
+        mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(oldPasswordLogin)))
+                .andExpect(status().isUnauthorized());
+
+        LoginRequest newPasswordLogin = new LoginRequest();
+        newPasswordLogin.setUsername(TEST_USERNAME);
+        newPasswordLogin.setPassword(updatedPassword);
+
+        MvcResult reloginResult = mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newPasswordLogin)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Authorization"))
+                .andReturn();
+
+        jwtToken = reloginResult.getResponse().getHeader("Authorization");
+        assertNotNull(jwtToken, "JWT token should be returned after password change");
+    }
+
     // =========================================================================
     // PROTECTED ENDPOINT ACCESS
     // =========================================================================
@@ -754,5 +798,53 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(get("/user/" + TEST_USERNAME)
                         .cookie(new Cookie("CLOUDAPP_AUTH", "")))
                 .andExpect(status().is(anyOf(equalTo(401), equalTo(403))));
+    }
+
+    private void ensureWidgetAExists() {
+        if (!itemRepository.findByName("Widget A").isEmpty()) {
+            return;
+        }
+        Item item = new Item();
+        item.setName("Widget A");
+        item.setPrice(new BigDecimal("19.99"));
+        item.setDescription("A high-quality widget");
+        itemRepository.save(item);
+    }
+
+    private String ensureAdminJwtToken() throws Exception {
+        if (adminJwtToken != null && !adminJwtToken.isBlank()) {
+            return adminJwtToken;
+        }
+
+        CreateUserRequest register = new CreateUserRequest();
+        register.setUsername(ADMIN_USERNAME);
+        register.setPassword(TEST_PASSWORD);
+        register.setConfirmPassword(TEST_PASSWORD);
+
+        int registerStatus = mockMvc.perform(post("/user/user-register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andReturn()
+                .getResponse()
+                .getStatus();
+        assertTrue(
+                registerStatus == 200 || registerStatus == 409,
+                "Admin bootstrap user registration should succeed or already exist"
+        );
+
+        LoginRequest login = new LoginRequest();
+        login.setUsername(ADMIN_USERNAME);
+        login.setPassword(TEST_PASSWORD);
+
+        MvcResult result = mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Authorization"))
+                .andReturn();
+
+        adminJwtToken = result.getResponse().getHeader("Authorization");
+        assertNotNull(adminJwtToken);
+        return adminJwtToken;
     }
 }

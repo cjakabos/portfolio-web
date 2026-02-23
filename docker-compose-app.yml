@@ -108,6 +108,12 @@ services:
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
       - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
       - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
+      # Demo users (dev-only seed on startup)
+      - CLOUDAPP_SEED_DEMO_USERS_ENABLED=true
+      - CLOUDAPP_SEED_DEMO_USERS_ADMIN_USERNAME=cloudadmin
+      - CLOUDAPP_SEED_DEMO_USERS_ADMIN_PASSWORD=cloudy
+      - CLOUDAPP_SEED_DEMO_USERS_REGULAR_USERNAME=regularuser123
+      - CLOUDAPP_SEED_DEMO_USERS_REGULAR_PASSWORD=456789
       # FIX 4.1: DB credentials from .env
       # Use internal Docker DNS for CI/Linux compatibility across split compose stacks.
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}

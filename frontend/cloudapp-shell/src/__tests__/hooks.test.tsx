@@ -55,6 +55,25 @@ describe("cloudapp hooks", () => {
     expect(result.current.isReady).toBe(true);
   });
 
+  test("useAuth decodes roles from JWT payload and exposes isAdmin", async () => {
+    const payload = { sub: "alice", roles: ["ROLE_USER", "ROLE_ADMIN"] };
+    const payloadB64 = btoa(JSON.stringify(payload))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+    const fakeJwt = `header.${payloadB64}.sig`;
+
+    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", fakeJwt);
+    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
+
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.username).toBe("alice"));
+
+    expect(result.current.roles).toEqual(["ROLE_USER", "ROLE_ADMIN"]);
+    expect(result.current.isAdmin).toBe(true);
+    expect(result.current.token).toBe(`Bearer ${fakeJwt}`);
+  });
+
   test("useItems fetches items and creates new item", async () => {
     const { result } = renderHook(() => useItems("Bearer token"));
     const first = [{ id: 1, name: "Item A", price: 5, description: "A" }];
