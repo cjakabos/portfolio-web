@@ -43,6 +43,17 @@ describe("cloudapp hooks", () => {
     expect(result.current.isReady).toBe(true);
   });
 
+  test("useAuth does not double-prefix legacy Bearer tokens from localStorage", async () => {
+    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", "Bearer legacy-token");
+    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
+
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.username).toBe("alice"));
+
+    expect(result.current.token).toBe("Bearer legacy-token");
+    expect(result.current.isReady).toBe(true);
+  });
+
   test("useItems fetches items and creates new item", async () => {
     const { result } = renderHook(() => useItems("Bearer token"));
     const first = [{ id: 1, name: "Item A", price: 5, description: "A" }];
@@ -132,8 +143,24 @@ describe("cloudapp hooks", () => {
     });
 
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBe("alice");
-    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("Bearer abc123");
+    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("abc123");
     expect(result.current.error).toBeNull();
+  });
+
+  test("useLogin and useAuth roundtrip keeps a single Bearer prefix", async () => {
+    mock.onPost(`${API_URL}/user/user-login`).reply(200, {}, { authorization: "Bearer abc123" });
+    const { result: loginResult } = renderHook(() => useLogin());
+
+    await act(async () => {
+      await loginResult.current.login({ username: "alice", password: "secret" });
+    });
+
+    const { result: authResult } = renderHook(() => useAuth());
+    await waitFor(() => expect(authResult.current.username).toBe("alice"));
+
+    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("abc123");
+    expect(authResult.current.token).toBe("Bearer abc123");
+    expect(loginResult.current.error).toBeNull();
   });
 
   test("useRegister validates password mismatch and API errors", async () => {

@@ -68,11 +68,16 @@ class ServiceConfiguration:
     @classmethod
     def from_env(cls) -> 'ServiceConfiguration':
         """Create configuration from environment variables"""
+        ml_url = (
+            os.getenv("ML_URL")
+            or os.getenv("ML_PIPELINE_URL")
+            or "http://mlops-segmentation:80/mlops-segmentation"
+        )
         return cls(
             cloudapp_url=os.getenv("CLOUDAPP_URL", "http://next-nginx-jwt:80/cloudapp"),
             petstore_url=os.getenv("PETSTORE_URL", "http://next-nginx-jwt:80/petstore"),
             vehicles_url=os.getenv("VEHICLES_URL", "http://next-nginx-jwt:80/vehicles"),
-            ml_url=os.getenv("ML_URL", "http://mlops-segmentation:80/mlops-segmentation"),
+            ml_url=ml_url,
             postgres_url=os.getenv("POSTGRES_URL", ""),
             internal_service_token=os.getenv("INTERNAL_SERVICE_TOKEN", ""),
             http_timeout=int(os.getenv("HTTP_TIMEOUT", "10")),
@@ -282,6 +287,10 @@ class Configuration:
 
         missing = []
         for var in required_vars:
+            if var == "ML_URL":
+                if not (os.getenv("ML_URL") or os.getenv("ML_PIPELINE_URL")):
+                    missing.append(var)
+                continue
             if not os.getenv(var):
                 missing.append(var)
 

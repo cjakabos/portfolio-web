@@ -49,7 +49,7 @@ public class CarService {
             car.setPrice(pricingWebClient.getPrice(car.getId()));
         }
 
-        return repository.findAll();
+        return returnList;
     }
 
     /**

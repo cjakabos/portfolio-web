@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 # Core Logic Imports (Restored from old main.py)
 # =============================================================================
 from core.orchestrator import AIOrchestrationLayer
-from core.config import get_config as get_core_config
+from core.config import ServiceConfiguration
 from observability.metrics_collector import MetricsCollector
 from observability.tracer import RequestTracer
 from memory.memory_manager import MemoryManager
@@ -53,25 +53,35 @@ from routers import (
 # =============================================================================
 
 class Settings:
-    """Application settings from environment variables."""
+    """Application runtime settings (service URLs come from core.config)."""
 
     # Server
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8700"))
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
-    # Backend Services
-    CLOUDAPP_URL: str = os.getenv("CLOUDAPP_URL", "http://next-nginx-jwt:80/cloudapp")
-    PETSTORE_URL: str = os.getenv("PETSTORE_URL", "http://next-nginx-jwt:80/petstore")
-    VEHICLES_URL: str = os.getenv("VEHICLES_URL", "http://next-nginx-jwt:80/vehicles")
-    ML_PIPELINE_URL: str = os.getenv("ML_PIPELINE_URL", "http://mlops-segmentation:80/mlops-segmentation")
-
-    # Data Storage
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379")
-    MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://mongodb-abtest:27019")
-
     # CORS
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://ai-orchestration-monitor:5010").split(",")
+
+    @property
+    def _services(self) -> ServiceConfiguration:
+        return ServiceConfiguration.from_env()
+
+    @property
+    def CLOUDAPP_URL(self) -> str:
+        return self._services.cloudapp_url
+
+    @property
+    def PETSTORE_URL(self) -> str:
+        return self._services.petstore_url
+
+    @property
+    def VEHICLES_URL(self) -> str:
+        return self._services.vehicles_url
+
+    @property
+    def ML_URL(self) -> str:
+        return self._services.ml_url
 
 settings = Settings()
 
@@ -360,7 +370,7 @@ async def get_config():
             "cloudapp": settings.CLOUDAPP_URL,
             "petstore": settings.PETSTORE_URL,
             "vehicles": settings.VEHICLES_URL,
-            "ml_pipeline": settings.ML_PIPELINE_URL
+            "ml_pipeline": settings.ML_URL
         },
         "cors_origins": settings.CORS_ORIGINS
     }

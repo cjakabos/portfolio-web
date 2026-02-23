@@ -2,6 +2,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
+const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
+const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
+const BEARER_PREFIX = "Bearer ";
+
+const normalizeTokenForStorage = (authorizationHeader?: string) => {
+  const token = authorizationHeader?.trim() || "";
+  if (!token) return "";
+  return token.startsWith(BEARER_PREFIX)
+    ? token.slice(BEARER_PREFIX.length)
+    : token;
+};
+
 interface LoginValues {
   username?: string;
   password?: string;
@@ -25,11 +37,13 @@ export const useLogin = () => {
         { headers: { "Content-Type": "application/json;charset=UTF-8" } }
       );
 
-
-      const token = response.headers.authorization;
+      const token = normalizeTokenForStorage(response.headers.authorization);
+      if (!token) {
+        throw new Error("Login succeeded but no Authorization token was returned");
+      }
       if (typeof window !== "undefined") {
-        localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", values.username);
-        localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
+        localStorage.setItem(USERNAME_STORAGE_KEY, values.username || "");
+        localStorage.setItem(TOKEN_STORAGE_KEY, token);
       }
 
     } catch (err: any) {
