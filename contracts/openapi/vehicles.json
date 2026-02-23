@@ -1,0 +1,291 @@
+{
+  "components": {
+    "schemas": {
+      "Car": {
+        "properties": {
+          "condition": {
+            "enum": [
+              "USED",
+              "NEW"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/Details"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "modifiedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "condition"
+        ],
+        "type": "object"
+      },
+      "Details": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "engine": {
+            "type": "string"
+          },
+          "externalColor": {
+            "type": "string"
+          },
+          "fuelType": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "$ref": "#/components/schemas/Manufacturer"
+          },
+          "mileage": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "modelYear": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "numberOfDoors": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "productionYear": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "body",
+          "manufacturer",
+          "model"
+        ],
+        "type": "object"
+      },
+      "Location": {
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "lat": {
+            "format": "double",
+            "type": "number"
+          },
+          "lon": {
+            "format": "double",
+            "type": "number"
+          },
+          "state": {
+            "type": "string"
+          },
+          "zip": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "type": "object"
+      },
+      "Manufacturer": {
+        "properties": {
+          "code": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "email": "myeaddress@udacity.com",
+      "name": "Udacious Student",
+      "url": "www.udacity.com"
+    },
+    "description": "This API returns a vehicle info.",
+    "license": {
+      "name": "License of API",
+      "url": "http://www.udacity.com/license"
+    },
+    "title": "Vehicle REST API",
+    "version": "v1.0"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/cars": {
+      "get": {
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "car-controller"
+        ]
+      },
+      "post": {
+        "operationId": "post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Car"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "car-controller"
+        ]
+      }
+    },
+    "/cars/{id}": {
+      "delete": {
+        "operationId": "delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "car-controller"
+        ]
+      },
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "car-controller"
+        ]
+      },
+      "put": {
+        "operationId": "put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Car"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "car-controller"
+        ]
+      }
+    }
+  }
+}

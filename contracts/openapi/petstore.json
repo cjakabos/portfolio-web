@@ -1,0 +1,852 @@
+{
+  "components": {
+    "schemas": {
+      "CustomerDTO": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "petIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "phoneNumber": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "EmployeeDTO": {
+        "properties": {
+          "daysAvailable": {
+            "items": {
+              "enum": [
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY",
+                "SUNDAY"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "skills": {
+            "items": {
+              "enum": [
+                "PETTING",
+                "WALKING",
+                "FEEDING",
+                "MEDICATING",
+                "SHAVING"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "type": "object"
+      },
+      "EmployeeRequestDTO": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "skills": {
+            "items": {
+              "enum": [
+                "PETTING",
+                "WALKING",
+                "FEEDING",
+                "MEDICATING",
+                "SHAVING"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "type": "object"
+      },
+      "PetDTO": {
+        "properties": {
+          "birthDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "ownerId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": {
+            "enum": [
+              "CAT",
+              "DOG",
+              "LIZARD",
+              "BIRD",
+              "FISH",
+              "SNAKE",
+              "OTHER"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ScheduleDTO": {
+        "properties": {
+          "activities": {
+            "items": {
+              "enum": [
+                "PETTING",
+                "WALKING",
+                "FEEDING",
+                "MEDICATING",
+                "SHAVING"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "employeeIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "petIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "Portfolio Web",
+      "url": "https://github.com/csaba"
+    },
+    "description": "Pet scheduling and customer/employee management API",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "title": "Petstore API",
+    "version": "v1"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/pet": {
+      "get": {
+        "operationId": "getPets",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PetDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "pet-controller"
+        ]
+      },
+      "post": {
+        "operationId": "savePet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "pet-controller"
+        ]
+      }
+    },
+    "/pet/owner/{ownerId}": {
+      "get": {
+        "operationId": "getPetsByOwner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ownerId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PetDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "pet-controller"
+        ]
+      }
+    },
+    "/pet/{id}": {
+      "delete": {
+        "operationId": "deletePet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "pet-controller"
+        ]
+      }
+    },
+    "/pet/{petId}": {
+      "get": {
+        "operationId": "getPet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "pet-controller"
+        ]
+      },
+      "put": {
+        "operationId": "updatePet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "pet-controller"
+        ]
+      }
+    },
+    "/schedule": {
+      "get": {
+        "operationId": "getAllSchedules",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schedule-controller"
+        ]
+      },
+      "post": {
+        "operationId": "createSchedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schedule-controller"
+        ]
+      }
+    },
+    "/schedule/customer/{customerId}": {
+      "get": {
+        "operationId": "getScheduleForCustomer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schedule-controller"
+        ]
+      }
+    },
+    "/schedule/employee/{employeeId}": {
+      "get": {
+        "operationId": "getScheduleForEmployee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employeeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schedule-controller"
+        ]
+      }
+    },
+    "/schedule/pet/{petId}": {
+      "get": {
+        "operationId": "getScheduleForPet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schedule-controller"
+        ]
+      }
+    },
+    "/schedule/{scheduleId}": {
+      "delete": {
+        "operationId": "deleteSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "schedule-controller"
+        ]
+      }
+    },
+    "/test": {
+      "get": {
+        "operationId": "test",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "petstore-controller"
+        ]
+      }
+    },
+    "/user/customer": {
+      "get": {
+        "operationId": "getAllCustomers",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      },
+      "post": {
+        "operationId": "saveCustomer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/user/customer/pet/{petId}": {
+      "get": {
+        "operationId": "getOwnerByPet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/user/customer/{customerId}": {
+      "delete": {
+        "operationId": "deleteCustomer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/user/employee": {
+      "get": {
+        "operationId": "getAllEmployees",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      },
+      "post": {
+        "operationId": "saveEmployee",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/user/employee/availability": {
+      "post": {
+        "operationId": "findEmployeesForService",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeDTO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
+    "/user/employee/{employeeId}": {
+      "delete": {
+        "operationId": "deleteEmployee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employeeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      },
+      "get": {
+        "operationId": "getEmployee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employeeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDTO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      },
+      "put": {
+        "operationId": "setAvailability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employeeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "enum": [
+                    "MONDAY",
+                    "TUESDAY",
+                    "WEDNESDAY",
+                    "THURSDAY",
+                    "FRIDAY",
+                    "SATURDAY",
+                    "SUNDAY"
+                  ],
+                  "type": "string"
+                },
+                "type": "array",
+                "uniqueItems": true
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    }
+  }
+}

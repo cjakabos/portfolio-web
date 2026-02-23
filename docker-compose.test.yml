@@ -295,7 +295,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-unit test-nginx-gateway test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================
@@ -316,6 +316,25 @@ services:
         condition: service_healthy
     networks:
       - test-frontend
+      - test-backend
+
+  # =========================================================================
+  # API CONTRACT GOVERNANCE TESTS (OpenAPI snapshots + generated TS clients)
+  # =========================================================================
+  test-api-contracts:
+    image: python:3.12-slim
+    working_dir: /workspace
+    entrypoint: ["python3", "scripts/contracts/openapi_contracts.py", "check", "--check-generated"]
+    volumes:
+      - ./:/workspace
+    depends_on:
+      test-cloudapp:
+        condition: service_healthy
+      test-petstore:
+        condition: service_healthy
+      test-vehicles:
+        condition: service_healthy
+    networks:
       - test-backend
 
   # =========================================================================
@@ -387,6 +406,7 @@ services:
       args:
         SERVICE_PATH: backend/cloudapp
     environment:
+      - JAVA_TOOL_OPTIONS=-Xmx384m
       - SPRING_PROFILES_ACTIVE=test
       - SPRING_DATASOURCE_USERNAME=testuser
       - SPRING_DATASOURCE_PASSWORD=testpass
@@ -431,6 +451,7 @@ services:
       args:
         SERVICE_PATH: backend/petstore
     environment:
+      - JAVA_TOOL_OPTIONS=-Xmx384m
       - DOCKER_HOST_IP=host.docker.internal
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=testpass
@@ -459,6 +480,7 @@ services:
       args:
         SERVICE_PATH: backend/vehicles-api
     environment:
+      - JAVA_TOOL_OPTIONS=-Xmx384m
       - INTERNAL_SERVICE_TOKEN=test-internal-token
       - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
     networks:
@@ -480,6 +502,7 @@ services:
       args:
         SERVICE_PATH: backend/web-proxy
     environment:
+      - JAVA_TOOL_OPTIONS=-Xmx384m
       - INTERNAL_SERVICE_TOKEN=test-internal-token
       - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
     networks:
