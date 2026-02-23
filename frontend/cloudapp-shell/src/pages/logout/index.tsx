@@ -11,10 +11,7 @@ export default function Index() {
     useEffect(() => {
         const runLogout = async () => {
             await logout();
-            router.push('/');
-            if (typeof window !== "undefined") {
-                window.location.reload();
-            }
+            router.replace('/login');
         };
 
         void runLogout();

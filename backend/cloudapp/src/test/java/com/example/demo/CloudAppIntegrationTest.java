@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,6 +72,7 @@ public class CloudAppIntegrationTest {
     private String jwtToken;
     private String jwtCookieToken;
     private String jwtTokenOtherUser;
+    private String jwtTokenOtherUserPromotedAdmin;
     private String adminJwtToken;
     private static final String TEST_USERNAME = "integrationuser";
     private static final String TEST_PASSWORD = "securePass123";
@@ -365,6 +367,66 @@ public class CloudAppIntegrationTest {
     void adminUsers_adminAllowed() throws Exception {
         mockMvc.perform(get("/user/admin/users")
                         .header("Authorization", adminJwtToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasItems(TEST_USERNAME, OTHER_USERNAME, ADMIN_USERNAME)));
+    }
+
+    @Test
+    @Order(18)
+    @DisplayName("POST /user/admin/roles — non-admin JWT returns 403")
+    void adminRoles_nonAdminForbidden() throws Exception {
+        Map<String, Object> request = Map.of(
+                "username", OTHER_USERNAME,
+                "roles", List.of("ADMIN")
+        );
+
+        mockMvc.perform(post("/user/admin/roles")
+                        .header("Authorization", jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(19)
+    @DisplayName("POST /user/admin/roles — admin can promote user and new JWT includes ROLE_ADMIN")
+    void adminRoles_adminPromotesUserAndPersistsRole() throws Exception {
+        Map<String, Object> request = Map.of(
+                "username", OTHER_USERNAME,
+                "roles", List.of("ADMIN")
+        );
+
+        mockMvc.perform(post("/user/admin/roles")
+                        .header("Authorization", adminJwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(OTHER_USERNAME))
+                .andExpect(jsonPath("$.roles", hasItems("ROLE_USER", "ROLE_ADMIN")));
+
+        User promotedUser = userRepository.findByUsername(OTHER_USERNAME);
+        assertNotNull(promotedUser);
+        assertTrue(promotedUser.getRoles().contains("ROLE_ADMIN"), "Promoted user roles should be persisted");
+
+        LoginRequest login = new LoginRequest();
+        login.setUsername(OTHER_USERNAME);
+        login.setPassword(TEST_PASSWORD);
+
+        MvcResult result = mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Authorization"))
+                .andReturn();
+
+        jwtTokenOtherUserPromotedAdmin = result.getResponse().getHeader("Authorization");
+        assertNotNull(jwtTokenOtherUserPromotedAdmin);
+
+        List<String> promotedRoles = jwtUtilities.getRoles(jwtTokenOtherUserPromotedAdmin);
+        assertTrue(promotedRoles.contains("ROLE_ADMIN"), "Promoted user JWT should include ROLE_ADMIN");
+
+        mockMvc.perform(get("/user/admin/users")
+                        .header("Authorization", jwtTokenOtherUserPromotedAdmin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasItems(TEST_USERNAME, OTHER_USERNAME, ADMIN_USERNAME)));
     }

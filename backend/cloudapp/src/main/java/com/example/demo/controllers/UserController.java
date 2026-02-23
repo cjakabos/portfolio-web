@@ -1,6 +1,7 @@
 package com.example.demo.controllers;
 
 import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.UserRoleAuthorityService;
 import com.example.demo.utilities.JwtUtilities;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -49,6 +51,9 @@ public class UserController {
 
     @Autowired
     private InternalRequestAuthorizer internalRequestAuthorizer;
+
+    @Autowired(required = false)
+    private UserRoleAuthorityService userRoleAuthorityService;
 
     private static final String AUTH_COOKIE_NAME = "CLOUDAPP_AUTH";
     private static final String FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
@@ -112,6 +117,31 @@ public class UserController {
         return ResponseEntity.ok(usernames);
     }
 
+    @PostMapping("/admin/roles")
+    public ResponseEntity<?> updateUserRoles(@RequestBody UpdateUserRolesRequest updateUserRolesRequest) {
+        if (updateUserRolesRequest == null || updateUserRolesRequest.getUsername() == null
+                || updateUserRolesRequest.getUsername().isBlank()) {
+            return ResponseEntity.badRequest().body("Username is required");
+        }
+        if (updateUserRolesRequest.getRoles() == null) {
+            return ResponseEntity.badRequest().body("Roles are required");
+        }
+
+        User user = userRepository.findByUsername(updateUserRolesRequest.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        List<String> normalizedRoles = normalizeRoleNames(updateUserRolesRequest.getRoles());
+        user.setRoles(normalizedRoles);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of(
+                "username", user.getUsername(),
+                "roles", normalizedRoles
+        ));
+    }
+
     @PostMapping("/user-register")
     public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
         if (createUserRequest.getUsername() == null || createUserRequest.getUsername().isBlank()) {
@@ -136,6 +166,7 @@ public class UserController {
         }
         user.setUsername(createUserRequest.getUsername());
         user.setPassword(this.passwordEncoder.encode(createUserRequest.getPassword()));
+        user.setRoles(defaultRolesForNewUser(createUserRequest.getUsername()));
         Cart cart = new Cart();
         cartRepository.save(cart);
         user.setCart(cart);
@@ -200,5 +231,19 @@ public class UserController {
         return ResponseEntity.ok()
                 .headers(responseHeaders)
                 .body("Logged out");
+    }
+
+    private List<String> defaultRolesForNewUser(String username) {
+        if (userRoleAuthorityService == null) {
+            return List.of("ROLE_USER");
+        }
+        return userRoleAuthorityService.getBootstrapRoleNamesForUsername(username);
+    }
+
+    private List<String> normalizeRoleNames(List<String> roles) {
+        if (userRoleAuthorityService == null) {
+            return List.of("ROLE_USER");
+        }
+        return userRoleAuthorityService.normalizeRoleNames(roles);
     }
 }

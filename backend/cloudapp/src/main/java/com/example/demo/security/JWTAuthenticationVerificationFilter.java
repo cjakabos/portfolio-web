@@ -79,7 +79,7 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
                 if (user != null) {
                     List<String> tokenRoles = jwtUtilities.getRoles(token);
                     var authorities = tokenRoles.isEmpty()
-                            ? userRoleAuthorityService.getAuthoritiesForUsername(username)
+                            ? userRoleAuthorityService.getAuthoritiesForUser(user)
                             : userRoleAuthorityService.getAuthoritiesFromRoleNames(tokenRoles);
                     var authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);

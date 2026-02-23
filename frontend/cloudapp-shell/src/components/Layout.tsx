@@ -92,6 +92,7 @@ const Layout = ({ children }: LayoutProps) => {
                                  <Link
                                    key={item.path}
                                    href={item.path}
+                                   prefetch={false}
                                    className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
                                      isActive
                                        ? 'bg-gray-800 text-blue-400'
@@ -112,6 +113,7 @@ const Layout = ({ children }: LayoutProps) => {
                               <Link
                                 key={item.path}
                                 href={item.path}
+                                prefetch={false}
                                 className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
                                   isActive
                                     ? 'bg-gray-800 text-blue-400'
@@ -172,6 +174,7 @@ const Layout = ({ children }: LayoutProps) => {
                                <Link
                                 key={item.path}
                                 href={item.path}
+                                prefetch={false}
                                 className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
                                     isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
                                 }`}
@@ -189,6 +192,7 @@ const Layout = ({ children }: LayoutProps) => {
                            <Link
                             key={item.path}
                             href={item.path}
+                            prefetch={false}
                             className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
                                 isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
                             }`}

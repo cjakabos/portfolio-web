@@ -45,6 +45,7 @@ const Home: React.FC = () => {
           <Link
             key={idx}
             href={card.path}
+            prefetch={false}
             className={`block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm hover:shadow-md transition-all group ${card.full ? 'md:col-span-2 lg:col-span-3 xl:col-span-4' : ''}`}
           >
             <div className="flex items-start justify-between">

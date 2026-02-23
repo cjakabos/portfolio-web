@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "usertable")
@@ -27,6 +30,12 @@ public class User {
     @JoinColumn(name = "cart_id", referencedColumnName = "id")
     @JsonIgnore
     private Cart cart;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role_name", nullable = false)
+    @JsonIgnore
+    private Set<String> roles = new LinkedHashSet<>();
 
     public User() {
     }
@@ -68,5 +77,15 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
-    
+
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Collection<String> roles) {
+        this.roles = new LinkedHashSet<>();
+        if (roles != null) {
+            this.roles.addAll(roles);
+        }
+    }
 }

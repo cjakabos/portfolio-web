@@ -1,5 +1,6 @@
 package com.example.demo.security;
 
+import com.example.demo.model.persistence.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,7 +29,7 @@ public class UserRoleAuthorityService {
                 .collect(Collectors.toSet());
     }
 
-    public List<String> getRoleNamesForUsername(String username) {
+    public List<String> getBootstrapRoleNamesForUsername(String username) {
         LinkedHashSet<String> roles = new LinkedHashSet<>();
         roles.add(ROLE_USER);
         if (username != null && adminUsernames.contains(username)) {
@@ -37,12 +38,24 @@ public class UserRoleAuthorityService {
         return List.copyOf(roles);
     }
 
-    public Collection<? extends GrantedAuthority> getAuthoritiesForUsername(String username) {
-        return getAuthoritiesFromRoleNames(getRoleNamesForUsername(username));
+    public List<String> getRoleNamesForUsername(String username) {
+        return getBootstrapRoleNamesForUsername(username);
     }
 
-    public List<GrantedAuthority> getAuthoritiesFromRoleNames(List<String> roleNames) {
-        if (roleNames == null || roleNames.isEmpty()) {
+    public List<String> getRoleNamesForUser(User user) {
+        if (user == null) {
+            return List.of();
+        }
+
+        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+            return normalizeRoleNames(user.getRoles());
+        }
+
+        return getBootstrapRoleNamesForUsername(user.getUsername());
+    }
+
+    public List<String> normalizeRoleNames(Collection<String> roleNames) {
+        if (roleNames == null) {
             return List.of();
         }
 
@@ -53,9 +66,28 @@ public class UserRoleAuthorityService {
             }
             String trimmed = roleName.trim();
             String normalized = trimmed.startsWith("ROLE_")
-                    ? trimmed
+                    ? trimmed.toUpperCase(Locale.ROOT)
                     : "ROLE_" + trimmed.toUpperCase(Locale.ROOT);
             normalizedRoles.add(normalized);
+        }
+
+        // Keep a base role on every authenticated user even if admin input omits it.
+        normalizedRoles.add(ROLE_USER);
+        return List.copyOf(normalizedRoles);
+    }
+
+    public Collection<? extends GrantedAuthority> getAuthoritiesForUser(User user) {
+        return getAuthoritiesFromRoleNames(getRoleNamesForUser(user));
+    }
+
+    public Collection<? extends GrantedAuthority> getAuthoritiesForUsername(String username) {
+        return getAuthoritiesFromRoleNames(getRoleNamesForUsername(username));
+    }
+
+    public List<GrantedAuthority> getAuthoritiesFromRoleNames(List<String> roleNames) {
+        List<String> normalizedRoles = normalizeRoleNames(roleNames);
+        if (normalizedRoles.isEmpty()) {
+            return List.of();
         }
 
         return normalizedRoles.stream()

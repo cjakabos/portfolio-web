@@ -559,6 +559,7 @@ services:
         SERVICE_PATH: frontend/remote/mlops
         SERVICE_PORT: 5005
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_API_URL: http://test-nginx
     networks:
       - test-frontend
     healthcheck:
@@ -578,6 +579,7 @@ services:
         SERVICE_PORT: 5001
         NEXT_PRIVATE_LOCAL_WEBPACK: true
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
+        NEXT_PUBLIC_API_URL: http://test-nginx/cloudapp
     depends_on:
       test-mlops-frontend:
         condition: service_healthy
@@ -637,6 +639,7 @@ services:
         SERVICE_PATH: frontend/remote/mlops
         SERVICE_PORT: 5005
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_API_URL: http://localhost
     ports:
       - "5005:5005"
     networks:

@@ -260,6 +260,7 @@ services:
         SERVICE_PATH: frontend/remote/mlops
         SERVICE_PORT: 5005
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:80}
     container_name: next-mlops
     ports:
       - 5005:5005
