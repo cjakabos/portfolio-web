@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
 import { Item, Cart } from '../../types';
+import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
@@ -12,7 +13,6 @@ export const useCart = (username: string, token: string) => {
 
     const getHeaders = () => ({
         'Content-Type': 'application/json;charset=UTF-8',
-        'Authorization': token
     });
 
     const getRequestConfig = () => ({
@@ -20,13 +20,21 @@ export const useCart = (username: string, token: string) => {
         withCredentials: true,
     });
 
+    const getUnsafeRequestConfig = async () => ({
+        headers: {
+            ...(await getCloudAppCsrfHeaders(API_URL)),
+            ...getHeaders(),
+        },
+        withCredentials: true,
+    });
+
     const fetchCart = useCallback(async () => {
-        if (!username || !token) return;
+        if (!username) return;
         setLoading(true);
         try {
             const res = await axios.post(`${API_URL}/cart/getCart`,
                 { username },
-                getRequestConfig()
+                await getUnsafeRequestConfig()
             );
             if (res.data) {
                 setCart({ id: res.data.id, items: res.data.items || [], total: res.data.total });
@@ -37,13 +45,13 @@ export const useCart = (username: string, token: string) => {
         } finally {
             setLoading(false);
         }
-    }, [username, token]);
+    }, [username]);
 
     const addToCart = async (item: any) => {
         try {
             await axios.post(`${API_URL}/cart/addToCart`,
                 { username, itemId: item.id, quantity: 1 },
-                getRequestConfig()
+                await getUnsafeRequestConfig()
             );
             await fetchCart();
         } catch (error) {
@@ -55,7 +63,7 @@ export const useCart = (username: string, token: string) => {
         try {
             const res = await axios.post(`${API_URL}/cart/clearCart`,
                 { username },
-                getRequestConfig()
+                await getUnsafeRequestConfig()
             );
             setCart({ id: res.data.id, items: res.data.items || [], total: res.data.total });
             setTotal(res.data.total);
@@ -66,7 +74,7 @@ export const useCart = (username: string, token: string) => {
 
     const submitOrder = async () => {
         try {
-            await axios.post(`${API_URL}/order/submit/${username}`, '', getRequestConfig());
+            await axios.post(`${API_URL}/order/submit/${username}`, '', await getUnsafeRequestConfig());
             await clearCart();
             await fetchHistory(); // Refresh history immediately
         } catch (error) {
@@ -75,14 +83,14 @@ export const useCart = (username: string, token: string) => {
     };
 
     const fetchHistory = useCallback(async () => {
-        if (!username || !token) return;
+        if (!username) return;
         try {
             const res = await axios.get(`${API_URL}/order/history/${username}`, getRequestConfig());
             setHistory(res.data);
         } catch (error) {
             console.error("History Error", error);
         }
-    }, [username, token]);
+    }, [username]);
 
     return { cart, total, history, loadingCart, fetchCart, addToCart, clearCart, submitOrder, fetchHistory };
 };

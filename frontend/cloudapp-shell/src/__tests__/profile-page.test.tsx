@@ -21,9 +21,11 @@ describe("CloudProfile page", () => {
   beforeEach(() => {
     mock = new MockAdapter(axios);
     window.localStorage.clear();
+    document.cookie = "XSRF-TOKEN=test-xsrf; path=/";
   });
 
   afterEach(() => {
+    document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     mock.restore();
     jest.restoreAllMocks();
   });
@@ -48,7 +50,7 @@ describe("CloudProfile page", () => {
     expect(screen.getByLabelText("Confirm New Password")).toBeEnabled();
   });
 
-  test("submits password change with current password and auth header", async () => {
+  test("submits password change with current password and csrf header", async () => {
     const jwt = makeJwt(["ROLE_USER"]);
     window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
     window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", jwt);
@@ -79,7 +81,8 @@ describe("CloudProfile page", () => {
 
     const [request] = mock.history.post;
     expect(request?.withCredentials).toBe(true);
-    expect(request?.headers?.Authorization).toBe(`Bearer ${jwt}`);
+    expect(request?.headers?.Authorization).toBeUndefined();
+    expect(request?.headers?.["X-XSRF-TOKEN"]).toBe("test-xsrf");
     expect(JSON.parse(request?.data || "{}")).toEqual({
       currentPassword: "securePass123",
       newPassword: "securePass456",

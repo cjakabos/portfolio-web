@@ -229,6 +229,25 @@ class TestCors:
         assert "content-type" in allowed_headers, \
             f"Content-Type header should be allowed in CORS, got: {allowed_headers}"
 
+    def test_cors_allows_x_xsrf_token_header(self):
+        """CORS should allow the X-XSRF-TOKEN header for cookie-authenticated writes."""
+        headers = {
+            "Origin": "http://localhost:5001",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "X-XSRF-TOKEN, Content-Type",
+        }
+        resp = requests.options(
+            f"{BACKEND_URL}/cloudapp/item",
+            headers=headers,
+            timeout=5
+        )
+        allowed_headers = resp.headers.get(
+            "Access-Control-Allow-Headers",
+            resp.headers.get("access-control-allow-headers", "")
+        ).lower()
+        assert "x-xsrf-token" in allowed_headers, \
+            f"X-XSRF-TOKEN header should be allowed in CORS, got: {allowed_headers}"
+
 
 # ===========================================================================
 # ROUTING — Verify NGINX routes to correct backend services

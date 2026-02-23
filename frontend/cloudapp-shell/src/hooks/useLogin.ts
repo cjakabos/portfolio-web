@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { ensureCloudAppCsrfToken } from "./cloudappCsrf";
 
 const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
 const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
@@ -47,6 +48,12 @@ export const useLogin = () => {
       if (typeof window !== "undefined") {
         localStorage.setItem(USERNAME_STORAGE_KEY, values.username || "");
         localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      }
+      try {
+        await ensureCloudAppCsrfToken(API_URL);
+      } catch (csrfError) {
+        // Keep login successful even if CSRF bootstrap fails; write requests will retry.
+        console.warn("CSRF bootstrap after login failed", csrfError);
       }
 
     } catch (err: any) {

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import axios from "axios";
+import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
@@ -8,11 +9,9 @@ export const useItems = (token: string) => {
     const [loadingItems, setLoading] = useState(false);
 
     const fetchItems = useCallback(async () => {
-        if (!token) return;
         setLoading(true);
         try {
             const res = await axios.get(`${API_URL}/item`, {
-                headers: { 'Authorization': token },
                 withCredentials: true,
             });
             setItems(res.data);
@@ -26,10 +25,11 @@ export const useItems = (token: string) => {
     const createItem = async (name: string, price: string, description: string) => {
         console.log("trying to create item2", name, price, description)
         try {
+            const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
             await axios.post(`${API_URL}/item`,
                 { name, price, description },
                 {
-                    headers: { 'Authorization': token, 'Content-Type': 'application/json;charset=UTF-8' },
+                    headers: { ...csrfHeaders, 'Content-Type': 'application/json;charset=UTF-8' },
                     withCredentials: true,
                 }
             );

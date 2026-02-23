@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { User, Mail, Shield, Lock, Save } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { getCloudAppCsrfHeaders } from '@/hooks/cloudappCsrf';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp';
 
@@ -15,7 +16,7 @@ const formatRoleLabel = (roles: string[], isAdmin: boolean) => {
 };
 
 const CloudProfile: React.FC = () => {
-  const { username, roles, isAdmin, token, isReady } = useAuth();
+  const { username, roles, isAdmin, isReady } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formValues, setFormValues] = useState({
     username: '',
@@ -72,13 +73,14 @@ const CloudProfile: React.FC = () => {
       setSaveError('New password and confirm password do not match.');
       return;
     }
-    if (!isReady || !token) {
+    if (!isReady) {
       setSaveError('You must be logged in to change your password.');
       return;
     }
 
     setLoading(true);
     try {
+      const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
       await axios.post(
         `${API_URL}/user/user-change-password`,
         {
@@ -87,7 +89,7 @@ const CloudProfile: React.FC = () => {
           confirmNewPassword,
         },
         {
-          headers: { Authorization: token },
+          headers: csrfHeaders,
           withCredentials: true,
         }
       );

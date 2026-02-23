@@ -24,3 +24,12 @@ def test_service_configuration_uses_legacy_ml_pipeline_url_when_ml_url_missing(m
     config = ServiceConfiguration.from_env()
 
     assert config.ml_url == "http://legacy-ml:8600/mlops-segmentation"
+
+
+def test_service_configuration_prefers_ml_url_over_legacy_alias(monkeypatch):
+    monkeypatch.setenv("ML_URL", "http://primary-ml:8600/mlops-segmentation")
+    monkeypatch.setenv("ML_PIPELINE_URL", "http://legacy-ml:8600/mlops-segmentation")
+
+    config = ServiceConfiguration.from_env()
+
+    assert config.ml_url == "http://primary-ml:8600/mlops-segmentation"

@@ -13,6 +13,7 @@ package com.example.demo.security;
 // ===========================================================================
 
 import com.example.demo.model.persistence.repositories.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,9 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
@@ -50,6 +54,7 @@ public class WebSecurityConfiguration {
     private String internalServiceToken;
 
     private static final String INTERNAL_AUTH_HEADER = "X-Internal-Auth";
+    private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "TRACE", "OPTIONS");
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -105,7 +110,12 @@ public class WebSecurityConfiguration {
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable);
+        http.csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository())
+                // During migration, require CSRF only for cookie-authenticated/browser-style
+                // unsafe requests. Header-auth clients keep working without CSRF.
+                .requireCsrfProtectionMatcher(this::requiresCsrfProtection)
+        );
         http.sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
@@ -121,6 +131,30 @@ public class WebSecurityConfiguration {
 
         http.addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    private boolean requiresCsrfProtection(HttpServletRequest request) {
+        if (SAFE_METHODS.contains(request.getMethod())) {
+            return false;
+        }
+
+        String servletPath = request.getServletPath();
+        if ("/user/user-register".equals(servletPath) || "/user/user-login".equals(servletPath)) {
+            return false;
+        }
+
+        String authorizationHeader = request.getHeader(SecurityConstants.HEADER_STRING);
+        return authorizationHeader == null || authorizationHeader.isBlank();
+    }
+
+    @Bean
+    CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");
+        repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setCookiePath("/cloudapp");
+        repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+        return repository;
     }
 
     @Bean

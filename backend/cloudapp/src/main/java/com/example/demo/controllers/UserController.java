@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.model.persistence.*;
@@ -231,6 +232,15 @@ public class UserController {
         return ResponseEntity.ok()
                 .headers(responseHeaders)
                 .body("Logged out");
+    }
+
+    @GetMapping("/csrf-token")
+    public ResponseEntity<?> getCsrfToken(CsrfToken csrfToken) {
+        return ResponseEntity.ok(Map.of(
+                "token", csrfToken.getToken(),
+                "headerName", csrfToken.getHeaderName(),
+                "parameterName", csrfToken.getParameterName()
+        ));
     }
 
     @PostMapping("/user-change-password")

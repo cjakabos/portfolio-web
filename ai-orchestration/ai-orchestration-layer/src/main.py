@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 # Core Logic Imports (Restored from old main.py)
 # =============================================================================
 from core.orchestrator import AIOrchestrationLayer
-from core.config import ServiceConfiguration
+from core.config import get_config as get_core_config
 from observability.metrics_collector import MetricsCollector
 from observability.tracer import RequestTracer
 from memory.memory_manager import MemoryManager
@@ -53,7 +53,7 @@ from routers import (
 # =============================================================================
 
 class Settings:
-    """Application runtime settings (service URLs come from core.config)."""
+    """Application runtime settings (service URLs come from shared core.config)."""
 
     # Server
     HOST: str = os.getenv("HOST", "0.0.0.0")
@@ -63,25 +63,30 @@ class Settings:
     # CORS
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://ai-orchestration-monitor:5010").split(",")
 
+    def __init__(self):
+        self._services = None
+
     @property
-    def _services(self) -> ServiceConfiguration:
-        return ServiceConfiguration.from_env()
+    def services(self):
+        if self._services is None:
+            self._services = get_core_config().services
+        return self._services
 
     @property
     def CLOUDAPP_URL(self) -> str:
-        return self._services.cloudapp_url
+        return self.services.cloudapp_url
 
     @property
     def PETSTORE_URL(self) -> str:
-        return self._services.petstore_url
+        return self.services.petstore_url
 
     @property
     def VEHICLES_URL(self) -> str:
-        return self._services.vehicles_url
+        return self.services.vehicles_url
 
     @property
     def ML_URL(self) -> str:
-        return self._services.ml_url
+        return self.services.ml_url
 
 settings = Settings()
 

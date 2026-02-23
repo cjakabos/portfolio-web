@@ -758,6 +758,27 @@ public class CloudAppIntegrationTest {
         assertNotNull(jwtToken, "JWT token should be returned after password change");
     }
 
+    @Test
+    @Order(57)
+    @DisplayName("POST /cart/getCart — cookie auth requires CSRF token for unsafe requests")
+    void cookieAuthUnsafePostRequiresCsrfToken() throws Exception {
+        mockMvc.perform(post("/cart/getCart")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME))))
+                .andExpect(status().isForbidden());
+
+        String csrfToken = fetchCsrfTokenForAuthCookie(jwtCookieToken);
+
+        mockMvc.perform(post("/cart/getCart")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken), new Cookie("XSRF-TOKEN", csrfToken))
+                        .header("X-XSRF-TOKEN", csrfToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNotEmpty());
+    }
+
     // =========================================================================
     // PROTECTED ENDPOINT ACCESS
     // =========================================================================
@@ -783,8 +804,10 @@ public class CloudAppIntegrationTest {
     @Order(62)
     @DisplayName("POST /user/user-logout — clears auth cookie and cleared cookie no longer authenticates")
     void logoutClearsCookie() throws Exception {
+        String csrfToken = fetchCsrfTokenForAuthCookie(jwtCookieToken);
         MvcResult logoutResult = mockMvc.perform(post("/user/user-logout")
-                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken)))
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken), new Cookie("XSRF-TOKEN", csrfToken))
+                        .header("X-XSRF-TOKEN", csrfToken))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
@@ -798,6 +821,20 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(get("/user/" + TEST_USERNAME)
                         .cookie(new Cookie("CLOUDAPP_AUTH", "")))
                 .andExpect(status().is(anyOf(equalTo(401), equalTo(403))));
+    }
+
+    private String fetchCsrfTokenForAuthCookie(String authCookieToken) throws Exception {
+        MvcResult csrfResult = mockMvc.perform(get("/user/csrf-token")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", authCookieToken)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("XSRF-TOKEN"))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn();
+
+        Cookie csrfCookie = csrfResult.getResponse().getCookie("XSRF-TOKEN");
+        assertNotNull(csrfCookie, "CSRF cookie should be returned");
+        assertNotNull(csrfCookie.getValue(), "CSRF cookie should contain a token");
+        return csrfCookie.getValue();
     }
 
     private void ensureWidgetAExists() {

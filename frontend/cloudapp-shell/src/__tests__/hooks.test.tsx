@@ -25,10 +25,13 @@ describe("cloudapp hooks", () => {
   beforeEach(() => {
     mock = new MockAdapter(axios);
     window.localStorage.clear();
+    document.cookie = "XSRF-TOKEN=test-xsrf; path=/";
     jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
+    document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     mock.restore();
     jest.restoreAllMocks();
   });
@@ -91,6 +94,9 @@ describe("cloudapp hooks", () => {
       await result.current.createItem("Item B", "7", "B");
     });
     expect(result.current.items).toEqual(second);
+    const createRequest = mock.history.post.find((request) => request.url === `${API_URL}/item`);
+    expect(createRequest?.headers?.Authorization).toBeUndefined();
+    expect(createRequest?.headers?.["X-XSRF-TOKEN"]).toBe("test-xsrf");
   });
 
   test("useCart fetches and updates cart", async () => {
@@ -199,6 +205,8 @@ describe("cloudapp hooks", () => {
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBeNull();
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBeNull();
     expect(lastPost?.withCredentials).toBe(true);
+    expect(lastPost?.headers?.Authorization).toBeUndefined();
+    expect(lastPost?.headers?.["X-XSRF-TOKEN"]).toBe("test-xsrf");
     expect(result.current.error).toBeNull();
   });
 
