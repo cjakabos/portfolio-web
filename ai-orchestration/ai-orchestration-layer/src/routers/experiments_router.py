@@ -179,7 +179,15 @@ class ExperimentStorage:
             from motor.motor_asyncio import AsyncIOMotorClient
             
             mongo_url = os.getenv("MONGODB_URL", "mongodb://mongodb-abtest:27017")
-            self._mongo_client = AsyncIOMotorClient(mongo_url)
+            max_pool_size = int(os.getenv("MONGODB_MAX_POOL_SIZE", "50"))
+            min_pool_size = int(os.getenv("MONGODB_MIN_POOL_SIZE", "10"))
+            server_selection_timeout = int(os.getenv("MONGODB_SERVER_SELECTION_TIMEOUT", "5000"))
+            self._mongo_client = AsyncIOMotorClient(
+                mongo_url,
+                maxPoolSize=max_pool_size,
+                minPoolSize=min_pool_size,
+                serverSelectionTimeoutMS=server_selection_timeout,
+            )
             await self._mongo_client.admin.command('ping')
             self._db = self._mongo_client.ai_orchestration
             self._use_mongo = True

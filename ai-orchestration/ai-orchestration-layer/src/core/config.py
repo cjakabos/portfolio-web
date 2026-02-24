@@ -239,6 +239,23 @@ class LoggingConfiguration:
 
 
 @dataclass
+class AuditConfiguration:
+    """Audit trail configuration for AI interaction logging"""
+    enabled: bool = True
+    collection: str = "audit_trail"
+    prompt_summary_max_length: int = 200
+
+    @classmethod
+    def from_env(cls) -> 'AuditConfiguration':
+        """Create configuration from environment variables"""
+        return cls(
+            enabled=os.getenv("AUDIT_ENABLED", "true").lower() == "true",
+            collection=os.getenv("AUDIT_COLLECTION", "audit_trail"),
+            prompt_summary_max_length=int(os.getenv("AUDIT_PROMPT_SUMMARY_MAX_LENGTH", "200"))
+        )
+
+
+@dataclass
 class Configuration:
     """Complete application configuration"""
     environment: Environment
@@ -250,6 +267,7 @@ class Configuration:
     cache: CacheConfiguration
     orchestration: OrchestrationConfiguration
     logging: LoggingConfiguration
+    audit: AuditConfiguration
 
     @classmethod
     def from_env(cls) -> 'Configuration':
@@ -265,7 +283,8 @@ class Configuration:
             rag=RAGConfiguration.from_env(),
             cache=CacheConfiguration.from_env(),
             orchestration=OrchestrationConfiguration.from_env(),
-            logging=LoggingConfiguration.from_env()
+            logging=LoggingConfiguration.from_env(),
+            audit=AuditConfiguration.from_env()
         )
 
     def validate(self) -> bool:

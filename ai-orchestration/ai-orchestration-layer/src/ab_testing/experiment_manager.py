@@ -187,16 +187,22 @@ class MongoDBExperimentStore:
     def __init__(
         self,
         mongodb_url: str = "mongodb://mongodb-abtest:27019",
-        database_name: str = "ai_orchestration"
+        database_name: str = "ai_orchestration",
+        max_pool_size: int = 50,
+        min_pool_size: int = 10,
+        server_selection_timeout_ms: int = 5000,
     ):
         self.mongodb_url = mongodb_url
         self.database_name = database_name
-        
+        self.max_pool_size = max_pool_size
+        self.min_pool_size = min_pool_size
+        self.server_selection_timeout_ms = server_selection_timeout_ms
+
         self.client: Optional[AsyncIOMotorClient] = None
         self.db: Optional[AsyncIOMotorDatabase] = None
         self.experiments_col: Optional[AsyncIOMotorCollection] = None
         self.assignments_col: Optional[AsyncIOMotorCollection] = None
-        
+
         self._initialized = False
         self.use_memory_fallback = not MONGODB_AVAILABLE
         
@@ -211,7 +217,12 @@ class MongoDBExperimentStore:
             return
         
         try:
-            self.client = AsyncIOMotorClient(self.mongodb_url)
+            self.client = AsyncIOMotorClient(
+                self.mongodb_url,
+                maxPoolSize=self.max_pool_size,
+                minPoolSize=self.min_pool_size,
+                serverSelectionTimeoutMS=self.server_selection_timeout_ms,
+            )
             self.db = self.client[self.database_name]
             self.experiments_col = self.db["experiments"]
             self.assignments_col = self.db["user_assignments"]
@@ -368,11 +379,17 @@ class ExperimentManager:
     def __init__(
         self,
         mongodb_url: str = "mongodb://mongodb-abtest:27019",
-        database_name: str = "ai_orchestration"
+        database_name: str = "ai_orchestration",
+        max_pool_size: int = 50,
+        min_pool_size: int = 10,
+        server_selection_timeout_ms: int = 5000,
     ):
         self.store = MongoDBExperimentStore(
             mongodb_url=mongodb_url,
-            database_name=database_name
+            database_name=database_name,
+            max_pool_size=max_pool_size,
+            min_pool_size=min_pool_size,
+            server_selection_timeout_ms=server_selection_timeout_ms,
         )
     
     async def initialize(self):
