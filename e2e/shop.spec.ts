@@ -3,7 +3,16 @@
 // ===========================================================================
 
 import { test, expect } from "./fixtures/test-base";
-import { ensureAdminLoggedIn, ensureLoggedIn, waitForPageLoad } from "./fixtures/helpers";
+import {
+  apiLogin,
+  ensureAdminLoggedIn,
+  ensureLoggedIn,
+  injectAuth,
+  TEST_USER,
+  waitForPageLoad,
+} from "./fixtures/helpers";
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:80";
 
 test.describe("Shopping Flow", () => {
   const ITEM_NAME = `Widget ${Date.now()}`;
@@ -146,6 +155,55 @@ test.describe("Shopping Flow", () => {
 
       await expect(page.getByRole("button", { name: "Add Item" })).toHaveCount(0);
       await expect(page.getByText("Create New Item")).toHaveCount(0);
+    });
+
+    test("should reflect admin promotion and demotion after re-login", async ({ authedPage: page, request }) => {
+      const regular = await ensureLoggedIn(request, page);
+      const admin = await ensureAdminLoggedIn(request, page);
+      await setupShopStubs(page);
+
+      const updateRoles = async (roles: string[]) => {
+        const resp = await request.post(`${BACKEND_URL}/cloudapp/user/admin/roles`, {
+          data: {
+            username: regular.username,
+            roles,
+          },
+          headers: {
+            Authorization: admin.token,
+          },
+          failOnStatusCode: false,
+        });
+        expect(resp.status()).toBe(200);
+      };
+
+      const reloginRegular = async () => {
+        const token = await apiLogin(request, regular.username, TEST_USER.password);
+        expect(token).toBeTruthy();
+        await injectAuth(page, token!, regular.username);
+      };
+
+      try {
+        await updateRoles(["ADMIN"]);
+        await reloginRegular();
+
+        await page.goto("/shop");
+        await waitForPageLoad(page);
+        await expect(page.getByRole("button", { name: "Add Item" })).toBeVisible();
+
+        await updateRoles(["USER"]);
+        await reloginRegular();
+
+        await page.goto("/shop");
+        await waitForPageLoad(page);
+        await expect(page.getByRole("button", { name: "Add Item" })).toHaveCount(0);
+      } finally {
+        // Best-effort cleanup so later tests keep a non-admin regular user.
+        await request.post(`${BACKEND_URL}/cloudapp/user/admin/roles`, {
+          data: { username: regular.username, roles: ["USER"] },
+          headers: { Authorization: admin.token },
+          failOnStatusCode: false,
+        });
+      }
     });
   });
 

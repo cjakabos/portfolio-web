@@ -1,16 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
+import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
 const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
-const BEARER_PREFIX = "Bearer ";
-
-const formatAuthorizationToken = (storedToken: string | null) => {
-    const token = storedToken?.trim() || "";
-    if (!token) return "";
-    return token.startsWith(BEARER_PREFIX) ? token : `${BEARER_PREFIX}${token}`;
-};
+const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
 
 const clearStoredAuth = () => {
     if (typeof window === "undefined") return;
@@ -27,14 +21,7 @@ export const useLogout = () => {
         setError(null);
 
         try {
-            const headers: Record<string, string> = {};
-            if (typeof window !== "undefined") {
-                const token = formatAuthorizationToken(localStorage.getItem(TOKEN_STORAGE_KEY));
-                if (token) {
-                    headers.Authorization = token;
-                }
-            }
-
+            const headers = await getCloudAppCsrfHeaders(API_URL);
             await axios.post(
                 `${API_URL}/user/user-logout`,
                 {},
@@ -54,4 +41,3 @@ export const useLogout = () => {
 
     return { logout, loading, error };
 };
-

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
+import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
@@ -10,7 +11,6 @@ export const useNotes = (username: string, token: string) => {
     // Helper to get headers
     const getHeaders = () => ({
         'Content-Type': 'application/json;charset=UTF-8',
-        'Authorization': token
     });
 
     const getRequestConfig = () => ({
@@ -18,8 +18,16 @@ export const useNotes = (username: string, token: string) => {
         withCredentials: true,
     });
 
+    const getUnsafeRequestConfig = async () => ({
+        headers: {
+            ...(await getCloudAppCsrfHeaders(API_URL)),
+            ...getHeaders(),
+        },
+        withCredentials: true,
+    });
+
     const fetchNotes = useCallback(async () => {
-        if (!username || !token) return;
+        if (!username) return;
         setLoading(true);
         try {
             const res = await axios.get(`${API_URL}/note/user/${username}`, getRequestConfig());
@@ -29,13 +37,13 @@ export const useNotes = (username: string, token: string) => {
         } finally {
             setLoading(false);
         }
-    }, [username, token]);
+    }, [username]);
 
     const addNote = async (title: string, description: string) => {
         try {
             await axios.post(`${API_URL}/note/addNote`,
                 { user: username, title, description },
-                getRequestConfig()
+                await getUnsafeRequestConfig()
             );
             await fetchNotes(); // Refresh list
         } catch (error) {
@@ -47,7 +55,7 @@ export const useNotes = (username: string, token: string) => {
         try {
             await axios.post(`${API_URL}/note/updateNote`,
                 { id, title, description },
-                getRequestConfig()
+                await getUnsafeRequestConfig()
             );
             await fetchNotes();
         } catch (error) {
@@ -57,7 +65,7 @@ export const useNotes = (username: string, token: string) => {
 
     const deleteNote = async (id: number) => {
         try {
-            await axios.delete(`${API_URL}/note/delete/${id}`, getRequestConfig());
+            await axios.delete(`${API_URL}/note/delete/${id}`, await getUnsafeRequestConfig());
             await fetchNotes();
         } catch (error) {
             console.error("Delete Note Error", error);

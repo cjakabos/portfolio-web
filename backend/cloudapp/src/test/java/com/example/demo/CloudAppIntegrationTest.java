@@ -758,6 +758,27 @@ public class CloudAppIntegrationTest {
         assertNotNull(jwtToken, "JWT token should be returned after password change");
     }
 
+    @Test
+    @Order(57)
+    @DisplayName("POST /cart/getCart — cookie auth requires CSRF token for unsafe requests")
+    void cookieAuthUnsafePostRequiresCsrfToken() throws Exception {
+        mockMvc.perform(post("/cart/getCart")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME))))
+                .andExpect(status().isForbidden());
+
+        String csrfToken = fetchCsrfTokenForAuthCookie(jwtCookieToken);
+
+        mockMvc.perform(post("/cart/getCart")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken), new Cookie("XSRF-TOKEN", csrfToken))
+                        .header("X-XSRF-TOKEN", csrfToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNotEmpty());
+    }
+
     // =========================================================================
     // PROTECTED ENDPOINT ACCESS
     // =========================================================================
@@ -783,14 +804,19 @@ public class CloudAppIntegrationTest {
     @Order(62)
     @DisplayName("POST /user/user-logout — clears auth cookie and cleared cookie no longer authenticates")
     void logoutClearsCookie() throws Exception {
+        String csrfToken = fetchCsrfTokenForAuthCookie(jwtCookieToken);
         MvcResult logoutResult = mockMvc.perform(post("/user/user-logout")
-                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken)))
+                        .cookie(new Cookie("CLOUDAPP_AUTH", jwtCookieToken), new Cookie("XSRF-TOKEN", csrfToken))
+                        .header("X-XSRF-TOKEN", csrfToken))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        String clearedCookieHeader = logoutResult.getResponse().getHeader("Set-Cookie");
-        assertNotNull(clearedCookieHeader);
+        String clearedCookieHeader = logoutResult.getResponse().getHeaders("Set-Cookie").stream()
+                .filter(header -> header != null && header.startsWith("CLOUDAPP_AUTH="))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(clearedCookieHeader, "Logout should emit a CLOUDAPP_AUTH Set-Cookie header");
         assertTrue(clearedCookieHeader.contains("CLOUDAPP_AUTH="), "Logout should clear CLOUDAPP_AUTH cookie");
         assertTrue(clearedCookieHeader.contains("Max-Age=0"), "Logout cookie should expire immediately");
         assertTrue(clearedCookieHeader.contains("HttpOnly"), "Logout cookie should remain HttpOnly");
@@ -798,6 +824,140 @@ public class CloudAppIntegrationTest {
         mockMvc.perform(get("/user/" + TEST_USERNAME)
                         .cookie(new Cookie("CLOUDAPP_AUTH", "")))
                 .andExpect(status().is(anyOf(equalTo(401), equalTo(403))));
+    }
+
+    @Test
+    @Order(63)
+    @DisplayName("POST /user/admin/roles — rejects unsupported roles with 400")
+    void adminRoles_rejectsUnsupportedRoleNames() throws Exception {
+        Map<String, Object> request = Map.of(
+                "username", TEST_USERNAME,
+                "roles", List.of("ADMIN", "SUPERADMIN")
+        );
+
+        mockMvc.perform(post("/user/admin/roles")
+                        .header("Authorization", ensureAdminJwtToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Unsupported role")));
+
+        User user = userRepository.findByUsername(TEST_USERNAME);
+        assertNotNull(user);
+        assertNotNull(user.getRoles());
+        assertFalse(user.getRoles().contains("ROLE_SUPERADMIN"));
+        assertTrue(user.getRoles().contains("ROLE_USER"));
+    }
+
+    @Test
+    @Order(64)
+    @DisplayName("POST /user/admin/roles — admin can demote user and new JWT loses ROLE_ADMIN")
+    void adminRoles_adminDemotesUserAndNewJwtLosesAdmin() throws Exception {
+        Map<String, Object> request = Map.of(
+                "username", OTHER_USERNAME,
+                "roles", List.of("USER")
+        );
+
+        mockMvc.perform(post("/user/admin/roles")
+                        .header("Authorization", ensureAdminJwtToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(OTHER_USERNAME))
+                .andExpect(jsonPath("$.roles", hasItem("ROLE_USER")))
+                .andExpect(jsonPath("$.roles", not(hasItem("ROLE_ADMIN"))));
+
+        User demotedUser = userRepository.findByUsername(OTHER_USERNAME);
+        assertNotNull(demotedUser);
+        assertNotNull(demotedUser.getRoles());
+        assertFalse(demotedUser.getRoles().contains("ROLE_ADMIN"), "Demoted user should no longer persist ROLE_ADMIN");
+
+        LoginRequest login = new LoginRequest();
+        login.setUsername(OTHER_USERNAME);
+        login.setPassword(TEST_PASSWORD);
+
+        MvcResult result = mockMvc.perform(post("/user/user-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Authorization"))
+                .andReturn();
+
+        String demotedJwtToken = result.getResponse().getHeader("Authorization");
+        assertNotNull(demotedJwtToken);
+
+        List<String> demotedRoles = jwtUtilities.getRoles(demotedJwtToken);
+        assertTrue(demotedRoles.contains("ROLE_USER"), "Demoted user JWT should keep ROLE_USER");
+        assertFalse(demotedRoles.contains("ROLE_ADMIN"), "Demoted user JWT should not include ROLE_ADMIN");
+
+        mockMvc.perform(get("/user/admin/users")
+                        .header("Authorization", demotedJwtToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(65)
+    @DisplayName("PUT /item/{id} — non-admin forbidden, admin can update item")
+    void updateItem_adminOnly() throws Exception {
+        ensureWidgetAExists();
+        Item item = itemRepository.findByName("Widget A").get(0);
+
+        CreateItemRequest updateRequest = new CreateItemRequest();
+        updateRequest.setName("Widget A Updated");
+        updateRequest.setPrice(new BigDecimal("21.99"));
+        updateRequest.setDescription("Updated description");
+
+        mockMvc.perform(put("/item/" + item.getId())
+                        .header("Authorization", jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/item/" + item.getId())
+                        .header("Authorization", ensureAdminJwtToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(item.getId()))
+                .andExpect(jsonPath("$.name").value("Widget A Updated"))
+                .andExpect(jsonPath("$.price").value(21.99))
+                .andExpect(jsonPath("$.description").value("Updated description"));
+    }
+
+    @Test
+    @Order(66)
+    @DisplayName("DELETE /item/{id} — non-admin forbidden, admin can delete item")
+    void deleteItem_adminOnly() throws Exception {
+        Item temporaryItem = new Item();
+        temporaryItem.setName("Widget To Delete");
+        temporaryItem.setPrice(new BigDecimal("9.99"));
+        temporaryItem.setDescription("Temp delete item");
+        temporaryItem = itemRepository.save(temporaryItem);
+
+        mockMvc.perform(delete("/item/" + temporaryItem.getId())
+                        .header("Authorization", jwtToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/item/" + temporaryItem.getId())
+                        .header("Authorization", ensureAdminJwtToken()))
+                .andExpect(status().isOk());
+
+        assertFalse(itemRepository.findById(temporaryItem.getId()).isPresent(), "Admin delete should remove item");
+    }
+
+    private String fetchCsrfTokenForAuthCookie(String authCookieToken) throws Exception {
+        MvcResult csrfResult = mockMvc.perform(get("/user/csrf-token")
+                        .cookie(new Cookie("CLOUDAPP_AUTH", authCookieToken)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("XSRF-TOKEN"))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn();
+
+        Cookie csrfCookie = csrfResult.getResponse().getCookie("XSRF-TOKEN");
+        assertNotNull(csrfCookie, "CSRF cookie should be returned");
+        assertNotNull(csrfCookie.getValue(), "CSRF cookie should contain a token");
+        return csrfCookie.getValue();
     }
 
     private void ensureWidgetAExists() {

@@ -6,11 +6,11 @@ Now fully async with standardized error handling
 Tracks capabilities used for observability metrics
 """
 
-import os
 from typing import Dict, Any
 import aiohttp
 
 from capabilities.base_capability import BaseCapability, CapabilityError
+from core.config import ServiceConfiguration
 from core.state import UnifiedState
 
 
@@ -22,7 +22,7 @@ class MLOrchestrator(BaseCapability):
     
     def __init__(self):
         super().__init__(capability_name="ml_orchestrator")
-        self.ml_service_url = os.getenv("ML_URL", "http://mlops-segmentation:8600")
+        self.ml_service_url = ServiceConfiguration.from_env().ml_url
     
     async def _execute_internal(self, state: UnifiedState) -> Dict[str, Any]:
         """

@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.model.persistence.*;
@@ -132,7 +134,12 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
-        List<String> normalizedRoles = normalizeRoleNames(updateUserRolesRequest.getRoles());
+        final List<String> normalizedRoles;
+        try {
+            normalizedRoles = normalizeAssignableRoleNames(updateUserRolesRequest.getRoles());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
         user.setRoles(normalizedRoles);
         userRepository.save(user);
 
@@ -233,6 +240,33 @@ public class UserController {
                 .body("Logged out");
     }
 
+    @GetMapping("/csrf-token")
+    public ResponseEntity<?> getCsrfToken(CsrfToken csrfToken) {
+        return ResponseEntity.ok(Map.of(
+                "token", csrfToken.getToken(),
+                "headerName", csrfToken.getHeaderName(),
+                "parameterName", csrfToken.getParameterName()
+        ));
+    }
+
+    @GetMapping("/auth-check")
+    public ResponseEntity<?> authCheck(Authentication auth) {
+        String authenticatedUsername = getAuthenticatedUsername(auth);
+        if (authenticatedUsername == null || authenticatedUsername.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        List<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .sorted()
+                .toList();
+
+        return ResponseEntity.ok(Map.of(
+                "username", authenticatedUsername,
+                "roles", roles
+        ));
+    }
+
     @PostMapping("/user-change-password")
     public ResponseEntity<?> changePassword(
             @RequestBody ChangePasswordRequest changePasswordRequest,
@@ -293,5 +327,12 @@ public class UserController {
             return List.of("ROLE_USER");
         }
         return userRoleAuthorityService.normalizeRoleNames(roles);
+    }
+
+    private List<String> normalizeAssignableRoleNames(List<String> roles) {
+        if (userRoleAuthorityService == null) {
+            return List.of("ROLE_USER");
+        }
+        return userRoleAuthorityService.normalizeAssignableRoleNames(roles);
     }
 }

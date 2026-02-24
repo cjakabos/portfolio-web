@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
+import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
@@ -8,11 +9,10 @@ export const useFiles = (username: string, token: string) => {
     const [loadingFiles, setLoading] = useState(false);
 
     const fetchFiles = useCallback(async () => {
-        if (!username || !token) return;
+        if (!username) return;
         setLoading(true);
         try {
             const res = await axios.get(`${API_URL}/file/user/${username}`, {
-                headers: { 'Authorization': token },
                 withCredentials: true,
             });
             setFiles(res.data);
@@ -21,7 +21,7 @@ export const useFiles = (username: string, token: string) => {
         } finally {
             setLoading(false);
         }
-    }, [username, token]);
+    }, [username]);
 
     const uploadFile = async (file: File) => {
         console.log("dilw",file)
@@ -30,9 +30,10 @@ export const useFiles = (username: string, token: string) => {
         formData.append('username', username);
 
         try {
+            const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
             await axios.post(`${API_URL}/file/upload`, formData, {
                 headers: {
-                    "Authorization": token,
+                    ...csrfHeaders,
                     "Content-type": "multipart/form-data"
                 },
                 withCredentials: true,
@@ -45,8 +46,9 @@ export const useFiles = (username: string, token: string) => {
 
     const deleteFile = async (id: number) => {
         try {
+            const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
             await axios.delete(`${API_URL}/file/delete-file/${id}`, {
-                headers: { 'Authorization': token },
+                headers: csrfHeaders,
                 withCredentials: true,
             });
             await fetchFiles();
@@ -59,7 +61,6 @@ export const useFiles = (username: string, token: string) => {
         try {
             const response = await fetch(`${API_URL}/file/get-file/${id}`, {
                 method: 'GET',
-                headers: { 'Authorization': token },
                 credentials: 'include',
             });
 

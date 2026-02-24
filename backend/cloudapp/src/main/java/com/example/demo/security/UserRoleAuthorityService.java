@@ -19,6 +19,7 @@ public class UserRoleAuthorityService {
 
     private static final String ROLE_USER = "ROLE_USER";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
+    private static final Set<String> SUPPORTED_ROLES = Set.of(ROLE_USER, ROLE_ADMIN);
 
     private final Set<String> adminUsernames;
 
@@ -55,6 +56,14 @@ public class UserRoleAuthorityService {
     }
 
     public List<String> normalizeRoleNames(Collection<String> roleNames) {
+        return normalizeRoleNames(roleNames, false);
+    }
+
+    public List<String> normalizeAssignableRoleNames(Collection<String> roleNames) {
+        return normalizeRoleNames(roleNames, true);
+    }
+
+    private List<String> normalizeRoleNames(Collection<String> roleNames, boolean strictValidation) {
         if (roleNames == null) {
             return List.of();
         }
@@ -64,16 +73,26 @@ public class UserRoleAuthorityService {
             if (roleName == null || roleName.isBlank()) {
                 continue;
             }
-            String trimmed = roleName.trim();
-            String normalized = trimmed.startsWith("ROLE_")
-                    ? trimmed.toUpperCase(Locale.ROOT)
-                    : "ROLE_" + trimmed.toUpperCase(Locale.ROOT);
+            String normalized = normalizeSingleRoleName(roleName);
+            if (!SUPPORTED_ROLES.contains(normalized)) {
+                if (strictValidation) {
+                    throw new IllegalArgumentException("Unsupported role: " + roleName);
+                }
+                continue;
+            }
             normalizedRoles.add(normalized);
         }
 
         // Keep a base role on every authenticated user even if admin input omits it.
         normalizedRoles.add(ROLE_USER);
         return List.copyOf(normalizedRoles);
+    }
+
+    private String normalizeSingleRoleName(String roleName) {
+        String trimmed = roleName.trim();
+        return trimmed.startsWith("ROLE_")
+                ? trimmed.toUpperCase(Locale.ROOT)
+                : "ROLE_" + trimmed.toUpperCase(Locale.ROOT);
     }
 
     public Collection<? extends GrantedAuthority> getAuthoritiesForUser(User user) {

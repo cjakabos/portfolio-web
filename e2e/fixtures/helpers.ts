@@ -74,6 +74,21 @@ export async function apiLogin(
 // ---------------------------------------------------------------------------
 
 export async function injectAuth(page: Page, token: string, username: string) {
+  const rawToken = token.replace(/^Bearer\s+/i, "").trim();
+  const backendUrl = new URL(BACKEND_URL);
+
+  await page.context().addCookies([
+    {
+      name: "CLOUDAPP_AUTH",
+      value: rawToken,
+      domain: backendUrl.hostname,
+      path: "/cloudapp",
+      httpOnly: true,
+      secure: backendUrl.protocol === "https:",
+      sameSite: "Lax",
+    },
+  ]);
+
   // Navigate to a page first so localStorage is available on the right origin
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.evaluate(

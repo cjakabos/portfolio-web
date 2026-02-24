@@ -2,6 +2,7 @@ package com.example.demo.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.UserRepository;
@@ -23,6 +24,12 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTH_COOKIE_NAME = "CLOUDAPP_AUTH";
 
+    private static final Set<String> SKIP_SUFFIXES = Set.of(
+            "/user/user-login",
+            "/user/user-register",
+            "/user/user-logout"
+    );
+
     @Autowired
     private JwtUtilities jwtUtilities;
 
@@ -31,6 +38,21 @@ public class JWTAuthenticationVerificationFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserRoleAuthorityService userRoleAuthorityService;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        if (path == null) {
+            return false;
+        }
+        // Also handle paths with the servlet context prefix (e.g. /cloudapp/user/user-login)
+        for (String suffix : SKIP_SUFFIXES) {
+            if (path.endsWith(suffix)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private String extractJwtToken(HttpServletRequest request) {
         String authHeader = request.getHeader(SecurityConstants.HEADER_STRING);

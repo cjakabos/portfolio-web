@@ -45,4 +45,36 @@ public class ItemController {
 
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Item> updateItem(@PathVariable Long id, @RequestBody CreateItemRequest updateItemRequest) {
+        Optional<Item> existingItem = itemRepository.findById(id);
+        if (existingItem.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Item item = existingItem.get();
+        if (updateItemRequest.getName() != null) {
+            item.setName(updateItemRequest.getName());
+        }
+        if (updateItemRequest.getPrice() != null) {
+            item.setPrice(updateItemRequest.getPrice());
+        }
+        if (updateItemRequest.getDescription() != null) {
+            item.setDescription(updateItemRequest.getDescription());
+        }
+
+        Item saved = itemRepository.save(item);
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+        if (!itemRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        itemRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
