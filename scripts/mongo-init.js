@@ -20,6 +20,7 @@ db.createUser({
 db.createCollection('experiments');
 db.createCollection('user_assignments');
 db.createCollection('circuit_breaker_backup');
+db.createCollection('audit_trail');
 
 // Create indexes for experiments
 db.experiments.createIndex({ "status": 1 });
@@ -33,7 +34,13 @@ db.user_assignments.createIndex(
   { unique: true }
 );
 
+// Create indexes for audit trail
+db.audit_trail.createIndex({ "timestamp": -1 });
+db.audit_trail.createIndex({ "user_id": 1 });
+db.audit_trail.createIndex({ "request_id": 1 }, { unique: true });
+db.audit_trail.createIndex({ "user_id": 1, "timestamp": -1 });
+
 print('MongoDB initialization complete!');
 print('Created database: ai_orchestration');
 print('Created user: orchestration_user');
-print('Created collections: experiments, user_assignments, circuit_breaker_backup');
+print('Created collections: experiments, user_assignments, circuit_breaker_backup, audit_trail');

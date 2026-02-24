@@ -66,6 +66,16 @@ python-dateutil==2.8.2
 structlog==24.1.0
 
 # ============================================================================
+# OPENTELEMETRY — Distributed Tracing & Logging (opt-in via OTEL_ENABLED)
+# ============================================================================
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp==1.29.0
+opentelemetry-instrumentation-fastapi==0.50b0
+opentelemetry-instrumentation-httpx==0.50b0
+opentelemetry-instrumentation-logging==0.50b0
+
+# ============================================================================
 # DEVELOPMENT DEPENDENCIES (optional)
 # ============================================================================
 # Uncomment for development

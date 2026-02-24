@@ -339,6 +339,10 @@ services:
       ENABLE_AB_TESTING: ${ENABLE_AB_TESTING}
       LOG_LEVEL: ${LOG_LEVEL}
       LOG_FORMAT: ${LOG_FORMAT}
+      # OpenTelemetry for FastAPI/Python (opt-in)
+      OTEL_ENABLED: ${OTEL_ENABLED}
+      OTEL_SERVICE_NAME: ai-orchestration
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
     volumes:
       - chroma_data:/data/chroma
       - ./logs:/app/logs

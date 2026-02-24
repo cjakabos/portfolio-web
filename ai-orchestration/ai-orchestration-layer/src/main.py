@@ -25,6 +25,7 @@ from observability.tracer import RequestTracer
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
 from tools.tool_manager import ToolManager
+from observability.audit_service import AuditService
 
 # Configure logging
 logging.basicConfig(
@@ -141,6 +142,22 @@ async def lifespan(app: FastAPI):
         logger.warning(f"⚠️ Experiments storage initialization failed (will use fallback): {e}")
 
     # -------------------------------------------------------------------------
+    # 2a-bis. Initialize Audit Trail (MongoDB)
+    # -------------------------------------------------------------------------
+    logger.info("Initializing Audit Trail...")
+    core_config = get_core_config()
+    audit_service = AuditService(
+        mongodb_url=core_config.mongodb.url,
+        database=core_config.mongodb.database,
+        collection=core_config.audit.collection,
+    )
+    try:
+        await audit_service.initialize(mongo_config=core_config.mongodb)
+        logger.info("✅ Audit trail initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ Audit trail initialization failed (non-fatal): {e}")
+
+    # -------------------------------------------------------------------------
     # 2b. Initialize Approvals Storage (Redis)
     # -------------------------------------------------------------------------
     logger.info("Initializing Approvals Storage...")
@@ -174,6 +191,7 @@ async def lifespan(app: FastAPI):
         memory_manager=memory_manager,
         context_store=context_store
     )
+    orchestration_router.set_audit_service(audit_service)
 
     # =========================================================================
     # CRITICAL FIX: Inject into Approvals Router for HITL frontend sync
@@ -223,6 +241,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Approvals shutdown error: {e}")
 
+    try:
+        await audit_service.close()
+    except Exception as e:
+        logger.warning(f"Audit service shutdown error: {e}")
+
     if orchestrator:
         await orchestrator.cleanup()
     logger.info("✅ Shutdown complete")
@@ -247,6 +270,10 @@ app = FastAPI(
     lifespan=lifespan,
     root_path="/ai"
 )
+
+# --- OpenTelemetry (opt-in via OTEL_ENABLED env var) ---
+from observability.otel_setup import init_telemetry
+init_telemetry(app)
 
 # =============================================================================
 # Middleware

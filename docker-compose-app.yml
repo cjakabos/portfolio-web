@@ -32,7 +32,7 @@ services:
       # FIX 4.9: Export metrics to Prometheus via OTel
       - OTEL_METRICS_EXPORTER=prometheus
       - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
     networks:
       - backend
     restart: unless-stopped
@@ -56,7 +56,7 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=prometheus
       - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
     networks:
       - backend
     restart: unless-stopped
@@ -86,7 +86,7 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=prometheus
       - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
     networks:
       - backend
     restart: unless-stopped
@@ -121,7 +121,7 @@ services:
       - SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS=broker:29092
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:?Set POSTGRES_USER in .env}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin&maxPoolSize=${MONGO_MAX_POOL_SIZE:-50}&minPoolSize=${MONGO_MIN_POOL_SIZE:-10}&serverSelectionTimeoutMS=5000
       - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
       # OpenTelemetry
       - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
@@ -131,7 +131,7 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=prometheus
       - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
     networks:
       - backend
     volumes:

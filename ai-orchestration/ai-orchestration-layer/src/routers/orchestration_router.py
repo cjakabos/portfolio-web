@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 _orchestrator: Optional[AIOrchestrationLayer] = None
 _memory_manager: Optional[MemoryManager] = None
 _context_store: Optional[ContextStore] = None
+_audit_service = None
 
 def set_orchestration_deps(
     orchestrator: AIOrchestrationLayer,
@@ -39,6 +40,11 @@ def set_orchestration_deps(
     _orchestrator = orchestrator
     _memory_manager = memory_manager
     _context_store = context_store
+
+def set_audit_service(audit_service):
+    """Inject audit service from main.py."""
+    global _audit_service
+    _audit_service = audit_service
 
 def get_context_store_dependency() -> ContextStore:
     if not _context_store:
@@ -169,6 +175,19 @@ async def orchestrate(http_request: Request, request: OrchestrationRequest):
                 metadata={"request_id": request_id, "duration": duration_ms}
             )
 
+        # 10. Audit Trail
+        if _audit_service:
+            prompt_summary = (request.message[:200] if request.message else "")
+            await _audit_service.record(
+                request_id=request_id,
+                user_id=request.user_id,
+                orchestration_type=request.orchestration_type,
+                prompt_summary=prompt_summary,
+                duration_ms=duration_ms,
+                success=success,
+                capabilities_used=capabilities_used,
+            )
+
         return {
             "request_id": request_id,
             "response": result_state.get("final_output"),
@@ -192,6 +211,19 @@ async def orchestrate(http_request: Request, request: OrchestrationRequest):
             user_id=int(request.user_id) if request.user_id.isdigit() else None
         )
         
+        # Audit failed request
+        if _audit_service:
+            prompt_summary = (request.message[:200] if request.message else "")
+            await _audit_service.record(
+                request_id=request_id,
+                user_id=request.user_id,
+                orchestration_type=request.orchestration_type,
+                prompt_summary=prompt_summary,
+                duration_ms=duration_ms,
+                success=False,
+                error=str(e),
+            )
+
         logger.error(f"Orchestration failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
     
