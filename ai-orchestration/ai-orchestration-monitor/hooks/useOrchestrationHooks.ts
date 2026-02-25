@@ -22,6 +22,7 @@ import type {
   ApprovalStats,
   OrchestrationResponse,
   ToolDiscoveryResponse,
+  OllamaStatusResponse,
   WebSocketStreamMessage,
 } from '../types';
 
@@ -940,6 +941,38 @@ export function useTools() {
     invoking,
     invokeError,
   };
+}
+
+// =============================================================================
+// OLLAMA STATUS HOOK
+// =============================================================================
+
+export function useOllamaStatus() {
+  const [status, setStatus] = useState<OllamaStatusResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkStatus = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await orchestrationClient.getOllamaStatus();
+      setStatus(result);
+    } catch (err) {
+      // If the backend itself is down, we get a network/502 error
+      if (err instanceof NetworkError || (err instanceof ApiError && err.status === 502)) {
+        setStatus({ connected: false, error: 'backend_offline', models: [] });
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to check Ollama status';
+        setError(message);
+        setStatus({ connected: false, error: 'connection_failed', models: [] });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { status, isLoading, error, checkStatus };
 }
 
 // =============================================================================

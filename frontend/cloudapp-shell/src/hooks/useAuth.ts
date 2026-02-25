@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 
 const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
 const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
@@ -55,6 +56,7 @@ export const useAuth = () => {
     const [username, setUsername] = useState("");
     const [roles, setRoles] = useState<string[]>([]);
     const [isReady, setIsReady] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -65,7 +67,7 @@ export const useAuth = () => {
             setRoles(extractRolesFromToken(t));
             setIsReady(!!(t && u));
         }
-    }, []);
+    }, [router.asPath]);
 
     const isAdmin = roles.includes("ROLE_ADMIN");
 

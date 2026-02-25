@@ -371,6 +371,12 @@ export interface ToolInvocationResponse {
   error?: string;
 }
 
+export interface OllamaStatusResponse {
+  connected: boolean;
+  error: string | null;
+  models: string[];
+}
+
 // =============================================================================
 // WebSocket Messages (UPDATED)
 // =============================================================================

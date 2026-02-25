@@ -52,7 +52,7 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="bg-gray-50 dark:bg-gray-900 p-8 text-center border-b border-gray-200 dark:border-gray-700">
-          <div className="mx-auto w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 mb-4 shadow-inner p-2">
+          <div className="mx-auto w-40 h-40 bg-gray-800 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 mb-4 shadow-inner p-2">
             <img src="/drawing_white.svg" alt="CloudApp" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">CloudApp</h2>

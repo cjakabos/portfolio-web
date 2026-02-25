@@ -15,9 +15,10 @@ import 'leaflet/dist/leaflet.css';
 // Import Hook (assuming this is safe)
 import { useVehicleMap, Vehicle } from '../../hooks/useVehiclesMap';
 
-// Create icon outside component to avoid recreation on each render
+// Resolve icon URL: use the remote's origin when mounted in the shell, fall back to relative path for standalone
+const OPENMAPS_BASE = process.env.NEXT_PUBLIC_REMOTE_OPENMAPS_URL || '';
 const iconCar = L.icon({
-    iconUrl: 'http://localhost:5002/icons/voyager.png',
+    iconUrl: `${OPENMAPS_BASE}/icons/voyager.png`,
     iconSize: [40, 40],
     iconAnchor: [20, 20],
     popupAnchor: [0, -20]
@@ -46,7 +47,7 @@ export default function CloudMaps() {
     } = useVehicleMap();
 
     return (
-        <div className="h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-6 p-4">
+        <div className="h-full flex flex-col lg:flex-row gap-6 p-4">
 
             {/* --- LEFT: Sidebar / List --- */}
             <div className="w-full lg:w-1/3 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">

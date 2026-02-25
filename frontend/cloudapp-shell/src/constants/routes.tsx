@@ -9,7 +9,7 @@ export interface RouteItem {
 }
 
 export const allAuthedRoutes: RouteItem[] = [
-  { label: 'Dashboard', path: '/', icon: <LayoutGrid size={20} />, adminOnly: false },
+  { label: 'Home', path: '/', icon: <LayoutGrid size={20} />, adminOnly: false },
   { label: 'Jira', path: '/jira', icon: <Trello size={20} />, adminOnly: true },
   { label: 'Notes', path: '/notes', icon: <FileText size={20} />, adminOnly: false },
   { label: 'Files', path: '/files', icon: <Folder size={20} />, adminOnly: false },

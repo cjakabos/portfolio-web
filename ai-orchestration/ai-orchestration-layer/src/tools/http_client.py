@@ -226,9 +226,13 @@ class ServiceHTTPClients:
     def get_petstore_client(cls) -> HTTPClient:
         if "petstore" not in cls._clients:
             config = get_config()
+            default_headers: Dict[str, str] = {}
+            if config.services.internal_service_token:
+                default_headers["X-Internal-Auth"] = config.services.internal_service_token
             cls._clients["petstore"] = HTTPClient(
                 base_url=config.services.petstore_url,
-                timeout=config.services.http_timeout
+                timeout=config.services.http_timeout,
+                default_headers=default_headers
             )
         return cls._clients["petstore"]
 
@@ -236,9 +240,13 @@ class ServiceHTTPClients:
     def get_vehicles_client(cls) -> HTTPClient:
         if "vehicles" not in cls._clients:
             config = get_config()
+            default_headers: Dict[str, str] = {}
+            if config.services.internal_service_token:
+                default_headers["X-Internal-Auth"] = config.services.internal_service_token
             cls._clients["vehicles"] = HTTPClient(
                 base_url=config.services.vehicles_url,
-                timeout=config.services.http_timeout
+                timeout=config.services.http_timeout,
+                default_headers=default_headers
             )
         return cls._clients["vehicles"]
 
@@ -246,9 +254,13 @@ class ServiceHTTPClients:
     def get_ml_client(cls) -> HTTPClient:
         if "ml" not in cls._clients:
             config = get_config()
+            default_headers: Dict[str, str] = {}
+            if config.services.internal_service_token:
+                default_headers["X-Internal-Auth"] = config.services.internal_service_token
             cls._clients["ml"] = HTTPClient(
                 base_url=config.services.ml_url,
-                timeout=config.services.http_timeout
+                timeout=config.services.http_timeout,
+                default_headers=default_headers
             )
         return cls._clients["ml"]
 

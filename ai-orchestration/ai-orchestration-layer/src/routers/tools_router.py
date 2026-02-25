@@ -63,6 +63,13 @@ class ToolInvocationResponse(BaseModel):
     error: Optional[str] = None
 
 
+class OllamaStatusResponse(BaseModel):
+    """Response for Ollama connectivity check"""
+    connected: bool
+    error: Optional[str] = None
+    models: List[str] = []
+
+
 # ============================================================================
 # DEPENDENCY INJECTION
 # ============================================================================
@@ -296,6 +303,50 @@ async def discover_tools():
     except Exception as e:
         logger.error(f"Failed to discover tools: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to discover tools: {str(e)}")
+
+
+@router.get("/ollama-status", response_model=OllamaStatusResponse)
+async def get_ollama_status():
+    """
+    Check Ollama connectivity and available models.
+    Used by the frontend to show clear error messages when Ollama is offline.
+    """
+    from core.llm_manager import LLMManager
+
+    try:
+        llm_manager = LLMManager.get_instance()
+        models, connected, error_msg = await llm_manager.fetch_available_models()
+
+        if not connected:
+            return OllamaStatusResponse(
+                connected=False,
+                error=error_msg or "connection_failed",
+                models=[]
+            )
+
+        model_names = [m.name for m in models]
+        chat_models = [m for m in model_names if "embed" not in m.lower()]
+
+        if not chat_models:
+            return OllamaStatusResponse(
+                connected=True,
+                error="no_models",
+                models=model_names
+            )
+
+        return OllamaStatusResponse(
+            connected=True,
+            error=None,
+            models=model_names
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to check Ollama status: {e}")
+        return OllamaStatusResponse(
+            connected=False,
+            error="connection_failed",
+            models=[]
+        )
 
 
 @router.get("/category/{category}", response_model=ToolDiscoveryResponse)

@@ -75,13 +75,13 @@ const PetStoreDashboard: React.FC = () => {
                 <Link href="/petstore/customers?action=new" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
                   Add Customer
                 </Link>
-                <Link href="/pets?action=new" className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-700 dark:text-indigo-300 font-medium hover:bg-indigo-100 text-center">
+                <Link href="/pets?action=new" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
                   Check In Pet
                 </Link>
-                <Link href="/petstore/schedule" className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-100 text-center">
+                <Link href="/petstore/schedule" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
                   New Schedule
                 </Link>
-                <Link href="/petstore/employees" className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-700 dark:text-emerald-300 font-medium hover:bg-emerald-100 text-center">
+                <Link href="/petstore/employees" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
                   Staff Availability
                 </Link>
               </div>

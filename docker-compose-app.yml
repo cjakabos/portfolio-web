@@ -190,11 +190,16 @@ services:
     volumes:
       - ${JWT_PUBLIC_KEY_FILE:?Set JWT_PUBLIC_KEY_FILE in .env}:/etc/nginx/localhost+3-key.pub:ro
     depends_on:
-      - cloudapp
-      - petstore
-      - jiraproxy
-      - vehicles-api
-      - mlops-segmentation
+      cloudapp:
+        condition: service_healthy
+      petstore:
+        condition: service_healthy
+      jiraproxy:
+        condition: service_healthy
+      vehicles-api:
+        condition: service_healthy
+      mlops-segmentation:
+        condition: service_healthy
     restart: unless-stopped
 
   # ===========================================================================
@@ -254,6 +259,7 @@ services:
       - 5003:5003
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
     networks:
       - frontend
     restart: unless-stopped
@@ -307,8 +313,8 @@ services:
       - 5333:5333
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-      # CI/Linux: route server-side /api/chat to Ollama over the shared Docker network.
-      - OLLAMA_URL=http://ollama:11434
+      # Native Ollama: host.docker.internal; Docker Ollama: override OLLAMA_URL=http://ollama:11434 in .env
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
     networks:
       - frontend
       - backend

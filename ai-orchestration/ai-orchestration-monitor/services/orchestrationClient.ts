@@ -37,6 +37,7 @@ import type {
   RecentErrorsResponse,
   ToolDiscoveryResponse,
   ToolInvocationResponse,
+  OllamaStatusResponse,
   CloudAppUser,
   CloudAppItem,
   CloudAppFile,
@@ -671,6 +672,10 @@ export class OrchestrationClient {
 
   async discoverTools(): Promise<ToolDiscoveryResponse> {
     return this.get<ToolDiscoveryResponse>(this.aiUrl('/tools'));
+  }
+
+  async getOllamaStatus(): Promise<OllamaStatusResponse> {
+    return this.get<OllamaStatusResponse>(this.aiUrl('/tools/ollama-status'));
   }
 
   async getToolsByCategory(category: string): Promise<ToolDiscoveryResponse> {

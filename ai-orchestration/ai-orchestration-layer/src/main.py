@@ -116,14 +116,20 @@ async def lifespan(app: FastAPI):
     memory_manager = MemoryManager()
     context_store = ContextStore()
 
-    # Initialize Orchestrator
-    orchestrator = AIOrchestrationLayer(
-        enable_checkpointing=True,
-        enable_hitl=True,
-        hitl_wait_mode="risk_based",
-        enable_parallel=True,
-        enable_streaming=False
-    )
+    # Initialize Orchestrator (resilient to Ollama being offline)
+    try:
+        orchestrator = AIOrchestrationLayer(
+            enable_checkpointing=True,
+            enable_hitl=True,
+            hitl_wait_mode="risk_based",
+            enable_parallel=True,
+            enable_streaming=False
+        )
+    except Exception as e:
+        logger.warning(
+            f"⚠️ Orchestrator initialization failed (server will start in degraded mode): {e}"
+        )
+        orchestrator = None
 
     # Initialize Tool Manager
     logger.info("Initializing Tool Manager...")
@@ -162,11 +168,12 @@ async def lifespan(app: FastAPI):
     # -------------------------------------------------------------------------
     logger.info("Initializing Approvals Storage...")
     try:
-        # Connect approvals router to orchestrator's hitl_manager
-        approvals_router.set_approvals_hitl_manager(
-            hitl_manager=orchestrator.hitl_manager,
-            orchestrator=orchestrator
-        )
+        if orchestrator:
+            # Connect approvals router to orchestrator's hitl_manager
+            approvals_router.set_approvals_hitl_manager(
+                hitl_manager=orchestrator.hitl_manager,
+                orchestrator=orchestrator
+            )
         await approvals_router.initialize_approvals()
         logger.info("✅ Approvals storage initialized")
     except Exception as e:
@@ -185,30 +192,33 @@ async def lifespan(app: FastAPI):
     # -------------------------------------------------------------------------
     # 3. Inject Dependencies into Routers
     # -------------------------------------------------------------------------
-    # Inject into the new Orchestration Router (for WebSocket streaming)
-    orchestration_router.set_orchestration_deps(
-        orchestrator=orchestrator,
-        memory_manager=memory_manager,
-        context_store=context_store
-    )
-    orchestration_router.set_audit_service(audit_service)
+    if orchestrator:
+        # Inject into the new Orchestration Router (for WebSocket streaming)
+        orchestration_router.set_orchestration_deps(
+            orchestrator=orchestrator,
+            memory_manager=memory_manager,
+            context_store=context_store
+        )
+        orchestration_router.set_audit_service(audit_service)
 
-    # =========================================================================
-    # CRITICAL FIX: Inject into Approvals Router for HITL frontend sync
-    # This connects the orchestrator's HITL manager to the approvals storage
-    # so pending approvals appear in the frontend!
-    # =========================================================================
-    approvals_router.set_orchestration_deps(
-        orchestrator=orchestrator,
-        memory_manager=memory_manager,
-        context_store=context_store
-    )
-    logger.info("✅ Approvals router connected to orchestrator")
+        # =========================================================================
+        # CRITICAL FIX: Inject into Approvals Router for HITL frontend sync
+        # This connects the orchestrator's HITL manager to the approvals storage
+        # so pending approvals appear in the frontend!
+        # =========================================================================
+        approvals_router.set_orchestration_deps(
+            orchestrator=orchestrator,
+            memory_manager=memory_manager,
+            context_store=context_store
+        )
+        logger.info("✅ Approvals router connected to orchestrator")
 
-    # Inject into System Router (from old main.py logic)
-    system_router.set_orchestrator(orchestrator)
-    if hasattr(orchestrator, 'error_handler') and orchestrator.error_handler:
-        system_router.set_error_handler(orchestrator.error_handler)
+        # Inject into System Router (from old main.py logic)
+        system_router.set_orchestrator(orchestrator)
+        if hasattr(orchestrator, 'error_handler') and orchestrator.error_handler:
+            system_router.set_error_handler(orchestrator.error_handler)
+    else:
+        logger.warning("⚠️ Orchestrator unavailable — routers running in degraded mode")
 
     # -------------------------------------------------------------------------
     # 4. Log Service Connections
