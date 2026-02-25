@@ -1,10 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { LogOut, User as UserIcon, LayoutGrid, FileText, Folder, ShoppingCart, MessageSquare, Cat, Trello, Sun, Moon, Map, Brain, Bot } from 'lucide-react';
+import { LogOut, User as UserIcon, LayoutGrid, Sun, Moon } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
 import { useLogout } from '../hooks/useLogout';
-import { isTokenExpired } from '../hooks/useAuth';
+import { isTokenExpired, useAuth } from '../hooks/useAuth';
+import { allAuthedRoutes } from '../constants/routes';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -14,6 +15,7 @@ const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const { isDark, toggleTheme } = useContext(ThemeContext);
   const { logout } = useLogout();
+  const { isAdmin } = useAuth();
 
   const user = typeof window !== 'undefined' ? localStorage.getItem('NEXT_PUBLIC_MY_USERNAME') : null;
 
@@ -55,18 +57,7 @@ const Layout = ({ children }: LayoutProps) => {
     window.location.href = '/login';
   };
 
-  const authedRoutes = [
-    { label: 'Dashboard', path: '/', icon: <LayoutGrid size={20} /> },
-    { label: 'Jira', path: '/jira', icon: <Trello size={20} /> },
-    { label: 'Notes', path: '/notes', icon: <FileText size={20} /> },
-    { label: 'Files', path: '/files', icon: <Folder size={20} /> },
-    { label: 'Shop', path: '/shop', icon: <ShoppingCart size={20} /> },
-    { label: 'Chat', path: '/chat', icon: <MessageSquare size={20} /> },
-    { label: 'Maps', path: '/maps', icon: <Map size={20} /> },
-    { label: 'MLOps', path: '/mlops', icon: <Brain size={20} /> },
-    { label: 'GPT', path: '/chatllm', icon: <Bot size={20} /> },
-    { label: 'PetStore', path: '/petstore', icon: <Cat size={20} /> },
-  ];
+  const authedRoutes = allAuthedRoutes.filter(r => !r.adminOnly || isAdmin);
 
   const publicRoutes = [
     { label: 'Login', path: '/login', icon: <LayoutGrid size={20} /> }

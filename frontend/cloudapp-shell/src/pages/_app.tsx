@@ -3,16 +3,19 @@ import { useState, useEffect } from 'react';
 import type { AppProps } from "next/app";
 import axios from 'axios';
 import Layout from "../components/Layout";
+import AccessDenied from "../components/AccessDenied";
 import '../styles/globals.css';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
-import { isTokenExpired } from '../hooks/useAuth';
+import { isTokenExpired, useAuth } from '../hooks/useAuth';
+import { allAuthedRoutes } from '../constants/routes';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const { isAdmin, isReady } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
@@ -76,6 +79,22 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   // Prevent hydration mismatch
   if (!isClient) return null;
+
+  // Check route permissions
+  const currentRoute = allAuthedRoutes.find(r => 
+    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
+  );
+  const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
+
+  if (isAccessDenied) {
+    return (
+      <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+        <Layout>
+          <AccessDenied />
+        </Layout>
+      </ThemeContext.Provider>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
