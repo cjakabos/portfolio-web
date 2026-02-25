@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { FileText, Folder, ShoppingCart, MessageSquare, Cat, ArrowRight, Filter, Activity, Trello, Map, Brain, Bot } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 const Home: React.FC = () => {
   const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
+  const { isAdmin } = useAuth();
   const [activityFilter, setActivityFilter] = useState<'ALL' | 'SYSTEM' | 'LOGIN' | 'FILE'>('ALL');
 
   const cards = [
@@ -64,8 +66,8 @@ const Home: React.FC = () => {
         ))}
       </div>
 
-      {/* Recent Activity Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      {/* Recent Activity Section — admin only */}
+      {isAdmin && <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
             <h2 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
                 <Activity size={20} className="text-blue-500" /> Recent System Activity - Mock
@@ -103,7 +105,7 @@ const Home: React.FC = () => {
              ))
            )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

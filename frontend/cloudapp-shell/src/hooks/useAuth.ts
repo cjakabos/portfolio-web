@@ -17,6 +17,22 @@ const decodeBase64Url = (value: string) => {
     return atob(padded);
 };
 
+export const isTokenExpired = (storedToken: string | null): boolean => {
+    if (!storedToken) return true;
+    const rawToken = storedToken.startsWith(BEARER_PREFIX)
+        ? storedToken.slice(BEARER_PREFIX.length)
+        : storedToken;
+    const parts = rawToken.split(".");
+    if (parts.length < 2) return true;
+    try {
+        const payload = JSON.parse(decodeBase64Url(parts[1]));
+        if (typeof payload?.exp !== "number") return true;
+        return Date.now() >= payload.exp * 1000;
+    } catch {
+        return true;
+    }
+};
+
 const extractRolesFromToken = (authorizationToken: string) => {
     const rawToken = authorizationToken.startsWith(BEARER_PREFIX)
         ? authorizationToken.slice(BEARER_PREFIX.length)

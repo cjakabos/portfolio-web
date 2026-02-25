@@ -1,9 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Cloud, LogOut, User as UserIcon, LayoutGrid, FileText, Folder, ShoppingCart, MessageSquare, Cat, Trello, Sun, Moon, Map, Brain, Bot } from 'lucide-react';
+import { LogOut, User as UserIcon, LayoutGrid, FileText, Folder, ShoppingCart, MessageSquare, Cat, Trello, Sun, Moon, Map, Brain, Bot } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
 import { useLogout } from '../hooks/useLogout';
+import { isTokenExpired } from '../hooks/useAuth';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -24,24 +25,34 @@ const Layout = ({ children }: LayoutProps) => {
       const checkToken = () => {
           if (typeof window !== "undefined") {
               const t = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '';
-              setUserToken(t);
-              if (t === '') {
-                  router.push("/login");
+              if (t === '' || isTokenExpired(t)) {
+                  if (t !== '') {
+                      localStorage.removeItem("NEXT_PUBLIC_MY_TOKEN");
+                      localStorage.removeItem("NEXT_PUBLIC_MY_USERNAME");
+                  }
+                  setUserToken('');
+                  if (router.pathname !== '/login') {
+                      router.push("/login");
+                  }
+              } else {
+                  setUserToken(t);
               }
           }
       };
 
       checkToken();
 
+      const intervalId = setInterval(checkToken, 60_000);
       router.events.on('routeChangeComplete', checkToken);
       return () => {
           router.events.off('routeChangeComplete', checkToken);
+          clearInterval(intervalId);
       };
   }, [router]);
 
   const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const authedRoutes = [
@@ -76,10 +87,10 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Top Navigation Bar */}
       <header className="bg-gray-900 dark:bg-gray-950 text-white shadow-lg z-30 shrink-0 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between min-h-16 py-2 gap-6">
             <div className="flex items-center">
               <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-                <Cloud className="h-8 w-8 text-blue-400" />
+                <img src="/drawing_white.svg" alt="CloudApp" width={32} height={32} />
                 <span className="font-bold text-xl tracking-tight">CloudApp</span>
               </Link>
               <div className="hidden md:block ml-6 lg:ml-10">
@@ -130,7 +141,7 @@ const Layout = ({ children }: LayoutProps) => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-full text-gray-400 hover:text-yellow-400 hover:bg-gray-800 transition"

@@ -6,15 +6,21 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 
 ## What's Inside?
 
-- **CloudApp - Interactive Next.js 14 App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp-shell/README.md).
+- **CloudApp - Interactive Next.js 15 (React 19) App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp-shell/README.md).
     - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-vehicle-locations)
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
-- **Load Balancer and Reverse Proxy**: Utilize Nginx to efficiently distribute traffic among servers and enhance performance and reliability of applications.   [Read more](https://www.nginx.com).
+- **NGINX Gateway with JWT Authentication**: Custom-compiled Nginx serving as the sole ingress point with JWT auth subrequests, rate limiting (auth 5r/s, API 30r/s, AI 60r/s), TLS 1.2/1.3, WebSocket proxying, and OTel header propagation. [See config](./frontend/nginx/conf/nginx.conf).
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
 - **Locally hosted LLM with Ollama**: Deploy and interact with a locally hosted LLM using Ollama, featuring a configurable model setup. In this case, Qwen3 was used to provide AI-driven insights while maintaining full control over data privacy and performance. [Details on LLM integration](#5-private-local-llm-ai)
 - **Integrated External APIs**: Enhance functionality with third-party services like Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#6-jira).
-- **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application, demonstrating real-time messaging capabilities. [Chat interface](#8-chat).
-- **Efficient Logging and CI/CD**: Implement robust logging with Log4j and streamline deployments using Jenkins. [Learn about CI/CD processes](backend/cloudapp/README.md#cicd-with-jenkins).
+- **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application with Confluent Kafka, WebSocket bridge, and MongoDB persistence. [Chat interface](#8-chat).
+- **AI Orchestration Layer**: FastAPI-based orchestration with LangGraph agentic workflows, RAG pipeline (ChromaDB), A/B testing, Human-in-the-Loop approval, circuit breakers, and WebSocket streaming. [Details on AI orchestration](#9-ai-orchestration-layer).
+- **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization. [Monitor details](#10-ai-orchestration-monitor).
+- **Observability Stack**: Distributed tracing (Jaeger), metrics (Prometheus), dashboards (Grafana), and OpenTelemetry auto-instrumentation across all services. [Observability details](#observability).
+- **Security Architecture**: JWT authentication (RSA asymmetric keys), CSRF protection, role-based access control, service-to-service auth, and non-root Docker containers. [Security details](#security).
+- **Resilience Patterns**: Resilience4j circuit breakers on external API calls with graceful fallbacks, health indicators, and Prometheus metrics. [Resilience details](#resilience).
+- **API Contract Governance**: OpenAPI snapshot drift detection, TypeScript client generation, and NGINX-level API versioning (`/v1/` prefix). [Contract details](#api-contract-governance).
+- **CI/CD with GitHub Actions**: 6-stage parallel CI pipeline (backend, ML, NGINX, API contracts, frontend, Playwright E2E) plus nightly AI integration tests. [See workflows](./.github/workflows/).
 
 Example view with regular and compact view:
 ![](examples/2.png)
@@ -135,7 +141,7 @@ The user is able to:
 - Click on the map to add new vehicle locations.
 - Click on existing locations and check basic info and delete the location.  
 
-Vehicels [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
+Vehicles [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
 
 ## 5. Private Local LLM AI
 Chat  interface for communicating with
@@ -163,7 +169,7 @@ curl http://localhost:11434/api/generate -d '{
 
 ## 6. Jira
 Jira interface for communicating with
-the [Jira API](https://platform.openai.com/docs/api-reference), to use it:
+the [Jira API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/), to use it:
 - [Register](https://www.atlassian.com/software/jira/free)
 - [Create Personal Access Token](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html)
 - [Use it for requests](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/)
@@ -193,6 +199,105 @@ A Kafka based chat service, the user is able to:
 
 ![](examples/14.png)
 
+## 9. AI Orchestration Layer
+A FastAPI-based AI orchestration layer (`ai-orchestration/ai-orchestration-layer/`) providing:
+
+**LangGraph Agentic Workflow**
+- Multi-node graph: `initialize` → `classify_intent` → `route_to_capability` → capability nodes → `finalize`
+- Capability routing: conversational, multi-agent (shop/petstore/vehicle agents), workflow execution, ML pipeline, RAG query
+- SQLite-backed checkpointing with thread-based state recovery and MemorySaver fallback
+
+**RAG Pipeline (Retrieval-Augmented Generation)**
+- Async document upload with progress tracking (PDF, DOCX, TXT, MD, CSV — 10MB limit)
+- ChromaDB vector database with similarity search (configurable top-k, 1-20)
+- LLM-based answer generation with source attribution and confidence scores
+
+**A/B Testing Framework**
+- Full experiment lifecycle: DRAFT → RUNNING → PAUSED → COMPLETED
+- Deterministic variant assignment (MD5 hash), metrics tracking (impressions, conversions, latency, error rates)
+- Z-test statistical significance analysis, MongoDB storage with in-memory fallback
+
+**Human-in-the-Loop (HITL)**
+- Risk-based hybrid approach: auto-approve, flag, or require manual approval based on risk score
+- Approval types: FINANCIAL, ML_DECISION, DATA_ACCESS, WORKFLOW_BRANCH, AGENT_ACTION, EXTERNAL_API, CONTENT_GENERATION
+- WebSocket real-time notifications, TTL-based expiration, Redis storage with in-memory fallback
+
+**Circuit Breaker & Resilience**
+- Redis-backed distributed circuit breaking (CLOSED → OPEN → HALF_OPEN)
+- Graceful degradation across all components: SQLite → MemorySaver, Redis → in-memory, MongoDB → in-memory, streaming → full response
+
+**WebSocket Streaming**
+- Real-time token streaming during LLM generation with node progress events
+- HITL approval integration within streaming context
+
+## 10. AI Orchestration Monitor
+A React/Vite admin dashboard (`ai-orchestration/ai-orchestration-monitor/`) at http://localhost:5010 providing:
+
+- **Streaming Interface** — real-time token/response visualization
+- **Observability Dashboard** — metrics, traces, latency charts
+- **RAG Dashboard** — document upload, query interface, document management
+- **Approval Interface** — HITL approval queue with approve/reject workflow
+- **Tools Explorer** — tool discovery and invocation testing
+- **Error Dashboard** — error tracking and analysis
+- **Services Dashboard** — service health monitoring
+- **Model Selector** — dynamic LLM model switching
+
+---
+
+# Architecture
+
+## Observability
+Distributed observability across all services:
+
+- **Jaeger v2** — distributed tracing via OTLP gRPC/HTTP (http://localhost:16686)
+- **Prometheus** — metrics collection with 15s scrape interval, 7-day retention (http://localhost:9090)
+- **Grafana** — dashboards and visualization (http://localhost:3000)
+- **OpenTelemetry** — Java Agent v2.25.0 auto-instrumentation on all Spring Boot services, manual instrumentation on Python services
+- **Request ID correlation** — X-Request-ID, traceparent, tracestate propagated through NGINX to all upstreams
+- **Spring Actuator** — health, info, and Prometheus endpoints exposed per service
+
+## Security
+- **JWT authentication** — RSA asymmetric keys (PEM files), Bearer token + `CLOUDAPP_AUTH` cookie
+- **CSRF protection** — CookieCsrfTokenRepository with SameSite=Lax
+- **Role-based access** — ADMIN/USER roles with method-level Spring Security authorization
+- **Service-to-service auth** — `X-Internal-Auth` token for internal requests
+- **NGINX as sole ingress** — backend services expose zero host ports
+- **Rate limiting** — auth endpoints (5 req/s), API general (30 req/s), AI endpoints (60 req/s)
+- **TLS 1.2/1.3** — modern ECDHE cipher suites
+- **Non-root containers** — all Docker images run as dedicated non-root users
+
+## Resilience
+- **Resilience4j** circuit breakers on vehicles-api external calls (Maps, Pricing APIs)
+  - 50% failure threshold, 30s recovery window, COUNT_BASED sliding window (size 5)
+  - Graceful fallbacks, health indicators, and Prometheus metrics per breaker
+- **AI Layer** — Redis-backed distributed circuit breaking for tool invocations and external API calls
+
+## API Contract Governance
+- **OpenAPI snapshot export** from live services (`scripts/contracts/openapi_contracts.py`)
+- **Contract drift detection** — compares current specs against committed snapshots in CI
+- **TypeScript client generation** — typed operation clients for frontend consumers
+- **API versioning** — `/v1/` prefix rewrite at NGINX gateway layer
+
+## Database Landscape
+
+| Database | Technology | Purpose | Port |
+|----------|-----------|---------|------|
+| postgres | PostgreSQL | CloudApp (users, items, carts, orders) | 5433 |
+| postgres-ml | PostgreSQL | ML pipeline (customer segmentation) | 5434 |
+| mysql | MySQL 8.0 | Petstore (pets, customers, employees) | 3307 |
+| mongo | MongoDB | Kafka chat messages | 27018 |
+| mongo-abtest | MongoDB | A/B testing experiments & metrics | 27019 |
+| redis | Redis 7 | AI orchestration cache, circuit breakers | 6379 |
+| chromadb | ChromaDB | RAG vector embeddings | 8000 |
+| H2 | H2 (in-memory) | Vehicles-API (dev only) | — |
+
+## CI/CD
+- **GitHub Actions CI** (`ci-tests.yml`) — 6 parallel jobs: backend integration (4 Spring Boot services), ML Pipeline (pytest), NGINX gateway (JWT/routing/CORS), API contract drift detection, frontend unit (Jest + React Testing Library), Playwright E2E
+- **Nightly AI integration tests** (`nightly-ai-integrations.yml`) — full stack startup with Ollama, AI E2E tests, 180-minute timeout
+- **Artifact uploads** — test results, coverage reports, Playwright reports (7-14 day retention)
+- **Concurrency control** — groups by ref, cancels in-progress runs on new pushes
+
+---
 
 # Optional API services
 
@@ -211,6 +316,8 @@ JIRA_EMAIL='youremail'
 Only `JIRA_PROJECT_KEY` is exposed to the browser. Credentials stay server-side in `jiraproxy`.
 
 ## Certificates
+[RAG and Agentic AI](https://www.coursera.org/account/accomplishments/specialization/JMUHR8ZOHOOE?utm_source=link&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=prof)
+
 [Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)  
 
 [Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)

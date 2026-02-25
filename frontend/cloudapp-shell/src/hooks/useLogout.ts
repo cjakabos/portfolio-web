@@ -19,6 +19,7 @@ export const useLogout = () => {
     const logout = async () => {
         setLoading(true);
         setError(null);
+        clearStoredAuth();
 
         try {
             const headers = await getCloudAppCsrfHeaders(API_URL);
@@ -34,7 +35,6 @@ export const useLogout = () => {
             console.error("Logout Error:", err);
             setError("Logout request failed; local session was cleared.");
         } finally {
-            clearStoredAuth();
             setLoading(false);
         }
     };

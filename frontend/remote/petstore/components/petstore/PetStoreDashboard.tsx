@@ -69,21 +69,6 @@ const PetStoreDashboard: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-96">
-              <h3 className="text-lg font-bold mb-4">Pets by Type</h3>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={petData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {petData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-4">

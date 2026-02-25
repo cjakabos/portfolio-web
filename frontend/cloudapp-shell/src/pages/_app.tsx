@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import type { AppProps } from "next/app";
+import axios from 'axios';
 import Layout from "../components/Layout";
 import '../styles/globals.css';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
+import { isTokenExpired } from '../hooks/useAuth';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
@@ -37,12 +39,36 @@ function MyApp({ Component, pageProps }: AppProps) {
       setIsDark((prev) => !prev);
   };
 
+  // Axios interceptor — force logout on 401 or on network errors when the token is expired
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (router.pathname !== '/login') {
+          const token = localStorage.getItem('NEXT_PUBLIC_MY_TOKEN');
+          const is401 = error.response?.status === 401;
+          const isNetworkErrorWithExpiredToken =
+            !error.response && isTokenExpired(token);
+          if ((is401 || isNetworkErrorWithExpiredToken) && token) {
+            localStorage.removeItem('NEXT_PUBLIC_MY_TOKEN');
+            localStorage.removeItem('NEXT_PUBLIC_MY_USERNAME');
+            router.push('/login');
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => { axios.interceptors.response.eject(interceptor); };
+  }, [router]);
+
   // Auth Guard Logic
   useEffect(() => {
     if (isClient) {
       const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
-      // Added simple check to prevent loop if already on /login
-      if (!user && router.pathname !== '/login') {
+      const token = localStorage.getItem('NEXT_PUBLIC_MY_TOKEN');
+      if ((!user || isTokenExpired(token)) && router.pathname !== '/login') {
+        localStorage.removeItem('NEXT_PUBLIC_MY_TOKEN');
+        localStorage.removeItem('NEXT_PUBLIC_MY_USERNAME');
         router.push('/login');
       }
     }
