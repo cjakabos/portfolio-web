@@ -2,7 +2,38 @@ import { type Page, type Route } from "@playwright/test";
 import { test, expect } from "./fixtures/test-base";
 
 const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
-const MONITOR_TOKEN = "Bearer monitor-e2e-token";
+const MONITOR_USERNAME = "cloudadmin";
+
+function toBase64UrlJson(value: unknown): string {
+  return Buffer.from(JSON.stringify(value))
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function createFakeAdminJwt(username: string): string {
+  const header = toBase64UrlJson({ alg: "RS256", typ: "JWT" });
+  const payload = toBase64UrlJson({
+    iss: "cloudapp",
+    sub: username,
+    roles: ["ROLE_ADMIN", "ROLE_USER"],
+    exp: 4_102_444_800, // Jan 1, 2100 UTC
+  });
+  return `Bearer ${header}.${payload}.test-signature`;
+}
+
+const MONITOR_TOKEN = createFakeAdminJwt(MONITOR_USERNAME);
+
+async function seedMonitorAdminAuth(page: Page): Promise<void> {
+  await page.addInitScript(
+    ({ token, username }) => {
+      localStorage.setItem("AI_MONITOR_CLOUDAPP_TOKEN", token);
+      localStorage.setItem("AI_MONITOR_CLOUDAPP_USERNAME", username);
+    },
+    { token: MONITOR_TOKEN, username: MONITOR_USERNAME }
+  );
+}
 
 function fulfillJson(route: Route, body: unknown, status = 200, headers?: Record<string, string>) {
   return route.fulfill({
@@ -66,7 +97,13 @@ async function mockBaselineMonitorApis(page: Page): Promise<void> {
     }
 
     if (path.endsWith("/llm/models")) {
-      return fulfillJson(route, { models: [{ name: "llama3.1:8b" }] });
+      return fulfillJson(route, {
+        models: [{ name: "llama3.1:8b", model: "llama3.1:8b" }],
+        total: 1,
+        ollama_url: "http://ollama:11434",
+        connected: true,
+        error: null,
+      });
     }
 
     if (path.endsWith("/llm/current")) {
@@ -76,6 +113,8 @@ async function mockBaselineMonitorApis(page: Page): Promise<void> {
       return fulfillJson(route, {
         chat_model: "llama3.1:8b",
         rag_model: "llama3.1:8b",
+        embedding_model: "nomic-embed-text",
+        ollama_url: "http://ollama:11434",
       });
     }
 
@@ -129,9 +168,7 @@ async function mockBaselineMonitorApis(page: Page): Promise<void> {
 
 test.describe("AI Monitor", () => {
   test("loads Services Dashboard with admin user dropdown and scoped user fetch", async ({ page }) => {
-    await page.addInitScript((token) => {
-      localStorage.setItem("AI_MONITOR_CLOUDAPP_TOKEN", token);
-    }, MONITOR_TOKEN);
+    await seedMonitorAdminAuth(page);
 
     await mockBaselineMonitorApis(page);
 
@@ -170,9 +207,7 @@ test.describe("AI Monitor", () => {
   });
 
   test("retries tool discovery on 429 and invokes tool with auth + params", async ({ page }) => {
-    await page.addInitScript((token) => {
-      localStorage.setItem("AI_MONITOR_CLOUDAPP_TOKEN", token);
-    }, MONITOR_TOKEN);
+    await seedMonitorAdminAuth(page);
 
     await mockBaselineMonitorApis(page);
 
