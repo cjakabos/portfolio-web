@@ -56,6 +56,7 @@ export const useAuth = () => {
     const [username, setUsername] = useState("");
     const [roles, setRoles] = useState<string[]>([]);
     const [isReady, setIsReady] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -66,10 +67,11 @@ export const useAuth = () => {
             setUsername(u);
             setRoles(extractRolesFromToken(t));
             setIsReady(!!(t && u));
+            setIsInitialized(true);
         }
     }, [router.asPath]);
 
     const isAdmin = roles.includes("ROLE_ADMIN");
 
-    return { token, username, roles, isAdmin, isReady };
+    return { token, username, roles, isAdmin, isReady, isInitialized };
 };

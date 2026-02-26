@@ -30,6 +30,55 @@ export const ADMIN_TEST_USER = {
   password: process.env.PW_ADMIN_PASSWORD || "SecureE2EPass123",
 };
 
+type AdminCandidate = {
+  username: string;
+  password: string;
+};
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const rawToken = token.replace(/^Bearer\s+/i, "").trim();
+  const parts = rawToken.split(".");
+  if (parts.length < 2) return null;
+
+  try {
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf-8")) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function tokenHasRole(token: string | null, role: string): boolean {
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  const roles = payload?.roles;
+  return Array.isArray(roles) && roles.includes(role);
+}
+
+function getAdminLoginCandidates(): AdminCandidate[] {
+  const candidates: AdminCandidate[] = [];
+  const configuredUsername = process.env.PW_ADMIN_USERNAME;
+  const configuredPassword = process.env.PW_ADMIN_PASSWORD;
+
+  if (configuredUsername && configuredPassword) {
+    candidates.push({ username: configuredUsername, password: configuredPassword });
+  }
+
+  candidates.push(
+    { username: "integrationadmin", password: "SecureE2EPass123" },
+    { username: "cloudadmin", password: "cloudy" }
+  );
+
+  const seen = new Set<string>();
+  return candidates.filter(({ username, password }) => {
+    const key = `${username}\u0000${password}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // API helpers (bypass frontend — go directly to NGINX gateway)
 // ---------------------------------------------------------------------------
@@ -163,35 +212,39 @@ export async function ensureAdminLoggedIn(
     return cachedAdminAuth;
   }
 
-  const username = ADMIN_TEST_USER.username;
-  const password = ADMIN_TEST_USER.password;
+  const candidates = getAdminLoginCandidates();
   let lastError: string | null = null;
 
   for (let attempt = 1; attempt <= AUTH_RETRY_ATTEMPTS; attempt++) {
-    const registerOk = await apiRegister(request, username, password);
-    const loginResp = await request.post(`${BACKEND_URL}/cloudapp/user/user-login`, {
-      data: { username, password },
-      failOnStatusCode: false,
-    });
-    const loginHeaders = loginResp.headers();
-    const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
+    for (const { username, password } of candidates) {
+      const registerOk = await apiRegister(request, username, password);
+      const loginResp = await request.post(`${BACKEND_URL}/cloudapp/user/user-login`, {
+        data: { username, password },
+        failOnStatusCode: false,
+      });
+      const loginHeaders = loginResp.headers();
+      const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
 
-    if (loginResp.status() === 200 && token) {
-      cachedAdminAuth = { token, username };
-      await injectAuth(page, token, username);
-      return cachedAdminAuth;
+      if (loginResp.status() === 200 && token && tokenHasRole(token, "ROLE_ADMIN")) {
+        cachedAdminAuth = { token, username };
+        await injectAuth(page, token, username);
+        return cachedAdminAuth;
+      }
+
+      const bodySnippet = (await loginResp.text().catch(() => ""))
+        .replace(/\s+/g, " ")
+        .slice(0, 300);
+      const hasAdminRole = tokenHasRole(token, "ROLE_ADMIN");
+      lastError =
+        `user=${username} registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
+        `hasAuthHeader=${Boolean(token)} hasAdminRole=${hasAdminRole} body="${bodySnippet}"`;
+
+      if (loginResp.status() === 200 && token && !hasAdminRole) {
+        console.warn(`[pw][auth-admin] candidate '${username}' logged in but is not admin`);
+      }
     }
 
-    const bodySnippet = (await loginResp.text().catch(() => ""))
-      .replace(/\s+/g, " ")
-      .slice(0, 300);
-    lastError =
-      `registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
-      `hasAuthHeader=${Boolean(token)} body="${bodySnippet}"`;
-
-    console.warn(
-      `[pw][auth-admin] attempt ${attempt}/${AUTH_RETRY_ATTEMPTS} failed: ${lastError}`
-    );
+    console.warn(`[pw][auth-admin] attempt ${attempt}/${AUTH_RETRY_ATTEMPTS} failed: ${lastError}`);
 
     if (attempt < AUTH_RETRY_ATTEMPTS) {
       await sleep(AUTH_RETRY_DELAY_MS);
