@@ -85,11 +85,16 @@ Open http://localhost:5001 to view it in your browser. For development mode chec
 
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
-<p align="center">
-  <img src="./examples/1.png" width="210px" height="150px" />
-</p>
+You can login with the following test users
+```text
+user: cloudadmin pwd: cloudy
 
-And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-shop-interface-for-cloudapp-web-store-rest-api-), and see the current front-end of the api integrations from the services above:
+user: regularuser123 pwd: 456789
+```
+
+![](examples/1.png)
+
+And you should be able to register and log in, and see the current front-end of the api integrations from the services above:
 
 ## 1. Machine learning system for Customer Segmentation
 
