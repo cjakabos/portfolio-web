@@ -208,7 +208,17 @@ test.describe("Authentication Flow", () => {
       for (const path of adminPaths) {
         await page.goto(path);
         await page.waitForLoadState("domcontentloaded");
-        await expect(page.getByText("Access Denied")).toBeVisible({ timeout: 15_000 });
+        try {
+          await expect(page.getByText("Access Denied")).toBeVisible({ timeout: 15_000 });
+        } catch (error) {
+          const bodyText = ((await page.locator("body").textContent().catch(() => "")) || "")
+            .replace(/\s+/g, " ")
+            .slice(0, 500);
+          throw new Error(
+            `Expected Access Denied on ${path}, url=${page.url()}, body="${bodyText}"`,
+            { cause: error }
+          );
+        }
       }
     });
 
