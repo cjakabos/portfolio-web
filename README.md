@@ -2,7 +2,8 @@
 <p align="center">
   <img src="./frontend/cloudapp-shell/public/drawing_white.svg" width="150px" height="150px" />
 </p>
-Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web Development and Predictive Analytics Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces and robust data analytics models.
+
+Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web Development](https://graduation.udacity.com/confirm/QDDKHJF9), [RAG and Agentic AI](https://www.coursera.org/account/accomplishments/specialization/JMUHR8ZOHOOE?utm_source=link&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=prof) and [Predictive Analytics for Business](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811) Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces, llm and agentic solutions and robust data analytics models.
 
 ## What's Inside?
 
@@ -15,14 +16,14 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my Web De
 - **Integrated External APIs**: Enhance functionality with third-party services like Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#6-jira).
 - **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application with Confluent Kafka, WebSocket bridge, and MongoDB persistence. [Chat interface](#8-chat).
 - **AI Orchestration Layer**: FastAPI-based orchestration with LangGraph agentic workflows, RAG pipeline (ChromaDB), A/B testing, Human-in-the-Loop approval, circuit breakers, and WebSocket streaming. [Details on AI orchestration](#9-ai-orchestration-layer).
-- **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization. [Monitor details](#10-ai-orchestration-monitor).
+- **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization. [Monitor details](#10-admin-ai-orchestration-monitor).
 - **Observability Stack**: Distributed tracing (Jaeger), metrics (Prometheus), dashboards (Grafana), and OpenTelemetry auto-instrumentation across all services. [Observability details](#observability).
 - **Security Architecture**: JWT authentication (RSA asymmetric keys), CSRF protection, role-based access control, service-to-service auth, and non-root Docker containers. [Security details](#security).
 - **Resilience Patterns**: Resilience4j circuit breakers on external API calls with graceful fallbacks, health indicators, and Prometheus metrics. [Resilience details](#resilience).
 - **API Contract Governance**: OpenAPI snapshot drift detection, TypeScript client generation, and NGINX-level API versioning (`/v1/` prefix). [Contract details](#api-contract-governance).
 - **CI/CD with GitHub Actions**: 6-stage parallel CI pipeline (backend, ML, NGINX, API contracts, frontend, Playwright E2E) plus nightly AI integration tests. [See workflows](./.github/workflows/).
 
-Example view with regular and compact view:
+Example view:
 ![](examples/2.png)
 
 
@@ -38,6 +39,10 @@ brew install docker-compose
 Setup and start databases and essential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
+```
+Optional (containerized Ollama on CPU, instead of native Ollama on Apple Silicon):
+```bash
+docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
 ```
 Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
 ```bash
@@ -70,16 +75,23 @@ Note 2: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compo
 Runs the app in the production mode.\
 Open http://localhost:5001 to view it in your browser. For development mode check [instructions here](./frontend/cloudapp-shell/README.md#option-2-dev-mode).
 
+### Also available after startup
+- **AI Orchestration API (via NGINX gateway)**: `http://localhost:80/ai/docs`, `http://localhost:80/ai/health`
+- **AI Orchestration Monitor**: `http://localhost:5010`
+- **Jaeger (traces)**: `http://localhost:16686`
+- **Prometheus (metrics)**: `http://localhost:9090`
+- **Grafana (dashboards)**: `http://localhost:3000`
+- **CloudApp Swagger (via gateway)**: `http://localhost:80/cloudapp/swagger-ui/index.html`
+
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
 <p align="center">
-  <img src="./examples/1a.png" width="210px" height="150px" />
+  <img src="./examples/1.png" width="210px" height="150px" />
 </p>
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-shop-interface-for-cloudapp-web-store-rest-api-), and see the current front-end of the api integrations from the services above:
 
 ## 1. Machine learning system for Customer Segmentation
-![](examples/11.png)  
 
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
 - Add new customer data point to the database.
@@ -91,33 +103,29 @@ View results:
 - Table: current list of customers from postgres db.
 
 The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the MLOps micro frontend:  
-http://localhost:5001/mlops  
-2. Right side module federated MLOps micro frontend:   
-http://localhost:5005  
+CloudApp-Shell as App Shell using the MLOps micro frontend:  
+http://localhost:5001/mlops
 
-![](examples/11a.png)
+![](examples/11.png)
 
 
 ## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md), 
 ![](examples/4.png)
 The user is able to:
-- Create new items.
+- Create new items (admin only).
 - Add existing items to the cart.
 - See and clear the cart.
 - Submit cart and check order history.  
 
 Shop API documentation: 
-- [Items](http://localhost:8099/cloudapp/swagger-ui/index.html#/item-controller)
-- [Cart](http://localhost:8099/cloudapp/swagger-ui/index.html#/cart-controller)
-- [Order](http://localhost:8099/cloudapp/swagger-ui/index.html#/order-controller)
+- [Items](http://localhost:80/cloudapp/swagger-ui/index.html#/item-controller)
+- [Cart](http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller)
+- [Order](http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller)
 
 ## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
 The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the Petstore micro frontend:  
-http://localhost:5001/petstore  
-2. Right side module federated Petstore micro frontend:   
-http://localhost:5006
+CloudApp-Shell as App Shell using the Petstore micro frontend:  
+http://localhost:5001/petstore
 
 ![](examples/5.png)
 The user is able to:
@@ -130,10 +138,8 @@ The user is able to:
 
 ## 4.  Maps with vehicle locations
 The module is built as Micro Frontend:  
-1. Left side main CloudApp-Shell as App Shell using the Maps micro frontend:  
-http://localhost:5001/maps  
-2. Right side module federated Maps micro frontend:   
-http://localhost:5002
+CloudApp-Shell as App Shell using the Maps micro frontend:  
+http://localhost:5001/maps
 
 ![](examples/8.png)
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
@@ -149,12 +155,8 @@ a locally hosted Ollama Qwen3 model, the user is able to:
 - Chat with a local LLM (and see model reasoning process, in models where it is applicable - can be toggled)
 
 The module is built as Micro Frontend:
-1. Left side main CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
+CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
    http://localhost:5001/chatllm
-2. Right side module federated Local LLM AI micro frontend:   
-   http://localhost:5333
-
-
 
 ![](examples/9.png)
 
@@ -177,27 +179,25 @@ the [Jira API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro
 The user is able to:
 
 - Create/list/update/delete Jira ticket  
-1. Left side main CloudApp-Shell as App Shell using the Jira micro frontend:  
+CloudApp-Shell as App Shell using the Jira micro frontend:  
    http://localhost:5001/jira
-   http://localhost:5001/jira
-2. Right side module federated Jira micro frontend:   
-   http://localhost:5003
 ![](examples/10.png)
 
 ## 7. Notes and Files
 A service for creating personal notes and uploading personal files.
 ![](examples/12.png)
-- Notes [API documentation](http://localhost:8099/cloudapp/swagger-ui/index.html#/note-controller)
-- Files [API documentation](http://localhost:8099/cloudapp/swagger-ui/index.html#/file-controller)
+![](examples/13.png)
+- Notes [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/note-controller)
+- Files [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/file-controller)
 ## 8. Chat
 A Kafka based chat service, the user is able to:
 
 - Create new chat rooms, furthermore share and enter chat room id  
 
-![](examples/13.png)
+![](examples/14.png)
 - Talk to other users in chat rooms  
 
-![](examples/14.png)
+![](examples/15.png)
 
 ## 9. AI Orchestration Layer
 A FastAPI-based AI orchestration layer (`ai-orchestration/ai-orchestration-layer/`) providing:
@@ -230,9 +230,20 @@ A FastAPI-based AI orchestration layer (`ai-orchestration/ai-orchestration-layer
 - Real-time token streaming during LLM generation with node progress events
 - HITL approval integration within streaming context
 
-## 10. AI Orchestration Monitor
-A React/Vite admin dashboard (`ai-orchestration/ai-orchestration-monitor/`) at http://localhost:5010 providing:
+**Operational API Surface (behind `/ai`)**
+- `/orchestrate` — orchestration execution and workflow routing
+- `/rag/*` — document upload/query/management endpoints
+- `/approvals/*` — Human-in-the-Loop approval queue and actions
+- `/experiments/*` — A/B testing lifecycle and metrics
+- `/tools/*` — tool discovery and invocation
+- `/llm/*` — model discovery/selection endpoints for chat/rag/embedding
+- `/metrics`, `/health`, `/config` — operational visibility and diagnostics
+- `/conversation-sync/*` — cross-session conversation synchronization (Redis-backed when available)
 
+## 10. Admin-AI Orchestration Monitor
+![](examples/d1.png)
+
+A React/Vite admin dashboard (`ai-orchestration/ai-orchestration-monitor/`) at http://localhost:5010 providing:
 - **Streaming Interface** — real-time token/response visualization
 - **Observability Dashboard** — metrics, traces, latency charts
 - **RAG Dashboard** — document upload, query interface, document management
@@ -241,6 +252,9 @@ A React/Vite admin dashboard (`ai-orchestration/ai-orchestration-monitor/`) at h
 - **Error Dashboard** — error tracking and analysis
 - **Services Dashboard** — service health monitoring
 - **Model Selector** — dynamic LLM model switching
+- **Unified Dashboard** — consolidated operator view across monitor capabilities
+- **Conversation Sync UI hooks** — multi-session/state synchronization support for orchestration workflows
+- **User Management** — Promoting existing users to Admin role
 
 ---
 
@@ -264,7 +278,7 @@ Distributed observability across all services:
 - **NGINX as sole ingress** — backend services expose zero host ports
 - **Rate limiting** — auth endpoints (5 req/s), API general (30 req/s), AI endpoints (60 req/s)
 - **TLS 1.2/1.3** — modern ECDHE cipher suites
-- **Non-root containers** — all Docker images run as dedicated non-root users
+- **Non-root containers** — non-root runtimes are used for the Next.js frontends and AI orchestration services
 
 ## Resilience
 - **Resilience4j** circuit breakers on vehicles-api external calls (Maps, Pricing APIs)
@@ -277,6 +291,15 @@ Distributed observability across all services:
 - **Contract drift detection** — compares current specs against committed snapshots in CI
 - **TypeScript client generation** — typed operation clients for frontend consumers
 - **API versioning** — `/v1/` prefix rewrite at NGINX gateway layer
+
+Typical local usage (when services are running):
+```bash
+python3 scripts/contracts/openapi_contracts.py export
+python3 scripts/contracts/openapi_contracts.py check --check-generated
+```
+
+Generated TypeScript operation clients are written to:
+- `frontend/cloudapp-shell/src/generated/contracts/`
 
 ## Database Landscape
 
@@ -297,6 +320,20 @@ Distributed observability across all services:
 - **Artifact uploads** — test results, coverage reports, Playwright reports (7-14 day retention)
 - **Concurrency control** — groups by ref, cancels in-progress runs on new pushes
 
+## Local Testing & Verification
+- Full local test guide: [TESTING.md](./TESTING.md)
+- Docker-based test composition: [`docker-compose.test.yml`](./docker-compose.test.yml)
+- Run all suites (backend, ML, AI orchestration layer, contracts, NGINX, frontend unit, Playwright):
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+```
+- Targeted suites (examples):
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e
+```
+
 ---
 
 # Optional API services
@@ -314,13 +351,4 @@ JIRA_PROJECT_KEY='yourjiraprojectkey'
 JIRA_EMAIL='youremail'
 ```
 Only `JIRA_PROJECT_KEY` is exposed to the browser. Credentials stay server-side in `jiraproxy`.
-
-## Certificates
-[RAG and Agentic AI](https://www.coursera.org/account/accomplishments/specialization/JMUHR8ZOHOOE?utm_source=link&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=prof)
-
-[Web Development Nanodegree certficiate](https://graduation.udacity.com/confirm/QDDKHJF9)  
-
-[Predictive Analytics for Business Nanodegree certficiate](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811)
-
-
 

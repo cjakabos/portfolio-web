@@ -29,7 +29,7 @@ export const useEmployees = () => {
     // Load employees when userToken is available
     useEffect(() => {
         getEmployees()
-    }, []);
+    }, [userToken]);
 
     const handleEmployeeChange = (event: { target: { name: string; value: string } }) => {
         const { name, value } = event.target;

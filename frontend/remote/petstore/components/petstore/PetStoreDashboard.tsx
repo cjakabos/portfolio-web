@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Users, Cat, Calendar, Briefcase } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PetStoreLayout from '../PetStoreLayout';
+import { usePetStoreNavigation } from '../PetStoreApp';
 import { useCustomers } from '../../hooks/useCustomers';
 import { usePets } from '../../hooks/usePets';
 import { useEmployees } from '../../hooks/useEmployees';
 import { useSchedules } from '../../hooks/useSchedules';
 
 const PetStoreDashboard: React.FC = () => {
+  const { navigate } = usePetStoreNavigation();
   const { allCustomers } = useCustomers();
   const { allPets } = usePets();
   const { allEmployees } = useEmployees();
@@ -72,18 +73,18 @@ const PetStoreDashboard: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-4">
-                <Link href="/petstore/customers?action=new" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
+                <button onClick={() => navigate('customers')} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
                   Add Customer
-                </Link>
-                <Link href="/pets?action=new" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
+                </button>
+                <button onClick={() => navigate('pets')} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
                   Check In Pet
-                </Link>
-                <Link href="/petstore/schedule" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
+                </button>
+                <button onClick={() => navigate('schedule')} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
                   New Schedule
-                </Link>
-                <Link href="/petstore/employees" className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 text-center">
+                </button>
+                <button onClick={() => navigate('employees')} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
                   Staff Availability
-                </Link>
+                </button>
               </div>
             </div>
           </div>

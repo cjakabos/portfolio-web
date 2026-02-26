@@ -582,7 +582,7 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
                     ) : (
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Result:</p>
-                        <pre className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-xs font-mono">
+                        <pre className="bg-gray-50 border border-gray-200 text-gray-800 dark:bg-slate-950 dark:border-slate-800 dark:text-green-300 p-4 rounded-lg overflow-x-auto text-xs font-mono">
                           {JSON.stringify(invocationResult?.result, null, 2)}
                         </pre>
                       </div>

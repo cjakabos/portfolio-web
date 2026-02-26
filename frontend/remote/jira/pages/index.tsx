@@ -1189,7 +1189,7 @@ const CloudJira: React.FC = () => {
                       return (
                         <div key={i} className={baseClasses}>
                           <div className={avatarClasses}><User size={16} /></div>
-                          <div className={`${bubbleClasses} bg-green-300 dark:bg-green-300 text-black dark:text-white rounded-tr-none`}>{part.text}</div>
+                          <div className={`${bubbleClasses} bg-green-300 dark:bg-green-300 text-black dark:text-black rounded-tr-none`}>{part.text}</div>
                         </div>
                       );
                     }
@@ -1198,7 +1198,7 @@ const CloudJira: React.FC = () => {
                       return (
                         <div key={i} className={baseClasses}>
                           <div className={avatarClasses}><Bot size={16} /></div>
-                          <details open className={`${bubbleClasses} bg-blue-300 dark:bg-blue-300 text-gray-900 dark:text-white rounded-tl-none`}>
+                          <details open className={`${bubbleClasses} bg-blue-300 dark:bg-blue-300 text-gray-900 dark:text-black rounded-tl-none`}>
                             <summary className="font-semibold cursor-pointer mb-2">Reasoning</summary>
                             {part.text}
                           </details>

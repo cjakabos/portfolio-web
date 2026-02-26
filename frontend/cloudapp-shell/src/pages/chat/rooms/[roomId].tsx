@@ -18,7 +18,7 @@ interface RoomMessage {
 
 const CloudChat: React.FC = () => {
   const router = useRouter();
-  const { roomId } = router.query;
+  const { roomId, created } = router.query;
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -76,8 +76,24 @@ const CloudChat: React.FC = () => {
     sendNewUser(username, roomCode);
     setConnected(true);
 
-    // Fetch messages after connection is established
-    //fetchMessages();
+    // Send automatic welcome message if room was just created
+    if (created === 'true') {
+      const welcomeMsg = {
+        sender: username,
+        content: 'This is an automatic message, the room was created.',
+      };
+      client.send(`/app/sendMessage/${roomCode}`, JSON.stringify(welcomeMsg));
+      // Clean up the query param
+      router.replace(`/chat/rooms/${roomCode}`, undefined, { shallow: true });
+    }
+
+    // Fetch message history after connection is established
+    fetchMessages(roomCode);
+  };
+
+  const fetchMessages = (roomCode: string) => {
+    client.send(`/app/loadHistory/${roomCode}`, JSON.stringify({}));
+    setLoading(false);
   };
 
   const onError = (error: any) => {
@@ -169,9 +185,13 @@ const CloudChat: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-gray-900/50">
-          {messages.length === 0 ? (
+          {loading ? (
             <div className="text-center py-10 text-gray-400">
               <p>Messages are loading...</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-10 text-gray-400">
+              <p>No messages yet. Start the conversation!</p>
             </div>
           ) : (
             messages.map((msg) => {

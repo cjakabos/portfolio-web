@@ -8,6 +8,8 @@
 #   app.include_router(system_router)
 # ============================================================================
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
@@ -271,34 +273,59 @@ async def get_connection_stats():
             total_services=0
         )
     
-    services = []
     service_names = ["cloudapp", "petstore", "vehicles", "ml"]
-    
-    for service_name in service_names:
+
+    probe_paths = {
+        "cloudapp": ["/actuator/health", "/health"],
+        "petstore": ["/actuator/health", "/health"],
+        "vehicles": ["/actuator/health", "/health"],
+        "ml": ["/health", "/actuator/health"],
+    }
+
+    async def collect_service_stats(service_name: str) -> ConnectionStats:
         try:
-            # Get the client getter method
             getter_method = getattr(ServiceHTTPClients, f"get_{service_name}_client", None)
-            if getter_method:
-                client = getter_method()
-                stats = await client.get_connection_stats()
-                services.append(ConnectionStats(
+            if not getter_method:
+                return ConnectionStats(
                     service=service_name,
-                    available=stats.get("available", False),
-                    client_closed=stats.get("client_closed", True),
-                    max_connections=stats.get("max_connections", 0),
-                    max_keepalive_connections=stats.get("max_keepalive_connections", 0),
-                    http2_enabled=stats.get("http2_enabled", False)
-                ))
-        except Exception as e:
-            services.append(ConnectionStats(
+                    available=False,
+                    client_closed=True,
+                    max_connections=0,
+                    max_keepalive_connections=0,
+                    http2_enabled=False
+                )
+
+            client = getter_method()
+
+            # Silent probe so the first dashboard load reflects real connectivity
+            # instead of "no client has made a request yet".
+            probe_ok = False
+            for path in probe_paths.get(service_name, []):
+                if await client.probe(path, timeout_seconds=2.0):
+                    probe_ok = True
+                    break
+
+            stats = await client.get_connection_stats()
+            return ConnectionStats(
+                service=service_name,
+                available=probe_ok,
+                client_closed=stats.get("client_closed", True),
+                max_connections=stats.get("max_connections", 0),
+                max_keepalive_connections=stats.get("max_keepalive_connections", 0),
+                http2_enabled=stats.get("http2_enabled", False)
+            )
+        except Exception:
+            return ConnectionStats(
                 service=service_name,
                 available=False,
                 client_closed=True,
                 max_connections=0,
                 max_keepalive_connections=0,
                 http2_enabled=False
-            ))
-    
+            )
+
+    services = await asyncio.gather(*(collect_service_stats(service_name) for service_name in service_names))
+
     return ConnectionStatsResponse(
         services=services,
         total_services=len(services)

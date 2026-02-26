@@ -39,6 +39,7 @@ import type {
   ToolInvocationResponse,
   OllamaStatusResponse,
   CloudAppUser,
+  CloudAppRoleUpdateResponse,
   CloudAppItem,
   CloudAppFile,
   Cart,
@@ -125,6 +126,7 @@ const getConfig = (): ClientConfig => {
 const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
 const CLOUDAPP_USERNAME_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_USERNAME';
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
+const BEARER_PREFIX = 'Bearer ';
 
 // =============================================================================
 // Custom Error Types
@@ -195,6 +197,14 @@ export class OrchestrationClient {
     }
     localStorage.setItem(CLOUDAPP_TOKEN_STORAGE_KEY, token);
     localStorage.setItem(CLOUDAPP_USERNAME_STORAGE_KEY, username);
+  }
+
+  private normalizeAuthorizationToken(token: string): string {
+    const trimmed = token.trim();
+    if (!trimmed) {
+      return '';
+    }
+    return trimmed.startsWith(BEARER_PREFIX) ? trimmed : `${BEARER_PREFIX}${trimmed}`;
   }
 
   private buildHeaders(
@@ -817,6 +827,30 @@ export class OrchestrationClient {
     return this.post<CloudAppUser>(this.cloudappUrl('/user/create'), { username, password });
   }
 
+  async registerCloudAppUser(username: string, password: string, confirmPassword: string = password): Promise<CloudAppUser> {
+    return this.post<CloudAppUser>(this.cloudappUrl('/user/user-register'), {
+      username,
+      password,
+      confirmPassword,
+    });
+  }
+
+  async updateCloudAppUserRoles(username: string, roles: string[]): Promise<CloudAppRoleUpdateResponse> {
+    return this.post<CloudAppRoleUpdateResponse>(this.cloudappUrl('/user/admin/roles'), {
+      username,
+      roles,
+    });
+  }
+
+  async promoteCloudAppUserToAdmin(username: string): Promise<CloudAppRoleUpdateResponse> {
+    return this.updateCloudAppUserRoles(username, ['ROLE_USER', 'ROLE_ADMIN']);
+  }
+
+  async createCloudAppAdmin(username: string, password: string, confirmPassword: string = password): Promise<CloudAppRoleUpdateResponse> {
+    await this.registerCloudAppUser(username, password, confirmPassword);
+    return this.promoteCloudAppUserToAdmin(username);
+  }
+
   async loginUser(username: string, password: string): Promise<AuthResponse> {
     const url = this.cloudappUrl('/user/user-login');
     const controller = new AbortController();
@@ -826,6 +860,7 @@ export class OrchestrationClient {
       const response = await fetch(url, {
         method: 'POST',
         signal: controller.signal,
+        credentials: 'include',
         headers: this.buildHeaders(undefined, true),
         body: JSON.stringify({ username, password }),
       });
@@ -842,11 +877,12 @@ export class OrchestrationClient {
         );
       }
 
-      const token = response.headers.get('Authorization') || response.headers.get('authorization');
-      if (!token) {
+      const tokenHeader = response.headers.get('Authorization') || response.headers.get('authorization');
+      if (!tokenHeader) {
         throw new ApiError('CloudApp login succeeded but no Authorization token was returned', 500, url);
       }
 
+      const token = this.normalizeAuthorizationToken(tokenHeader);
       this.storeCloudAppAuth(token, username);
       return {
         username,

@@ -173,7 +173,9 @@ public class UserController {
         }
         user.setUsername(createUserRequest.getUsername());
         user.setPassword(this.passwordEncoder.encode(createUserRequest.getPassword()));
-        user.setRoles(defaultRolesForNewUser(createUserRequest.getUsername()));
+        // Public registration always creates regular users. Admin elevation is handled
+        // explicitly via the admin-only roles endpoint.
+        user.setRoles(List.of("ROLE_USER"));
         Cart cart = new Cart();
         cartRepository.save(cart);
         user.setCart(cart);

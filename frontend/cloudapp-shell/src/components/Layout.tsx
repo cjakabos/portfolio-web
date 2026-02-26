@@ -91,7 +91,7 @@ const Layout = ({ children }: LayoutProps) => {
                   {(userToken === null || userToken === '') ? (
                           <>
                              {publicRoutes.map((item) => {
-                                const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                                const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
                                 return (
                                  <Link
                                    key={item.path}
@@ -112,7 +112,7 @@ const Layout = ({ children }: LayoutProps) => {
                       ) :
                       <>
                           {authedRoutes.map((item) => {
-                             const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                             const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
                              return (
                               <Link
                                 key={item.path}
@@ -173,7 +173,7 @@ const Layout = ({ children }: LayoutProps) => {
              {(userToken === null || userToken === '') ? (
                      <>
                          {publicRoutes.map(item => {
-                            const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                            const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
                             return (
                                <Link
                                 key={item.path}
@@ -191,7 +191,7 @@ const Layout = ({ children }: LayoutProps) => {
                  ) :
                  <>
                      {authedRoutes.map(item => {
-                        const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path));
+                        const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
                         return (
                            <Link
                             key={item.path}

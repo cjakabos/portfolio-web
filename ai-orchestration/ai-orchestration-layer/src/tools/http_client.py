@@ -193,6 +193,39 @@ class HTTPClient:
             "http2_enabled": True
         }
 
+    async def probe(self, url: str, timeout_seconds: float = 2.0) -> bool:
+        """
+        Lightweight connectivity probe used by health dashboards.
+        Does not use retries so it stays fast and reflects current reachability.
+        """
+        merged_headers: Dict[str, str] = {}
+        merged_headers.update(self.default_headers)
+        merged_headers.update(self.get_request_context_headers())
+        request_headers = merged_headers or None
+
+        try:
+            if self._use_httpx:
+                client = await self._get_client()
+                response = await client.request(
+                    method="GET",
+                    url=url,
+                    headers=request_headers,
+                    timeout=httpx.Timeout(timeout_seconds),
+                )
+                return 200 <= response.status_code < 300
+
+            session = await self._get_session()
+            full_url = f"{self.base_url}{url}" if self.base_url and not url.startswith("http") else url
+            async with session.request(
+                method="GET",
+                url=full_url,
+                headers=request_headers,
+                timeout=aiohttp.ClientTimeout(total=timeout_seconds),
+            ) as response:
+                return 200 <= response.status < 300
+        except Exception:
+            return False
+
     async def aclose(self):
         """Close clients"""
         if self._client and not self._client.is_closed:
