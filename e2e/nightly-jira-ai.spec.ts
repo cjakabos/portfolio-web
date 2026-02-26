@@ -1,6 +1,6 @@
 import { type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import { test, expect } from "./fixtures/test-base";
-import { ensureLoggedIn, waitForPageLoad } from "./fixtures/helpers";
+import { ensureAdminLoggedIn, waitForPageLoad } from "./fixtures/helpers";
 
 const NIGHTLY_AI_E2E = process.env.NIGHTLY_AI_E2E === "1";
 const NIGHTLY_ENABLE_JIRA_E2E = process.env.NIGHTLY_ENABLE_JIRA_E2E !== "0";
@@ -187,7 +187,7 @@ test.describe("Nightly AI Integration - Jira", () => {
   }) => {
     test.setTimeout(600_000);
 
-    const { token } = await ensureLoggedIn(request, page);
+    const { token } = await ensureAdminLoggedIn(request, page);
 
     const runId = Date.now().toString(36);
     const parentSummary = `Nightly AI E2E Parent ${runId}`;
@@ -202,6 +202,7 @@ test.describe("Nightly AI Integration - Jira", () => {
       await waitForPageLoad(page);
 
       const bodyText = (await page.locator("body").textContent()) || "";
+      expect(bodyText).not.toContain("Access Denied");
       expect(bodyText).not.toContain("Module Load Error");
       expect(bodyText).not.toContain("Remote Module Unavailable");
 

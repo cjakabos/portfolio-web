@@ -576,6 +576,42 @@ services:
       start_period: 10s
     restart: "no"
 
+  test-openmaps-frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/openmaps
+        SERVICE_PORT: 5002
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5002/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  test-jira-frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/jira
+        SERVICE_PORT: 5003
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5003/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
   test-mlops-frontend:
     build:
       context: ./
@@ -595,6 +631,42 @@ services:
       start_period: 20s
     restart: "no"
 
+  test-petstore-frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/petstore
+        SERVICE_PORT: 5006
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5006/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  test-chatllm-frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/remote/chatllm
+        SERVICE_PORT: 5333
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5333/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
   test-shell:
     build:
       context: ./
@@ -603,10 +675,22 @@ services:
         SERVICE_PATH: frontend/cloudapp-shell
         SERVICE_PORT: 5001
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_OPENMAPS_URL: http://test-openmaps-frontend:5002
+        NEXT_PUBLIC_REMOTE_JIRA_URL: http://test-jira-frontend:5003
+        NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
+        NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
         NEXT_PUBLIC_API_URL: http://test-nginx/cloudapp
     depends_on:
+      test-openmaps-frontend:
+        condition: service_healthy
+      test-jira-frontend:
+        condition: service_healthy
       test-mlops-frontend:
+        condition: service_healthy
+      test-petstore-frontend:
+        condition: service_healthy
+      test-chatllm-frontend:
         condition: service_healthy
     networks:
       - test-frontend

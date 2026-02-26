@@ -3,7 +3,7 @@
 // ===========================================================================
 
 import { test, expect } from "./fixtures/test-base";
-import { ensureLoggedIn, waitForPageLoad } from "./fixtures/helpers";
+import { ensureAdminLoggedIn, waitForPageLoad } from "./fixtures/helpers";
 
 test.describe("MLOps Segmentation Flow", () => {
   const mockCustomers = [
@@ -60,7 +60,7 @@ test.describe("MLOps Segmentation Flow", () => {
   }
 
   test.beforeEach(async ({ authedPage: page, request }) => {
-    await ensureLoggedIn(request, page);
+    await ensureAdminLoggedIn(request, page);
   });
 
   test("should navigate to MLOps page without error", async ({ authedPage: page }) => {

@@ -84,7 +84,7 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="flex items-center">
               <Link href="/" className="flex-shrink-0 flex items-center gap-1">
                 <img src="/drawing_white.svg" alt="CloudApp" width={50} height={50} />
-                <span className="hidden 2xl:inline font-bold text-xl tracking-tight">CloudApp</span>
+                <span className="hidden xl:inline font-bold text-xl tracking-tight">CloudApp</span>
               </Link>
               <div className="hidden md:block ml-6 lg:ml-10">
                 <div className="flex items-baseline space-x-0.5 xl:space-x-1">
@@ -104,7 +104,7 @@ const Layout = ({ children }: LayoutProps) => {
                                    }`}
                                  >
                                    {item.icon}
-                                   <span className="hidden 2xl:inline">{item.label}</span>
+                                   <span className="hidden xl:inline">{item.label}</span>
                                  </Link>
                                );
                              })}
@@ -125,7 +125,7 @@ const Layout = ({ children }: LayoutProps) => {
                                 }`}
                               >
                                 {item.icon}
-                                <span className="hidden 2xl:inline">{item.label}</span>
+                                <span className="hidden xl:inline">{item.label}</span>
                               </Link>
                             );
                           })}
@@ -151,7 +151,7 @@ const Layout = ({ children }: LayoutProps) => {
                     <div className="bg-gray-700 group-hover:bg-gray-600 p-1.5 rounded-full transition">
                       <UserIcon size={16} />
                     </div>
-                    <span className="hidden 2xl:inline max-w-[100px] truncate">{user}</span>
+                    <span className="hidden xl:inline max-w-[100px] truncate">{user}</span>
                   </Link>
                   <button
                     onClick={handleLogout}
