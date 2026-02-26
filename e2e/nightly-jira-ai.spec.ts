@@ -152,8 +152,51 @@ async function openAiSidebarAndSelectModel(page: Page): Promise<void> {
   await expect(modelSelect).toHaveValue(CHAT_MODEL);
 }
 
+async function waitForJiraBoardInteractive(page: Page): Promise<Locator> {
+  const newTicketButton = page.locator('button:has-text("New Ticket")').first();
+  const refreshButton = page.getByTitle("Refresh").first();
+  const knownErrorTitles = [
+    "Jira Authentication Failed",
+    "Permission Denied",
+    "Project Not Found",
+    "Network Error",
+    "Unexpected Error",
+    "Jira Configuration Missing",
+  ];
+  const deadline = Date.now() + 120_000;
+
+  while (Date.now() < deadline) {
+    for (const title of knownErrorTitles) {
+      const alert = page.getByText(title).first();
+      if (await alert.isVisible().catch(() => false)) {
+        const bodyText = ((await page.locator("body").textContent().catch(() => "")) || "")
+          .replace(/\s+/g, " ")
+          .slice(0, 1000);
+        throw new Error(`Jira board error before ticket creation: ${title}. body="${bodyText}"`);
+      }
+    }
+
+    if (await newTicketButton.isVisible().catch(() => false)) {
+      if (await newTicketButton.isEnabled().catch(() => false)) {
+        return newTicketButton;
+      }
+      if (await refreshButton.isVisible().catch(() => false)) {
+        await refreshButton.click().catch(() => {});
+      }
+    }
+
+    await page.waitForTimeout(2_000);
+  }
+
+  const bodyText = ((await page.locator("body").textContent().catch(() => "")) || "")
+    .replace(/\s+/g, " ")
+    .slice(0, 1000);
+  throw new Error(`Timed out waiting for Jira board to become interactive. body="${bodyText}"`);
+}
+
 async function createParentTicket(page: Page, summary: string, description: string): Promise<void> {
-  await page.getByRole("button", { name: "New Ticket" }).click();
+  const newTicketButton = await waitForJiraBoardInteractive(page);
+  await newTicketButton.click({ timeout: 30_000 });
 
   const createModal = page
     .locator('h3:has-text("Create New Ticket")')
