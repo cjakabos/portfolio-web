@@ -70,10 +70,12 @@ export const test = base.extend<{
     // --- API Proxy (equivalent to cypress/support/e2e.ts beforeEach) ------
     // Re-route /cloudapp/* and /mlops-segmentation/* requests that the
     // frontend sends to localhost → the actual NGINX gateway.
-    await page.route(/\/(cloudapp|mlops-segmentation|petstore|vehicles)\//, async (route: Route) => {
+    await page.route(/^https?:\/\/[^/]+\/(?:cloudapp|mlops-segmentation|petstore|vehicles)\//, async (route: Route) => {
       const url = new URL(route.request().url());
-      // Replace origin with backend gateway
-      const proxiedUrl = `${BACKEND_URL}${url.pathname}${url.search}`;
+      const path = url.pathname;
+      // Top-level API calls only. Anchored route matcher avoids catching
+      // Next.js internals like /_next/data/.../petstore.json.
+      const proxiedUrl = `${BACKEND_URL}${path}${url.search}`;
       try {
         const response = await route.fetch({ url: proxiedUrl });
         await route.fulfill({ response });

@@ -15,7 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
-  const { isAdmin, isReady } = useAuth();
+  const { isAdmin, isReady, isInitialized } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
@@ -84,7 +84,19 @@ function MyApp({ Component, pageProps }: AppProps) {
   const currentRoute = allAuthedRoutes.find(r => 
     r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
   );
+  const isAdminRoute = Boolean(currentRoute?.adminOnly);
   const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
+
+  // For admin-only routes, avoid rendering the route component until auth state
+  // is initialized. This prevents remote modules from loading before RBAC can
+  // show Access Denied (or redirect unauthenticated users).
+  if (isAdminRoute && !isInitialized) {
+    return null;
+  }
+
+  if (isAdminRoute && !isReady) {
+    return null;
+  }
 
   if (isAccessDenied) {
     return (
