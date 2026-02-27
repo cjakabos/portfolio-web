@@ -1,77 +1,69 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/router";
 
-const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
-const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
-const BEARER_PREFIX = "Bearer ";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
+export const CLOUDAPP_AUTH_STATE_CHANGED_EVENT = "cloudapp-auth-state-changed";
 
-const formatAuthorizationToken = (storedToken: string | null) => {
-    const token = storedToken?.trim() || "";
-    if (!token) return "";
-    return token.startsWith(BEARER_PREFIX) ? token : `${BEARER_PREFIX}${token}`;
+type AuthCheckResponse = {
+  username: string;
+  roles?: string[];
 };
 
-const decodeBase64Url = (value: string) => {
-    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-    if (typeof atob !== "function") return "";
-    return atob(padded);
-};
-
-export const isTokenExpired = (storedToken: string | null): boolean => {
-    if (!storedToken) return true;
-    const rawToken = storedToken.startsWith(BEARER_PREFIX)
-        ? storedToken.slice(BEARER_PREFIX.length)
-        : storedToken;
-    const parts = rawToken.split(".");
-    if (parts.length < 2) return true;
-    try {
-        const payload = JSON.parse(decodeBase64Url(parts[1]));
-        if (typeof payload?.exp !== "number") return true;
-        return Date.now() >= payload.exp * 1000;
-    } catch {
-        return true;
-    }
-};
-
-const extractRolesFromToken = (authorizationToken: string) => {
-    const rawToken = authorizationToken.startsWith(BEARER_PREFIX)
-        ? authorizationToken.slice(BEARER_PREFIX.length)
-        : authorizationToken;
-
-    const parts = rawToken.split(".");
-    if (parts.length < 2) return [] as string[];
-
-    try {
-        const payload = JSON.parse(decodeBase64Url(parts[1]));
-        if (!Array.isArray(payload?.roles)) return [] as string[];
-        return payload.roles.filter((role: unknown): role is string => typeof role === "string");
-    } catch {
-        return [] as string[];
-    }
+export const notifyCloudAppAuthStateChanged = () => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(CLOUDAPP_AUTH_STATE_CHANGED_EVENT));
 };
 
 export const useAuth = () => {
-    const [token, setToken] = useState("");
-    const [username, setUsername] = useState("");
-    const [roles, setRoles] = useState<string[]>([]);
-    const [isReady, setIsReady] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const router = useRouter();
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const t = formatAuthorizationToken(localStorage.getItem(TOKEN_STORAGE_KEY));
-            const u = localStorage.getItem(USERNAME_STORAGE_KEY) || "";
-            setToken(t);
-            setUsername(u);
-            setRoles(extractRolesFromToken(t));
-            setIsReady(!!(t && u));
-            setIsInitialized(true);
-        }
-    }, [router.asPath]);
+  const refreshAuthState = useCallback(async () => {
+    try {
+      const response = await axios.get<AuthCheckResponse>(`${API_URL}/user/auth-check`, {
+        withCredentials: true,
+      });
+      const nextUsername = response.data?.username?.trim() || "";
+      const nextRoles = Array.isArray(response.data?.roles)
+        ? response.data.roles.filter((role): role is string => typeof role === "string")
+        : [];
 
-    const isAdmin = roles.includes("ROLE_ADMIN");
+      setUsername(nextUsername);
+      setRoles(nextRoles);
+      setIsReady(Boolean(nextUsername));
+    } catch (error) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      if (status !== 401 && status !== 403) {
+        console.error("CloudApp auth check failed", error);
+      }
+      setUsername("");
+      setRoles([]);
+      setIsReady(false);
+    } finally {
+      setIsInitialized(true);
+    }
+  }, []);
 
-    return { token, username, roles, isAdmin, isReady, isInitialized };
+  useEffect(() => {
+    void refreshAuthState();
+  }, [refreshAuthState, router.asPath]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const handleAuthChanged = () => {
+      void refreshAuthState();
+    };
+
+    window.addEventListener(CLOUDAPP_AUTH_STATE_CHANGED_EVENT, handleAuthChanged);
+    return () => window.removeEventListener(CLOUDAPP_AUTH_STATE_CHANGED_EVENT, handleAuthChanged);
+  }, [refreshAuthState]);
+
+  const isAdmin = roles.includes("ROLE_ADMIN");
+
+  return { username, roles, isAdmin, isReady, isInitialized };
 };

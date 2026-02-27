@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const initialCustomer = {
@@ -21,25 +21,13 @@ export const useCustomers = () => {
     const [allCustomers, setAllCustomers] = useState([initialCustomer]);
     const [loading, setLoading] = useState(false);
     const [date, setDate] = useState(new Date());
-    const [userToken, setUserToken] = useState('');
     const [selectedOwner, setSelectedOwner] = useState('');
     const [selectedPetType, setSelectedPetType] = useState('CAT');
     const [isPetDialogOpen, setPetDialogOpen] = useState(false);
 
-    const effectRan = useRef(false);
-
-    // Initialize user token from localStorage
     useEffect(() => {
-        if (!effectRan.current && typeof window !== "undefined") {
-            setUserToken(`Bearer ${localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")}` || '');
-            effectRan.current = true;
-        }
+        void getCustomers();
     }, []);
-
-    // Load customers when userToken is available
-    useEffect(() => {
-        getCustomers();
-    }, [userToken]);
 
     const handleChange = (event: { target: { name: string; value: string } }) => {
         const { name, value } = event.target;
@@ -68,8 +56,8 @@ export const useCustomers = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {
@@ -92,8 +80,8 @@ export const useCustomers = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {
@@ -129,8 +117,8 @@ export const useCustomers = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {

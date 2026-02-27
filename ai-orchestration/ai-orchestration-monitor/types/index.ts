@@ -254,7 +254,7 @@ export interface ApprovalRequest {
   status: ApprovalStatus;
   created_at: string;
   expires_at: string;
-  requester_id: number;
+  requester_id: string;
   proposed_action: string;
   risk_level: RiskLevel;
   risk_score: number;
@@ -265,14 +265,13 @@ export interface ApprovalRequest {
 
 export interface ApprovalHistoryItem extends ApprovalRequest {
   approved_at?: string;
-  approver_id?: number;
+  approver_id?: string;
   approval_notes?: string;
   modifications?: Record<string, unknown>;
 }
 
 export interface ApprovalDecision {
   approved: boolean;
-  approver_id: number;
   approval_notes?: string;
   modifications?: Record<string, unknown>;
 }
@@ -295,7 +294,6 @@ export interface ApprovalStats {
 
 // Resume workflow after approval
 export interface ResumeRequest {
-  user_id: number;
   session_id: string;
   additional_context?: Record<string, unknown>;
 }
@@ -312,7 +310,7 @@ export interface ResumeResponse {
 
 export interface AuthResponse {
   username: string;
-  token: string;
+  roles: string[];
   message?: string;
   success?: boolean;
 }

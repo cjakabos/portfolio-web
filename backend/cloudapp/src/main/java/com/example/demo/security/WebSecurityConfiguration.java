@@ -68,13 +68,41 @@ public class WebSecurityConfiguration {
 
     private static final String[] AUTH_WHITELIST_SWAGGER = {
             "/swagger-ui/**",
+            "/cloudapp/swagger-ui/**",
             "/v3/api-docs/**",
+            "/cloudapp/v3/api-docs/**",
             "/swagger-ui.html"
     };
 
     private static final String[] AUTH_WHITELIST = {
             "/ws/**",
+            "/cloudapp/ws/**",
             "/actuator/**"
+            ,"/cloudapp/actuator/**"
+    };
+
+    private static final String[] PUBLIC_AUTH_POSTS = {
+            "/user/user-register",
+            "/cloudapp/user/user-register",
+            "/user/user-login",
+            "/cloudapp/user/user-login",
+            "/user/user-logout",
+            "/cloudapp/user/user-logout"
+    };
+
+    private static final String[] ADMIN_USER_PATHS = {
+            "/user/admin/**",
+            "/cloudapp/user/admin/**"
+    };
+
+    private static final String[] ADMIN_ITEM_POSTS = {
+            "/item",
+            "/cloudapp/item"
+    };
+
+    private static final String[] ADMIN_ITEM_MUTATIONS = {
+            "/item/**",
+            "/cloudapp/item/**"
     };
 
     // Check for service-to-service token instead of IP address.
@@ -124,13 +152,13 @@ public class WebSecurityConfiguration {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
         http.authorizeHttpRequests(authHttpRequests -> authHttpRequests
-                .requestMatchers(HttpMethod.POST,"/user/user-register", "/user/user-login", "/user/user-logout").permitAll()
+                .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_POSTS).permitAll()
                 .requestMatchers(HttpMethod.GET, AUTH_WHITELIST_SWAGGER).permitAll()
                 .requestMatchers(AUTH_WHITELIST).permitAll()
-                .requestMatchers("/user/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/item").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/item/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/item/**").hasRole("ADMIN")
+                .requestMatchers(ADMIN_USER_PATHS).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, ADMIN_ITEM_POSTS).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, ADMIN_ITEM_MUTATIONS).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, ADMIN_ITEM_MUTATIONS).hasRole("ADMIN")
                 .anyRequest()
                 .authenticated()
         );

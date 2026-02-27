@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const initialPet = {
@@ -33,26 +33,14 @@ export const useSchedules = () => {
     const [selectedOption, setSelectedOption] = useState(1);
     const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
     const [date, setDate] = useState(new Date());
-    const [userToken, setUserToken] = useState('');
     const [isModal1Open, setModal1Open] = useState(false);
     const [isModal2Open, setModal2Open] = useState(false);
     const [isModal3Open, setModal3Open] = useState(false);
 
-    const effectRan = useRef(false);
-
-    // Initialize user token from localStorage
     useEffect(() => {
-        if (!effectRan.current && typeof window !== "undefined") {
-            setUserToken(`Bearer ${localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")}` || '');
-            effectRan.current = true;
-        }
+            void getPets();
+            void getSchedules();
     }, []);
-
-    // Load data when userToken is available
-    useEffect(() => {
-            getPets();
-            getSchedules();
-    }, [userToken]);
 
     const handleOptionSelect = (event: { target: { options: HTMLOptionsCollection } }) => {
         for (let i = 0; i < event.target.options.length; i++) {
@@ -66,8 +54,8 @@ export const useSchedules = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {
@@ -97,8 +85,8 @@ export const useSchedules = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {
@@ -139,8 +127,8 @@ export const useSchedules = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {
@@ -161,8 +149,8 @@ export const useSchedules = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {

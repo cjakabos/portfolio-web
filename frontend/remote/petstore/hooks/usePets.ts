@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const initialPet = {
@@ -13,30 +13,18 @@ const initialPet = {
 export const usePets = () => {
     const [allPets, setAllPets] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [userToken, setUserToken] = useState('');
 
-    const effectRan = useRef(false);
-
-    // Initialize user token from localStorage
     useEffect(() => {
-        if (!effectRan.current && typeof window !== "undefined") {
-            setUserToken(`Bearer ${localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")}` || '');
-            effectRan.current = true;
-        }
+        void getPets();
     }, []);
-
-    // Load pets when userToken is available
-    useEffect(() => {
-        getPets()
-    }, [userToken]);
 
     const getPets = async () => {
         setLoading(true);
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {

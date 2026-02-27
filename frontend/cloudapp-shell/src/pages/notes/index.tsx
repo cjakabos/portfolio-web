@@ -5,8 +5,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { useNotes } from "../../hooks/useNotes";
 
 const Notes: React.FC = () => {
-    const { token, username } = useAuth();
-    const { notes, fetchNotes, addNote, updateNote, deleteNote } = useNotes(username, token);
+    const { username, isReady } = useAuth();
+    const { notes, fetchNotes, addNote, updateNote, deleteNote } = useNotes(username);
 
     // -- State --
     const [showForm, setShowForm] = useState(false);
@@ -21,10 +21,10 @@ const Notes: React.FC = () => {
     const sortedNotes = [...notes].sort((a, b) => b.id - a.id);
 
     useEffect(() => {
-        if (token && username) {
+        if (isReady && username) {
             fetchNotes();
         }
-    }, [token, username]);
+    }, [isReady, username, fetchNotes]);
 
     // -- Handlers --
     const handleSubmit = async (e: React.FormEvent) => {

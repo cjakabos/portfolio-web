@@ -31,7 +31,6 @@ const getConfig = () => {
   return { baseUrl, timeout };
 };
 
-const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
 // =============================================================================
@@ -71,13 +70,6 @@ export class RAGClient {
       headers.set('Content-Type', 'application/json');
     }
 
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem(CLOUDAPP_TOKEN_STORAGE_KEY);
-      if (token && !headers.has('Authorization')) {
-        headers.set('Authorization', token);
-      }
-    }
-
     return headers;
   }
 
@@ -114,6 +106,7 @@ export class RAGClient {
       try {
         const response = await fetch(url, {
           ...options,
+          credentials: 'include',
           signal: controller.signal,
           headers: this.buildHeaders(options.headers, true),
         });
@@ -227,6 +220,7 @@ export class RAGClient {
         const response = await fetch(this.ragUrl('/documents/upload'), {
           method: 'POST',
           body: formData,
+          credentials: 'include',
           signal: controller.signal,
           headers: this.buildHeaders(undefined, false),
         });

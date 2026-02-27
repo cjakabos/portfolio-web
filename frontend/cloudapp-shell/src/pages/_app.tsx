@@ -8,7 +8,7 @@ import '../styles/globals.css';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
-import { isTokenExpired, useAuth } from '../hooks/useAuth';
+import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -42,21 +42,14 @@ function MyApp({ Component, pageProps }: AppProps) {
       setIsDark((prev) => !prev);
   };
 
-  // Axios interceptor — force logout on 401 or on network errors when the token is expired
+  // Axios interceptor — redirect to login when the authenticated session expires.
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (router.pathname !== '/login') {
-          const token = localStorage.getItem('NEXT_PUBLIC_MY_TOKEN');
-          const is401 = error.response?.status === 401;
-          const isNetworkErrorWithExpiredToken =
-            !error.response && isTokenExpired(token);
-          if ((is401 || isNetworkErrorWithExpiredToken) && token) {
-            localStorage.removeItem('NEXT_PUBLIC_MY_TOKEN');
-            localStorage.removeItem('NEXT_PUBLIC_MY_USERNAME');
-            router.push('/login');
-          }
+        if (router.pathname !== '/login' && error.response?.status === 401) {
+          notifyCloudAppAuthStateChanged();
+          router.push('/login');
         }
         return Promise.reject(error);
       }
@@ -66,16 +59,12 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   // Auth Guard Logic
   useEffect(() => {
-    if (isClient) {
-      const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
-      const token = localStorage.getItem('NEXT_PUBLIC_MY_TOKEN');
-      if ((!user || isTokenExpired(token)) && router.pathname !== '/login') {
-        localStorage.removeItem('NEXT_PUBLIC_MY_TOKEN');
-        localStorage.removeItem('NEXT_PUBLIC_MY_USERNAME');
+    if (isClient && isInitialized) {
+      if (!isReady && router.pathname !== '/login') {
         router.push('/login');
       }
     }
-  }, [isClient, router.pathname]);
+  }, [isClient, isInitialized, isReady, router.pathname, router]);
 
   // Prevent hydration mismatch
   if (!isClient) return null;

@@ -192,7 +192,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite("Lax")
-                .path("/cloudapp")
+                .path("/")
                 .build()
                 .toString();
     }
@@ -205,7 +205,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite("Lax")
-                .path("/cloudapp")
+                .path("/")
                 .maxAge(0)
                 .build()
                 .toString();
@@ -222,12 +222,10 @@ public class UserController {
             );
             String token = jwtUtilities.generateToken(authentication);
             HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set("Authorization",
-                    token);
             responseHeaders.add(HttpHeaders.SET_COOKIE, buildAuthCookie(request, token));
             return ResponseEntity.ok()
                     .headers(responseHeaders)
-                    .body("Response with header using ResponseEntity");
+                    .body(Map.of("message", "Login successful"));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }

@@ -1,18 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { ensureCloudAppCsrfToken } from "./cloudappCsrf";
-
-const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
-const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
-const BEARER_PREFIX = "Bearer ";
-
-const normalizeTokenForStorage = (authorizationHeader?: string) => {
-  const token = authorizationHeader?.trim() || "";
-  if (!token) return "";
-  return token.startsWith(BEARER_PREFIX)
-    ? token.slice(BEARER_PREFIX.length)
-    : token;
-};
+import { notifyCloudAppAuthStateChanged } from "./useAuth";
 
 interface LoginValues {
   username?: string;
@@ -38,25 +27,18 @@ export const useLogin = () => {
           withCredentials: true,
         }
       );
-
-      const token = normalizeTokenForStorage(response.headers.authorization);
-      if (!token) {
-        throw new Error("Login succeeded but no Authorization token was returned");
-      }
-      if (typeof window !== "undefined") {
-        localStorage.setItem(USERNAME_STORAGE_KEY, values.username || "");
-        localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      }
       try {
         await ensureCloudAppCsrfToken(API_URL);
       } catch (csrfError) {
         // Keep login successful even if CSRF bootstrap fails; write requests will retry.
         console.warn("CSRF bootstrap after login failed", csrfError);
       }
-
+      notifyCloudAppAuthStateChanged();
+      return response.data;
     } catch (err: any) {
       console.error("Login Error:", err);
       setError("Something went wrong. Please check your credentials.");
+      throw err;
     } finally {
       setLoading(false);
     }

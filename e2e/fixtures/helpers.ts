@@ -1,7 +1,7 @@
 // ===========================================================================
 // e2e/fixtures/helpers.ts — Shared helpers (replaces cypress/support/commands.ts)
 //
-// Provides API-level registration/login and localStorage injection.
+// Provides API-level registration/login and cookie injection.
 // Used by global-setup.ts to create persistent auth state, and by
 // individual tests for API-level operations.
 // ===========================================================================
@@ -29,6 +29,15 @@ export const ADMIN_TEST_USER = {
   username: process.env.PW_ADMIN_USERNAME || "integrationadmin",
   password: process.env.PW_ADMIN_PASSWORD || "SecureE2EPass123",
 };
+
+function getAuthTokenFromSetCookie(setCookieHeader: string | null | undefined): string | null {
+  if (!setCookieHeader) return null;
+
+  const match = setCookieHeader.match(/(?:^|,\s*)CLOUDAPP_AUTH=([^;]+)/);
+  if (!match?.[1]) return null;
+
+  return decodeURIComponent(match[1]).trim() || null;
+}
 
 type AdminCandidate = {
   username: string;
@@ -111,42 +120,29 @@ export async function apiLogin(
     failOnStatusCode: false,
   });
   if (resp.status() === 200) {
-    const headers = resp.headers();
-    return headers["authorization"] || headers["Authorization"] || null;
+    return getAuthTokenFromSetCookie(resp.headers()["set-cookie"]);
   }
   return null;
 }
 
 // ---------------------------------------------------------------------------
-// Page-level auth injection (sets localStorage so frontend sees user as
-// logged in — equivalent to Cypress apiLogin command)
+// Page-level auth injection
 // ---------------------------------------------------------------------------
 
-export async function injectAuth(page: Page, token: string, username: string) {
-  const rawToken = token.replace(/^Bearer\s+/i, "").trim();
+export async function injectAuth(page: Page, token: string, _username: string) {
   const backendUrl = new URL(BACKEND_URL);
 
   await page.context().addCookies([
     {
       name: "CLOUDAPP_AUTH",
-      value: rawToken,
+      value: token,
       domain: backendUrl.hostname,
-      path: "/cloudapp",
+      path: "/",
       httpOnly: true,
       secure: backendUrl.protocol === "https:",
       sameSite: "Lax",
     },
   ]);
-
-  // Navigate to a page first so localStorage is available on the right origin
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.evaluate(
-    ({ token, username }) => {
-      localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
-      localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", username);
-    },
-    { token, username }
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -175,8 +171,7 @@ export async function ensureLoggedIn(
       data: { username, password },
       failOnStatusCode: false,
     });
-    const loginHeaders = loginResp.headers();
-    const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
+    const token = getAuthTokenFromSetCookie(loginResp.headers()["set-cookie"]);
 
     if (loginResp.status() === 200 && token) {
       cachedAuth = { token, username };
@@ -189,7 +184,7 @@ export async function ensureLoggedIn(
       .slice(0, 300);
     lastError =
       `registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
-      `hasAuthHeader=${Boolean(token)} body="${bodySnippet}"`;
+      `hasAuthCookie=${Boolean(token)} body="${bodySnippet}"`;
 
     console.warn(
       `[pw][auth] attempt ${attempt}/${AUTH_RETRY_ATTEMPTS} failed: ${lastError}`
@@ -222,8 +217,7 @@ export async function ensureAdminLoggedIn(
         data: { username, password },
         failOnStatusCode: false,
       });
-      const loginHeaders = loginResp.headers();
-      const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
+      const token = getAuthTokenFromSetCookie(loginResp.headers()["set-cookie"]);
 
       if (loginResp.status() === 200 && token && tokenHasRole(token, "ROLE_ADMIN")) {
         cachedAdminAuth = { token, username };
@@ -237,7 +231,7 @@ export async function ensureAdminLoggedIn(
       const hasAdminRole = tokenHasRole(token, "ROLE_ADMIN");
       lastError =
         `user=${username} registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
-        `hasAuthHeader=${Boolean(token)} hasAdminRole=${hasAdminRole} body="${bodySnippet}"`;
+        `hasAuthCookie=${Boolean(token)} hasAdminRole=${hasAdminRole} body="${bodySnippet}"`;
 
       if (loginResp.status() === 200 && token && !hasAdminRole) {
         console.warn(`[pw][auth-admin] candidate '${username}' logged in but is not admin`);

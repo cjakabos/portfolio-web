@@ -5,8 +5,10 @@ import { chatHttpApi } from '../../hooks/chatHttpApi';
 import { MessageSquare, Users, Plus, LogIn } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
+import { useAuth } from '../../hooks/useAuth';
 
-const SOCKET_URL = 'http://localhost:80/cloudapp/ws/';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
+const SOCKET_URL = `${API_URL}/ws/`;
 let client;
 
 interface Room {
@@ -20,22 +22,18 @@ const Chat: React.FC = () => {
   const [newRoomName, setNewRoomName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
-  const [username, setUsername] = useState('');
   const effectRan = useRef(false);
   const router = useRouter();
+  const { username } = useAuth();
 
   useEffect(() => {
     if (!effectRan.current) {
-      if (typeof window !== 'undefined') {
-        const storedUsername = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME') || '';
-        setUsername(storedUsername);
-        if (storedUsername) {
-          fetchRooms(storedUsername);
-        }
+      if (username) {
+        fetchRooms(username);
         effectRan.current = true;
       }
     }
-  }, []);
+  }, [username]);
 
   const fetchRooms = async (user: string) => {
     if (!user) return;

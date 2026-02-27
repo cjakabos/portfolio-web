@@ -5,15 +5,15 @@ import { useAuth } from "../../hooks/useAuth";
 import { useFiles } from "../../hooks/useFiles";
 
 const CloudFiles: React.FC = () => {
-    const { token, username, isReady } = useAuth();
-  const { files, loadingFiles, fetchFiles, uploadFile, downloadFile, deleteFile } = useFiles(username, token);
+    const { username, isReady } = useAuth();
+  const { files, loadingFiles, fetchFiles, uploadFile, downloadFile, deleteFile } = useFiles(username);
   const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
-        if (token && username) {
+        if (isReady && username) {
             fetchFiles();
         }
-    }, [token, username]);
+    }, [isReady, username, fetchFiles]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

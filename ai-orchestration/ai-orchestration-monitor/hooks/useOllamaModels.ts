@@ -56,7 +56,6 @@ const getApiBaseUrl = (): string => {
   return 'http://localhost:8700';
 };
 
-const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 // Ollama can be up while the orchestration layer still reports it as disconnected
 // during app startup. Retry a couple of times on the initial mount to avoid a
@@ -137,13 +136,6 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
       headers.set('Content-Type', 'application/json');
     }
 
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem(CLOUDAPP_TOKEN_STORAGE_KEY);
-      if (token && !headers.has('Authorization')) {
-        headers.set('Authorization', token);
-      }
-    }
-
     return headers;
   }, []);
 
@@ -157,6 +149,7 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
       try {
         response = await fetch(url, {
           ...options,
+          credentials: 'include',
           headers: buildHeaders(options.headers),
         });
       } catch (err) {

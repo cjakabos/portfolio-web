@@ -17,8 +17,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 
 const Home: React.FC = () => {
-  const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
-  const { isAdmin } = useAuth();
+  const { username, isAdmin } = useAuth();
   const [activityFilter, setActivityFilter] = useState<'ALL' | 'SYSTEM' | 'LOGIN' | 'FILE'>('ALL');
 
   const cards = [
@@ -48,7 +47,7 @@ const Home: React.FC = () => {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {user}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {username || 'User'}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">Here is what's happening in your cloud workspace today.</p>
         </div>
         <div className="text-sm text-gray-400 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">

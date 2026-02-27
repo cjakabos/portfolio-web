@@ -174,3 +174,12 @@ async def require_admin_user(request: Request) -> str:
 async def require_websocket_user(websocket: WebSocket) -> str:
     principal = await authenticate_principal(websocket.headers, websocket.cookies)
     return principal.username
+
+
+async def require_websocket_admin(websocket: WebSocket) -> str:
+    principal = await authenticate_principal(
+        websocket.headers,
+        websocket.cookies,
+        require_admin=True,
+    )
+    return principal.username

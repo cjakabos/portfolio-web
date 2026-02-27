@@ -1,8 +1,8 @@
 // ===========================================================================
 // e2e/global-setup.ts — Authentication Setup (runs once before all tests)
 //
-// Registers a test user via the API, logs in, injects the token into
-// localStorage, and saves the browser storage state to e2e/.auth/user.json.
+// Registers a test user via the API, injects the CloudApp auth cookie into the
+// browser context, and saves the storage state to e2e/.auth/user.json.
 // All test projects that depend on "setup" will reuse this state.
 // ===========================================================================
 
@@ -37,10 +37,9 @@ setup("authenticate", async ({ page, request }) => {
   const auth = await ensureLoggedIn(request, page);
   expect(auth.token, "Login should return a JWT token").toBeTruthy();
 
-  // Verify we're no longer on the login page
-  await page.goto("/");
-  await page.waitForLoadState("domcontentloaded");
-
-  // Save storage state for reuse by all test projects
+  // Save the injected auth cookie state directly. Avoid booting the shell here:
+  // in the E2E topology the frontend and gateway are cross-origin, so loading
+  // "/" during setup triggers noisy auth-check requests that are irrelevant to
+  // establishing browser auth state for downstream specs.
   await page.context().storageState({ path: authFile });
 });

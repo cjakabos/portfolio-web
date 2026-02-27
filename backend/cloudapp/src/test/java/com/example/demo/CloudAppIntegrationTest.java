@@ -138,7 +138,7 @@ public class CloudAppIntegrationTest {
 
     @Test
     @Order(4)
-    @DisplayName("POST /user/user-login — valid credentials return JWT in header")
+    @DisplayName("POST /user/user-login — valid credentials return auth cookie")
     void login_happyPath() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setUsername(TEST_USERNAME);
@@ -148,18 +148,18 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        jwtToken = result.getResponse().getHeader("Authorization");
-        assertNotNull(jwtToken, "JWT token should be returned in Authorization header");
+        jwtToken = extractAuthCookieToken(result);
+        assertNotNull(jwtToken, "JWT token should be returned in CLOUDAPP_AUTH cookie");
         assertFalse(jwtToken.isEmpty(), "JWT token should not be empty");
 
-        String authCookieHeader = result.getResponse().getHeader("Set-Cookie");
+        String authCookieHeader = findAuthCookieHeader(result);
         assertNotNull(authCookieHeader, "JWT auth cookie should be returned in Set-Cookie header");
         assertTrue(authCookieHeader.contains("CLOUDAPP_AUTH="), "Set-Cookie should include CLOUDAPP_AUTH");
         assertTrue(authCookieHeader.contains("HttpOnly"), "Auth cookie should be HttpOnly");
-        jwtCookieToken = authCookieHeader.split(";", 2)[0].substring("CLOUDAPP_AUTH=".length());
+        jwtCookieToken = jwtToken;
         assertFalse(jwtCookieToken.isEmpty(), "JWT cookie token should not be empty");
     }
 
@@ -229,10 +229,10 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        jwtTokenOtherUser = result.getResponse().getHeader("Authorization");
+        jwtTokenOtherUser = extractAuthCookieToken(result);
         assertNotNull(jwtTokenOtherUser);
     }
 
@@ -406,10 +406,10 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        jwtTokenOtherUserPromotedAdmin = result.getResponse().getHeader("Authorization");
+        jwtTokenOtherUserPromotedAdmin = extractAuthCookieToken(result);
         assertNotNull(jwtTokenOtherUserPromotedAdmin);
 
         List<String> promotedRoles = jwtUtilities.getRoles(jwtTokenOtherUserPromotedAdmin);
@@ -751,10 +751,10 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newPasswordLogin)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        jwtToken = reloginResult.getResponse().getHeader("Authorization");
+        jwtToken = extractAuthCookieToken(reloginResult);
         assertNotNull(jwtToken, "JWT token should be returned after password change");
     }
 
@@ -880,10 +880,10 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        String demotedJwtToken = result.getResponse().getHeader("Authorization");
+        String demotedJwtToken = extractAuthCookieToken(result);
         assertNotNull(demotedJwtToken);
 
         List<String> demotedRoles = jwtUtilities.getRoles(demotedJwtToken);
@@ -1000,11 +1000,24 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andReturn();
 
-        adminJwtToken = result.getResponse().getHeader("Authorization");
+        adminJwtToken = extractAuthCookieToken(result);
         assertNotNull(adminJwtToken);
         return adminJwtToken;
+    }
+
+    private String findAuthCookieHeader(MvcResult result) {
+        return result.getResponse().getHeaders("Set-Cookie").stream()
+                .filter(header -> header != null && header.startsWith("CLOUDAPP_AUTH="))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String extractAuthCookieToken(MvcResult result) {
+        String authCookieHeader = findAuthCookieHeader(result);
+        assertNotNull(authCookieHeader, "Expected CLOUDAPP_AUTH Set-Cookie header");
+        return authCookieHeader.split(";", 2)[0].substring("CLOUDAPP_AUTH=".length());
     }
 }

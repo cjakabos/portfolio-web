@@ -5,7 +5,7 @@ import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
-export const useCart = (username: string, token: string) => {
+export const useCart = (username: string) => {
     const [cart, setCart] = useState<Cart>({id: 1, items: [], total: 0 });
     const [total, setTotal] = useState<any>(null); // Depending on API, might be string or obj
     const [history, setHistory] = useState<any[]>([]);

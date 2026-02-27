@@ -36,7 +36,6 @@ const Pets: React.FC = () => {
     e.preventDefault();
     
     // Call API directly since we don't have a createPet method in usePets hook
-    const userToken = typeof window !== 'undefined' ? `Bearer ${localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")}` || '' : '';
     const postData = {
       ...formData, 
       birthDate: new Date(formData.birthDate).toISOString()
@@ -45,8 +44,8 @@ const Pets: React.FC = () => {
     const axiosConfig = {
       headers: {
         'Content-Type': 'application/json;charset=UTF-8',
-        'Authorization': userToken
-      }
+      },
+      withCredentials: true,
     };
 
     try {

@@ -48,7 +48,6 @@ export default function ApprovalInterface({
 
   // FIX: Use persistent session ID if none provided
   const effectiveSessionId = sessionId || getPersistentSessionId();
-  const effectiveUserId = currentUserId || userId;
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +176,7 @@ export default function ApprovalInterface({
   const handleReject = async (requestId: string) => {
     setActionLoading(true);
     try {
-      await approvalClient.rejectAction(requestId, userId, 'Rejected by user');
+      await approvalClient.rejectAction(requestId, 'Rejected by user');
       setApprovals(prev => prev.filter(a => a.request_id !== requestId));
       setSelectedApproval(null);
       setNotification({ type: 'success', message: 'Action rejected' });
@@ -195,7 +194,7 @@ export default function ApprovalInterface({
     setResumeLoading(true);
     try {
       // First approve
-      await approvalClient.approveAction(requestId, userId, 'Approved and resumed');
+      await approvalClient.approveAction(requestId, 'Approved and resumed');
 
       // Get the original session ID from the approval request context
       const originalSessionId = (selectedApproval as ApprovalRequest)?.context?.session_id
@@ -206,7 +205,6 @@ export default function ApprovalInterface({
       // Then resume the workflow with the ORIGINAL session ID
       const response = await approvalClient.resumeAfterApproval(
         requestId,
-        userId,
         originalSessionId
       );
 
@@ -626,7 +624,7 @@ export default function ApprovalInterface({
                         <div>
                           <h4 className="text-xs text-gray-500 uppercase mb-1">Approved By</h4>
                           <p className="text-sm text-gray-900">
-                            User #{(effectiveSelectedApproval as ApprovalHistoryItem).approver_id}
+                            {(effectiveSelectedApproval as ApprovalHistoryItem).approver_id}
                           </p>
                         </div>
                       )}
@@ -738,9 +736,9 @@ export default function ApprovalInterface({
                       </p>
                     </div>
                     <div>
-                      <h4 className="text-xs text-gray-500 uppercase mb-1">Requester ID</h4>
+                      <h4 className="text-xs text-gray-500 uppercase mb-1">Requester</h4>
                       <p className="text-sm text-gray-900">
-                        User #{effectiveSelectedApproval.requester_id}
+                        {effectiveSelectedApproval.requester_id}
                       </p>
                     </div>
                   </div>

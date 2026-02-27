@@ -1,5 +1,6 @@
 import { type APIRequestContext, type Page } from "@playwright/test";
 import { test, expect } from "./fixtures/test-base";
+import { ensureAdminLoggedIn } from "./fixtures/helpers";
 
 const NIGHTLY_AI_E2E = process.env.NIGHTLY_AI_E2E === "1";
 const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
@@ -8,29 +9,6 @@ const CHAT_MODEL = process.env.NIGHTLY_CHAT_MODEL || "qwen3:1.7b";
 const RAG_MODEL = process.env.NIGHTLY_RAG_MODEL || CHAT_MODEL;
 const EMBEDDING_MODEL = process.env.NIGHTLY_EMBEDDING_MODEL || "qwen3-embedding:4b";
 const EMBEDDING_MODEL_BASE = EMBEDDING_MODEL.split(":")[0] || EMBEDDING_MODEL;
-const MONITOR_USERNAME = process.env.PW_ADMIN_USERNAME || "cloudadmin";
-
-function toBase64UrlJson(value: unknown): string {
-  return Buffer.from(JSON.stringify(value))
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
-function createFakeAdminJwt(username: string): string {
-  const header = toBase64UrlJson({ alg: "RS256", typ: "JWT" });
-  const payload = toBase64UrlJson({
-    iss: "cloudapp",
-    sub: username,
-    roles: ["ROLE_ADMIN", "ROLE_USER"],
-    exp: 4_102_444_800, // Jan 1, 2100 UTC
-  });
-  return `Bearer ${header}.${payload}.nightly-signature`;
-}
-
-const MONITOR_TOKEN = createFakeAdminJwt(MONITOR_USERNAME);
-
 interface CurrentModelSettings {
   chat_model: string;
   rag_model: string;
@@ -72,14 +50,7 @@ test.describe("Nightly AI Integration - Monitor", () => {
 
   test("sets chat/rag/embedding models from UI and persists in backend", async ({ page, request }) => {
     test.setTimeout(240_000);
-
-    await page.addInitScript(
-      ({ token, username }) => {
-        localStorage.setItem("AI_MONITOR_CLOUDAPP_TOKEN", token);
-        localStorage.setItem("AI_MONITOR_CLOUDAPP_USERNAME", username);
-      },
-      { token: MONITOR_TOKEN, username: MONITOR_USERNAME }
-    );
+    await ensureAdminLoggedIn(request, page);
 
     try {
       await fetchCurrentModels(request);

@@ -49,24 +49,7 @@ interface FormValues {
 // API configuration - adjust these for your environment
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:80';
 const API_PREFIX = '/mlops-segmentation';
-const TOKEN_STORAGE_KEY = 'NEXT_PUBLIC_MY_TOKEN';
-const BEARER_PREFIX = 'Bearer ';
-
-const getStoredAuthorizationToken = () => {
-    if (typeof window === 'undefined') return '';
-
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY)?.trim() || '';
-    if (!storedToken) return '';
-
-    return storedToken.startsWith(BEARER_PREFIX) ? storedToken : `${BEARER_PREFIX}${storedToken}`;
-};
-
-const getJsonAuthHeaders = () => {
-    const token = getStoredAuthorizationToken();
-    return token
-        ? { 'Content-Type': 'application/json', 'Authorization': token }
-        : { 'Content-Type': 'application/json' };
-};
+const getJsonHeaders = () => ({ 'Content-Type': 'application/json' });
 
 export function useCustomerSegmentation() {
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -88,7 +71,7 @@ export function useCustomerSegmentation() {
         try {
             const response = await fetch(`${API_BASE_URL}${API_PREFIX}/getMLInfo`, {
                 method: 'POST',
-                headers: getJsonAuthHeaders(),
+                headers: getJsonHeaders(),
                 credentials: 'include',
                 body: JSON.stringify({ sampleSize: size }),
             });
@@ -114,7 +97,7 @@ export function useCustomerSegmentation() {
         try {
             const response = await fetch(`${API_BASE_URL}${API_PREFIX}/getSegmentationCustomers`, {
                 method: 'GET',
-                headers: getJsonAuthHeaders(),
+                headers: getJsonHeaders(),
                 credentials: 'include',
             });
 
@@ -140,7 +123,7 @@ export function useCustomerSegmentation() {
         try {
             const response = await fetch(`${API_BASE_URL}${API_PREFIX}/addCustomer`, {
                 method: 'POST',
-                headers: getJsonAuthHeaders(),
+                headers: getJsonHeaders(),
                 credentials: 'include',
                 body: JSON.stringify({ fields: customerData }),
             });
