@@ -1,35 +1,31 @@
-import Axios from 'axios';
+import axios from 'axios';
 import { getCloudAppCsrfHeaders } from './cloudappCsrf';
 
-const api = Axios.create({
-  baseURL: 'http://localhost:80/cloudapp/',
-  withCredentials: true,
-});
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
 const authHeader = () => ({
-                                          'Content-Type': 'application/json;charset=UTF-8'
-                                      });
+    'Content-Type': 'application/json;charset=UTF-8'
+});
 
 export const chatHttpApi = {
   login: (username: string, password: string) =>
-    api.post('login', { username, password }),
+    axios.post(`${API_URL}/login`, { username, password }, { withCredentials: true }),
 
   createRoom: async (username: string, name: string) => {
     const csrfHeaders = await getCloudAppCsrfHeaders();
-    return api.post(
-      'room',
+    return axios.post(
+      `${API_URL}/room`,
       { name, username },
-      { headers: { ...authHeader(), ...csrfHeaders } }
+      { headers: { ...authHeader(), ...csrfHeaders }, withCredentials: true }
     );
   },
 
   findRoom: (code: string) =>
-    api.get(
-      `room/${code}`,
-      { headers: authHeader() }
+    axios.get(
+      `${API_URL}/room/${code}`,
+      { headers: authHeader(), withCredentials: true }
     ),
 
   getRooms: () =>
-    api.get(`room`, { headers: authHeader() }),
-
+    axios.get(`${API_URL}/room`, { headers: authHeader(), withCredentials: true }),
 };

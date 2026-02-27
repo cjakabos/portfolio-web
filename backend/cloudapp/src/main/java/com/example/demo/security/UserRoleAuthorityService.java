@@ -48,11 +48,14 @@ public class UserRoleAuthorityService {
             return List.of();
         }
 
+        LinkedHashSet<String> effectiveRoles = new LinkedHashSet<>();
+        effectiveRoles.addAll(getBootstrapRoleNamesForUsername(user.getUsername()));
+
         if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-            return normalizeRoleNames(user.getRoles());
+            effectiveRoles.addAll(normalizeRoleNames(user.getRoles()));
         }
 
-        return getBootstrapRoleNamesForUsername(user.getUsername());
+        return List.copyOf(effectiveRoles);
     }
 
     public List<String> normalizeRoleNames(Collection<String> roleNames) {

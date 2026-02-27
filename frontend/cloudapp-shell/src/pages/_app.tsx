@@ -1,16 +1,21 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import type { AppProps } from "next/app";
+import axios from 'axios';
 import Layout from "../components/Layout";
+import AccessDenied from "../components/AccessDenied";
 import '../styles/globals.css';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
+import { isTokenExpired, useAuth } from '../hooks/useAuth';
+import { allAuthedRoutes } from '../constants/routes';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const { isAdmin, isReady, isInitialized } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
@@ -37,12 +42,36 @@ function MyApp({ Component, pageProps }: AppProps) {
       setIsDark((prev) => !prev);
   };
 
+  // Axios interceptor — force logout on 401 or on network errors when the token is expired
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (router.pathname !== '/login') {
+          const token = localStorage.getItem('NEXT_PUBLIC_MY_TOKEN');
+          const is401 = error.response?.status === 401;
+          const isNetworkErrorWithExpiredToken =
+            !error.response && isTokenExpired(token);
+          if ((is401 || isNetworkErrorWithExpiredToken) && token) {
+            localStorage.removeItem('NEXT_PUBLIC_MY_TOKEN');
+            localStorage.removeItem('NEXT_PUBLIC_MY_USERNAME');
+            router.push('/login');
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => { axios.interceptors.response.eject(interceptor); };
+  }, [router]);
+
   // Auth Guard Logic
   useEffect(() => {
     if (isClient) {
       const user = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME');
-      // Added simple check to prevent loop if already on /login
-      if (!user && router.pathname !== '/login') {
+      const token = localStorage.getItem('NEXT_PUBLIC_MY_TOKEN');
+      if ((!user || isTokenExpired(token)) && router.pathname !== '/login') {
+        localStorage.removeItem('NEXT_PUBLIC_MY_TOKEN');
+        localStorage.removeItem('NEXT_PUBLIC_MY_USERNAME');
         router.push('/login');
       }
     }
@@ -50,6 +79,34 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   // Prevent hydration mismatch
   if (!isClient) return null;
+
+  // Check route permissions
+  const currentRoute = allAuthedRoutes.find(r => 
+    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
+  );
+  const isAdminRoute = Boolean(currentRoute?.adminOnly);
+  const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
+
+  // For admin-only routes, avoid rendering the route component until auth state
+  // is initialized. This prevents remote modules from loading before RBAC can
+  // show Access Denied (or redirect unauthenticated users).
+  if (isAdminRoute && !isInitialized) {
+    return null;
+  }
+
+  if (isAdminRoute && !isReady) {
+    return null;
+  }
+
+  if (isAccessDenied) {
+    return (
+      <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+        <Layout>
+          <AccessDenied />
+        </Layout>
+      </ThemeContext.Provider>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>

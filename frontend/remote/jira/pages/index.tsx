@@ -765,7 +765,7 @@ const CloudJira: React.FC = () => {
   }
 
   return (
-    <div className={`flex flex-col h-[calc(100vh-2rem)] w-full max-w-[1920px] mx-auto px-4 sm:px-6 py-4 overflow-hidden ${isResizing ? 'cursor-col-resize select-none' : ''}`}>
+    <div className={`flex flex-col h-full w-full max-w-[1920px] mx-auto px-4 sm:px-6 py-4 overflow-hidden ${isResizing ? 'cursor-col-resize select-none' : ''}`}>
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden h-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
 
         {/* 1. Jira Board (Left/Top Pane) */}
@@ -1189,7 +1189,7 @@ const CloudJira: React.FC = () => {
                       return (
                         <div key={i} className={baseClasses}>
                           <div className={avatarClasses}><User size={16} /></div>
-                          <div className={`${bubbleClasses} bg-green-300 dark:bg-green-300 text-black dark:text-white rounded-tr-none`}>{part.text}</div>
+                          <div className={`${bubbleClasses} bg-green-300 dark:bg-green-300 text-black dark:text-black rounded-tr-none`}>{part.text}</div>
                         </div>
                       );
                     }
@@ -1198,7 +1198,7 @@ const CloudJira: React.FC = () => {
                       return (
                         <div key={i} className={baseClasses}>
                           <div className={avatarClasses}><Bot size={16} /></div>
-                          <details open className={`${bubbleClasses} bg-blue-300 dark:bg-blue-300 text-gray-900 dark:text-white rounded-tl-none`}>
+                          <details open className={`${bubbleClasses} bg-blue-300 dark:bg-blue-300 text-gray-900 dark:text-black rounded-tl-none`}>
                             <summary className="font-semibold cursor-pointer mb-2">Reasoning</summary>
                             {part.text}
                           </details>
@@ -1272,10 +1272,10 @@ const CloudJira: React.FC = () => {
 
             {/* Chat Input */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
-              <form onSubmit={handleChatSubmit} className="relative">
+              <form className="shrink-0 border-t p-3" onSubmit={handleChatSubmit}>
                 <input
                   type="text"
-                  className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-full px-4 md:px-6 py-3 pr-12 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white placeholder-gray-500 text-sm md:text-base disabled:opacity-50"
+                  className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-full px-4 md:px-6 py-3 pr-14 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white placeholder-gray-500 text-sm md:text-base disabled:opacity-50"
                   placeholder={modelsError ? "Fix Ollama setup to enable chat" : "Message GPT..."}
                   value={input}
                   onChange={e => setInput(e.target.value)}
@@ -1284,7 +1284,7 @@ const CloudJira: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!input.trim() || !selectedModel || !!modelsError || status !== 'ready'}
-                  className="absolute right-2 top-2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition"
                 >
                   <Send size={18} />
                 </button>

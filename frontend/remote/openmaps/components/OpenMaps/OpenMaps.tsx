@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin, Plus, Trash2, Edit, X, CarFront } from 'lucide-react';
 import {
     MapContainer,
@@ -12,12 +12,13 @@ import {
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Import Hook (assuming this is safe)
-import { useVehicleMap, Vehicle } from '../../hooks/useVehiclesMap';
+import { useVehicleMap } from '../../hooks/useVehiclesMap';
+import type { VehicleFormData } from '../../hooks/useVehiclesMap';
 
-// Create icon outside component to avoid recreation on each render
+// Resolve icon URL: use the remote's origin when mounted in the shell, fall back to relative path for standalone
+const OPENMAPS_BASE = process.env.NEXT_PUBLIC_REMOTE_OPENMAPS_URL || '';
 const iconCar = L.icon({
-    iconUrl: 'http://localhost:5002/icons/voyager.png',
+    iconUrl: `${OPENMAPS_BASE}/icons/voyager.png`,
     iconSize: [40, 40],
     iconAnchor: [20, 20],
     popupAnchor: [0, -20]
@@ -38,6 +39,11 @@ export default function CloudMaps() {
         formMode,
         formData,
         setFormData,
+        manufacturers,
+        bodyOptions,
+        fuelTypeOptions,
+        submitting,
+        formError,
         handleFormSubmit,
         handleMapClick,
         deleteVehicle,
@@ -45,8 +51,37 @@ export default function CloudMaps() {
         openEdit
     } = useVehicleMap();
 
+    const inputClassName = "w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none";
+    const labelClassName = "text-xs font-semibold text-gray-500 uppercase";
+    const coordInputClassName = "w-full p-2 border rounded-lg bg-gray-100 text-gray-700 font-mono text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100";
+
+    const updateField = <K extends keyof VehicleFormData,>(key: K, value: VehicleFormData[K]) => {
+        setFormData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const updateNumberField = (
+        key: 'manufacturerCode' | 'numberOfDoors' | 'mileage' | 'modelYear' | 'productionYear' | 'lat' | 'lon',
+        value: string
+    ) => {
+        const parsed = Number(value);
+
+        if (Number.isNaN(parsed)) {
+            return;
+        }
+
+        updateField(key, parsed as VehicleFormData[typeof key]);
+    };
+
+    const bodySelectOptions = bodyOptions.includes(formData.body as (typeof bodyOptions)[number])
+        ? bodyOptions
+        : [formData.body, ...bodyOptions];
+
+    const fuelTypeSelectOptions = fuelTypeOptions.includes(formData.fuelType as (typeof fuelTypeOptions)[number])
+        ? fuelTypeOptions
+        : [formData.fuelType, ...fuelTypeOptions];
+
     return (
-        <div className="h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-6 p-4">
+        <div className="h-full flex flex-col lg:flex-row gap-6 p-4">
 
             {/* --- LEFT: Sidebar / List --- */}
             <div className="w-full lg:w-1/3 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -143,7 +178,7 @@ export default function CloudMaps() {
             {/* --- MODAL --- */}
             {showModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md shadow-2xl transform transition-all">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl transform transition-all">
                         <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-gray-700">
                             <h3 className="font-bold text-xl text-gray-900 dark:text-white">{formMode === 'CREATE' ? 'Add Vehicle' : 'Edit Vehicle'}</h3>
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -151,62 +186,203 @@ export default function CloudMaps() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase">Manufacturer</label>
-                                    <input className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                           placeholder="e.g. Volvo"
-                                           value={formData.manufacturer}
-                                           onChange={e => setFormData({...formData, manufacturer: e.target.value})}
-                                           required />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase">Model</label>
-                                    <input className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                           placeholder="e.g. V60"
-                                           value={formData.model}
-                                           onChange={e => setFormData({...formData, model: e.target.value})}
-                                           required />
-                                </div>
+                        <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
+                            <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white dark:border-blue-900">
+                                Manufacturer options are limited to backend-supported values.
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {formError && (
+                                <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 dark:bg-red-950/30 dark:text-red-200 dark:border-red-900">
+                                    {formError}
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase">Color</label>
-                                    <input className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                           placeholder="e.g. Silver"
-                                           value={formData.color}
-                                           onChange={e => setFormData({...formData, color: e.target.value})}
-                                           required />
+                                    <label className={labelClassName}>Manufacturer</label>
+                                    <select
+                                        className={inputClassName}
+                                        value={formData.manufacturerCode}
+                                        onChange={e => updateNumberField('manufacturerCode', e.target.value)}
+                                        required
+                                    >
+                                        {manufacturers.map(manufacturer => (
+                                            <option key={manufacturer.code} value={manufacturer.code}>
+                                                {manufacturer.name} ({manufacturer.code})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase">Condition</label>
-                                    <select className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            value={formData.condition}
-                                            onChange={e => setFormData({...formData, condition: e.target.value})}>
+                                    <label className={labelClassName}>Model</label>
+                                    <input
+                                        className={inputClassName}
+                                        placeholder="e.g. Impala"
+                                        value={formData.model}
+                                        onChange={e => updateField('model', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Condition</label>
+                                    <select
+                                        className={inputClassName}
+                                        value={formData.condition}
+                                        onChange={e => updateField('condition', e.target.value as VehicleFormData['condition'])}
+                                    >
                                         <option value="NEW">New</option>
                                         <option value="USED">Used</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="pt-2">
-                                <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Location (Lat / Lon)</label>
-                                <div className="flex gap-2">
-                                    <input type="number" step="0.000001" className="w-full p-2 border rounded-lg bg-gray-100 text-gray-600 font-mono text-sm"
-                                           value={formData.lat}
-                                           onChange={e => setFormData({...formData, lat: Number(e.target.value)})}
-                                           required />
-                                    <input type="number" step="0.000001" className="w-full p-2 border rounded-lg bg-gray-100 text-gray-600 font-mono text-sm"
-                                           value={formData.lon}
-                                           onChange={e => setFormData({...formData, lon: Number(e.target.value)})}
-                                           required />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Body</label>
+                                    <select
+                                        className={inputClassName}
+                                        value={formData.body}
+                                        onChange={e => updateField('body', e.target.value)}
+                                        required
+                                    >
+                                        {bodySelectOptions.map(body => (
+                                            <option key={body} value={body}>
+                                                {body.charAt(0).toUpperCase() + body.slice(1)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Exterior Color</label>
+                                    <input
+                                        className={inputClassName}
+                                        placeholder="e.g. White"
+                                        value={formData.color}
+                                        onChange={e => updateField('color', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Fuel Type</label>
+                                    <select
+                                        className={inputClassName}
+                                        value={formData.fuelType}
+                                        onChange={e => updateField('fuelType', e.target.value)}
+                                        required
+                                    >
+                                        {fuelTypeSelectOptions.map(fuelType => (
+                                            <option key={fuelType} value={fuelType}>{fuelType}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
-                            <button className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium shadow-lg shadow-blue-600/30 transition-all mt-2">
-                                {formMode === 'CREATE' ? 'Create Vehicle' : 'Save Changes'}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-1 md:col-span-1">
+                                    <label className={labelClassName}>Engine</label>
+                                    <input
+                                        className={inputClassName}
+                                        placeholder="e.g. 3.6L V6"
+                                        value={formData.engine}
+                                        onChange={e => updateField('engine', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Doors</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={8}
+                                        step={1}
+                                        className={inputClassName}
+                                        value={formData.numberOfDoors}
+                                        onChange={e => updateNumberField('numberOfDoors', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Mileage</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={2000000}
+                                        step={1}
+                                        className={inputClassName}
+                                        value={formData.mileage}
+                                        onChange={e => updateNumberField('mileage', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Model Year</label>
+                                    <input
+                                        type="number"
+                                        min={1886}
+                                        max={2100}
+                                        step={1}
+                                        className={inputClassName}
+                                        value={formData.modelYear}
+                                        onChange={e => updateNumberField('modelYear', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className={labelClassName}>Production Year</label>
+                                    <input
+                                        type="number"
+                                        min={1886}
+                                        max={2100}
+                                        step={1}
+                                        className={inputClassName}
+                                        value={formData.productionYear}
+                                        onChange={e => updateNumberField('productionYear', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-1">
+                                <label className={`${labelClassName} block mb-1`}>Location (Lat / Lon)</label>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <input
+                                        type="number"
+                                        min={-90}
+                                        max={90}
+                                        step="0.000001"
+                                        className={coordInputClassName}
+                                        value={formData.lat}
+                                        onChange={e => updateNumberField('lat', e.target.value)}
+                                        required
+                                    />
+                                    <input
+                                        type="number"
+                                        min={-180}
+                                        max={180}
+                                        step="0.000001"
+                                        className={coordInputClassName}
+                                        value={formData.lon}
+                                        onChange={e => updateNumberField('lon', e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className={`w-full text-white py-2.5 rounded-lg font-medium shadow-lg transition-all mt-2 ${
+                                    submitting
+                                        ? 'bg-blue-400 shadow-blue-400/20 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/30'
+                                }`}
+                            >
+                                {submitting
+                                    ? (formMode === 'CREATE' ? 'Creating Vehicle...' : 'Saving Changes...')
+                                    : (formMode === 'CREATE' ? 'Create Vehicle' : 'Save Changes')}
                             </button>
                         </form>
                     </div>

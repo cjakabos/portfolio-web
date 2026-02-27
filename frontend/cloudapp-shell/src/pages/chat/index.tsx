@@ -96,12 +96,10 @@ const Chat: React.FC = () => {
       }
 
       setNewRoomName('');
-      fetchRooms(username);
 
-      // Connect to WebSocket for the new room and navigate to it
+      // Navigate to the new room — the room page handles its own WebSocket connection
       if (res.data.data.code) {
-        connectSocket(res.data.data.code, username, true);
-        router.push(`/chat/rooms/${res.data.data.code}`);
+        router.push(`/chat/rooms/${res.data.data.code}?created=true`);
       }
     } catch (err) {
       setError('Failed to create room');

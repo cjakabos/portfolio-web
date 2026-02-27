@@ -22,6 +22,7 @@ import type {
   ApprovalStats,
   OrchestrationResponse,
   ToolDiscoveryResponse,
+  OllamaStatusResponse,
   WebSocketStreamMessage,
 } from '../types';
 
@@ -687,6 +688,9 @@ export function useStreaming({
   const [currentStreamingContent, setCurrentStreamingContent] = useState('');
   const [pendingApproval, setPendingApproval] = useState<ApprovalRequest | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const STREAMING_RECONNECT_DELAYS_MS = [800, 2000, 5000];
 
   // Store callbacks in refs to avoid dependency changes triggering reconnects
   const callbacksRef = useRef({
@@ -773,7 +777,10 @@ export function useStreaming({
 
   // Connect to WebSocket
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
       return;
     }
 
@@ -795,7 +802,10 @@ export function useStreaming({
       );
 
       wsRef.current = ws;
-      setIsConnected(true);
+      ws.addEventListener('open', () => {
+        setIsConnected(true);
+        reconnectAttemptRef.current = 0;
+      });
     } catch (err) {
       console.error('Failed to connect WebSocket:', err);
       setIsConnected(false);
@@ -803,6 +813,10 @@ export function useStreaming({
   }, [handleMessage]);
 
   const disconnect = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
     orchestrationClient.closeWebSocket();
     wsRef.current = null;
     setIsConnected(false);
@@ -888,6 +902,46 @@ export function useStreaming({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoConnect]); // Intentionally omit connect/disconnect to prevent loops
 
+  // Bounded auto-reconnect when the initial connect races backend startup.
+  useEffect(() => {
+    if (!autoConnect) return;
+
+    if (isConnected) {
+      reconnectAttemptRef.current = 0;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
+      return;
+    }
+
+    if (reconnectAttemptRef.current >= STREAMING_RECONNECT_DELAYS_MS.length) {
+      return;
+    }
+
+    const delay = STREAMING_RECONNECT_DELAYS_MS[reconnectAttemptRef.current];
+    reconnectAttemptRef.current += 1;
+
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null;
+      connect();
+    }, delay);
+
+    return () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    };
+  }, [autoConnect, isConnected, connect]);
+
   return {
     isConnected,
     isStreaming,
@@ -940,6 +994,38 @@ export function useTools() {
     invoking,
     invokeError,
   };
+}
+
+// =============================================================================
+// OLLAMA STATUS HOOK
+// =============================================================================
+
+export function useOllamaStatus() {
+  const [status, setStatus] = useState<OllamaStatusResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const checkStatus = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await orchestrationClient.getOllamaStatus();
+      setStatus(result);
+    } catch (err) {
+      // If the backend itself is down, we get a network/502 error
+      if (err instanceof NetworkError || (err instanceof ApiError && err.status === 502)) {
+        setStatus({ connected: false, error: 'backend_offline', models: [] });
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to check Ollama status';
+        setError(message);
+        setStatus({ connected: false, error: 'connection_failed', models: [] });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { status, isLoading, error, checkStatus };
 }
 
 // =============================================================================

@@ -8,6 +8,8 @@ import {
   apiLogin,
   injectAuth,
   uiRegister,
+  ensureAdminLoggedIn,
+  ADMIN_TEST_USER,
 } from "./fixtures/helpers";
 
 async function clearAuthState(page: import("@playwright/test").Page) {
@@ -188,6 +190,72 @@ test.describe("Authentication Flow", () => {
 
       await page.goto("/shop");
       await expect(page).toHaveURL(/\/shop/, { timeout: 15_000 });
+    });
+  });
+
+  // =========================================================================
+  // RBAC — Admin-Only Routes
+  // =========================================================================
+
+  test.describe("RBAC — Admin-Only Routes", () => {
+    const adminPaths = ["/petstore", "/jira", "/mlops"];
+
+    test("should show Access Denied for non-admin users on admin routes", async ({ page, request }) => {
+      await apiRegister(request, uniqueUser, password);
+      const token = await apiLogin(request, uniqueUser, password);
+      if (token) await injectAuth(page, token, uniqueUser);
+
+      for (const path of adminPaths) {
+        await page.goto(path);
+        await page.waitForLoadState("domcontentloaded");
+        try {
+          await expect(page.getByText("Access Denied")).toBeVisible({ timeout: 15_000 });
+        } catch (error) {
+          const bodyText = ((await page.locator("body").textContent().catch(() => "")) || "")
+            .replace(/\s+/g, " ")
+            .slice(0, 500);
+          throw new Error(
+            `Expected Access Denied on ${path}, url=${page.url()}, body="${bodyText}"`,
+            { cause: error }
+          );
+        }
+      }
+    });
+
+    test("should hide admin nav links for non-admin users", async ({ page, request }) => {
+      await apiRegister(request, uniqueUser, password);
+      const token = await apiLogin(request, uniqueUser, password);
+      if (token) await injectAuth(page, token, uniqueUser);
+
+      await page.goto("/");
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
+
+      for (const label of ["PetStore", "Jira", "MLOps"]) {
+        await expect(page.locator(`header >> text="${label}"`)).toBeHidden();
+      }
+    });
+
+    test("should allow admin users to access admin routes", async ({ page, request }) => {
+      await ensureAdminLoggedIn(request, page);
+
+      for (const path of adminPaths) {
+        await page.goto(path);
+        await page.waitForLoadState("domcontentloaded");
+        await expect(page.getByText("Access Denied")).not.toBeVisible({ timeout: 10_000 });
+      }
+    });
+
+    test("should show admin nav links for admin users", async ({ page, request }) => {
+      await ensureAdminLoggedIn(request, page);
+
+      await page.goto("/");
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
+
+      for (const label of ["PetStore", "Jira", "MLOps"]) {
+        await expect(page.locator(`header >> text="${label}"`)).toBeVisible();
+      }
     });
   });
 

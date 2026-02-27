@@ -6,6 +6,7 @@
     "dev": "rm -rf .next; NEXT_PRIVATE_LOCAL_WEBPACK=true next dev -p 5001",
     "build": "set NEXT_PRIVATE_LOCAL_WEBPACK=true && next build",
     "start": "set NEXT_PRIVATE_LOCAL_WEBPACK=true && next start -p 5001",
+    "test": "jest",
     "format": "prettier --write .",
     "lint": "next lint",
     "playwright:test": "NODE_PATH=./node_modules npx playwright test -c ../../playwright.config.ts",

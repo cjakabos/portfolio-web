@@ -58,6 +58,10 @@ const getApiBaseUrl = (): string => {
 
 const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
+// Ollama can be up while the orchestration layer still reports it as disconnected
+// during app startup. Retry a couple of times on the initial mount to avoid a
+// false "offline" state that only resolves after manual refresh.
+const OLLAMA_BOOTSTRAP_RETRY_DELAYS_MS = [500, 1500];
 
 const sleep = async (ms: number): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -149,10 +153,19 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
     maxAttempts: number = 3
   ): Promise<Response> => {
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const response = await fetch(url, {
-        ...options,
-        headers: buildHeaders(options.headers),
-      });
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          ...options,
+          headers: buildHeaders(options.headers),
+        });
+      } catch (err) {
+        if (attempt < maxAttempts - 1) {
+          await sleep(getRetryDelayMs(attempt));
+          continue;
+        }
+        throw err;
+      }
 
       if (response.ok) {
         return response;
@@ -170,26 +183,42 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
     throw new Error('Request retries exhausted');
   }, [buildHeaders]);
 
-  // Fetch available models from Ollama
-  const fetchModels = useCallback(async () => {
+  const fetchModelsInternal = useCallback(async (bootstrapRetry: boolean) => {
     setIsLoading(true);
     setError(null);
 
+    const retryDelays = bootstrapRetry ? OLLAMA_BOOTSTRAP_RETRY_DELAYS_MS : [];
+
     try {
-      const response = await fetchWithRetry(`${apiBaseUrl}/llm/models`);
+      for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+        const response = await fetchWithRetry(`${apiBaseUrl}/llm/models`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
 
-      const data: OllamaModelsResponse = await response.json();
+        const data: OllamaModelsResponse = await response.json();
 
-      setModels(data.models);
-      setOllamaUrl(data.ollama_url);
-      setIsConnected(data.connected);
+        setModels(data.models);
+        setOllamaUrl(data.ollama_url);
+        setIsConnected(data.connected);
 
-      if (!data.connected && data.error) {
-        setError(data.error);
+        if (data.connected) {
+          setError(null);
+          return;
+        }
+
+        // On the initial load, give the backend a short window to finish
+        // establishing its Ollama connection before surfacing "offline".
+        if (attempt < retryDelays.length) {
+          await sleep(retryDelays[attempt]);
+          continue;
+        }
+
+        if (data.error) {
+          setError(data.error);
+        }
+        return;
       }
     } catch (err) {
       console.error('Failed to fetch Ollama models:', err);
@@ -199,6 +228,11 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
       setIsLoading(false);
     }
   }, [apiBaseUrl, fetchWithRetry]);
+
+  // Fetch available models from Ollama
+  const fetchModels = useCallback(async () => {
+    await fetchModelsInternal(false);
+  }, [fetchModelsInternal]);
 
   // Fetch current model settings
   const fetchCurrentSettings = useCallback(async () => {
@@ -253,10 +287,10 @@ export function useOllamaModels(options: UseOllamaModelsOptions = {}): UseOllama
   // Auto-fetch on mount
   useEffect(() => {
     if (autoFetch) {
-      fetchModels();
+      fetchModelsInternal(true);
       fetchCurrentSettings();
     }
-  }, [autoFetch, fetchModels, fetchCurrentSettings]);
+  }, [autoFetch, fetchModelsInternal, fetchCurrentSettings]);
 
   // Polling
   useEffect(() => {

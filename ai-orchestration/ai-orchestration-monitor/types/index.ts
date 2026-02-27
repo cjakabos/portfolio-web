@@ -310,6 +310,13 @@ export interface ResumeResponse {
   error?: string;
 }
 
+export interface AuthResponse {
+  username: string;
+  token: string;
+  message?: string;
+  success?: boolean;
+}
+
 // Orchestration
 export interface OrchestrationRequest {
   message: string;
@@ -369,6 +376,12 @@ export interface ToolInvocationResponse {
   result: unknown;
   latency_ms: number;
   error?: string;
+}
+
+export interface OllamaStatusResponse {
+  connected: boolean;
+  error: string | null;
+  models: string[];
 }
 
 // =============================================================================
@@ -441,6 +454,11 @@ export interface CloudAppUser {
   id: number;
   username: string;
   created_at?: string;
+}
+
+export interface CloudAppRoleUpdateResponse {
+  username: string;
+  roles: string[];
 }
 
 export interface CloudAppItem {

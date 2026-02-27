@@ -32,13 +32,12 @@ class AgentExecutor(BaseCapability):
         self.tool_manager = get_tool_manager()
         self.logger = get_logger()
 
-        # Initialize specialized agents (using shared tools from tool manager)
-        # Note: These are created once. If you need dynamic model switching for agents,
-        # you would need to recreate these on model change.
+        # Agents are lazy-initialized on first use so the backend can start
+        # even when Ollama is offline. They get created in _get_or_create_agent().
         self.agents: Dict[AgentType, Optional[LangChainAgentExecutor]] = {
-            "shop": self._create_shop_agent(),
-            "petstore": self._create_petstore_agent(),
-            "vehicle": self._create_vehicle_agent(),
+            "shop": None,
+            "petstore": None,
+            "vehicle": None,
             "none": None
         }
 
@@ -56,13 +55,76 @@ class AgentExecutor(BaseCapability):
             "shop_tools_count": len(shop_tools),
             "petstore_tools_count": len(self.tool_manager.get_tools_for_agent("petstore")),
             "vehicle_tools_count": len(self.tool_manager.get_tools_for_agent("vehicle")),
-            "total_tools": len(self.tool_manager.registry.get_all_tools())
+            "total_tools": len(self.tool_manager.registry.get_all_tools()),
+            "agents_lazy": True
         })
 
     # Helper to get the current LLM dynamically
     @property
     def current_llm(self):
         return self.llm_manager.get_chat_llm()
+
+    def _get_or_create_agent(self, agent_type: AgentType) -> LangChainAgentExecutor:
+        """
+        Lazily create an agent on first use. This allows the backend to start
+        even when Ollama is offline — agents are only created when actually needed.
+
+        Raises:
+            CapabilityError: If Ollama is not reachable or no models are available.
+        """
+        if agent_type == "none":
+            raise CapabilityError(
+                message="No agent matched the query",
+                capability_name=self.capability_name,
+                error_code="NO_AGENT_MATCH",
+                recoverable=False,
+            )
+
+        agent = self.agents.get(agent_type)
+        if agent is not None:
+            return agent
+
+        # Try to create the agent (requires Ollama to be reachable)
+        try:
+            creators = {
+                "shop": self._create_shop_agent,
+                "petstore": self._create_petstore_agent,
+                "vehicle": self._create_vehicle_agent,
+            }
+            creator = creators.get(agent_type)
+            if creator is None:
+                raise CapabilityError(
+                    message=f"Unknown agent type: {agent_type}",
+                    capability_name=self.capability_name,
+                    error_code="UNKNOWN_AGENT_TYPE",
+                    recoverable=False,
+                )
+
+            agent = creator()
+            self.agents[agent_type] = agent
+            self.logger.info("agent_lazy_created", {"agent_type": agent_type})
+            return agent
+
+        except ValueError as e:
+            # Raised by llm_manager when Ollama is unreachable or has no models
+            raise CapabilityError(
+                message=(
+                    "Cannot create agent: Ollama is not running or has no models installed. "
+                    "Please start Ollama and install a model (e.g. 'ollama pull qwen3:1.7b')."
+                ),
+                capability_name=self.capability_name,
+                error_code="OLLAMA_UNAVAILABLE",
+                recoverable=True,
+                original_error=e,
+            )
+        except Exception as e:
+            raise CapabilityError(
+                message=f"Failed to create agent '{agent_type}': {str(e)}",
+                capability_name=self.capability_name,
+                error_code=f"AGENT_{agent_type.upper()}_CREATION_ERROR",
+                recoverable=True,
+                original_error=e,
+            )
 
     def _create_shop_agent(self) -> LangChainAgentExecutor:
         """
@@ -216,7 +278,8 @@ CRITICAL INSTRUCTIONS:
         if agent_type == "none":
             return self._handle_no_agent_match(query)
 
-        agent = self.agents[agent_type]
+        # Lazy-create the agent (handles Ollama offline gracefully)
+        agent = self._get_or_create_agent(agent_type)
         if not agent:
             raise CapabilityError(
                 message=f"Agent '{agent_type}' not initialized",

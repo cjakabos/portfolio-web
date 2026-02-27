@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 
 const TOKEN_STORAGE_KEY = "NEXT_PUBLIC_MY_TOKEN";
 const USERNAME_STORAGE_KEY = "NEXT_PUBLIC_MY_USERNAME";
@@ -15,6 +16,22 @@ const decodeBase64Url = (value: string) => {
     const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
     if (typeof atob !== "function") return "";
     return atob(padded);
+};
+
+export const isTokenExpired = (storedToken: string | null): boolean => {
+    if (!storedToken) return true;
+    const rawToken = storedToken.startsWith(BEARER_PREFIX)
+        ? storedToken.slice(BEARER_PREFIX.length)
+        : storedToken;
+    const parts = rawToken.split(".");
+    if (parts.length < 2) return true;
+    try {
+        const payload = JSON.parse(decodeBase64Url(parts[1]));
+        if (typeof payload?.exp !== "number") return true;
+        return Date.now() >= payload.exp * 1000;
+    } catch {
+        return true;
+    }
 };
 
 const extractRolesFromToken = (authorizationToken: string) => {
@@ -39,6 +56,8 @@ export const useAuth = () => {
     const [username, setUsername] = useState("");
     const [roles, setRoles] = useState<string[]>([]);
     const [isReady, setIsReady] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -48,10 +67,11 @@ export const useAuth = () => {
             setUsername(u);
             setRoles(extractRolesFromToken(t));
             setIsReady(!!(t && u));
+            setIsInitialized(true);
         }
-    }, []);
+    }, [router.asPath]);
 
     const isAdmin = roles.includes("ROLE_ADMIN");
 
-    return { token, username, roles, isAdmin, isReady };
+    return { token, username, roles, isAdmin, isReady, isInitialized };
 };

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 
 // Define the shape of the data
@@ -12,7 +11,6 @@ export interface RegisterValues {
 }
 
 export const useRegister = () => {
-    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [errorType, setErrorType] = useState<"PASSWORD_MISMATCH" | "API_ERROR" | null>(null);
 

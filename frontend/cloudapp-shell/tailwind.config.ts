@@ -12,6 +12,41 @@ module.exports = {
       'md:flex', 'md:hidden',
 
       // ===========================================
+      // REMOTE MICROFRONTEND CLASSES — Chat (ChatLLM / Jira)
+      // ===========================================
+      // Bubble backgrounds
+      'bg-green-300', 'dark:bg-green-300',   // user message
+      'bg-blue-300', 'dark:bg-blue-300',     // AI reasoning
+      'bg-gray-300',                          // AI response
+      'bg-green-600',                         // AI avatar
+      // Bubble text
+      'text-black',
+      // Bubble shape & layout
+      'flex-row-reverse',
+      'rounded-2xl', 'rounded-tr-none', 'rounded-tl-none',
+      'max-w-[80%]', 'max-w-[85%]',
+      'leading-relaxed',
+      'shrink-0',
+      'w-8', 'h-8',
+      'w-2', 'h-2',
+      'animate-bounce', 'animate-spin',
+      // Alert colors (ChatLLM / Jira error states)
+      'dark:bg-red-900/20', 'border-red-200', 'dark:border-red-800',
+      'bg-amber-50', 'dark:bg-amber-900/20', 'border-amber-200', 'dark:border-amber-800',
+      'dark:bg-blue-900/20', 'border-blue-200', 'dark:border-blue-800',
+      'text-red-800', 'dark:text-red-200', 'text-amber-800', 'dark:text-amber-200',
+      'text-blue-800', 'dark:text-blue-200',
+      'dark:text-red-400', 'text-amber-600', 'dark:text-amber-400',
+      'dark:text-blue-400',
+      'bg-red-100', 'dark:bg-red-800', 'dark:bg-red-700',
+      'dark:bg-green-900/30', 'text-green-600', 'dark:text-green-400',
+      'dark:text-green-300',
+      'bg-amber-600', 'hover:bg-amber-700',
+      'bg-purple-100', 'dark:bg-purple-800', 'text-purple-700', 'dark:text-purple-300',
+      'bg-green-800', 'dark:bg-green-800', 'bg-blue-800', 'dark:bg-blue-800',
+      'text-blue-700', 'dark:text-blue-300',
+
+      // ===========================================
       // REMOTE MICROFRONTEND CLASSES (OpenMaps/Fleet Manager)
       // ===========================================
       'lg:flex-row',

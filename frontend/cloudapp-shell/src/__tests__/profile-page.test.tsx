@@ -4,6 +4,17 @@ import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import CloudProfile from "../pages/profile";
 
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    asPath: "/profile",
+    pathname: "/profile",
+    events: { on: jest.fn(), off: jest.fn() },
+  }),
+}));
+
 const API_URL = "http://localhost:80/cloudapp";
 
 const makeJwt = (roles: string[]) => {

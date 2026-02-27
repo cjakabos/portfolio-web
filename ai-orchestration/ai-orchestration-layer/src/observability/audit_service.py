@@ -78,7 +78,7 @@ class AuditService:
         metadata: Optional[Dict[str, Any]] = None,
     ):
         """Insert a single audit record. Fire-and-forget -- never raises."""
-        if not self._enabled or not self._collection:
+        if not self._enabled or self._collection is None:
             return
 
         doc = {

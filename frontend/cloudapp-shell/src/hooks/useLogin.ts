@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import { ensureCloudAppCsrfToken } from "./cloudappCsrf";
 
@@ -21,7 +20,6 @@ interface LoginValues {
 }
 
 export const useLogin = () => {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

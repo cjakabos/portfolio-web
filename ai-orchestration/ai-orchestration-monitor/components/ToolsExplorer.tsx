@@ -4,13 +4,13 @@
 // Fully integrated with backend - no mock data
 // =============================================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Wrench, Search, Play, Code, ChevronRight, ChevronDown,
   AlertCircle, CheckCircle, Clock, Loader2, RefreshCw,
   FileJson, Settings, Zap, BookOpen
 } from 'lucide-react';
-import { useTools } from '../hooks/useOrchestrationHooks';
+import { useTools, useOllamaStatus } from '../hooks/useOrchestrationHooks';
 import type { ToolInfo, ToolInvocationResponse } from '../types';
 
 interface ToolsExplorerProps {
@@ -36,6 +36,21 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
     invoking,
     invokeError
   } = useTools();
+
+  // Ollama status check — triggered when tools fail to load
+  const { status: ollamaStatus, isLoading: ollamaChecking, checkStatus: checkOllama } = useOllamaStatus();
+
+  useEffect(() => {
+    if (error) {
+      checkOllama();
+    }
+  }, [error, checkOllama]);
+
+  const handleRetry = useCallback(async () => {
+    await refresh();
+    // Re-check Ollama status after retry
+    checkOllama();
+  }, [refresh, checkOllama]);
 
   // Filter tools
   const filteredTools = tools.filter(tool => {
@@ -159,8 +174,118 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
         </div>
       )}
 
-      {/* Error Banner */}
-      {error && (
+      {/* Error Banner — Ollama-aware */}
+      {error && ollamaStatus?.error === 'backend_offline' && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center text-red-700">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            <span className="font-medium">AI Backend is not running</span>
+          </div>
+          <p className="text-sm text-red-600 mt-2">
+            The AI orchestration backend is offline. This usually means Ollama was not running when the backend started.
+          </p>
+          <div className="mt-3 bg-white rounded-lg p-4 border border-red-200 text-sm">
+            <p className="font-semibold text-gray-800 mb-2">To fix this:</p>
+            <ol className="list-decimal ml-4 space-y-1 text-gray-700">
+              <li>Start Ollama: <code className="bg-gray-100 px-1 rounded">ollama serve</code></li>
+              <li>Ensure a model is installed: <code className="bg-gray-100 px-1 rounded">ollama pull qwen3:1.7b</code></li>
+              <li>Restart the AI backend container: <code className="bg-gray-100 px-1 rounded">docker compose -f docker-compose-app.yml restart ai-orchestration-layer</code></li>
+            </ol>
+          </div>
+          <button
+            onClick={handleRetry}
+            disabled={isLoading || ollamaChecking}
+            className="mt-3 flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading || ollamaChecking ? 'animate-spin' : ''}`} />
+            {isLoading || ollamaChecking ? 'Checking...' : 'Retry Connection'}
+          </button>
+        </div>
+      )}
+
+      {error && ollamaStatus?.error === 'connection_failed' && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center text-red-700">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            <span className="font-medium">Cannot connect to Ollama</span>
+          </div>
+          <p className="text-sm text-red-600 mt-2">
+            The AI backend is running but cannot reach Ollama.
+          </p>
+          <div className="mt-3 bg-white rounded-lg p-4 border border-red-200 text-sm">
+            <p className="font-semibold text-gray-800 mb-2">To fix this:</p>
+            <ol className="list-decimal ml-4 space-y-1 text-gray-700">
+              <li>Start Ollama: <code className="bg-gray-100 px-1 rounded">ollama serve</code></li>
+              <li>Pull a model: <code className="bg-gray-100 px-1 rounded">ollama pull qwen3:1.7b</code></li>
+              <li>Verify: <code className="bg-gray-100 px-1 rounded">ollama list</code></li>
+            </ol>
+          </div>
+          <button
+            onClick={handleRetry}
+            disabled={isLoading || ollamaChecking}
+            className="mt-3 flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading || ollamaChecking ? 'animate-spin' : ''}`} />
+            {isLoading || ollamaChecking ? 'Checking...' : 'Retry Connection'}
+          </button>
+        </div>
+      )}
+
+      {error && ollamaStatus?.error === 'timeout' && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center text-amber-700">
+            <Clock className="w-5 h-5 mr-2" />
+            <span className="font-medium">Ollama connection timeout</span>
+          </div>
+          <p className="text-sm text-amber-600 mt-2">
+            Ollama is not responding. It may still be starting up or loading a model.
+          </p>
+          <button
+            onClick={handleRetry}
+            disabled={isLoading || ollamaChecking}
+            className="mt-3 flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading || ollamaChecking ? 'animate-spin' : ''}`} />
+            {isLoading || ollamaChecking ? 'Checking...' : 'Retry Connection'}
+          </button>
+        </div>
+      )}
+
+      {error && ollamaStatus?.error === 'no_models' && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center text-amber-700">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            <span className="font-medium">No chat models installed</span>
+          </div>
+          <p className="text-sm text-amber-600 mt-2">
+            Ollama is running but no chat models are available.
+          </p>
+          <div className="mt-3 bg-white rounded-lg p-4 border border-amber-200 text-sm">
+            <p className="font-semibold text-gray-800 mb-2">Install a model:</p>
+            <div className="space-y-2 text-gray-700">
+              <div className="bg-gray-100 p-2 rounded font-mono text-xs">
+                <span className="text-gray-500"># Small & fast:</span><br/>
+                ollama pull qwen3:1.7b
+              </div>
+              <div className="bg-gray-100 p-2 rounded font-mono text-xs">
+                <span className="text-gray-500"># Better quality:</span><br/>
+                ollama pull llama3.2
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleRetry}
+            disabled={isLoading || ollamaChecking}
+            className="mt-3 flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading || ollamaChecking ? 'animate-spin' : ''}`} />
+            {isLoading || ollamaChecking ? 'Checking...' : 'Check for Models'}
+          </button>
+        </div>
+      )}
+
+      {/* Fallback: unknown error or ollamaStatus not yet loaded */}
+      {error && ollamaStatus && !['backend_offline', 'connection_failed', 'timeout', 'no_models'].includes(ollamaStatus.error || '') && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-center text-red-700">
             <AlertCircle className="w-5 h-5 mr-2" />
@@ -168,11 +293,21 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
           </div>
           <p className="text-sm text-red-600 mt-1">{error}</p>
           <button
-            onClick={refresh}
+            onClick={handleRetry}
             className="mt-2 text-red-700 hover:text-red-800 text-sm underline"
           >
             Try again
           </button>
+        </div>
+      )}
+
+      {/* Loading state while checking Ollama */}
+      {error && !ollamaStatus && ollamaChecking && (
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center text-gray-600">
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            <span className="font-medium">Checking connection status...</span>
+          </div>
         </div>
       )}
 
@@ -447,7 +582,7 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
                     ) : (
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Result:</p>
-                        <pre className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-xs font-mono">
+                        <pre className="bg-gray-50 border border-gray-200 text-gray-800 dark:bg-slate-950 dark:border-slate-800 dark:text-green-300 p-4 rounded-lg overflow-x-auto text-xs font-mono">
                           {JSON.stringify(invocationResult?.result, null, 2)}
                         </pre>
                       </div>

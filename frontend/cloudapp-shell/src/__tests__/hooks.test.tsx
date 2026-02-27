@@ -9,11 +9,14 @@ import { useLogout } from "../hooks/useLogout";
 import { useNotes } from "../hooks/useNotes";
 import { useRegister } from "../hooks/useRegister";
 
-jest.mock("next/navigation", () => ({
+jest.mock("next/router", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
     prefetch: jest.fn(),
+    asPath: "/",
+    pathname: "/",
+    events: { on: jest.fn(), off: jest.fn() },
   }),
 }));
 
