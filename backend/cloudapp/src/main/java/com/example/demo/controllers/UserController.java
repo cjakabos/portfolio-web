@@ -263,10 +263,45 @@ public class UserController {
                 .sorted()
                 .toList();
 
-        return ResponseEntity.ok(Map.of(
-                "username", authenticatedUsername,
-                "roles", roles
-        ));
+        // Set response headers so nginx auth_request_set can forward identity
+        // to upstream services without a second auth-check call.
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-User", authenticatedUsername);
+        headers.set("X-Auth-Roles", String.join(",", roles));
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(Map.of(
+                        "username", authenticatedUsername,
+                        "roles", roles
+                ));
+    }
+
+    /**
+     * Admin-only auth check. Spring Security enforces ROLE_ADMIN via the
+     * {@code /user/admin/**} matcher in WebSecurityConfiguration, so this
+     * endpoint returns 200 only for authenticated admins (401 for missing JWT,
+     * 403 for non-admin users).  Used by the nginx admin-only auth_request.
+     */
+    @GetMapping("/admin/auth-check")
+    public ResponseEntity<?> adminAuthCheck(Authentication auth) {
+        String authenticatedUsername = getAuthenticatedUsername(auth);
+
+        List<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .sorted()
+                .toList();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-User", authenticatedUsername);
+        headers.set("X-Auth-Roles", String.join(",", roles));
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(Map.of(
+                        "username", authenticatedUsername,
+                        "roles", roles
+                ));
     }
 
     @PostMapping("/user-change-password")

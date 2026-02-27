@@ -8,7 +8,8 @@
 //
 // ROUTES:
 // - AI Backend (localhost:8700):
-//   - /health, /config, /feature-status
+//   - /health, /config
+//   - /system/feature-status, /system/circuit-breakers, /system/connection-stats, /system/errors (admin-only)
 //   - /orchestrate, /metrics, /experiments, /approvals, /tools, /rag
 //   - WebSocket: ws://localhost:8700/ws/*
 //
@@ -472,7 +473,7 @@ export class OrchestrationClient {
   }
 
   async getFeatureStatus(): Promise<FeatureStatus> {
-    return this.get<FeatureStatus>(this.aiUrl('/feature-status'));
+    return this.get<FeatureStatus>(this.aiUrl('/system/feature-status'));
   }
 
   // ===========================================================================
@@ -508,11 +509,11 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getCircuitBreakers(): Promise<CircuitBreakerListResponse> {
-    return this.get<CircuitBreakerListResponse>(this.aiUrl('/circuit-breakers'));
+    return this.get<CircuitBreakerListResponse>(this.aiUrl('/system/circuit-breakers'));
   }
 
   async resetCircuitBreaker(name: string): Promise<{ success: boolean; message: string }> {
-    return this.post(this.aiUrl(`/circuit-breakers/${encodeURIComponent(name)}/reset`));
+    return this.post(this.aiUrl(`/system/circuit-breakers/${encodeURIComponent(name)}/reset`));
   }
 
   // ===========================================================================
@@ -520,7 +521,7 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getConnectionStats(): Promise<ConnectionStatsResponse> {
-    return this.get<ConnectionStatsResponse>(this.aiUrl('/connection-stats'));
+    return this.get<ConnectionStatsResponse>(this.aiUrl('/system/connection-stats'));
   }
 
   // ===========================================================================
@@ -528,11 +529,11 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getErrorSummary(hours: number = 24): Promise<ErrorSummary> {
-    return this.get<ErrorSummary>(this.aiUrl(`/errors/summary?hours=${hours}`));
+    return this.get<ErrorSummary>(this.aiUrl(`/system/errors/summary?hours=${hours}`));
   }
 
   async getRecentErrors(limit: number = 50): Promise<RecentErrorsResponse> {
-    return this.get<RecentErrorsResponse>(this.aiUrl(`/errors/recent?limit=${limit}`));
+    return this.get<RecentErrorsResponse>(this.aiUrl(`/system/errors/recent?limit=${limit}`));
   }
 
   // ===========================================================================
