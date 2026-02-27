@@ -8,7 +8,12 @@ import Stomp from 'webstomp-client';
 import { useAuth } from '../../../hooks/useAuth';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
-const SOCKET_URL = `${API_URL}/ws/`;
+const CHAT_WS_API_URL = (
+  process.env.NEXT_PUBLIC_CHAT_WS_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:80/cloudapp'
+).replace(/\/+$/, '');
+const SOCKET_URL = `${CHAT_WS_API_URL}/ws/`;
 let client;
 
 interface RoomMessage {
@@ -27,14 +32,7 @@ const CloudChat: React.FC = () => {
   const [connected, setConnected] = useState(false);
   const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const effectRan = useRef(false);
   const { username } = useAuth();
-
-  useEffect(() => {
-    if (!effectRan.current && username) {
-      effectRan.current = true;
-    }
-  }, [username]);
 
   const onMessageReceived = (msg: any) => {
     if (msg.content === 'newUser') {
@@ -160,10 +158,6 @@ const CloudChat: React.FC = () => {
       console.error('Failed to send message', err);
     }
   };
-
-  if (!effectRan.current) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div>

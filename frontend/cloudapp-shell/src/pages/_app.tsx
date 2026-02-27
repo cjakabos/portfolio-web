@@ -47,7 +47,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (router.pathname !== '/login' && error.response?.status === 401) {
+        if (router.pathname !== '/login' && router.pathname !== '/logout' && error.response?.status === 401) {
           notifyCloudAppAuthStateChanged();
           router.push('/login');
         }
@@ -60,7 +60,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   // Auth Guard Logic
   useEffect(() => {
     if (isClient && isInitialized) {
-      if (!isReady && router.pathname !== '/login') {
+      if (!isReady && router.pathname !== '/login' && router.pathname !== '/logout') {
         router.push('/login');
       }
     }

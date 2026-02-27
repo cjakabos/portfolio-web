@@ -145,8 +145,8 @@ class TestJwtAuthentication:
         assert resp.status_code not in (401, 403), \
             f"Expected Petstore request to pass gateway auth, got {resp.status_code}"
 
-    def test_petstore_route_with_cookie_only_jwt_is_still_blocked(self):
-        """Petstore remains header-auth only at the gateway (cookie-only JWT should not pass)."""
+    def test_petstore_route_with_cookie_only_auth_cookie_is_allowed(self):
+        """Petstore routes should accept the CloudApp auth cookie via gateway auth_request."""
         if not TEST_AUTH_COOKIE:
             pytest.skip("No auth cookie available — login failed or cookie not set")
 
@@ -155,8 +155,8 @@ class TestJwtAuthentication:
             cookies={"CLOUDAPP_AUTH": TEST_AUTH_COOKIE},
             timeout=5
         )
-        assert resp.status_code in (401, 403), \
-            f"Expected header-only Petstore route to reject cookie-only auth, got {resp.status_code}"
+        assert resp.status_code not in (401, 403), \
+            f"Expected Petstore route to accept cookie auth, got {resp.status_code}"
 
     def test_vehicles_route_without_jwt_is_blocked(self):
         """Vehicles application routes should be blocked without JWT at the gateway."""

@@ -6,12 +6,16 @@ import { test, expect } from "./fixtures/test-base";
 import {
   apiRegister,
   apiLogin,
+  clearTrackedAuthToken,
   injectAuth,
   uiRegister,
   ensureAdminLoggedIn,
 } from "./fixtures/helpers";
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
+
 async function clearAuthState(page: import("@playwright/test").Page) {
+  clearTrackedAuthToken(page.context());
   await page.context().clearCookies();
   await gotoLogin(page);
 }
@@ -30,7 +34,7 @@ async function gotoLogin(page: import("@playwright/test").Page) {
 }
 
 async function expectUnauthenticated(page: import("@playwright/test").Page) {
-  const authCookies = await page.context().cookies();
+  const authCookies = await page.context().cookies([BASE_URL]);
   expect(authCookies.some((cookie) => cookie.name === "CLOUDAPP_AUTH")).toBe(false);
   await expect
     .poll(() => new URL(page.url()).pathname, { timeout: 15_000 })
@@ -38,7 +42,7 @@ async function expectUnauthenticated(page: import("@playwright/test").Page) {
 }
 
 async function hasCloudAppAuthCookie(page: import("@playwright/test").Page): Promise<boolean> {
-  const cookies = await page.context().cookies();
+  const cookies = await page.context().cookies([BASE_URL]);
   return cookies.some((cookie) => cookie.name === "CLOUDAPP_AUTH" && cookie.value.length > 0);
 }
 
@@ -219,6 +223,12 @@ test.describe("Authentication Flow", () => {
 
     test("should allow admin users to access admin routes", async ({ page, request }) => {
       await ensureAdminLoggedIn(request, page);
+      await page.goto("/");
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
+      for (const label of ["PetStore", "Jira", "MLOps"]) {
+        await expect(page.locator(`header >> text="${label}"`)).toBeVisible();
+      }
 
       for (const path of adminPaths) {
         await page.goto(path);

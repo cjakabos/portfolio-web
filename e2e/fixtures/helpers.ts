@@ -6,14 +6,29 @@
 // individual tests for API-level operations.
 // ===========================================================================
 
-import { type Page, type APIRequestContext, expect } from "@playwright/test";
+import {
+  type BrowserContext,
+  type Page,
+  type APIRequestContext,
+  expect,
+} from "@playwright/test";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:80";
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
+const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
 const AUTH_RETRY_ATTEMPTS = Number(process.env.PW_AUTH_RETRY_ATTEMPTS || "12");
 const AUTH_RETRY_DELAY_MS = Number(process.env.PW_AUTH_RETRY_DELAY_MS || "5000");
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAuthCookieTargetOrigins(): string[] {
+  const backendUrl = new URL(BACKEND_URL);
+  const frontendUrl = new URL(BASE_URL);
+  const monitorUrl = new URL(MONITOR_URL);
+
+  return Array.from(new Set([backendUrl.origin, frontendUrl.origin, monitorUrl.origin]));
 }
 
 export const TEST_USER = {
@@ -129,20 +144,49 @@ export async function apiLogin(
 // Page-level auth injection
 // ---------------------------------------------------------------------------
 
-export async function injectAuth(page: Page, token: string, _username: string) {
-  const backendUrl = new URL(BACKEND_URL);
+const contextAuthTokens = new WeakMap<BrowserContext, string>();
 
-  await page.context().addCookies([
-    {
+export function getTrackedAuthToken(context: BrowserContext): string | undefined {
+  return contextAuthTokens.get(context);
+}
+
+export function clearTrackedAuthToken(context: BrowserContext) {
+  contextAuthTokens.delete(context);
+}
+
+export async function injectAuth(page: Page, token: string, _username: string) {
+  const cookieTargets = getAuthCookieTargetOrigins();
+  contextAuthTokens.set(page.context(), token);
+
+  await page.context().addCookies(
+    cookieTargets.map((target) => ({
       name: "CLOUDAPP_AUTH",
       value: token,
-      domain: backendUrl.hostname,
-      path: "/",
-      httpOnly: true,
-      secure: backendUrl.protocol === "https:",
-      sameSite: "Lax",
-    },
-  ]);
+      // Use host-only cookies via explicit URLs. Single-label Docker hostnames
+      // like "test-shell" are handled more consistently across browsers this
+      // way than with a Domain attribute.
+      url: target,
+      // This helper synthesizes browser state for E2E. WebKit is noticeably
+      // stricter about retaining injected HttpOnly cookies on single-label
+      // container hostnames, so keep the cookie script-readable here and rely
+      // on the backend/gateway to validate the JWT itself.
+      httpOnly: false,
+      secure: new URL(target).protocol === "https:",
+      sameSite: "Lax" as const,
+    }))
+  );
+}
+
+export async function clearInjectedAuth(context: BrowserContext) {
+  clearTrackedAuthToken(context);
+  await context.addCookies(
+    getAuthCookieTargetOrigins().map((target) => ({
+      name: "CLOUDAPP_AUTH",
+      value: "",
+      url: target,
+      expires: 0,
+    }))
+  );
 }
 
 // ---------------------------------------------------------------------------

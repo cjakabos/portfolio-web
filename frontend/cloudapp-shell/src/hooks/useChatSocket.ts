@@ -6,7 +6,12 @@ import Stomp from 'webstomp-client';
 import { chatHttpApi } from './chatHttpApi';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
-const SOCKET_URL = `${API_URL}/ws/`;
+const CHAT_WS_API_URL = (
+    process.env.NEXT_PUBLIC_CHAT_WS_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:80/cloudapp'
+).replace(/\/+$/, '');
+const SOCKET_URL = `${CHAT_WS_API_URL}/ws/`;
 const AUTH_CHECK_URL = `${API_URL}/user/auth-check`;
 
 export default function useChat() {

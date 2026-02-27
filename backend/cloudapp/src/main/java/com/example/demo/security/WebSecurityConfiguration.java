@@ -174,7 +174,13 @@ public class WebSecurityConfiguration {
 
         String requestUri = request.getRequestURI();
         String servletPath = request.getServletPath();
-        if (endsWithAnyPath(requestUri, servletPath, "/user/user-register", "/user/user-login")) {
+        if (endsWithAnyPath(
+                requestUri,
+                servletPath,
+                "/user/user-register",
+                "/user/user-login",
+                "/user/user-logout"
+        )) {
             return false;
         }
 

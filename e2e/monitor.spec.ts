@@ -16,6 +16,13 @@ function fulfillJson(route: Route, body: unknown, status = 200, headers?: Record
 }
 
 async function mockBaselineMonitorApis(page: Page): Promise<void> {
+  await page.route("**/cloudapp/user/admin/auth-check", async (route) =>
+    fulfillJson(route, {
+      username: "integrationadmin",
+      roles: ["ROLE_ADMIN", "ROLE_USER"],
+    })
+  );
+
   await page.route("**/ai/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
