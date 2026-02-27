@@ -7,14 +7,14 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web D
 
 ## What's Inside?
 
-- **CloudApp - Interactive Next.js 15 (React 19) App Shell and Micro Frontend**: Experience the sleek Next.js interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp-shell/README.md).
+- **CloudApp - Interactive Next.js 15 (React 19) App Shell and Micro Frontend**: Experience the sleek interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp-shell/README.md).
     - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-vehicle-locations)
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
-- **NGINX Gateway with JWT Authentication**: Custom-compiled Nginx serving as the sole ingress point with JWT auth subrequests, rate limiting (auth 5r/s, API 30r/s, AI 60r/s), TLS 1.2/1.3, WebSocket proxying, and OTel header propagation. [See config](./frontend/nginx/conf/nginx.conf).
+- **NGINX Gateway with JWT Authentication**: sole ingress point with JWT auth subrequests, rate limiting (auth 5r/s, API 30r/s, AI 60r/s), TLS 1.2/1.3, WebSocket proxying, and OTel header propagation. [See config](./frontend/nginx/conf/nginx.conf).
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
 - **Locally hosted LLM with Ollama**: Deploy and interact with a locally hosted LLM using Ollama, featuring a configurable model setup. In this case, Qwen3 was used to provide AI-driven insights while maintaining full control over data privacy and performance. [Details on LLM integration](#5-private-local-llm-ai)
-- **Integrated External APIs**: Enhance functionality with third-party services like Jira through customized proxy APIs to navigate CORS issues. [Details on API integration](#6-jira).
-- **Real-Time Kafka Chat**: Engage with the Kafka-powered chat application with Confluent Kafka, WebSocket bridge, and MongoDB persistence. [Chat interface](#8-chat).
+- **Jira with local LLM refinement**: create Jira tickets and refine them with locally hosted LLM. [Details on API integration](#6-jira-with-ai-refinement).
+- **Real-Time Chat**: Engage with the Kafka-powered chat application with Confluent Kafka, WebSocket bridge, and MongoDB persistence. [Chat interface](#8-chat).
 - **AI Orchestration Layer**: FastAPI-based orchestration with LangGraph agentic workflows, RAG pipeline (ChromaDB), A/B testing, Human-in-the-Loop approval, circuit breakers, and WebSocket streaming. [Details on AI orchestration](#9-ai-orchestration-layer).
 - **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization. [Monitor details](#10-admin-ai-orchestration-monitor).
 - **Observability Stack**: Distributed tracing (Jaeger), metrics (Prometheus), dashboards (Grafana), and OpenTelemetry auto-instrumentation across all services. [Observability details](#observability).
@@ -36,19 +36,11 @@ brew install docker
 brew install docker-compose
 ```
 
-Setup and start databases and essential services with docker-compose:
+Step 1. Setup and start databases and essential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```
-Optional (containerized Ollama on CPU, instead of native Ollama on Apple Silicon):
-```bash
-docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
-```
-Build and start the Java based services, the Python based ml-pipeline and the Next.js based frontend:
-```bash
-docker-compose -f docker-compose-app.yml up -d
-```
-Note 1: For Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
+Step 2. Install local ollama, for Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
 ```bash
 brew install ollama
 # Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
@@ -58,8 +50,14 @@ ollama pull deepseek-r1:1.5b
 ollama pull qwen3-embedding:4b
 ollama serve
 ```
+<details>
+  <summary>Alternative Step 2 (containerized Ollama on CPU, instead of native Ollama on Apple Silicon)</summary>
 
-Note 2: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was qwen3 with 1.7B parameter, good enough for local testing purposes.
+```bash
+docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+```
+
+Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was qwen3 with 1.7B parameter, good enough for local testing purposes.
 ```dockerfile
   ollama:
     container_name: ollama
@@ -71,18 +69,15 @@ Note 2: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compo
     ports:
       - 11434:11434
 ```
+</details>
 
-Runs the app in the production mode.\
+Step 3. Build and start the app stack:
+```bash
+docker-compose -f docker-compose-app.yml up -d
+```
+
+Step 4. Runs the app in the production mode.
 Open http://localhost:5001 to view it in your browser. For development mode check [instructions here](./frontend/cloudapp-shell/README.md#option-2-dev-mode).
-
-### Also available after startup
-- **AI Orchestration API (via NGINX gateway)**: `http://localhost:80/ai/docs`, `http://localhost:80/ai/health`
-- **AI Orchestration Monitor**: `http://localhost:5010`
-- **Jaeger (traces)**: `http://localhost:16686`
-- **Prometheus (metrics)**: `http://localhost:9090`
-- **Grafana (dashboards)**: `http://localhost:3000`
-- **CloudApp Swagger (via gateway)**: `http://localhost:80/cloudapp/swagger-ui/index.html`
-
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
 You can login with the following test users
@@ -96,6 +91,7 @@ user: regularuser123 pwd: 456789
 
 And you should be able to register and log in, and see the current front-end of the api integrations from the services above:
 
+
 ## 1. Machine learning system for Customer Segmentation
 
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
@@ -104,7 +100,7 @@ MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), 
 
 
 View results:
-- Pictures: correlation between parameters and the different segments.
+- Graphs: correlation between parameters and the different segments.
 - Table: current list of customers from postgres db.
 
 The module is built as Micro Frontend:  
@@ -172,9 +168,9 @@ curl http://localhost:11434/api/generate -d '{
   "prompt": "Why is the sky blue?"
 }'
 ```
-  
 
-## 6. Jira
+
+## 6. Jira with AI refinement
 Jira interface for communicating with
 the [Jira API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/), to use it:
 - [Register](https://www.atlassian.com/software/jira/free)
@@ -183,7 +179,10 @@ the [Jira API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro
 
 The user is able to:
 
-- Create/list/update/delete Jira ticket  
+- Create/list/update/delete Jira ticket
+- Refine and edit tickets with LLM
+- Create and edit children tickets proposal with LLM
+
 CloudApp-Shell as App Shell using the Jira micro frontend:  
    http://localhost:5001/jira
 ![](examples/10.png)
