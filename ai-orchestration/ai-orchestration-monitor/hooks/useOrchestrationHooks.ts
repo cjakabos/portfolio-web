@@ -899,8 +899,7 @@ export function useStreaming({
         hasConnectedRef.current = false;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoConnect]); // Intentionally omit connect/disconnect to prevent loops
+  }, [autoConnect]); // eslint-disable-line -- Intentionally omit connect/disconnect to prevent loops
 
   // Bounded auto-reconnect when the initial connect races backend startup.
   useEffect(() => {

@@ -290,7 +290,7 @@ export const API_CONFIG = {
     cloudapp: '/cloudapp',
     petstore: '/petstore',
     vehicles: '/vehicles',
-    mlops-segmentation: '/mlops-segmentation',
+    'mlops-segmentation': '/mlops-segmentation',
     proxy: '/proxy',
     tools: '/ai/tools',
     approvals: '/ai/approvals',
