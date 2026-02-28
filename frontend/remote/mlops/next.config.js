@@ -24,7 +24,7 @@ const nextConfig = {
             "./mlops": "./pages/index",
           },
           shared: {
-            tailwindcss: {
+            "@tailwindcss/postcss": {
               eager: true,
               singleton: true,
               requiredVersion: false,

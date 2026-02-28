@@ -24,7 +24,7 @@ const nextConfig = {
             "./openmaps": "./components/OpenMaps/OpenMaps",
           },
           shared: {
-            tailwindcss: {
+            "@tailwindcss/postcss": {
               eager: true,
               singleton: true,
               requiredVersion: false,
