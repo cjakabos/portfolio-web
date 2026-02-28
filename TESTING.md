@@ -185,3 +185,15 @@ docker compose -f docker-compose-infrastructure.yml ps --all
 - Forgetting that test builds can bake env vars into the frontend at build time.
 - Debugging backend auth without checking gateway routing and `auth_request` behavior.
 - Assuming container health means route readiness. In this repo, gateway behavior can still be wrong while all services are healthy.
+
+### Platform-Specific Lockfiles
+
+- macOS-generated `package-lock.json` files can miss Linux-native packages needed by Docker builds.
+- For the Next.js remotes and shell, validate lockfiles before pushing:
+
+```bash
+python3 scripts/check_frontend_native_lockfiles.py
+```
+
+- This check guards the `Dockerfile_FE` services against missing Linux SWC and Tailwind oxide entries.
+- The AI monitor uses a separate Dockerfile fallback for Rollup native bindings.

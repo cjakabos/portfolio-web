@@ -184,7 +184,7 @@ const Chat: React.FC = () => {
         <h3 className="font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider text-sm">Your Rooms</h3>
         {rooms.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-400">
-            You haven't joined any rooms yet.
+            You haven&apos;t joined any rooms yet.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

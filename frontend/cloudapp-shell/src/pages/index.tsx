@@ -48,7 +48,7 @@ const Home: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {username || 'User'}</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Here is what's happening in your cloud workspace today.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Here is what&apos;s happening in your cloud workspace today.</p>
         </div>
         <div className="text-sm text-gray-400 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
           {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

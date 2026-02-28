@@ -5,15 +5,35 @@
 # =============================================================================
 
 # Stage 1: Build
-FROM node:20-alpine AS builder
+#
+# Prefer the Debian-based image here. Vite/Rollup native optional packages are
+# more reliable on glibc than on musl during CI and nightly container builds.
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies deterministically when a lockfile is present.
+# npm intermittently misses Rollup's optional native package in containers, so
+# install the matching Linux native binding explicitly if the loader is absent.
+RUN if [ -f package-lock.json ]; then npm ci --include=optional; else npm install --include=optional; fi \
+ && case "$(node -p "process.arch")" in \
+      arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; \
+      x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; \
+      *) ROLLUP_PACKAGE='' ;; \
+    esac \
+ && if [ -z "$ROLLUP_PACKAGE" ]; then \
+      echo "Unsupported architecture for Rollup native fallback: $(node -p "process.arch")" >&2; \
+      exit 1; \
+    fi \
+ && if [ ! -d "node_modules/${ROLLUP_PACKAGE}" ]; then \
+      ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"; \
+      echo "Installing missing Rollup native package: ${ROLLUP_PACKAGE}@${ROLLUP_VERSION}"; \
+      npm install --no-save "${ROLLUP_PACKAGE}@${ROLLUP_VERSION}"; \
+    fi \
+ && node -e "require('rollup/dist/native.js')"
 
 # Copy source files
 COPY . .
@@ -33,7 +53,7 @@ RUN npm run build
 # =============================================================================
 # Stage 2: Production (Node.js + serve)
 # =============================================================================
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
@@ -48,7 +68,7 @@ EXPOSE 5010
 
 # Health check (Checks if root returns 200 OK)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:5010/ || exit 1
+    CMD node -e "fetch('http://localhost:5010/').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 # Start the server
 # -s: Single-page application (rewrites 404s to index.html)

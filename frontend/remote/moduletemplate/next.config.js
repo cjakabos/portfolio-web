@@ -19,7 +19,7 @@ const nextConfig = {
             "./moduletemplate": "./components/ModuleTemplate/ModuleTemplate",
           },
           shared: {
-            tailwindcss: {
+            "@tailwindcss/postcss": {
               eager: true,
               singleton: true,
               requiredVersion: false,

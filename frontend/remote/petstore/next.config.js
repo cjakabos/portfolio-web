@@ -19,7 +19,7 @@ const nextConfig = {
             "./petstore": "./components/PetStoreApp",
           },
           shared: {
-            tailwindcss: {
+            "@tailwindcss/postcss": {
               eager: true,
               singleton: true,
               requiredVersion: false,

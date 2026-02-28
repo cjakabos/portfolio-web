@@ -4,16 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "rm -rf .next; NEXT_PRIVATE_LOCAL_WEBPACK=true next dev -p 5005",
-    "build": "set NEXT_PRIVATE_LOCAL_WEBPACK=true && next build",
-    "start": "set NEXT_PRIVATE_LOCAL_WEBPACK=true && next start -p 5005",
+    "build": "NEXT_PRIVATE_LOCAL_WEBPACK=true next build",
+    "start": "NEXT_PRIVATE_LOCAL_WEBPACK=true next start -p 5005",
     "format": "prettier --write .",
     "lint": "next lint",
     "cypress:open": "cypress open"
   },
   "dependencies": {
+    "lucide-react": "^0.454.0",
     "next": "15.3.8",
     "next-themes": "^0.4.6",
-    "lucide-react": "^0.454.0",
     "react": "19.1.2",
     "react-dom": "19.1.2",
     "recharts": "^3.4.1",
@@ -28,6 +28,7 @@
     "@types/react": "^19.1.8",
     "cypress": "14.5.4",
     "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.8",
     "tailwindcss": "^4",
     "typescript": "5.9.2"
   }
