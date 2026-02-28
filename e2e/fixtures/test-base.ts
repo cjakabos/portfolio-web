@@ -85,11 +85,9 @@ export const test = base.extend<{
         if (cookieHeader) {
           headers.cookie = cookieHeader;
         }
-        if (!headers.authorization) {
-          const trackedToken = getTrackedAuthToken(page.context());
-          if (trackedToken) {
-            headers.authorization = `Bearer ${trackedToken}`;
-          }
+        const trackedToken = getTrackedAuthToken(page.context());
+        if (trackedToken) {
+          headers.authorization = `Bearer ${trackedToken}`;
         }
         delete headers.host;
         const response = await fetch(proxiedUrl, {

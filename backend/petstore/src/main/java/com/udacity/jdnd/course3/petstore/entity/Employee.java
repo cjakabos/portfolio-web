@@ -10,9 +10,10 @@ import java.util.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "employee")
 public class Employee {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Nationalized
@@ -21,15 +22,25 @@ public class Employee {
     @Nationalized
     @ElementCollection
     @Enumerated
+    @CollectionTable(name = "employee_skills", joinColumns = @JoinColumn(name = "employee_id"), indexes = {
+            @Index(name = "idx_employee_skills_employee_id", columnList = "employee_id"),
+            @Index(name = "idx_employee_skills_skill", columnList = "skills")
+    })
+    @Column(name = "skills")
     private Set<EmployeeSkill> skills;
 
     @Nationalized
     @ElementCollection
     @Enumerated
+    @CollectionTable(name = "employee_days_available", joinColumns = @JoinColumn(name = "employee_id"), indexes = {
+            @Index(name = "idx_employee_days_employee_id", columnList = "employee_id"),
+            @Index(name = "idx_employee_days_available", columnList = "days_available")
+    })
+    @Column(name = "days_available")
     private Set<DayOfWeek> daysAvailable;
 
     @Nationalized
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "employeeList")
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "employeeList")
     private List<Schedule> schedules;
 
     public Long getId() {
@@ -70,5 +81,21 @@ public class Employee {
 
     public void setSchedules(List<Schedule> schedules) {
         this.schedules = schedules;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Employee other)) {
+            return false;
+        }
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
