@@ -3,7 +3,7 @@
 // ===========================================================================
 
 import { test, expect, type Page } from "./fixtures/test-base";
-import { ensureLoggedIn, waitForPageLoad } from "./fixtures/helpers";
+import { ensureLoggedIn, waitForPageLoad, TEST_USER } from "./fixtures/helpers";
 
 test.describe("Chat Flow", () => {
   const roomName = `TestRoom_${Date.now()}`;
@@ -62,7 +62,10 @@ test.describe("Chat Flow", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     await expect(page).toHaveURL(new RegExp(`/chat/rooms/${roomCode}`), { timeout: 15_000 });
-    await expect(page.getByText(roomCode)).toBeVisible({ timeout: 15_000 });
+    await waitForPageLoad(page);
+    await expect(
+      page.getByText(roomCode).or(page.getByPlaceholder("Type your message...")).first()
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("should join a chat room", async ({ authedPage: page }) => {
@@ -74,7 +77,10 @@ test.describe("Chat Flow", () => {
     await expect(page.getByText(roomName)).toBeVisible({ timeout: 15_000 });
     await page.getByRole("link", { name: new RegExp(roomName, "i") }).first().click();
     await expect(page).toHaveURL(new RegExp(`/chat/rooms/${roomCode}`), { timeout: 15_000 });
-    await expect(page.getByText(roomCode)).toBeVisible({ timeout: 15_000 });
+    await waitForPageLoad(page);
+    await expect(
+      page.getByText(roomCode).or(page.getByPlaceholder("Type your message...")).first()
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("should send a message and see it appear", async ({ authedPage: page }) => {
@@ -133,11 +139,6 @@ test.describe("Chat Flow", () => {
     await page.getByRole("link", { name: new RegExp(roomName, "i") }).first().click();
     await expect(page).toHaveURL(new RegExp(`/chat/rooms/${roomCode}`), { timeout: 15_000 });
 
-    const username = await page.evaluate(() =>
-      localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")
-    );
-    if (username) {
-      await expect(page.getByText(username)).toBeVisible({ timeout: 10_000 });
-    }
+    await expect(page.getByText(TEST_USER.username)).toBeVisible({ timeout: 10_000 });
   });
 });

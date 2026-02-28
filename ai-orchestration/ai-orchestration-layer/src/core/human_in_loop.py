@@ -78,8 +78,8 @@ class ApprovalRequest:
     status: ApprovalStatus
     created_at: datetime
     expires_at: datetime
-    requester_id: int
-    approver_id: Optional[int] = None
+    requester_id: str
+    approver_id: Optional[str] = None
     approved_at: Optional[datetime] = None
 
     # Context for the approval
@@ -475,7 +475,7 @@ class HumanInLoopManager:
             orchestration_id=state["request_id"],
             node_name=node_name,
             approval_type=approval_type,
-            requester_id=int(state.get("user_id", 0)) if str(state.get("user_id", "0")).isdigit() else 0,
+            requester_id=str(state.get("user_id", "unknown")),
             context={
                 "session_id": state.get("session_id"),
                 "query": state["input_data"],
@@ -531,7 +531,7 @@ class HumanInLoopManager:
         orchestration_id: str,
         node_name: str,
         approval_type: ApprovalType,
-        requester_id: int,
+        requester_id: str,
         context: Dict[str, Any],
         proposed_action: str,
         execution_context: Dict[str, Any],
@@ -640,7 +640,7 @@ class HumanInLoopManager:
     async def process_approval(
         self,
         request_id: str,
-        approver_id: int,
+        approver_id: str,
         approved: bool,
         notes: Optional[str] = None,
         modifications: Optional[Dict] = None
@@ -831,7 +831,7 @@ class HumanInLoopManager:
                 logger.error(f"Error in timeout monitor: {e}")
                 await asyncio.sleep(10)
 
-    def get_pending_approvals(self, user_id: Optional[int] = None) -> List[ApprovalRequest]:
+    def get_pending_approvals(self, user_id: Optional[str] = None) -> List[ApprovalRequest]:
         """Get list of pending approvals, optionally filtered by user"""
         approvals = list(self.pending_approvals.values())
 
@@ -842,7 +842,7 @@ class HumanInLoopManager:
 
     def get_approval_history(
         self,
-        user_id: Optional[int] = None,
+        user_id: Optional[str] = None,
         limit: int = 50
     ) -> List[ApprovalRequest]:
         """Get approval history"""

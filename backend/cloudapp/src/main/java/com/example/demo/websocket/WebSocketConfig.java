@@ -20,7 +20,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "http://localhost:*",
                         "https://localhost:*",
                         "http://127.0.0.1:*",
-                        "https://127.0.0.1:*"
+                        "https://127.0.0.1:*",
+                        "http://test-shell:*",
+                        "https://test-shell:*",
+                        "http://test-nginx:*",
+                        "https://test-nginx:*"
                 )
                 .withSockJS();
     }

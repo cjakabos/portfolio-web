@@ -10,15 +10,15 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web D
 - **CloudApp - Interactive Next.js 15 (React 19) App Shell and Micro Frontend**: Experience the sleek interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp-shell/README.md).
     - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-vehicle-locations)
 - **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
-- **NGINX Gateway with JWT Authentication**: sole ingress point with JWT auth subrequests, rate limiting (auth 5r/s, API 30r/s, AI 60r/s), TLS 1.2/1.3, WebSocket proxying, and OTel header propagation. [See config](./frontend/nginx/conf/nginx.conf).
+- **NGINX Gateway with Session/Auth Enforcement**: sole ingress point with CloudApp auth subrequests, admin-only protection for `/cloudapp-admin/*` and `/ai/system/*`, authenticated access for `/ai/*` and `/ai/ws/*`, rate limiting (auth 5r/s, API 30r/s, AI 60r/s), TLS 1.2/1.3, WebSocket proxying, and OTel header propagation. [See config](./frontend/nginx/conf/nginx.conf).
 - **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
 - **Locally hosted LLM with Ollama**: Deploy and interact with a locally hosted LLM using Ollama, featuring a configurable model setup. In this case, Qwen3 was used to provide AI-driven insights while maintaining full control over data privacy and performance. [Details on LLM integration](#5-private-local-llm-ai)
 - **Jira with local LLM refinement**: create Jira tickets and refine them with locally hosted LLM. [Details on API integration](#6-jira-with-ai-refinement).
 - **Real-Time Chat**: Engage with the Kafka-powered chat application with Confluent Kafka, WebSocket bridge, and MongoDB persistence. [Chat interface](#8-chat).
 - **AI Orchestration Layer**: FastAPI-based orchestration with LangGraph agentic workflows, RAG pipeline (ChromaDB), A/B testing, Human-in-the-Loop approval, circuit breakers, and WebSocket streaming. [Details on AI orchestration](#9-ai-orchestration-layer).
-- **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization. [Monitor details](#10-admin-ai-orchestration-monitor).
+- **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization, reusing the CloudApp admin session via gateway-protected routes. [Monitor details](#10-admin-ai-orchestration-monitor).
 - **Observability Stack**: Distributed tracing (Jaeger), metrics (Prometheus), dashboards (Grafana), and OpenTelemetry auto-instrumentation across all services. [Observability details](#observability).
-- **Security Architecture**: JWT authentication (RSA asymmetric keys), CSRF protection, role-based access control, service-to-service auth, and non-root Docker containers. [Security details](#security).
+- **Security Architecture**: RSA-signed JWT sessions, HttpOnly cookie auth for browser clients, CSRF protection, role-based access control, service-to-service auth, and non-root Docker containers. [Security details](#security).
 - **Resilience Patterns**: Resilience4j circuit breakers on external API calls with graceful fallbacks, health indicators, and Prometheus metrics. [Resilience details](#resilience).
 - **API Contract Governance**: OpenAPI snapshot drift detection, TypeScript client generation, and NGINX-level API versioning (`/v1/` prefix). [Contract details](#api-contract-governance).
 - **CI/CD with GitHub Actions**: 6-stage parallel CI pipeline (backend, ML, NGINX, API contracts, frontend, Playwright E2E) plus nightly AI integration tests. [See workflows](./.github/workflows/).
@@ -235,6 +235,7 @@ A FastAPI-based AI orchestration layer (`ai-orchestration/ai-orchestration-layer
 - HITL approval integration within streaming context
 
 **Operational API Surface (behind `/ai`)**
+- Gateway-protected with authenticated CloudApp identity; `/ai/system/*` is admin-only
 - `/orchestrate` — orchestration execution and workflow routing
 - `/rag/*` — document upload/query/management endpoints
 - `/approvals/*` — Human-in-the-Loop approval queue and actions
@@ -260,6 +261,11 @@ A React/Vite admin dashboard (`ai-orchestration/ai-orchestration-monitor/`) at h
 - **Conversation Sync UI hooks** — multi-session/state synchronization support for orchestration workflows
 - **User Management** — Promoting existing users to Admin role
 
+Authentication model:
+- Uses the same CloudApp login/session as the main app
+- Browser clients authenticate with the `CLOUDAPP_AUTH` HttpOnly cookie
+- Admin monitor routes are enforced through `/cloudapp-admin/*` and admin-only `/ai/system/*` gateway checks
+
 ---
 
 # Architecture
@@ -275,7 +281,7 @@ Distributed observability across all services:
 - **Spring Actuator** — health, info, and Prometheus endpoints exposed per service
 
 ## Security
-- **JWT authentication** — RSA asymmetric keys (PEM files), Bearer token + `CLOUDAPP_AUTH` cookie
+- **JWT session authentication** — RSA asymmetric keys (PEM files), with browser clients authenticated primarily via the `CLOUDAPP_AUTH` HttpOnly cookie and validated through `/user/auth-check`
 - **CSRF protection** — CookieCsrfTokenRepository with SameSite=Lax
 - **Role-based access** — ADMIN/USER roles with method-level Spring Security authorization
 - **Service-to-service auth** — `X-Internal-Auth` token for internal requests
@@ -355,4 +361,3 @@ JIRA_PROJECT_KEY='yourjiraprojectkey'
 JIRA_EMAIL='youremail'
 ```
 Only `JIRA_PROJECT_KEY` is exposed to the browser. Credentials stay server-side in `jiraproxy`.
-

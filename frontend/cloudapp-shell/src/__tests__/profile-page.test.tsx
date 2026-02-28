@@ -17,15 +17,6 @@ jest.mock("next/router", () => ({
 
 const API_URL = "http://localhost:80/cloudapp";
 
-const makeJwt = (roles: string[]) => {
-  const payload = { sub: "alice", roles };
-  const payloadB64 = btoa(JSON.stringify(payload))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-  return `header.${payloadB64}.sig`;
-};
-
 describe("CloudProfile page", () => {
   let mock: MockAdapter;
 
@@ -41,16 +32,19 @@ describe("CloudProfile page", () => {
     jest.restoreAllMocks();
   });
 
-  test("shows role from JWT and keeps username/email disabled", async () => {
-    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
-    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", makeJwt(["ROLE_USER", "ROLE_ADMIN"]));
+  test("shows role from auth-check and keeps username/email disabled", async () => {
+    mock.onGet(`${API_URL}/user/auth-check`).reply(200, {
+      username: "alice",
+      roles: ["ROLE_USER", "ROLE_ADMIN"],
+    });
 
     render(React.createElement(CloudProfile));
 
     const usernameInput = (await screen.findByLabelText("Username")) as HTMLInputElement;
     const emailInput = screen.getByLabelText("Email Address") as HTMLInputElement;
 
-    expect(usernameInput.value).toBe("alice");
+    await waitFor(() => expect(usernameInput.value).toBe("alice"));
+
     expect(usernameInput).toBeDisabled();
     expect(emailInput.value).toBe("alice@example.com");
     expect(emailInput).toBeDisabled();
@@ -62,9 +56,10 @@ describe("CloudProfile page", () => {
   });
 
   test("submits password change with current password and csrf header", async () => {
-    const jwt = makeJwt(["ROLE_USER"]);
-    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
-    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", jwt);
+    mock.onGet(`${API_URL}/user/auth-check`).reply(200, {
+      username: "alice",
+      roles: ["ROLE_USER"],
+    });
     mock.onPost(`${API_URL}/user/user-change-password`).reply(200, {
       username: "alice",
       message: "Password updated",

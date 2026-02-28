@@ -1,17 +1,21 @@
 // File: scripts/mongo-init.js
 // MongoDB initialization script - creates database and user
 
+const databaseName = process.env.MONGO_INITDB_DATABASE || 'ai_orchestration';
+const orchestrationUser = process.env.MONGO_ABTEST_ORCH_USER || 'orchestration_user';
+const orchestrationPassword = process.env.MONGO_ABTEST_ORCH_PASSWORD || 'orchestration_pass';
+
 // Switch to the target database
-db = db.getSiblingDB('ai_orchestration');
+db = db.getSiblingDB(databaseName);
 
 // Create the application user
 db.createUser({
-  user: 'orchestration_user',
-  pwd: 'orchestration_pass',
+  user: orchestrationUser,
+  pwd: orchestrationPassword,
   roles: [
     {
       role: 'readWrite',
-      db: 'ai_orchestration'
+      db: databaseName
     }
   ]
 });
@@ -41,6 +45,6 @@ db.audit_trail.createIndex({ "request_id": 1 }, { unique: true });
 db.audit_trail.createIndex({ "user_id": 1, "timestamp": -1 });
 
 print('MongoDB initialization complete!');
-print('Created database: ai_orchestration');
-print('Created user: orchestration_user');
+print(`Created database: ${databaseName}`);
+print(`Created user: ${orchestrationUser}`);
 print('Created collections: experiments, user_assignments, circuit_breaker_backup, audit_trail');

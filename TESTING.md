@@ -83,3 +83,105 @@ npm run playwright:open
 - Can still clash on resources (CPU/RAM), causing slower/flakier tests.
 - `host-ui` profile can clash on ports `80`, `5001`, `5005`.
   - If those ports are already used, stop app stack first or do not use `host-ui`.
+
+## Docker Debugging
+
+Use the smallest Compose topology that answers the question:
+
+- `docker-compose.test.yml`: isolated test stack
+- `docker-compose-app.yml`: app stack
+- `docker-compose-infrastructure.yml`: infra dependencies
+
+### Core Commands
+
+Build only what changed:
+
+```bash
+docker compose -f docker-compose.test.yml build test-shell test-e2e
+docker compose -f docker-compose.test.yml build test-nginx test-cloudapp
+docker compose -f docker-compose.test.yml build test-ai-monitor
+```
+
+Run one-off focused commands:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=chromium
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/monitor.spec.ts --project=chromium
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --grep "Logout"
+```
+
+Bring up dependencies for manual inspection:
+
+```bash
+docker compose -f docker-compose.test.yml up -d test-shell test-nginx test-ai-monitor
+docker compose -f docker-compose-app.yml up -d
+docker compose -f docker-compose-infrastructure.yml up -d
+```
+
+Inspect state:
+
+```bash
+docker compose -f docker-compose.test.yml ps
+docker compose -f docker-compose-app.yml ps
+docker ps --format "table {{.Names}}\t{{.Status}}"
+docker ps -a --format "table {{.Names}}\t{{.Status}}"
+```
+
+Read logs:
+
+```bash
+docker compose -f docker-compose.test.yml logs test-nginx
+docker compose -f docker-compose.test.yml logs test-shell
+docker logs portfolio-web-test-e2e-1
+docker logs next-nginx-jwt
+```
+
+### Recommended Flow
+
+1. Rebuild only touched services.
+2. Run one failing spec or one failing test container.
+3. Check container logs before changing code again.
+4. Widen to a small subset once the first failure is fixed.
+5. Run the full suite only after the subset is green.
+6. Reset with `down -v --remove-orphans` only when you suspect stale volumes or orphaned containers.
+
+### Good Patterns
+
+For gateway or contract failures:
+
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-nginx-gateway
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
+```
+
+For E2E failures:
+
+```bash
+docker compose -f docker-compose.test.yml build test-shell test-e2e
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=webkit
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts e2e/monitor.spec.ts --grep "admin|logout"
+```
+
+For AI and monitor failures:
+
+```bash
+docker compose -f docker-compose.test.yml build test-ai-monitor test-e2e
+docker compose -f docker-compose.test.yml up -d test-ai-monitor test-nginx test-shell
+docker compose -f docker-compose.test.yml logs test-ai-monitor
+```
+
+For app readiness:
+
+```bash
+docker compose -f docker-compose-app.yml up -d
+docker compose -f docker-compose-app.yml ps
+docker compose -f docker-compose-infrastructure.yml ps --all
+```
+
+### Common Failure Patterns
+
+- Rebuilding everything when only one frontend changed.
+- Running full E2E before reproducing a single failing spec.
+- Forgetting that test builds can bake env vars into the frontend at build time.
+- Debugging backend auth without checking gateway routing and `auth_request` behavior.
+- Assuming container health means route readiness. In this repo, gateway behavior can still be wrong while all services are healthy.

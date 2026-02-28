@@ -1,19 +1,34 @@
 // ===========================================================================
 // e2e/fixtures/helpers.ts — Shared helpers (replaces cypress/support/commands.ts)
 //
-// Provides API-level registration/login and localStorage injection.
+// Provides API-level registration/login and cookie injection.
 // Used by global-setup.ts to create persistent auth state, and by
 // individual tests for API-level operations.
 // ===========================================================================
 
-import { type Page, type APIRequestContext, expect } from "@playwright/test";
+import {
+  type BrowserContext,
+  type Page,
+  type APIRequestContext,
+  expect,
+} from "@playwright/test";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:80";
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
+const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
 const AUTH_RETRY_ATTEMPTS = Number(process.env.PW_AUTH_RETRY_ATTEMPTS || "12");
 const AUTH_RETRY_DELAY_MS = Number(process.env.PW_AUTH_RETRY_DELAY_MS || "5000");
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAuthCookieTargetOrigins(): string[] {
+  const backendUrl = new URL(BACKEND_URL);
+  const frontendUrl = new URL(BASE_URL);
+  const monitorUrl = new URL(MONITOR_URL);
+
+  return Array.from(new Set([backendUrl.origin, frontendUrl.origin, monitorUrl.origin]));
 }
 
 export const TEST_USER = {
@@ -29,6 +44,15 @@ export const ADMIN_TEST_USER = {
   username: process.env.PW_ADMIN_USERNAME || "integrationadmin",
   password: process.env.PW_ADMIN_PASSWORD || "SecureE2EPass123",
 };
+
+function getAuthTokenFromSetCookie(setCookieHeader: string | null | undefined): string | null {
+  if (!setCookieHeader) return null;
+
+  const match = setCookieHeader.match(/(?:^|,\s*)CLOUDAPP_AUTH=([^;]+)/);
+  if (!match?.[1]) return null;
+
+  return decodeURIComponent(match[1]).trim() || null;
+}
 
 type AdminCandidate = {
   username: string;
@@ -111,41 +135,57 @@ export async function apiLogin(
     failOnStatusCode: false,
   });
   if (resp.status() === 200) {
-    const headers = resp.headers();
-    return headers["authorization"] || headers["Authorization"] || null;
+    return getAuthTokenFromSetCookie(resp.headers()["set-cookie"]);
   }
   return null;
 }
 
 // ---------------------------------------------------------------------------
-// Page-level auth injection (sets localStorage so frontend sees user as
-// logged in — equivalent to Cypress apiLogin command)
+// Page-level auth injection
 // ---------------------------------------------------------------------------
 
-export async function injectAuth(page: Page, token: string, username: string) {
-  const rawToken = token.replace(/^Bearer\s+/i, "").trim();
-  const backendUrl = new URL(BACKEND_URL);
+const contextAuthTokens = new WeakMap<BrowserContext, string>();
 
-  await page.context().addCookies([
-    {
+export function getTrackedAuthToken(context: BrowserContext): string | undefined {
+  return contextAuthTokens.get(context);
+}
+
+export function clearTrackedAuthToken(context: BrowserContext) {
+  contextAuthTokens.delete(context);
+}
+
+export async function injectAuth(page: Page, token: string, _username: string) {
+  const cookieTargets = getAuthCookieTargetOrigins();
+  contextAuthTokens.set(page.context(), token);
+
+  await page.context().addCookies(
+    cookieTargets.map((target) => ({
       name: "CLOUDAPP_AUTH",
-      value: rawToken,
-      domain: backendUrl.hostname,
-      path: "/cloudapp",
-      httpOnly: true,
-      secure: backendUrl.protocol === "https:",
-      sameSite: "Lax",
-    },
-  ]);
+      value: token,
+      // Use host-only cookies via explicit URLs. Single-label Docker hostnames
+      // like "test-shell" are handled more consistently across browsers this
+      // way than with a Domain attribute.
+      url: target,
+      // This helper synthesizes browser state for E2E. WebKit is noticeably
+      // stricter about retaining injected HttpOnly cookies on single-label
+      // container hostnames, so keep the cookie script-readable here and rely
+      // on the backend/gateway to validate the JWT itself.
+      httpOnly: false,
+      secure: new URL(target).protocol === "https:",
+      sameSite: "Lax" as const,
+    }))
+  );
+}
 
-  // Navigate to a page first so localStorage is available on the right origin
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.evaluate(
-    ({ token, username }) => {
-      localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", token);
-      localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", username);
-    },
-    { token, username }
+export async function clearInjectedAuth(context: BrowserContext) {
+  clearTrackedAuthToken(context);
+  await context.addCookies(
+    getAuthCookieTargetOrigins().map((target) => ({
+      name: "CLOUDAPP_AUTH",
+      value: "",
+      url: target,
+      expires: 0,
+    }))
   );
 }
 
@@ -175,8 +215,7 @@ export async function ensureLoggedIn(
       data: { username, password },
       failOnStatusCode: false,
     });
-    const loginHeaders = loginResp.headers();
-    const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
+    const token = getAuthTokenFromSetCookie(loginResp.headers()["set-cookie"]);
 
     if (loginResp.status() === 200 && token) {
       cachedAuth = { token, username };
@@ -189,7 +228,7 @@ export async function ensureLoggedIn(
       .slice(0, 300);
     lastError =
       `registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
-      `hasAuthHeader=${Boolean(token)} body="${bodySnippet}"`;
+      `hasAuthCookie=${Boolean(token)} body="${bodySnippet}"`;
 
     console.warn(
       `[pw][auth] attempt ${attempt}/${AUTH_RETRY_ATTEMPTS} failed: ${lastError}`
@@ -222,8 +261,7 @@ export async function ensureAdminLoggedIn(
         data: { username, password },
         failOnStatusCode: false,
       });
-      const loginHeaders = loginResp.headers();
-      const token = loginHeaders["authorization"] || loginHeaders["Authorization"] || null;
+      const token = getAuthTokenFromSetCookie(loginResp.headers()["set-cookie"]);
 
       if (loginResp.status() === 200 && token && tokenHasRole(token, "ROLE_ADMIN")) {
         cachedAdminAuth = { token, username };
@@ -237,7 +275,7 @@ export async function ensureAdminLoggedIn(
       const hasAdminRole = tokenHasRole(token, "ROLE_ADMIN");
       lastError =
         `user=${username} registerOk=${registerOk} loginStatus=${loginResp.status()} ` +
-        `hasAuthHeader=${Boolean(token)} hasAdminRole=${hasAdminRole} body="${bodySnippet}"`;
+        `hasAuthCookie=${Boolean(token)} hasAdminRole=${hasAdminRole} body="${bodySnippet}"`;
 
       if (loginResp.status() === 200 && token && !hasAdminRole) {
         console.warn(`[pw][auth-admin] candidate '${username}' logged in but is not admin`);

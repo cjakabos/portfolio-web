@@ -8,7 +8,8 @@
 //
 // ROUTES:
 // - AI Backend (localhost:8700):
-//   - /health, /config, /feature-status
+//   - /health, /config
+//   - /system/feature-status, /system/circuit-breakers, /system/connection-stats, /system/errors (admin-only)
 //   - /orchestrate, /metrics, /experiments, /approvals, /tools, /rag
 //   - WebSocket: ws://localhost:8700/ws/*
 //
@@ -85,7 +86,8 @@ interface ClientConfig {
     ai: string;            // '' (root) or '/api'
 
     // Gateway paths (relative to gatewayUrl)
-    cloudapp: string;      // /cloudapp-admin
+    cloudappAdmin: string; // /cloudapp-admin
+    cloudappPublic: string; // /cloudapp
     petstore: string;      // /petstore
     vehicles: string;      // /vehicles
     mlPipeline: string;    // /mlops-segmentation
@@ -115,18 +117,15 @@ const getConfig = (): ClientConfig => {
     timeout,
     paths: {
       ai: import.meta.env?.VITE_AI_PATH || '',  // AI endpoints are at root of aiBaseUrl
-      cloudapp: import.meta.env?.VITE_CLOUDAPP_PATH || '/cloudapp-admin',
+      cloudappAdmin: import.meta.env?.VITE_CLOUDAPP_ADMIN_PATH || '/cloudapp-admin',
+      cloudappPublic: import.meta.env?.VITE_CLOUDAPP_PUBLIC_PATH || '/cloudapp',
       petstore: import.meta.env?.VITE_PETSTORE_PATH || '/petstore',
       vehicles: import.meta.env?.VITE_VEHICLES_PATH || '/vehicles',
       mlPipeline: import.meta.env?.VITE_ML_PATH || '/mlops-segmentation',
     },
   };
 };
-
-const CLOUDAPP_TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
-const CLOUDAPP_USERNAME_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_USERNAME';
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
-const BEARER_PREFIX = 'Bearer ';
 
 // =============================================================================
 // Custom Error Types
@@ -175,38 +174,6 @@ export class OrchestrationClient {
   // Core HTTP Methods
   // ===========================================================================
 
-  private getStoredCloudAppToken(): string | null {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    const token = localStorage.getItem(CLOUDAPP_TOKEN_STORAGE_KEY);
-    return token?.trim() || null;
-  }
-
-  private getStoredCloudAppUsername(): string | null {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    const username = localStorage.getItem(CLOUDAPP_USERNAME_STORAGE_KEY);
-    return username?.trim() || null;
-  }
-
-  private storeCloudAppAuth(token: string, username: string): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    localStorage.setItem(CLOUDAPP_TOKEN_STORAGE_KEY, token);
-    localStorage.setItem(CLOUDAPP_USERNAME_STORAGE_KEY, username);
-  }
-
-  private normalizeAuthorizationToken(token: string): string {
-    const trimmed = token.trim();
-    if (!trimmed) {
-      return '';
-    }
-    return trimmed.startsWith(BEARER_PREFIX) ? trimmed : `${BEARER_PREFIX}${trimmed}`;
-  }
-
   private buildHeaders(
     baseHeaders?: HeadersInit,
     includeJsonContentType: boolean = true
@@ -214,11 +181,6 @@ export class OrchestrationClient {
     const headers = new Headers(baseHeaders || {});
     if (includeJsonContentType && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
-    }
-
-    const token = this.getStoredCloudAppToken();
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', token);
     }
 
     return headers;
@@ -251,6 +213,7 @@ export class OrchestrationClient {
       try {
         const response = await fetch(url, {
           ...options,
+          credentials: 'include',
           signal: controller.signal,
           headers: this.buildHeaders(options.headers, true),
         });
@@ -353,6 +316,7 @@ export class OrchestrationClient {
         const response = await fetch(url, {
           method: 'POST',
           body: formData,
+          credentials: 'include',
           signal: controller.signal,
           headers: this.buildHeaders(undefined, false),
         });
@@ -432,7 +396,11 @@ export class OrchestrationClient {
    * Example: http://localhost:80/cloudapp/item
    */
   private cloudappUrl(endpoint: string): string {
-    return `${this.config.gatewayUrl}${this.config.paths.cloudapp}${endpoint}`;
+    return `${this.config.gatewayUrl}${this.config.paths.cloudappAdmin}${endpoint}`;
+  }
+
+  private cloudappAuthUrl(endpoint: string): string {
+    return `${this.config.gatewayUrl}${this.config.paths.cloudappPublic}${endpoint}`;
   }
 
   /**
@@ -472,7 +440,7 @@ export class OrchestrationClient {
   }
 
   async getFeatureStatus(): Promise<FeatureStatus> {
-    return this.get<FeatureStatus>(this.aiUrl('/feature-status'));
+    return this.get<FeatureStatus>(this.aiUrl('/system/feature-status'));
   }
 
   // ===========================================================================
@@ -508,11 +476,11 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getCircuitBreakers(): Promise<CircuitBreakerListResponse> {
-    return this.get<CircuitBreakerListResponse>(this.aiUrl('/circuit-breakers'));
+    return this.get<CircuitBreakerListResponse>(this.aiUrl('/system/circuit-breakers'));
   }
 
   async resetCircuitBreaker(name: string): Promise<{ success: boolean; message: string }> {
-    return this.post(this.aiUrl(`/circuit-breakers/${encodeURIComponent(name)}/reset`));
+    return this.post(this.aiUrl(`/system/circuit-breakers/${encodeURIComponent(name)}/reset`));
   }
 
   // ===========================================================================
@@ -520,7 +488,7 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getConnectionStats(): Promise<ConnectionStatsResponse> {
-    return this.get<ConnectionStatsResponse>(this.aiUrl('/connection-stats'));
+    return this.get<ConnectionStatsResponse>(this.aiUrl('/system/connection-stats'));
   }
 
   // ===========================================================================
@@ -528,11 +496,11 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getErrorSummary(hours: number = 24): Promise<ErrorSummary> {
-    return this.get<ErrorSummary>(this.aiUrl(`/errors/summary?hours=${hours}`));
+    return this.get<ErrorSummary>(this.aiUrl(`/system/errors/summary?hours=${hours}`));
   }
 
   async getRecentErrors(limit: number = 50): Promise<RecentErrorsResponse> {
-    return this.get<RecentErrorsResponse>(this.aiUrl(`/errors/recent?limit=${limit}`));
+    return this.get<RecentErrorsResponse>(this.aiUrl(`/system/errors/recent?limit=${limit}`));
   }
 
   // ===========================================================================
@@ -638,7 +606,6 @@ export class OrchestrationClient {
     approval_type: string;
     proposed_action: string;
     risk_level: string;
-    requester_id: number;
     context: Record<string, unknown>;
     expires_in_seconds?: number;
   }): Promise<ApprovalRequest> {
@@ -652,18 +619,16 @@ export class OrchestrationClient {
     );
   }
 
-  async approveRequest(requestId: string, approverId: number, notes?: string): Promise<ApprovalHistoryItem> {
+  async approveRequest(requestId: string, notes?: string): Promise<ApprovalHistoryItem> {
     return this.decideApproval(requestId, {
       approved: true,
-      approver_id: approverId,
       approval_notes: notes,
     });
   }
 
-  async rejectRequest(requestId: string, approverId: number, notes?: string): Promise<ApprovalHistoryItem> {
+  async rejectRequest(requestId: string, notes?: string): Promise<ApprovalHistoryItem> {
     return this.decideApproval(requestId, {
       approved: false,
-      approver_id: approverId,
       approval_notes: notes,
     });
   }
@@ -794,20 +759,22 @@ export class OrchestrationClient {
   // CloudApp Service - Users (via Nginx Gateway)
   // ===========================================================================
 
-  isCloudAppAuthenticated(): boolean {
-    return Boolean(this.getStoredCloudAppToken());
+  async getCloudAppSession(): Promise<AuthResponse> {
+    return this.get<AuthResponse>(this.cloudappAuthUrl('/user/auth-check'));
   }
 
-  getCloudAppUsername(): string | null {
-    return this.getStoredCloudAppUsername();
+  async getCloudAppAdminSession(): Promise<AuthResponse> {
+    return this.get<AuthResponse>(this.cloudappAuthUrl('/user/admin/auth-check'));
   }
 
-  clearCloudAppAuth(): void {
-    if (typeof window === 'undefined') {
-      return;
+  private async getCloudAppCsrfHeaders(): Promise<Record<string, string>> {
+    const response = await this.get<{ token?: string; headerName?: string }>(this.cloudappAuthUrl('/user/csrf-token'));
+    const token = typeof response.token === 'string' ? response.token.trim() : '';
+    const headerName = typeof response.headerName === 'string' ? response.headerName.trim() : 'X-XSRF-TOKEN';
+    if (!token) {
+      return {};
     }
-    localStorage.removeItem(CLOUDAPP_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(CLOUDAPP_USERNAME_STORAGE_KEY);
+    return { [headerName]: token };
   }
 
   async listCloudAppUsers(): Promise<string[]> {
@@ -852,7 +819,7 @@ export class OrchestrationClient {
   }
 
   async loginUser(username: string, password: string): Promise<AuthResponse> {
-    const url = this.cloudappUrl('/user/user-login');
+    const url = this.cloudappAuthUrl('/user/user-login');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
@@ -876,20 +843,12 @@ export class OrchestrationClient {
           errorBody
         );
       }
-
-      const tokenHeader = response.headers.get('Authorization') || response.headers.get('authorization');
-      if (!tokenHeader) {
-        throw new ApiError('CloudApp login succeeded but no Authorization token was returned', 500, url);
-      }
-
-      const token = this.normalizeAuthorizationToken(tokenHeader);
-      this.storeCloudAppAuth(token, username);
+      const session = await this.getCloudAppAdminSession();
       return {
-        username,
-        token,
+        ...session,
         message: 'Login successful',
         success: true,
-      } as AuthResponse;
+      };
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof ApiError) {
@@ -903,6 +862,14 @@ export class OrchestrationClient {
       }
       throw new NetworkError('Unknown error occurred', url);
     }
+  }
+
+  async logoutUser(): Promise<void> {
+    const headers = await this.getCloudAppCsrfHeaders();
+    await this.request<void>(this.cloudappAuthUrl('/user/user-logout'), {
+      method: 'POST',
+      headers,
+    });
   }
 
   // ===========================================================================

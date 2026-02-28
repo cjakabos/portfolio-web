@@ -1,39 +1,8 @@
 import { type Page, type Route } from "@playwright/test";
 import { test, expect } from "./fixtures/test-base";
+import { ensureAdminLoggedIn } from "./fixtures/helpers";
 
 const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
-const MONITOR_USERNAME = "cloudadmin";
-
-function toBase64UrlJson(value: unknown): string {
-  return Buffer.from(JSON.stringify(value))
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
-function createFakeAdminJwt(username: string): string {
-  const header = toBase64UrlJson({ alg: "RS256", typ: "JWT" });
-  const payload = toBase64UrlJson({
-    iss: "cloudapp",
-    sub: username,
-    roles: ["ROLE_ADMIN", "ROLE_USER"],
-    exp: 4_102_444_800, // Jan 1, 2100 UTC
-  });
-  return `Bearer ${header}.${payload}.test-signature`;
-}
-
-const MONITOR_TOKEN = createFakeAdminJwt(MONITOR_USERNAME);
-
-async function seedMonitorAdminAuth(page: Page): Promise<void> {
-  await page.addInitScript(
-    ({ token, username }) => {
-      localStorage.setItem("AI_MONITOR_CLOUDAPP_TOKEN", token);
-      localStorage.setItem("AI_MONITOR_CLOUDAPP_USERNAME", username);
-    },
-    { token: MONITOR_TOKEN, username: MONITOR_USERNAME }
-  );
-}
 
 function fulfillJson(route: Route, body: unknown, status = 200, headers?: Record<string, string>) {
   return route.fulfill({
@@ -47,6 +16,13 @@ function fulfillJson(route: Route, body: unknown, status = 200, headers?: Record
 }
 
 async function mockBaselineMonitorApis(page: Page): Promise<void> {
+  await page.route("**/cloudapp/user/admin/auth-check", async (route) =>
+    fulfillJson(route, {
+      username: "integrationadmin",
+      roles: ["ROLE_ADMIN", "ROLE_USER"],
+    })
+  );
+
   await page.route("**/ai/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
@@ -167,8 +143,8 @@ async function mockBaselineMonitorApis(page: Page): Promise<void> {
 }
 
 test.describe("AI Monitor", () => {
-  test("loads Services Dashboard with admin user dropdown and scoped user fetch", async ({ page }) => {
-    await seedMonitorAdminAuth(page);
+  test("loads Services Dashboard with admin user dropdown and scoped user fetch", async ({ page, request }) => {
+    await ensureAdminLoggedIn(request, page);
 
     await mockBaselineMonitorApis(page);
 
@@ -202,12 +178,12 @@ test.describe("AI Monitor", () => {
     await page.getByRole("button", { name: "cart" }).click();
     await expect(page.getByText("Admin Cart Item")).toBeVisible();
 
-    expect(usersAuthorizationHeader).toBe(MONITOR_TOKEN);
+    expect(usersAuthorizationHeader).toBeUndefined();
     expect(requestedCartUsername).toBe("alice");
   });
 
-  test("retries tool discovery on 429 and invokes tool with auth + params", async ({ page }) => {
-    await seedMonitorAdminAuth(page);
+  test("retries tool discovery on 429 and invokes tool with auth + params", async ({ page, request }) => {
+    await ensureAdminLoggedIn(request, page);
 
     await mockBaselineMonitorApis(page);
 
@@ -282,8 +258,8 @@ test.describe("AI Monitor", () => {
     await expect(page.getByText('"username": "bob"')).toBeVisible();
 
     expect(discoverToolsCalls).toBe(2);
-    expect(discoverToolsAuthHeaders).toEqual([MONITOR_TOKEN, MONITOR_TOKEN]);
-    expect(invokeAuthHeader).toBe(MONITOR_TOKEN);
+    expect(discoverToolsAuthHeaders).toEqual(["", ""]);
+    expect(invokeAuthHeader).toBeUndefined();
     expect((invokePayload?.parameters as { username?: string } | undefined)?.username).toBe("bob");
   });
 });

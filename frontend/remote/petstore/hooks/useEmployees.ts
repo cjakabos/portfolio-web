@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const initialEmployee = {
@@ -14,22 +14,10 @@ export const useEmployees = () => {
     const [loading, setLoading] = useState(false);
     const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
     const [selectedDayOption, setSelectedDayOption] = useState(["MONDAY", "TUESDAY", "FRIDAY"]);
-    const [userToken, setUserToken] = useState('');
 
-    const effectRan = useRef(false);
-
-    // Initialize user token from localStorage
     useEffect(() => {
-        if (!effectRan.current && typeof window !== "undefined") {
-            setUserToken(`Bearer ${localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")}` || '');
-            effectRan.current = true;
-        }
+        void getEmployees();
     }, []);
-
-    // Load employees when userToken is available
-    useEffect(() => {
-        getEmployees()
-    }, [userToken]);
 
     const handleEmployeeChange = (event: { target: { name: string; value: string } }) => {
         const { name, value } = event.target;
@@ -51,8 +39,8 @@ export const useEmployees = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {
@@ -77,8 +65,8 @@ export const useEmployees = () => {
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
-                'Authorization': userToken
-            }
+            },
+            withCredentials: true,
         };
 
         try {

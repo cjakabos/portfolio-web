@@ -5,8 +5,15 @@ import { chatHttpApi } from '../../../hooks/chatHttpApi';
 import { Send, ArrowLeft } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
+import { useAuth } from '../../../hooks/useAuth';
 
-const SOCKET_URL = 'http://localhost:80/cloudapp/ws/';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
+const CHAT_WS_API_URL = (
+  process.env.NEXT_PUBLIC_CHAT_WS_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:80/cloudapp'
+).replace(/\/+$/, '');
+const SOCKET_URL = `${CHAT_WS_API_URL}/ws/`;
 let client;
 
 interface RoomMessage {
@@ -24,17 +31,8 @@ const CloudChat: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
-  const [username, setUsername] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
-  const effectRan = useRef(false);
-
-  useEffect(() => {
-    if (!effectRan.current && typeof window !== 'undefined') {
-      const storedUsername = localStorage.getItem('NEXT_PUBLIC_MY_USERNAME') || '';
-      setUsername(storedUsername);
-      effectRan.current = true;
-    }
-  }, []);
+  const { username } = useAuth();
 
   const onMessageReceived = (msg: any) => {
     if (msg.content === 'newUser') {
@@ -160,10 +158,6 @@ const CloudChat: React.FC = () => {
       console.error('Failed to send message', err);
     }
   };
-
-  if (!effectRan.current) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div>

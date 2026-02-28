@@ -6,18 +6,18 @@ import { test, expect } from "./fixtures/test-base";
 import {
   apiRegister,
   apiLogin,
+  clearTrackedAuthToken,
   injectAuth,
   uiRegister,
   ensureAdminLoggedIn,
-  ADMIN_TEST_USER,
 } from "./fixtures/helpers";
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
+
 async function clearAuthState(page: import("@playwright/test").Page) {
+  clearTrackedAuthToken(page.context());
+  await page.context().clearCookies();
   await gotoLogin(page);
-  await page.evaluate(() => {
-    localStorage.removeItem("NEXT_PUBLIC_MY_TOKEN");
-    localStorage.removeItem("NEXT_PUBLIC_MY_USERNAME");
-  });
 }
 
 async function gotoLogin(page: import("@playwright/test").Page) {
@@ -34,25 +34,16 @@ async function gotoLogin(page: import("@playwright/test").Page) {
 }
 
 async function expectUnauthenticated(page: import("@playwright/test").Page) {
-  const token = await page.evaluate(() => localStorage.getItem("NEXT_PUBLIC_MY_TOKEN"));
-  expect(token ?? "").toBe("");
+  const authCookies = await page.context().cookies([BASE_URL]);
+  expect(authCookies.some((cookie) => cookie.name === "CLOUDAPP_AUTH")).toBe(false);
   await expect
     .poll(() => new URL(page.url()).pathname, { timeout: 15_000 })
     .toMatch(/^\/$|^\/login$/);
 }
 
-async function readLocalStorageSafely(
-  page: import("@playwright/test").Page,
-  key: string
-): Promise<string> {
-  try {
-    return (
-      (await page.evaluate((storageKey) => localStorage.getItem(storageKey), key)) ?? ""
-    );
-  } catch {
-    // During logout flow, the page can navigate/reload repeatedly.
-    return "__NAVIGATING__";
-  }
+async function hasCloudAppAuthCookie(page: import("@playwright/test").Page): Promise<boolean> {
+  const cookies = await page.context().cookies([BASE_URL]);
+  return cookies.some((cookie) => cookie.name === "CLOUDAPP_AUTH" && cookie.value.length > 0);
 }
 
 test.describe("Authentication Flow", () => {
@@ -134,11 +125,8 @@ test.describe("Authentication Flow", () => {
         await page.getByRole("button", { name: "Sign In" }).click();
         try {
           await expect
-            .poll(
-              () => page.evaluate(() => localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") ?? ""),
-              { timeout: 10_000 }
-            )
-            .not.toBe("");
+            .poll(() => hasCloudAppAuthCookie(page), { timeout: 10_000 })
+            .toBe(true);
           break;
         } catch (error) {
           if (attempt === 2) throw error;
@@ -158,10 +146,7 @@ test.describe("Authentication Flow", () => {
       await page.locator('input[name="password"]').fill("wrongpass");
       await page.getByRole("button", { name: "Sign In" }).click();
 
-      const token = await page.evaluate(() =>
-        localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")
-      );
-      expect(token ?? "").toBe("");
+      expect(await hasCloudAppAuthCookie(page)).toBe(false);
       await expectUnauthenticated(page);
     });
 
@@ -238,6 +223,12 @@ test.describe("Authentication Flow", () => {
 
     test("should allow admin users to access admin routes", async ({ page, request }) => {
       await ensureAdminLoggedIn(request, page);
+      await page.goto("/");
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
+      for (const label of ["PetStore", "Jira", "MLOps"]) {
+        await expect(page.locator(`header >> text="${label}"`)).toBeVisible();
+      }
 
       for (const path of adminPaths) {
         await page.goto(path);
@@ -272,15 +263,10 @@ test.describe("Authentication Flow", () => {
       await page.goto("/logout");
 
       await expect
-        .poll(() => readLocalStorageSafely(page, "NEXT_PUBLIC_MY_TOKEN"), {
+        .poll(() => hasCloudAppAuthCookie(page), {
           timeout: 20_000,
         })
-        .toBe("");
-      await expect
-        .poll(() => readLocalStorageSafely(page, "NEXT_PUBLIC_MY_USERNAME"), {
-          timeout: 20_000,
-        })
-        .toBe("");
+        .toBe(false);
       await expect
         .poll(() => new URL(page.url()).pathname, { timeout: 15_000 })
         .toMatch(/^\/$|^\/login$|^\/logout$/);

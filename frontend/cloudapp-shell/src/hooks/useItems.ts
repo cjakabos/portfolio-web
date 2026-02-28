@@ -4,7 +4,7 @@ import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
-export const useItems = (token: string) => {
+export const useItems = () => {
     const [items, setItems] = useState<any[]>([]);
     const [loadingItems, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ export const useItems = (token: string) => {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, []);
 
     const createItem = async (name: string, price: string, description: string) => {
         console.log("trying to create item2", name, price, description)

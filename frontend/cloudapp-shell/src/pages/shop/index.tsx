@@ -18,11 +18,11 @@ const CloudShop: React.FC = () => {
 
 
    // 1. Auth
-    const { token, username, isReady, isAdmin } = useAuth();
+    const { username, isReady, isAdmin } = useAuth();
 
     // 2. Logic Hooks
-    const { items, fetchItems, createItem } = useItems(token);
-    const { cart, history, fetchCart, fetchHistory, addToCart, clearCart, submitOrder } = useCart(username, token);
+    const { items, fetchItems, createItem } = useItems();
+    const { cart, history, fetchCart, fetchHistory, addToCart, clearCart, submitOrder } = useCart(username);
 
     // 3. Local UI State
     const [formValues, setFormValues] = useState(initialFormValues);

@@ -1,36 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, orchestrationClient } from '../services/orchestrationClient';
 
-const TOKEN_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_TOKEN';
-const USERNAME_STORAGE_KEY = 'AI_MONITOR_CLOUDAPP_USERNAME';
-const BEARER_PREFIX = 'Bearer ';
-
-const decodeBase64Url = (value: string) => {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
-  if (typeof atob !== 'function') return '';
-  return atob(padded);
-};
-
-const isTokenExpired = (storedToken: string | null): boolean => {
-  if (!storedToken) return true;
-
-  const rawToken = storedToken.startsWith(BEARER_PREFIX)
-    ? storedToken.slice(BEARER_PREFIX.length)
-    : storedToken;
-
-  const parts = rawToken.split('.');
-  if (parts.length < 2) return true;
-
-  try {
-    const payload = JSON.parse(decodeBase64Url(parts[1]));
-    if (typeof payload?.exp !== 'number') return true;
-    return Date.now() >= payload.exp * 1000;
-  } catch {
-    return true;
-  }
-};
-
 type LoginValues = {
   username: string;
   password: string;
@@ -40,58 +10,12 @@ type AuthSnapshot = {
   isAuthenticated: boolean;
   username: string;
   roles: string[];
-  reason?: 'missing' | 'expired' | 'invalid' | 'not_admin';
 };
 
-const extractRolesFromToken = (storedToken: string | null): string[] => {
-  if (!storedToken) return [];
-
-  const rawToken = storedToken.startsWith(BEARER_PREFIX)
-    ? storedToken.slice(BEARER_PREFIX.length)
-    : storedToken;
-
-  const parts = rawToken.split('.');
-  if (parts.length < 2) return [];
-
-  try {
-    const payload = JSON.parse(decodeBase64Url(parts[1]));
-    if (!Array.isArray(payload?.roles)) return [];
-    return payload.roles.filter((role: unknown): role is string => typeof role === 'string');
-  } catch {
-    return [];
-  }
-};
-
-const readAuthSnapshot = (): AuthSnapshot => {
-  if (typeof window === 'undefined') {
-    return { isAuthenticated: false, username: '', roles: [], reason: 'missing' };
-  }
-
-  const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
-  const username = window.localStorage.getItem(USERNAME_STORAGE_KEY)?.trim() || '';
-
-  if (!token || !username) {
-    orchestrationClient.clearCloudAppAuth();
-    return { isAuthenticated: false, username: '', roles: [], reason: 'missing' };
-  }
-
-  if (isTokenExpired(token)) {
-    orchestrationClient.clearCloudAppAuth();
-    return { isAuthenticated: false, username: '', roles: [], reason: 'expired' };
-  }
-
-  const roles = extractRolesFromToken(token);
-  if (!roles.length) {
-    orchestrationClient.clearCloudAppAuth();
-    return { isAuthenticated: false, username: '', roles: [], reason: 'invalid' };
-  }
-
-  if (!roles.includes('ROLE_ADMIN')) {
-    orchestrationClient.clearCloudAppAuth();
-    return { isAuthenticated: false, username: '', roles: [], reason: 'not_admin' };
-  }
-
-  return { isAuthenticated: true, username, roles };
+const EMPTY_AUTH_SNAPSHOT: AuthSnapshot = {
+  isAuthenticated: false,
+  username: '',
+  roles: [],
 };
 
 export function useCloudAppAuth() {
@@ -102,29 +26,40 @@ export function useCloudAppAuth() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const syncFromStorage = useCallback(() => {
-    const next = readAuthSnapshot();
-    setIsAuthenticated(next.isAuthenticated);
-    setUsername(next.username);
-    setRoles(next.roles);
-    if (!next.isAuthenticated && next.reason === 'not_admin') {
-      setError('Only CloudApp admins can sign in to AI Orchestration Monitor.');
-    }
-    setIsInitialized(true);
+  const applySnapshot = useCallback((snapshot: AuthSnapshot) => {
+    setIsAuthenticated(snapshot.isAuthenticated);
+    setUsername(snapshot.username);
+    setRoles(snapshot.roles);
   }, []);
 
-  useEffect(() => {
-    syncFromStorage();
+  const clearAuth = useCallback(() => {
+    applySnapshot(EMPTY_AUTH_SNAPSHOT);
+  }, [applySnapshot]);
 
-    const onStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === TOKEN_STORAGE_KEY || event.key === USERNAME_STORAGE_KEY) {
-        syncFromStorage();
+  const refreshSession = useCallback(async () => {
+    try {
+      const session = await orchestrationClient.getCloudAppAdminSession();
+      applySnapshot({
+        isAuthenticated: Boolean(session.username),
+        username: session.username || '',
+        roles: Array.isArray(session.roles) ? session.roles : [],
+      });
+      setError(null);
+    } catch (err) {
+      clearAuth();
+      if (err instanceof ApiError && err.statusCode === 403) {
+        setError('Only CloudApp admins can sign in to AI Orchestration Monitor.');
+      } else {
+        setError(null);
       }
-    };
+    } finally {
+      setIsInitialized(true);
+    }
+  }, [applySnapshot, clearAuth]);
 
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, [syncFromStorage]);
+  useEffect(() => {
+    void refreshSession();
+  }, [refreshSession]);
 
   const login = useCallback(async ({ username, password }: LoginValues) => {
     setIsLoggingIn(true);
@@ -132,23 +67,25 @@ export function useCloudAppAuth() {
 
     try {
       const authResponse = await orchestrationClient.loginUser(username, password);
-      const nextRoles = extractRolesFromToken(authResponse.token);
+      const nextRoles = Array.isArray(authResponse.roles) ? authResponse.roles : [];
 
       if (!nextRoles.includes('ROLE_ADMIN')) {
-        orchestrationClient.clearCloudAppAuth();
-        setIsAuthenticated(false);
-        setUsername('');
-        setRoles([]);
+        clearAuth();
         setError('Only CloudApp admins can sign in to AI Orchestration Monitor.');
         throw new Error('ADMIN_REQUIRED');
       }
 
-      setIsAuthenticated(true);
-      setUsername(username);
-      setRoles(nextRoles);
+      applySnapshot({
+        isAuthenticated: true,
+        username: authResponse.username || username,
+        roles: nextRoles,
+      });
     } catch (err) {
+      clearAuth();
       if (err instanceof ApiError && (err.statusCode === 401 || err.statusCode === 403)) {
-        setError('Invalid username or password.');
+        setError(err.statusCode === 403
+          ? 'Only CloudApp admins can sign in to AI Orchestration Monitor.'
+          : 'Invalid username or password.');
       } else if (err instanceof Error && err.message === 'ADMIN_REQUIRED') {
         // Keep the admin-only message set above.
       } else {
@@ -158,15 +95,16 @@ export function useCloudAppAuth() {
     } finally {
       setIsLoggingIn(false);
     }
-  }, []);
+  }, [applySnapshot, clearAuth]);
 
-  const logout = useCallback(() => {
-    orchestrationClient.clearCloudAppAuth();
-    setIsAuthenticated(false);
-    setUsername('');
-    setRoles([]);
-    setError(null);
-  }, []);
+  const logout = useCallback(async () => {
+    try {
+      await orchestrationClient.logoutUser();
+    } finally {
+      clearAuth();
+      setError(null);
+    }
+  }, [clearAuth]);
 
   return {
     isInitialized,

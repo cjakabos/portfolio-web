@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LatLng } from 'leaflet';
 
@@ -200,7 +200,6 @@ export const useVehicleMap = () => {
     // 1. Data State
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState(false);
-    const [userToken, setUserToken] = useState('');
 
     // 2. UI/Modal State
     const [showModal, setShowModal] = useState(false);
@@ -213,22 +212,19 @@ export const useVehicleMap = () => {
     // 3. Map State
     const [center] = useState<[number, number]>([59.328246, 18.053383]);
 
-    // Refs to prevent double firing
-    const effectRan = useRef(false);
-
     // --- Helpers ---
-    const getAxiosConfig = (token: string) => ({
+    const getAxiosConfig = () => ({
         headers: {
             'Content-Type': 'application/json;charset=UTF-8',
-            'Authorization': token
-        }
+        },
+        withCredentials: true,
     });
 
     // --- API Actions ---
-    const fetchVehicles = async (token: string) => {
+    const fetchVehicles = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(VEHICLES_API_URL, getAxiosConfig(token));
+            const response = await axios.get(VEHICLES_API_URL, getAxiosConfig());
             setVehicles(response.data);
         } catch (error) {
             console.error("AXIOS ERROR FETCH:", error);
@@ -240,7 +236,7 @@ export const useVehicleMap = () => {
     const createVehicle = async () => {
         const payload = buildVehiclePayload(formData);
 
-        await axios.post(VEHICLES_API_URL, payload, getAxiosConfig(userToken));
+        await axios.post(VEHICLES_API_URL, payload, getAxiosConfig());
     };
 
     const updateVehicle = async () => {
@@ -250,14 +246,14 @@ export const useVehicleMap = () => {
 
         const payload = buildVehiclePayload(formData);
 
-        await axios.put(`${VEHICLES_API_URL}/${selectedId}`, payload, getAxiosConfig(userToken));
+        await axios.put(`${VEHICLES_API_URL}/${selectedId}`, payload, getAxiosConfig());
     };
 
     const deleteVehicle = async (id: VehicleId) => {
         if(!window.confirm("Are you sure you want to delete this vehicle?")) return;
 
         try {
-            await axios.delete(`${VEHICLES_API_URL}/${id}`, getAxiosConfig(userToken));
+            await axios.delete(`${VEHICLES_API_URL}/${id}`, getAxiosConfig());
             setVehicles(prev => prev.filter(v => v.id !== id));
         } catch (error) {
             console.error("AXIOS ERROR DELETE:", error);
@@ -285,7 +281,7 @@ export const useVehicleMap = () => {
                     await updateVehicle();
                 }
 
-                await fetchVehicles(userToken);
+                await fetchVehicles();
                 setShowModal(false);
                 setSelectedId(null);
             } catch (error) {
@@ -344,13 +340,7 @@ export const useVehicleMap = () => {
 
     // --- Initialization ---
     useEffect(() => {
-        if (!effectRan.current && typeof window !== "undefined") {
-            const storedToken = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN");
-            const token = storedToken ? `Bearer ${storedToken}` : '';
-            setUserToken(token);
-            effectRan.current = true;
-            void fetchVehicles(token);
-        }
+        void fetchVehicles();
     }, []);
 
     return {

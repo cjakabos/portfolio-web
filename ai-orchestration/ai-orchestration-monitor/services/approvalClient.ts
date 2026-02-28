@@ -36,6 +36,7 @@ class ApprovalClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -91,10 +92,10 @@ class ApprovalClient {
 
   /**
    * Approves a specific action by ID.
+   * Approver identity is derived server-side from the authenticated session.
    */
   async approveAction(
     requestId: string,
-    approverId: number = 1,
     notes?: string,
     modifications?: Record<string, unknown>
   ): Promise<ApprovalHistoryItem> {
@@ -102,7 +103,6 @@ class ApprovalClient {
       method: 'POST',
       body: JSON.stringify({
         approved: true,
-        approver_id: approverId,
         approval_notes: notes,
         modifications,
       } as ApprovalDecision),
@@ -111,17 +111,16 @@ class ApprovalClient {
 
   /**
    * Rejects a specific action by ID with an optional reason.
+   * Approver identity is derived server-side from the authenticated session.
    */
   async rejectAction(
     requestId: string,
-    approverId: number = 1,
     reason?: string
   ): Promise<ApprovalHistoryItem> {
     return this.request<ApprovalHistoryItem>(`/approvals/pending/${requestId}/decide`, {
       method: 'POST',
       body: JSON.stringify({
         approved: false,
-        approver_id: approverId,
         approval_notes: reason,
       } as ApprovalDecision),
     });
@@ -146,14 +145,12 @@ class ApprovalClient {
    */
   async resumeAfterApproval(
     approvalId: string,
-    userId: number,
     sessionId: string,
     additionalContext?: Record<string, unknown>
   ): Promise<ResumeResponse> {
     return this.request<ResumeResponse>(`/approvals/pending/${approvalId}/resume`, {
       method: 'POST',
       body: JSON.stringify({
-        user_id: userId,
         session_id: sessionId,
         additional_context: additionalContext,
       } as ResumeRequest),

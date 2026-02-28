@@ -1025,6 +1025,26 @@
         ]
       }
     },
+    "/user/admin/auth-check": {
+      "get": {
+        "operationId": "adminAuthCheck",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-controller"
+        ]
+      }
+    },
     "/user/admin/roles": {
       "post": {
         "operationId": "updateUserRoles",

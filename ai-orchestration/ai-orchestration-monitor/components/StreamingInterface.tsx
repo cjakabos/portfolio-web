@@ -103,7 +103,10 @@ export default function StreamingInterface({
     userId,
     sessionId: localSessionId,
     onError: handleStreamingError,
-    autoConnect: true,
+    // Embedded dashboard mode should not eagerly open the AI stream socket.
+    // The E2E monitor stack mocks the HTTP APIs but does not run a live AI
+    // backend, so lazy connect avoids a guaranteed handshake failure on load.
+    autoConnect: !embedded,
   });
 
   // ==========================================================================

@@ -4,7 +4,7 @@ import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
-export const useNotes = (username: string, token: string) => {
+export const useNotes = (username: string) => {
     const [notes, setNotes] = useState<any[]>([]);
     const [loadingNotes, setLoading] = useState(false);
 

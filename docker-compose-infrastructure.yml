@@ -262,6 +262,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ABTEST_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ABTEST_PASSWORD}
       MONGO_INITDB_DATABASE: ai_orchestration
+      MONGO_ABTEST_ORCH_USER: ${MONGO_ABTEST_ORCH_USER:-orchestration_user}
+      MONGO_ABTEST_ORCH_PASSWORD: ${MONGO_ABTEST_ORCH_PASSWORD:-orchestration_pass}
     volumes:
       - mongodb_data:/data/db
       - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro

@@ -259,6 +259,17 @@ export const CLOUDAPP_OPERATIONS = [
     responseStatuses: ["200"] as const,
   },
   {
+    id: "adminAuthCheck",
+    method: "GET",
+    path: "/user/admin/auth-check",
+    summary: "",
+    tags: ["user-controller"] as const,
+    pathParams: [] as const,
+    queryParams: [] as const,
+    hasRequestBody: false,
+    responseStatuses: ["200"] as const,
+  },
+  {
     id: "updateUserRoles",
     method: "POST",
     path: "/user/admin/roles",

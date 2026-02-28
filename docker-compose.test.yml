@@ -382,9 +382,11 @@ services:
       context: ./ai-orchestration/ai-orchestration-monitor
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://test-nginx:80
-        VITE_AI_BASE_URL: http://test-nginx:80/ai
-        VITE_AI_WS_URL: ws://test-nginx:80/ai
+        # Use same-origin URLs in the browser test stack and let the Playwright
+        # proxy/stubs forward monitor API calls to the gateway as needed.
+        VITE_API_URL: http://test-ai-monitor:5010
+        VITE_AI_BASE_URL: http://test-ai-monitor:5010/ai
+        VITE_AI_WS_URL: ws://test-ai-monitor:5010/ai
         NODE_ENV: production
     depends_on:
       test-nginx:
@@ -620,7 +622,10 @@ services:
         SERVICE_PATH: frontend/remote/mlops
         SERVICE_PORT: 5005
         NEXT_PRIVATE_LOCAL_WEBPACK: true
-        NEXT_PUBLIC_API_URL: http://test-nginx
+        # In browser E2E the MLOps remote runs inside the shell origin, so use
+        # the shell host and let the Playwright proxy forward same-origin API
+        # calls to the test gateway with the active auth state.
+        NEXT_PUBLIC_API_URL: http://test-shell:5001
     networks:
       - test-frontend
     healthcheck:
@@ -680,7 +685,10 @@ services:
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
         NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
-        NEXT_PUBLIC_API_URL: http://test-nginx/cloudapp
+        NEXT_PUBLIC_API_URL: /cloudapp
+        NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx/cloudapp
+    environment:
+      - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx/cloudapp
     depends_on:
       test-openmaps-frontend:
         condition: service_healthy
@@ -770,6 +778,7 @@ services:
         SERVICE_PATH: frontend/cloudapp-shell
         SERVICE_PORT: 5001
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_API_URL: /cloudapp
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://localhost:5005
     ports:
       - "5001:5001"

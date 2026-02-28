@@ -18,10 +18,12 @@ import {
   type Route,
   type TestInfo,
 } from "@playwright/test";
+import { clearInjectedAuth, getTrackedAuthToken } from "./helpers";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:80";
 const LOG_BROWSER_CONSOLE = process.env.PW_LOG_BROWSER_CONSOLE !== "0";
 const LOG_REQUEST_FAILURES = process.env.PW_LOG_REQUEST_FAILURES !== "0";
+const BACKEND_ORIGIN = new URL(BACKEND_URL).origin;
 
 function buildLogPrefix(testInfo: TestInfo): string {
   return `[pw][${testInfo.project.name}][w${testInfo.workerIndex}][${testInfo.title}]`;
@@ -77,8 +79,40 @@ export const test = base.extend<{
       // Next.js internals like /_next/data/.../petstore.json.
       const proxiedUrl = `${BACKEND_URL}${path}${url.search}`;
       try {
-        const response = await route.fetch({ url: proxiedUrl });
-        await route.fulfill({ response });
+        const headers = await route.request().allHeaders();
+        const cookies = await page.context().cookies([url.origin, BACKEND_ORIGIN]);
+        const cookieHeader = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+        if (cookieHeader) {
+          headers.cookie = cookieHeader;
+        }
+        if (!headers.authorization) {
+          const trackedToken = getTrackedAuthToken(page.context());
+          if (trackedToken) {
+            headers.authorization = `Bearer ${trackedToken}`;
+          }
+        }
+        delete headers.host;
+        const response = await fetch(proxiedUrl, {
+          method: route.request().method(),
+          headers,
+          body: route.request().method() === "GET" || route.request().method() === "HEAD"
+            ? undefined
+            : route.request().postDataBuffer() ?? undefined,
+          redirect: "manual",
+        });
+        if (path === "/cloudapp/user/user-logout" && response.ok) {
+          await clearInjectedAuth(page.context());
+        }
+        const responseHeaders = Object.fromEntries(response.headers.entries());
+        delete responseHeaders["content-length"];
+        delete responseHeaders["content-encoding"];
+        delete responseHeaders["transfer-encoding"];
+
+        await route.fulfill({
+          status: response.status,
+          headers: responseHeaders,
+          body: Buffer.from(await response.arrayBuffer()),
+        });
       } catch {
         // If backend is unreachable, let the request fail naturally
         await route.fallback();

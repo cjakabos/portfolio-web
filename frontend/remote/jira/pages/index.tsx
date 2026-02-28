@@ -177,7 +177,6 @@ const CloudJira: React.FC = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
-  const [userToken, setUserToken] = useState("");
 
   // Jira configuration state
   const [jiraConfigError, setJiraConfigError] = useState<string[] | null>(null);
@@ -215,8 +214,6 @@ const CloudJira: React.FC = () => {
 
   // Refs
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const effectRan = useRef(false);
-
   // Resizing state
   const [sidebarWidth, setSidebarWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
@@ -234,15 +231,6 @@ const CloudJira: React.FC = () => {
       api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"
     }) as any,
   });
-
-  // Initialize user token
-  if (!effectRan.current) {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("NEXT_PUBLIC_MY_TOKEN") || '';
-      if (token) setUserToken(token);
-      effectRan.current = true;
-    }
-  }
 
   // --- Resizing Logic ---
   const startResizing = useCallback(() => {
@@ -422,8 +410,8 @@ const CloudJira: React.FC = () => {
     const axiosConfig = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': userToken
-      }
+      },
+      withCredentials: true,
     };
 
     setLoading(true);
@@ -455,7 +443,7 @@ const CloudJira: React.FC = () => {
       jiraPath: "/rest/api/latest/issuetype/project?projectId=10000",
     };
 
-    const axiosConfig = { headers: { "Content-Type": "application/json", Authorization: userToken } };
+    const axiosConfig = { headers: { "Content-Type": "application/json" }, withCredentials: true };
     setLoading(true);
     axios.post(jiraProxy + "/get", postData, axiosConfig)
       .then((response) => setTicketTypes(response.data))
@@ -474,8 +462,8 @@ const CloudJira: React.FC = () => {
     const axiosConfig = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': userToken
-      }
+      },
+      withCredentials: true,
     };
 
     axios.put(jiraProxy + "/put", postData, axiosConfig)
@@ -491,8 +479,8 @@ const CloudJira: React.FC = () => {
     const axiosConfig = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': userToken
-      }
+      },
+      withCredentials: true,
     };
 
     axios.post(jiraProxy + "/delete", postData, axiosConfig)
@@ -515,8 +503,8 @@ const CloudJira: React.FC = () => {
     const axiosConfig = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': userToken
-      }
+      },
+      withCredentials: true,
     };
 
     axios.post(jiraProxy + "/post", postData, axiosConfig)

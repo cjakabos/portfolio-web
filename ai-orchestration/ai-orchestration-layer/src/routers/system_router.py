@@ -14,6 +14,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 
+from auth import require_admin_user
+
 router = APIRouter(tags=["System"])
 
 
@@ -114,10 +116,10 @@ def get_error_handler():
 # ============================================================================
 
 @router.get("/feature-status", response_model=FeatureStatusResponse)
-async def get_feature_status():
+async def get_feature_status(admin: str = Depends(require_admin_user)):
     """
-    Get status of all system features
-    
+    Get status of all system features (admin-only).
+
     Returns feature availability, enabled status, and active fallbacks
     """
     orchestrator = get_orchestrator()
@@ -129,10 +131,10 @@ async def get_feature_status():
 # ============================================================================
 
 @router.get("/circuit-breakers", response_model=CircuitBreakerListResponse)
-async def list_circuit_breakers():
+async def list_circuit_breakers(admin: str = Depends(require_admin_user)):
     """
-    List all circuit breakers and their current status
-    
+    List all circuit breakers and their current status (admin-only).
+
     Returns status for all registered circuit breakers including:
     - Current state (closed/open/half_open)
     - Failure count and threshold
@@ -182,7 +184,7 @@ async def list_circuit_breakers():
 
 
 @router.get("/circuit-breakers/{name}")
-async def get_circuit_breaker(name: str):
+async def get_circuit_breaker(name: str, admin: str = Depends(require_admin_user)):
     """
     Get status of a specific circuit breaker
     
@@ -213,7 +215,7 @@ async def get_circuit_breaker(name: str):
 
 
 @router.post("/circuit-breakers/{name}/reset")
-async def reset_circuit_breaker(name: str):
+async def reset_circuit_breaker(name: str, admin: str = Depends(require_admin_user)):
     """
     Reset a circuit breaker to closed state
     
@@ -255,7 +257,7 @@ async def reset_circuit_breaker(name: str):
 # ============================================================================
 
 @router.get("/connection-stats", response_model=ConnectionStatsResponse)
-async def get_connection_stats():
+async def get_connection_stats(admin: str = Depends(require_admin_user)):
     """
     Get HTTP connection pool statistics for all services
     
@@ -337,7 +339,7 @@ async def get_connection_stats():
 # ============================================================================
 
 @router.get("/errors/summary")
-async def get_error_summary(hours: int = 24):
+async def get_error_summary(hours: int = 24, admin: str = Depends(require_admin_user)):
     """
     Get summary of errors in the last N hours
     
@@ -368,7 +370,8 @@ async def get_error_summary(hours: int = 24):
 async def get_recent_errors(
     limit: int = 50,
     category: Optional[str] = None,
-    severity: Optional[str] = None
+    severity: Optional[str] = None,
+    admin: str = Depends(require_admin_user),
 ):
     """
     Get recent error entries with optional filtering.

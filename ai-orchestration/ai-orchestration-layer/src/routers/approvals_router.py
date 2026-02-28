@@ -18,6 +18,8 @@ from enum import Enum
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, WebSocket, WebSocketDisconnect, Depends
 from pydantic import BaseModel, Field
 
+from auth import require_authenticated_user, require_admin_user, require_websocket_admin
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/approvals", tags=["HITL Approvals"])
@@ -91,7 +93,7 @@ class ApprovalRequestCreate(BaseModel):
     approval_type: ApprovalType
     proposed_action: str
     risk_level: RiskLevel
-    requester_id: int
+    requester_id: Optional[str] = None  # Ignored by server; identity derived from auth
     context: ApprovalContext
     execution_context: Optional[ExecutionContextModel] = None
     risk_score: float = 0.5
@@ -106,7 +108,7 @@ class ApprovalRequest(BaseModel):
     status: ApprovalStatus
     created_at: str
     expires_at: str
-    requester_id: int
+    requester_id: str
     proposed_action: str
     risk_level: RiskLevel
     risk_score: float = 0.5
@@ -117,14 +119,14 @@ class ApprovalRequest(BaseModel):
 
 class ApprovalDecision(BaseModel):
     approved: bool
-    approver_id: int
+    approver_id: Optional[str] = None  # Ignored by server; identity derived from auth
     approval_notes: Optional[str] = None
     modifications: Optional[Dict[str, Any]] = None
 
 
 class ApprovalHistoryItem(ApprovalRequest):
     approved_at: Optional[str] = None
-    approver_id: Optional[int] = None
+    approver_id: Optional[str] = None
     approval_notes: Optional[str] = None
     modifications: Optional[Dict[str, Any]] = None
 
@@ -143,7 +145,7 @@ class ApprovalStats(BaseModel):
 
 class ResumeRequest(BaseModel):
     """Request to resume workflow after approval"""
-    user_id: int
+    user_id: Optional[str] = None  # Ignored by server; identity derived from auth
     session_id: str
     additional_context: Optional[Dict[str, Any]] = None
 
@@ -472,7 +474,10 @@ async def _ensure_initialized():
 # =============================================================================
 
 @router.post("/request", response_model=ApprovalRequest)
-async def create_approval_request(request: ApprovalRequestCreate):
+async def create_approval_request(
+    request: ApprovalRequestCreate,
+    auth_user: str = Depends(require_authenticated_user),
+):
     """Create a new approval request."""
     await _ensure_initialized()
 
@@ -487,7 +492,7 @@ async def create_approval_request(request: ApprovalRequestCreate):
         "status": ApprovalStatus.PENDING.value,
         "created_at": now.isoformat() + "Z",
         "expires_at": expires_at.isoformat() + "Z",
-        "requester_id": request.requester_id,
+        "requester_id": auth_user,  # Server-authoritative: derived from auth
         "proposed_action": request.proposed_action,
         "risk_level": request.risk_level.value,
         "risk_score": request.risk_score,
@@ -512,7 +517,8 @@ async def create_approval_request(request: ApprovalRequestCreate):
 async def get_pending_approvals(
     approval_type: Optional[ApprovalType] = None,
     risk_level: Optional[RiskLevel] = None,
-    min_risk_score: Optional[float] = None
+    min_risk_score: Optional[float] = None,
+    admin_user: str = Depends(require_admin_user),
 ):
     """Get all pending approval requests."""
     await _ensure_initialized()
@@ -534,7 +540,7 @@ async def get_pending_approvals(
 
 
 @router.get("/pending/{request_id}", response_model=ApprovalRequest)
-async def get_pending_approval(request_id: str):
+async def get_pending_approval(request_id: str, admin_user: str = Depends(require_admin_user)):
     """Get a specific pending approval."""
     await _ensure_initialized()
 
@@ -545,7 +551,11 @@ async def get_pending_approval(request_id: str):
 
 
 @router.post("/pending/{request_id}/decide", response_model=ApprovalHistoryItem)
-async def decide_approval(request_id: str, decision: ApprovalDecision):
+async def decide_approval(
+    request_id: str,
+    decision: ApprovalDecision,
+    admin_user: str = Depends(require_admin_user),
+):
     """Approve or reject a pending request."""
     await _ensure_initialized()
 
@@ -556,14 +566,14 @@ async def decide_approval(request_id: str, decision: ApprovalDecision):
     now = datetime.utcnow()
     approval["status"] = ApprovalStatus.APPROVED.value if decision.approved else ApprovalStatus.REJECTED.value
     approval["approved_at"] = now.isoformat() + "Z"
-    approval["approver_id"] = decision.approver_id
+    approval["approver_id"] = admin_user  # Server-authoritative: derived from auth
     approval["approval_notes"] = decision.approval_notes
     approval["modifications"] = decision.modifications
 
     await storage.add_to_history(approval)
 
     action = "approved" if decision.approved else "rejected"
-    logger.info(f"Approval {request_id} {action} by user {decision.approver_id}")
+    logger.info(f"Approval {request_id} {action} by user {admin_user}")
 
     # Broadcast decision
     await notifier.broadcast({
@@ -575,7 +585,11 @@ async def decide_approval(request_id: str, decision: ApprovalDecision):
 
 
 @router.post("/pending/{request_id}/resume", response_model=ResumeResponse)
-async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
+async def resume_after_approval(
+    request_id: str,
+    resume_request: ResumeRequest,
+    admin_user: str = Depends(require_admin_user),
+):
     """
     Resume workflow execution after approval.
 
@@ -664,12 +678,19 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         if not original_input:
             original_input = context_data.get("query", "Resume approved operation")
 
+        requester_id = str(approval.get("requester_id", "")).strip()
+        if not requester_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Approval request is missing requester identity"
+            )
+
         # Load user context
         user_context = {}
         history = []
 
         if _context_store:
-            user_context = _context_store.load_user_profile(str(resume_request.user_id))
+            user_context = _context_store.load_user_profile(requester_id)
         if _memory_manager:
             # Use original session_id for history lookup
             history = _memory_manager.get_history(original_session_id)
@@ -682,7 +703,7 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         # Use ORIGINAL session_id, not the one from resume_request
         state = create_initial_state(
             request_id=orchestration_id,
-            user_id=str(resume_request.user_id),
+            user_id=requester_id,
             session_id=original_session_id,  # FIX: Use original session_id
             input_data=original_input,
             orchestration_type=orchestration_type,
@@ -725,7 +746,13 @@ async def resume_after_approval(request_id: str, resume_request: ResumeRequest):
         state["execution_path"].append("resume_from_approval")
         state["current_node"] = f"{next_capability}_system"
 
-        logger.info(f"Resuming workflow {orchestration_id} with capability {next_capability}")
+        logger.info(
+            "Resuming workflow %s with capability %s for requester %s (approved by %s)",
+            orchestration_id,
+            next_capability,
+            requester_id,
+            admin_user,
+        )
 
         # Execute the resumed workflow
         # Use original session_id for thread_id as well
@@ -789,7 +816,8 @@ async def get_approval_history(
     offset: int = Query(0, ge=0),
     status: Optional[ApprovalStatus] = None,
     approval_type: Optional[ApprovalType] = None,
-    include_auto_approved: bool = True
+    include_auto_approved: bool = True,
+    admin_user: str = Depends(require_admin_user),
 ):
     """Get approval history."""
     await _ensure_initialized()
@@ -811,7 +839,7 @@ async def get_approval_history(
 
 
 @router.get("/stats", response_model=ApprovalStats)
-async def get_approval_stats():
+async def get_approval_stats(admin_user: str = Depends(require_admin_user)):
     """Get approval statistics."""
     await _ensure_initialized()
 
@@ -820,7 +848,7 @@ async def get_approval_stats():
 
 
 @router.delete("/pending/{request_id}")
-async def cancel_approval_request(request_id: str):
+async def cancel_approval_request(request_id: str, admin_user: str = Depends(require_admin_user)):
     """Cancel a pending approval request."""
     await _ensure_initialized()
 
@@ -843,7 +871,7 @@ async def cancel_approval_request(request_id: str):
 
 
 @router.get("/{request_id}", response_model=ApprovalHistoryItem)
-async def get_approval(request_id: str):
+async def get_approval(request_id: str, admin_user: str = Depends(require_admin_user)):
     """Get any approval by ID (pending or processed)."""
     await _ensure_initialized()
 
@@ -861,6 +889,13 @@ async def get_approval(request_id: str):
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time approval notifications."""
+    try:
+        await require_websocket_admin(websocket)
+    except HTTPException as exc:
+        logger.warning("Rejecting unauthenticated approval websocket: %s", exc.detail)
+        await websocket.close(code=1008, reason=exc.detail)
+        return
+
     await notifier.connect(websocket)
     try:
         while True:

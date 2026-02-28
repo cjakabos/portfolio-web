@@ -2,7 +2,7 @@ import uuid
 import time
 import logging
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Request
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Request, Query
 from starlette.websockets import WebSocketState
 import json
 import uuid
@@ -14,6 +14,7 @@ from core.orchestrator import AIOrchestrationLayer, UnifiedState, OrchestrationT
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
 from tools.http_client import HTTPClient
+from auth import require_authenticated_user, require_websocket_user
 
 # Import metrics collector for recording real metrics
 from routers.metrics_router import collector
@@ -78,19 +79,54 @@ def _extract_downstream_headers(request: Request) -> Dict[str, str]:
 
     return headers
 
+
+def _resolve_effective_user_id(
+    requested_user_id: Optional[Any],
+    authenticated_user: str,
+) -> str:
+    """
+    Bind end-user requests to the authenticated identity.
+
+    Internal service calls may act on behalf of another user, but public
+    callers cannot override their identity via request payloads.
+    """
+    requested = str(requested_user_id).strip() if requested_user_id is not None else ""
+    if authenticated_user == "internal-service":
+        if not requested:
+            raise HTTPException(status_code=400, detail="user_id is required for internal requests")
+        return requested
+
+    if requested and requested != authenticated_user:
+        logger.warning(
+            "Ignoring client-supplied user_id %s for authenticated user %s",
+            requested,
+            authenticated_user,
+        )
+
+    return authenticated_user
+
 # =============================================================================
 # Endpoints
 # =============================================================================
 
 @router.post("/orchestrate")
-async def orchestrate(http_request: Request, request: OrchestrationRequest):
+async def orchestrate(
+    http_request: Request,
+    request: OrchestrationRequest,
+    auth_user: str = Depends(require_authenticated_user),
+):
     """
     Main orchestration endpoint.
     Routes the request through the LangGraph workflow.
     Records real metrics after execution.
+
+    User identity is derived server-side from the gateway-validated auth
+    headers rather than trusting the client-supplied ``user_id``.
     """
     if not _orchestrator or not _context_store or not _memory_manager:
         raise HTTPException(status_code=503, detail="Orchestration layer not initialized")
+
+    request.user_id = _resolve_effective_user_id(request.user_id, auth_user)
 
     request_id = str(uuid.uuid4())
     start_time = time.time()
@@ -259,9 +295,17 @@ def _derive_capabilities_from_path(execution_path: list) -> list:
 async def delete_user_preference(
     user_id: str,
     key: str,
-    ctx_store: ContextStore = Depends(get_context_store_dependency)
+    auth_user: str = Depends(require_authenticated_user),
+    ctx_store: ContextStore = Depends(get_context_store_dependency),
 ):
     """Delete a specific user preference."""
+    effective_user_id = _resolve_effective_user_id(user_id, auth_user)
+    if effective_user_id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot modify another user's preferences",
+        )
+
     profile = ctx_store.load_user_profile(user_id)
     if "preferences" in profile and key in profile["preferences"]:
         del profile["preferences"][key]
@@ -291,6 +335,13 @@ async def websocket_stream(websocket: WebSocket):
     """
     client_id = str(uuid.uuid4())[:8]
     logger.info(f"WebSocket connection attempt from client {client_id}")
+
+    try:
+        auth_user = await require_websocket_user(websocket)
+    except HTTPException as exc:
+        logger.warning("Rejecting unauthenticated WebSocket %s: %s", client_id, exc.detail)
+        await websocket.close(code=1008, reason=exc.detail)
+        return
 
     # 1. ATTEMPT ACCEPT
     try:
@@ -325,7 +376,7 @@ async def websocket_stream(websocket: WebSocket):
                 continue
 
             message = data.get("message", "")
-            user_id = data.get("user_id", "anonymous")
+            user_id = _resolve_effective_user_id(data.get("user_id"), auth_user)
             session_id = data.get("session_id", str(uuid.uuid4()))
             context = data.get("context", {})
 

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth, CLOUDAPP_AUTH_STATE_CHANGED_EVENT } from "../hooks/useAuth";
 import { useCart } from "../hooks/useCart";
 import { useItems } from "../hooks/useItems";
 import { useLogin } from "../hooks/useLogin";
@@ -39,49 +39,35 @@ describe("cloudapp hooks", () => {
     jest.restoreAllMocks();
   });
 
-  test("useAuth reads token and username from localStorage", async () => {
-    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", "jwt-token");
-    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
+  test("useAuth derives username and roles from auth-check", async () => {
+    mock.onGet(`${API_URL}/user/auth-check`).reply(200, {
+      username: "alice",
+      roles: ["ROLE_USER", "ROLE_ADMIN"],
+    });
 
     const { result } = renderHook(() => useAuth());
-    await waitFor(() => expect(result.current.username).toBe("alice"));
+    await waitFor(() => expect(result.current.isInitialized).toBe(true));
 
-    expect(result.current.token).toBe("Bearer jwt-token");
-    expect(result.current.isReady).toBe(true);
-  });
-
-  test("useAuth does not double-prefix legacy Bearer tokens from localStorage", async () => {
-    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", "Bearer legacy-token");
-    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
-
-    const { result } = renderHook(() => useAuth());
-    await waitFor(() => expect(result.current.username).toBe("alice"));
-
-    expect(result.current.token).toBe("Bearer legacy-token");
-    expect(result.current.isReady).toBe(true);
-  });
-
-  test("useAuth decodes roles from JWT payload and exposes isAdmin", async () => {
-    const payload = { sub: "alice", roles: ["ROLE_USER", "ROLE_ADMIN"] };
-    const payloadB64 = btoa(JSON.stringify(payload))
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/g, "");
-    const fakeJwt = `header.${payloadB64}.sig`;
-
-    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", fakeJwt);
-    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
-
-    const { result } = renderHook(() => useAuth());
-    await waitFor(() => expect(result.current.username).toBe("alice"));
-
+    expect(result.current.username).toBe("alice");
     expect(result.current.roles).toEqual(["ROLE_USER", "ROLE_ADMIN"]);
     expect(result.current.isAdmin).toBe(true);
-    expect(result.current.token).toBe(`Bearer ${fakeJwt}`);
+    expect(result.current.isReady).toBe(true);
+  });
+
+  test("useAuth clears state on unauthorized auth-check", async () => {
+    mock.onGet(`${API_URL}/user/auth-check`).reply(401);
+
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.isInitialized).toBe(true));
+
+    expect(result.current.username).toBe("");
+    expect(result.current.roles).toEqual([]);
+    expect(result.current.isAdmin).toBe(false);
+    expect(result.current.isReady).toBe(false);
   });
 
   test("useItems fetches items and creates new item", async () => {
-    const { result } = renderHook(() => useItems("Bearer token"));
+    const { result } = renderHook(() => useItems());
     const first = [{ id: 1, name: "Item A", price: 5, description: "A" }];
     const second = [...first, { id: 2, name: "Item B", price: 7, description: "B" }];
 
@@ -103,7 +89,7 @@ describe("cloudapp hooks", () => {
   });
 
   test("useCart fetches and updates cart", async () => {
-    const { result } = renderHook(() => useCart("alice", "Bearer token"));
+    const { result } = renderHook(() => useCart("alice"));
     const cartAfterAdd = { id: 1, items: [{ id: 11, name: "Widget", price: 9.99 }], total: 9.99 };
     const cleared = { id: 1, items: [], total: 0 };
 
@@ -130,7 +116,7 @@ describe("cloudapp hooks", () => {
   });
 
   test("useNotes add/update/delete refreshes notes", async () => {
-    const { result } = renderHook(() => useNotes("alice", "Bearer token"));
+    const { result } = renderHook(() => useNotes("alice"));
     const initial = [{ id: 1, title: "n1", description: "d1" }];
     const updated = [{ id: 1, title: "n1-u", description: "d1-u" }];
     const empty: any[] = [];
@@ -163,39 +149,26 @@ describe("cloudapp hooks", () => {
     expect(result.current.notes).toEqual(empty);
   });
 
-  test("useLogin stores JWT and username in localStorage", async () => {
-    mock.onPost(`${API_URL}/user/user-login`).reply(200, {}, { authorization: "Bearer abc123" });
+  test("useLogin posts credentials, keeps auth in cookies, and emits auth change", async () => {
+    const dispatchSpy = jest.spyOn(window, "dispatchEvent");
+    mock.onPost(`${API_URL}/user/user-login`).reply(200, { message: "Login successful" });
     const { result } = renderHook(() => useLogin());
 
     await act(async () => {
       await result.current.login({ username: "alice", password: "secret" });
     });
 
-    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBe("alice");
-    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("abc123");
+    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBeNull();
+    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBeNull();
     expect(mock.history.post[0]?.withCredentials).toBe(true);
+    expect(dispatchSpy).toHaveBeenCalledWith(expect.any(Event));
+    expect((dispatchSpy.mock.calls.at(-1)?.[0] as Event | undefined)?.type)
+      .toBe(CLOUDAPP_AUTH_STATE_CHANGED_EVENT);
     expect(result.current.error).toBeNull();
   });
 
-  test("useLogin and useAuth roundtrip keeps a single Bearer prefix", async () => {
-    mock.onPost(`${API_URL}/user/user-login`).reply(200, {}, { authorization: "Bearer abc123" });
-    const { result: loginResult } = renderHook(() => useLogin());
-
-    await act(async () => {
-      await loginResult.current.login({ username: "alice", password: "secret" });
-    });
-
-    const { result: authResult } = renderHook(() => useAuth());
-    await waitFor(() => expect(authResult.current.username).toBe("alice"));
-
-    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBe("abc123");
-    expect(authResult.current.token).toBe("Bearer abc123");
-    expect(loginResult.current.error).toBeNull();
-  });
-
-  test("useLogout clears local auth state and calls logout endpoint with credentials", async () => {
-    window.localStorage.setItem("NEXT_PUBLIC_MY_USERNAME", "alice");
-    window.localStorage.setItem("NEXT_PUBLIC_MY_TOKEN", "abc123");
+  test("useLogout calls logout endpoint with credentials and emits auth change", async () => {
+    const dispatchSpy = jest.spyOn(window, "dispatchEvent");
     mock.onPost(`${API_URL}/user/user-logout`).reply(200, {});
 
     const { result } = renderHook(() => useLogout());
@@ -205,11 +178,12 @@ describe("cloudapp hooks", () => {
     });
 
     const lastPost = mock.history.post[mock.history.post.length - 1];
-    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBeNull();
-    expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBeNull();
     expect(lastPost?.withCredentials).toBe(true);
     expect(lastPost?.headers?.Authorization).toBeUndefined();
     expect(lastPost?.headers?.["X-XSRF-TOKEN"]).toBe("test-xsrf");
+    expect(dispatchSpy).toHaveBeenCalledWith(expect.any(Event));
+    expect((dispatchSpy.mock.calls.at(-1)?.[0] as Event | undefined)?.type)
+      .toBe(CLOUDAPP_AUTH_STATE_CHANGED_EVENT);
     expect(result.current.error).toBeNull();
   });
 
