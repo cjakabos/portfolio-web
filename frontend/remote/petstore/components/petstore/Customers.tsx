@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/compat/router';
 import { Plus, User, Phone } from 'lucide-react';
 import PetStoreLayout from '../PetStoreLayout';
 import { useCustomers } from '../../hooks/useCustomers';
@@ -15,18 +15,13 @@ const PetStoreCustomers: React.FC = () => {
   
   const [showForm, setShowForm] = React.useState(false);
 
-  let router: ReturnType<typeof useRouter> | null = null;
-  try {
-    router = useRouter();
-  } catch {
-    // Router not available in federated module context
-  }
+  const router = useRouter();
 
   useEffect(() => {
     if (router?.query?.action === 'new') {
       setShowForm(true);
     }
-  }, [router?.query]);
+  }, [router?.query?.action]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     await handleCustomerSubmit(e);

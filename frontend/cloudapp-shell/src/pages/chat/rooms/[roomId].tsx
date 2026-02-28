@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { chatHttpApi } from '../../../hooks/chatHttpApi';
@@ -34,7 +34,7 @@ const CloudChat: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { username } = useAuth();
 
-  const onMessageReceived = (msg: any) => {
+  const onMessageReceived = useCallback((msg: any) => {
     if (msg.content === 'newUser') {
       setConnectedUsers((users) => [...users, msg.sender]);
       console.log('New user joined:', msg.sender);
@@ -47,9 +47,22 @@ const CloudChat: React.FC = () => {
       };
       setMessages((messages) => [...messages, newMessage]);
     }
-  };
+  }, []);
 
-  const onConnected = (username: string, roomCode: string) => {
+  const fetchMessages = useCallback((roomCode: string) => {
+    client.send(`/app/loadHistory/${roomCode}`, JSON.stringify({}));
+    setLoading(false);
+  }, []);
+
+  const sendNewUser = useCallback((usernameValue: string, roomCode: string) => {
+    const msg = {
+      sender: usernameValue,
+      content: 'newUser',
+    };
+    client.send(`/app/newUser/${roomCode}`, JSON.stringify(msg));
+  }, []);
+
+  const onConnected = useCallback((usernameValue: string, roomCode: string) => {
     console.log('Connected to room:', roomCode);
 
     // Subscribe to load message history
@@ -65,19 +78,19 @@ const CloudChat: React.FC = () => {
     // Subscribe to new user notifications
     client.subscribe(`/topic/newUser/${roomCode}`, (message) => {
       const msg = JSON.parse(message.body);
-      if (msg.sender !== username) {
+      if (msg.sender !== usernameValue) {
         console.log(`User ${msg.sender} has entered room`);
       }
     });
 
     // Send new user message
-    sendNewUser(username, roomCode);
+    sendNewUser(usernameValue, roomCode);
     setConnected(true);
 
     // Send automatic welcome message if room was just created
     if (created === 'true') {
       const welcomeMsg = {
-        sender: username,
+        sender: usernameValue,
         content: 'This is an automatic message, the room was created.',
       };
       client.send(`/app/sendMessage/${roomCode}`, JSON.stringify(welcomeMsg));
@@ -87,38 +100,25 @@ const CloudChat: React.FC = () => {
 
     // Fetch message history after connection is established
     fetchMessages(roomCode);
-  };
+  }, [created, fetchMessages, onMessageReceived, router, sendNewUser]);
 
-  const fetchMessages = (roomCode: string) => {
-    client.send(`/app/loadHistory/${roomCode}`, JSON.stringify({}));
-    setLoading(false);
-  };
-
-  const onError = (error: any) => {
+  const onError = useCallback((error: any) => {
     console.log('Failed to connect to WebSocket server', error);
     setConnected(false);
-  };
+  }, []);
 
-  const onDisconnected = () => {
+  const onDisconnected = useCallback(() => {
     console.log('Disconnected from WebSocket');
     setConnected(false);
-  };
+  }, []);
 
-  const connectSocket = (roomCode: string, username: string) => {
+  const connectSocket = useCallback((roomCode: string, usernameValue: string) => {
     const socket = new SockJS(SOCKET_URL);
     client = Stomp.over(socket);
     client.debug = () => {};
-    client.connect({}, () => onConnected(username, roomCode), onError);
+    client.connect({}, () => onConnected(usernameValue, roomCode), onError);
     client.disconnect = onDisconnected;
-  };
-
-  const sendNewUser = (username: string, roomCode: string) => {
-    const msg = {
-      sender: username,
-      content: 'newUser',
-    };
-    client.send(`/app/newUser/${roomCode}`, JSON.stringify(msg));
-  };
+  }, [onConnected, onDisconnected, onError]);
 
 
   useEffect(() => {
@@ -133,7 +133,7 @@ const CloudChat: React.FC = () => {
         }
       };
     }
-  }, [roomId, username]);
+  }, [roomId, username, connectSocket]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

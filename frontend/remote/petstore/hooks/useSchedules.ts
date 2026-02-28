@@ -1,37 +1,14 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
-const initialPet = {
-    id: "",
-    type: "",
-    name: "",
-    ownerId: "",
-    birthDate: "",
-    notes: ""
-};
-
-const initialEmployee = {
-    id: "",
-    name: "",
-    skills: [""],
-    daysAvailable: [],
-};
-
-const initialSchedule = {
-    id: 0,
-    employeeIds: [],
-    petIds: [],
-    date: new Date(),
-    activities: [""]
-};
+import type { Pet, Employee, Schedule } from "../types";
 
 export const useSchedules = () => {
-    const [availableEmployees, setAvailableEmployees] = useState([]);
-    const [allPets, setAllPets] = useState([initialPet]);
-    const [schedules, setSchedules] = useState([]);
+    const [availableEmployees, setAvailableEmployees] = useState<Employee[]>([]);
+    const [allPets, setAllPets] = useState<Pet[]>([]);
+    const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedOption, setSelectedOption] = useState(1);
-    const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
+    const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([""]);
     const [date, setDate] = useState(new Date());
     const [isModal1Open, setModal1Open] = useState(false);
     const [isModal2Open, setModal2Open] = useState(false);
@@ -75,7 +52,7 @@ export const useSchedules = () => {
         getAvailability(date, selectedMultiOptions);
     };
 
-    const getAvailability = async (dateString, skills) => {
+    const getAvailability = async (dateString: Date, skills: string[]) => {
 
         const postData = {
             date: dateString,

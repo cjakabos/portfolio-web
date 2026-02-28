@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import type { Employee } from "../types";
 
-const initialEmployee = {
+const initialEmployee: Employee = {
     id: "",
     name: "",
-    skills: [""],
+    skills: [],
     daysAvailable: [],
 };
 
 export const useEmployees = () => {
-    const [employee, setEmployee] = useState(initialEmployee);
-    const [allEmployees, setAllEmployees] = useState([]);
+    const [employee, setEmployee] = useState<Employee>(initialEmployee);
+    const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedMultiOptions, setSelectedMultiOptions] = useState(initialEmployee.skills);
+    const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
     const [selectedDayOption, setSelectedDayOption] = useState(["MONDAY", "TUESDAY", "FRIDAY"]);
 
     useEffect(() => {

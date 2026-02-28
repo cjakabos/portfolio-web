@@ -26,7 +26,6 @@ const Schedules: React.FC = () => {
   const { allPets } = usePets();
 
   const [date, setDate] = useState('');
-  const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<Skill[]>([]);
   //const [availableEmployees, setAvailableEmployees] = useState<typeof allEmployees>([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -41,14 +40,13 @@ const Schedules: React.FC = () => {
     );
   };
 
-const handleFetchAvailability = async () => {
+  const handleFetchAvailability = async () => {
     if (!date || selectedMultiOptions.length === 0) return;
 
     setLoadingAvailability(true);
 
     try {
-      await getAvailability(date, selectedMultiOptions);
-      console.log(availableEmployees)
+      await getAvailability(new Date(date), selectedMultiOptions);
     } finally {
       setLoadingAvailability(false);
     }

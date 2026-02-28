@@ -28,12 +28,9 @@ const REMOTE_PETSTORE = process.env.NEXT_PUBLIC_REMOTE_PETSTORE_URL || "http://l
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: false,
+    reactStrictMode: true,
     images: {
         qualities: [25, 50, 75, 100],
-    },
-    eslint: {
-        ignoreDuringBuilds: true,
     },
     transpilePackages: ['@mui/x-data-grid'],
     output: 'standalone',

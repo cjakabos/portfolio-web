@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   FileText,
@@ -19,6 +19,17 @@ import { useAuth } from '../hooks/useAuth';
 const Home: React.FC = () => {
   const { username, isAdmin } = useAuth();
   const [activityFilter, setActivityFilter] = useState<'ALL' | 'SYSTEM' | 'LOGIN' | 'FILE'>('ALL');
+  const [dateStr, setDateStr] = useState('');
+
+  // Derive the date string client-side to avoid SSR / hydration mismatch
+  // (toLocaleDateString output depends on the runtime locale).
+  useEffect(() => {
+    setDateStr(
+      new Date().toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      }),
+    );
+  }, []);
 
   const cards = [
     { title: 'Jira', desc: 'Project & Issue Tracking', icon: <Trello className="text-blue-600" size={32} />, path: '/jira', color: 'bg-blue-600/10', adminOnly: true },
@@ -51,7 +62,7 @@ const Home: React.FC = () => {
           <p className="text-gray-500 dark:text-gray-400 mt-2">Here is what&apos;s happening in your cloud workspace today.</p>
         </div>
         <div className="text-sm text-gray-400 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-          {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {dateStr}
         </div>
       </div>
 

@@ -53,7 +53,7 @@ const PetStoreApp = () => {
     if (isStandalone) {
       // Use Next.js router when standalone
       const path = page === 'dashboard' ? '/petstore' : `/petstore/${page}`;
-      router.push(path);
+      router?.push(path);
     } else {
       // Use internal state when embedded
       setInternalPage(page);
