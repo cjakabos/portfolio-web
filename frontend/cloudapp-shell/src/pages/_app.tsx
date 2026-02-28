@@ -13,33 +13,33 @@ import { allAuthedRoutes } from '../constants/routes';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const router = useRouter();
   const { isAdmin, isReady, isInitialized } = useAuth();
 
+  // Client-side theme initialisation — reads localStorage once after mount.
   useEffect(() => {
-    setIsClient(true);
+    setHasMounted(true);
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setIsDark(true);
     }
   }, []);
 
+  // Sync the `dark` class on <html> whenever the theme changes (client only).
   useEffect(() => {
-    if (isClient) {
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      }
+    if (!hasMounted) return;
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
-  }, [isDark, isClient]);
+  }, [isDark, hasMounted]);
 
   const toggleTheme = () => {
-      console.log("Toggle triggered in App");
-      setIsDark((prev) => !prev);
+    setIsDark((prev) => !prev);
   };
 
   // Axios interceptor — redirect to login when the authenticated session expires.
@@ -57,28 +57,24 @@ function MyApp({ Component, pageProps }: AppProps) {
     return () => { axios.interceptors.response.eject(interceptor); };
   }, [router]);
 
-  // Auth Guard Logic
+  // Auth guard — redirect unauthenticated users to /login (client-side only).
   useEffect(() => {
-    if (isClient && isInitialized) {
+    if (hasMounted && isInitialized) {
       if (!isReady && router.pathname !== '/login' && router.pathname !== '/logout') {
         router.push('/login');
       }
     }
-  }, [isClient, isInitialized, isReady, router.pathname, router]);
+  }, [hasMounted, isInitialized, isReady, router.pathname, router]);
 
-  // Prevent hydration mismatch
-  if (!isClient) return null;
-
-  // Check route permissions
-  const currentRoute = allAuthedRoutes.find(r => 
+  // ---- Route-level access control (evaluated on every render) ----
+  const currentRoute = allAuthedRoutes.find(r =>
     r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
   );
   const isAdminRoute = Boolean(currentRoute?.adminOnly);
   const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
 
-  // For admin-only routes, avoid rendering the route component until auth state
-  // is initialized. This prevents remote modules from loading before RBAC can
-  // show Access Denied (or redirect unauthenticated users).
+  // For admin-only routes, defer rendering until auth state is resolved so
+  // we don't flash the page content before RBAC can deny access.
   if (isAdminRoute && !isInitialized) {
     return null;
   }

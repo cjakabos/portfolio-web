@@ -9,7 +9,7 @@ import { useCart } from "../../hooks/useCart";
 const initialFormValues = { name: "", price: "", description: "" };
 
 
-import { Item, Cart, UserOrder } from '../../../types';
+import { Item, UserOrder } from '../../../types';
 import { ShoppingCart, Package, CheckCircle, Plus, X } from 'lucide-react';
 
 const CloudShop: React.FC = () => {
@@ -35,7 +35,6 @@ const CloudShop: React.FC = () => {
             fetchCart();
             fetchHistory();
         }
-        console.log("cart", cart)
     }, [isReady, fetchItems, fetchCart, fetchHistory]);
 
     // Handle form input changes

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { Lock, User } from 'lucide-react';
 import { useLogin } from "../../hooks/useLogin";
@@ -44,7 +45,7 @@ const Login: React.FC = () => {
       }
       router.push('/');
     } catch (err: any) {
-      (err.message || 'Authentication failed');
+      setError(err.message || 'Authentication failed');
     }
   };
 
@@ -53,7 +54,7 @@ const Login: React.FC = () => {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="bg-gray-50 dark:bg-gray-900 p-8 text-center border-b border-gray-200 dark:border-gray-700">
           <div className="mx-auto w-40 h-40 bg-gray-800 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 mb-4 shadow-inner p-2">
-            <img src="/drawing_white.svg" alt="CloudApp" className="w-full h-full object-contain" />
+            <Image src="/drawing_white.svg" alt="CloudApp" width={160} height={160} className="w-full h-full object-contain" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">CloudApp</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2">Please sign in to continue</p>

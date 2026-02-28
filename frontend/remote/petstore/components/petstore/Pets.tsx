@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/compat/router';
 import { PetType } from '../../types';
 import { Plus, PawPrint } from 'lucide-react';
 import PetStoreLayout from '../PetStoreLayout';
@@ -19,18 +19,13 @@ const Pets: React.FC = () => {
     notes: ''
   });
 
-  let router: ReturnType<typeof useRouter> | null = null;
-  try {
-    router = useRouter();
-  } catch {
-    // Router not available in federated module context
-  }
+  const router = useRouter();
 
   useEffect(() => {
     if (router?.query?.action === 'new') {
       setShowForm(true);
     }
-  }, [router?.query]);
+  }, [router?.query?.action]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

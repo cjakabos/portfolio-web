@@ -3,28 +3,26 @@ import axios from "axios";
 import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
+const JSON_HEADERS = {
+    'Content-Type': 'application/json;charset=UTF-8',
+};
+
+const getRequestConfig = () => ({
+    headers: JSON_HEADERS,
+    withCredentials: true,
+});
+
+const getUnsafeRequestConfig = async () => ({
+    headers: {
+        ...(await getCloudAppCsrfHeaders(API_URL)),
+        ...JSON_HEADERS,
+    },
+    withCredentials: true,
+});
 
 export const useNotes = (username: string) => {
     const [notes, setNotes] = useState<any[]>([]);
     const [loadingNotes, setLoading] = useState(false);
-
-    // Helper to get headers
-    const getHeaders = () => ({
-        'Content-Type': 'application/json;charset=UTF-8',
-    });
-
-    const getRequestConfig = () => ({
-        headers: getHeaders(),
-        withCredentials: true,
-    });
-
-    const getUnsafeRequestConfig = async () => ({
-        headers: {
-            ...(await getCloudAppCsrfHeaders(API_URL)),
-            ...getHeaders(),
-        },
-        withCredentials: true,
-    });
 
     const fetchNotes = useCallback(async () => {
         if (!username) return;

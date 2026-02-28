@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { LogOut, User as UserIcon, LayoutGrid, Sun, Moon } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
@@ -44,7 +45,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="flex items-center justify-between min-h-16 py-2 gap-10">
             <div className="flex items-center">
               <Link href="/" className="flex-shrink-0 flex items-center gap-1">
-                <img src="/drawing_white.svg" alt="CloudApp" width={50} height={50} />
+                <Image src="/drawing_white.svg" alt="CloudApp" width={50} height={50} />
                 <span className="hidden xl:inline font-bold text-xl tracking-tight">CloudApp</span>
               </Link>
               <div className="hidden md:block ml-6 lg:ml-10">

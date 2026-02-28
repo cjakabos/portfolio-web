@@ -322,7 +322,7 @@ const ChatLLM: React.FC = () => {
                       <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 rounded">Balanced</span>
                     </div>
                     <code className="text-xs">ollama pull llama3.2</code>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">~2 GB • Good quality • Meta's latest</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">~2 GB • Good quality • Meta&apos;s latest</p>
                   </div>
 
                   <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded">

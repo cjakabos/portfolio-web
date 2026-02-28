@@ -2,10 +2,7 @@ const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: false,
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
+    reactStrictMode: true,
     output: 'standalone',
     async headers() {
         return [

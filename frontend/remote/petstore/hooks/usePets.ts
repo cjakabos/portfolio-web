@@ -1,17 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
-const initialPet = {
-    id: "",
-    type: "",
-    name: "",
-    ownerId: "",
-    birthDate: "",
-    notes: ""
-};
+import type { Pet } from "../types";
 
 export const usePets = () => {
-    const [allPets, setAllPets] = useState([]);
+    const [allPets, setAllPets] = useState<Pet[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {

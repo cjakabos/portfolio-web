@@ -3,12 +3,9 @@ const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: false,
+    reactStrictMode: true,
     images: {
         qualities: [25, 50, 75, 100],
-    },
-    eslint: {
-        ignoreDuringBuilds: true,
     },
     output: 'standalone',
     webpack(config, options) {

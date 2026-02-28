@@ -335,8 +335,8 @@ export default function CloudMLOps() {
                         tick={{ fontSize: 11 }}
                     />
                     <Tooltip
-                        formatter={(value: number) => [value, 'Count']}
-                        labelFormatter={(label: string) => `Range: ${label}`}
+                        formatter={(value?: number) => [value ?? 0, 'Count']}
+                        labelFormatter={(label) => `Range: ${label}`}
                         contentStyle={{ backgroundColor: 'white', borderRadius: '8px' }}
                     />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -423,7 +423,7 @@ export default function CloudMLOps() {
                         domain={['dataMin', 'dataMax']}
                     />
                     <Tooltip
-                        formatter={(value: number) => value.toFixed(1)}
+                        formatter={(value?: number) => (value ?? 0).toFixed(1)}
                         labelFormatter={() => ''}
                     />
                     <RechartsScatter
