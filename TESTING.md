@@ -159,6 +159,7 @@ For E2E failures:
 ```bash
 docker compose -f docker-compose.test.yml build test-shell test-e2e
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=webkit
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/shop.spec.ts '--project=firefox' --grep 'should create a real item and add it to cart without request stubs'
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts e2e/monitor.spec.ts --grep "admin|logout"
 ```
 

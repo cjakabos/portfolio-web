@@ -1,7 +1,9 @@
 package com.example.demo.controllers;
 
 import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.utilities.JwtUtilities;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -26,6 +28,8 @@ import com.example.demo.model.requests.ModifyCartRequest;
 @RestController
 @RequestMapping("cart")
 public class CartController {
+    private static final String AUTH_COOKIE_NAME = "CLOUDAPP_AUTH";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Autowired
     public UserRepository userRepository;
@@ -38,6 +42,9 @@ public class CartController {
 
     @Autowired
     private InternalRequestAuthorizer internalRequestAuthorizer;
+
+    @Autowired
+    private JwtUtilities jwtUtilities;
 
     private String getAuthenticatedUsername(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
@@ -58,7 +65,49 @@ public class CartController {
             return true;
         }
         String authenticated = getAuthenticatedUsername(auth);
+        if (authenticated == null || authenticated.isBlank()) {
+            authenticated = extractUsernameFromToken(request);
+        }
         return authenticated != null && authenticated.equals(usernameFromRequest);
+    }
+
+    private String extractUsernameFromToken(HttpServletRequest request) {
+        String rawHeader = request.getHeader("Authorization");
+        if (rawHeader != null && !rawHeader.isBlank()) {
+            String token = rawHeader.trim();
+            if (token.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+                token = token.substring(BEARER_PREFIX.length()).trim();
+            }
+            if (!token.isBlank()) {
+                try {
+                    return jwtUtilities.getSubject(token);
+                } catch (Exception ignored) {
+                    // Fall back to the auth cookie.
+                }
+            }
+        }
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+
+        for (Cookie cookie : cookies) {
+            if (!AUTH_COOKIE_NAME.equals(cookie.getName())) {
+                continue;
+            }
+            String token = cookie.getValue();
+            if (token == null || token.isBlank()) {
+                return null;
+            }
+            try {
+                return jwtUtilities.getSubject(token.trim());
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     @PostMapping("/addToCart")
@@ -71,7 +120,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
+        if (!isAuthorized(auth, request.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Item> item = itemRepository.findById(request.getItemId());
@@ -95,7 +144,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
+        if (!isAuthorized(auth, request.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Optional<Item> item = itemRepository.findById(request.getItemId());
@@ -119,7 +168,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
+        if (!isAuthorized(auth, request.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Cart cart = cartRepository.findByUser(user);
@@ -136,7 +185,7 @@ public class CartController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (!isAuthorized(auth, user.getUsername(), servletRequest)) {
+        if (!isAuthorized(auth, request.getUsername(), servletRequest)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         Cart cart = user.getCart();

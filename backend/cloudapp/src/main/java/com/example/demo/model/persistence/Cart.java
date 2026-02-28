@@ -11,8 +11,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -29,8 +31,14 @@ public class Cart {
     private Long id;
 
     @ManyToMany
+    @JoinTable(name = "cart_items",
+            joinColumns = @JoinColumn(name = "cart_id"),
+            inverseJoinColumns = @JoinColumn(name = "items_id"),
+            indexes = {
+                    @Index(name = "idx_cart_items_cart_id", columnList = "cart_id"),
+                    @Index(name = "idx_cart_items_item_id", columnList = "items_id")
+            })
     @JsonProperty
-    @Column
     private List<Item> items;
 
     @OneToOne(mappedBy = "cart")
@@ -109,5 +117,21 @@ public class Cart {
         items = new ArrayList<>();
 
         total = new BigDecimal(0);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Cart other)) {
+            return false;
+        }
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "files")
+@Table(name = "files", indexes = {
+        @Index(name = "idx_files_userid", columnList = "userid")
+})
 public class File {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,16 +18,16 @@ public class File {
     @Column(nullable = false)
     @JsonProperty
     private String name;
-    @Column(nullable = false)
+    @Column(name = "content_type", nullable = false)
     @JsonProperty
     private String contentType;
-    @Column(nullable = false)
+    @Column(name = "file_size", nullable = false)
     @JsonProperty
     private String fileSize;
     @Column(nullable = false)
     @JsonProperty
     private Long userid;
-    @Column(nullable = false)
+    @Column(name = "file_data", nullable = false)
     @JsonIgnore
     private byte[] fileData;
 
@@ -95,5 +97,21 @@ public class File {
 
     public void setFileData(byte[] fileData) {
         this.fileData = fileData;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof File other)) {
+            return false;
+        }
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

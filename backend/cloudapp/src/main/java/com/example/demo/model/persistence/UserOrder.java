@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,9 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "user_order")
+@Table(name = "user_order", indexes = {
+        @Index(name = "idx_user_order_user_id", columnList = "user_id")
+})
 public class UserOrder {
 
     @Id
@@ -28,9 +31,15 @@ public class UserOrder {
     @Column
     private Long id;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "user_order_items",
+            joinColumns = @JoinColumn(name = "user_order_id"),
+            inverseJoinColumns = @JoinColumn(name = "items_id"),
+            indexes = {
+                    @Index(name = "idx_user_order_items_order_id", columnList = "user_order_id"),
+                    @Index(name = "idx_user_order_items_item_id", columnList = "items_id")
+            })
     @JsonProperty
-    @Column
     private List<Item> items;
 
     @ManyToOne
@@ -90,6 +99,22 @@ public class UserOrder {
         order.setTotal(cart.getTotal());
         order.setUser(cart.getUser());
         return order;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof UserOrder other)) {
+            return false;
+        }
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
 }

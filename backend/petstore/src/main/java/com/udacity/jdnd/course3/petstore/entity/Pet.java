@@ -9,13 +9,16 @@ import java.util.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Table(name = "pet")
+@Table(name = "pet", indexes = {
+        @Index(name = "idx_pet_customer", columnList = "customer")
+})
 public class Pet {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Nationalized
+    @Column(name = "pet_type")
     private PetType petType;
 
     @Nationalized
@@ -26,12 +29,13 @@ public class Pet {
     private Customer customer;
 
     @Nationalized
+    @Column(name = "birth_date")
     private LocalDate birthDate;
 
     @Nationalized
     private String notes;
 
-    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "petList")
+    @ManyToMany(mappedBy = "petList")
     private List<Schedule> schedules;
 
     public long getId() {
@@ -88,5 +92,21 @@ public class Pet {
 
     public void setSchedules(List<Schedule> schedules) {
         this.schedules = schedules;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Pet other)) {
+            return false;
+        }
+        return id != 0L && id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

@@ -8,15 +8,17 @@ import java.util.List;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "customer")
 public class Customer {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Nationalized
     private String name;
 
     @Nationalized
+    @Column(name = "phone_number")
     private String phoneNumber;
 
 
@@ -32,7 +34,7 @@ public class Customer {
         pets.add(pet);
     }
 
-    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "customerList")
+    @ManyToMany(mappedBy = "customerList")
     private List<Schedule> schedules;
 
     public Customer() {
@@ -92,5 +94,21 @@ public class Customer {
 
     public void setSchedules(List<Schedule> schedules) {
         this.schedules = schedules;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Customer other)) {
+            return false;
+        }
+        return id != 0L && id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

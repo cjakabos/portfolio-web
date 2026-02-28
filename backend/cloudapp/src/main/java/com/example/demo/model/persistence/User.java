@@ -10,7 +10,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "usertable")
+@Table(name = "usertable", indexes = {
+        @Index(name = "idx_usertable_username", columnList = "username", unique = true),
+        @Index(name = "idx_usertable_cart_id", columnList = "cart_id", unique = true)
+})
 public class User {
 
     @Id
@@ -27,12 +30,15 @@ public class User {
     private String password;
 
     @OneToOne
-    @JoinColumn(name = "cart_id", referencedColumnName = "id")
+    @JoinColumn(name = "cart_id", referencedColumnName = "id", unique = true)
     @JsonIgnore
     private Cart cart;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), indexes = {
+            @Index(name = "idx_user_roles_user_id", columnList = "user_id"),
+            @Index(name = "idx_user_roles_role_name", columnList = "role_name")
+    })
     @Column(name = "role_name", nullable = false)
     @JsonIgnore
     private Set<String> roles = new LinkedHashSet<>();
@@ -87,5 +93,21 @@ public class User {
         if (roles != null) {
             this.roles.addAll(roles);
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof User other)) {
+            return false;
+        }
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
