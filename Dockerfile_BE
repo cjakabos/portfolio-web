@@ -4,9 +4,9 @@
 # Added HEALTHCHECK using Spring Boot Actuator.
 # NEW (OpenTelemetry): Downloads the OTel Java agent at build time.
 #   The agent auto-instruments Spring MVC, WebClient, JPA, Kafka, and
-#   Resilience4j with zero code changes. Activation is controlled by
-#   JAVA_TOOL_OPTIONS env var set in docker-compose — if not set, the
-#   agent is present but inactive.
+#   Resilience4j with zero code changes. Activation is controlled by the
+#   OTEL_ENABLED env var in docker-compose-app.yml; the entrypoint script
+#   attaches the agent only when OTEL_ENABLED=true.
 # ===========================================================================
 
 FROM docker.io/library/maven:3-eclipse-temurin-21 AS builder
@@ -36,6 +36,8 @@ RUN chmod 644 /opt/opentelemetry-javaagent.jar
 RUN mkdir -p /home/run
 WORKDIR /home/run
 COPY --from=builder /home/root/target/*-SNAPSHOT.jar /home/run/app.jar
+COPY ./scripts/java-backend-entrypoint.sh /usr/local/bin/java-backend-entrypoint.sh
+RUN chmod 755 /usr/local/bin/java-backend-entrypoint.sh
 
 ARG DOCKER_HOST_IP
 ENV DOCKER_HOST_IP=host.docker.internal
@@ -46,6 +48,7 @@ ENV HEALTH_CHECK_URL="http://localhost:8080/actuator/health"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -sf $HEALTH_CHECK_URL || exit 1
 
-# The OTel agent is activated via JAVA_TOOL_OPTIONS in docker-compose.
-# When JAVA_TOOL_OPTIONS is not set, the app starts normally without tracing.
-ENTRYPOINT ["java", "-jar", "/home/run/app.jar"]
+# OpenTelemetry activation is decided by OTEL_ENABLED=true|false in the
+# container environment. Compose interpolation cannot distinguish "false"
+# from any other non-empty value, so we gate it here instead.
+ENTRYPOINT ["/usr/local/bin/java-backend-entrypoint.sh"]

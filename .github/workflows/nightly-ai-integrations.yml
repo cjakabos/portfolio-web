@@ -5,6 +5,12 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+# Least-privilege: read-only access to repo contents.
+# If you add steps that comment on PRs or create issues, add the relevant
+# write permission (e.g. pull-requests: write, issues: write).
+permissions:
+  contents: read
+
 concurrency:
   group: nightly-ai-integrations-${{ github.ref }}
   cancel-in-progress: true

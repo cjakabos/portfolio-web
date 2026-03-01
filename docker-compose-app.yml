@@ -7,7 +7,8 @@ services:
   # Start infra first, then run this file separately:
   #   docker compose -f docker-compose-infrastructure.yml up -d
   #   docker compose -f docker-compose-app.yml up -d
-  # FIX 4.9: Metrics exported to Prometheus via OTel agent + Actuator.
+  # FIX 4.9: Metrics exported to Prometheus via Spring Actuator.
+  # OTel remains traces/logs only when OTEL_ENABLED=true.
   # ===========================================================================
   jiraproxy:
     image: jiraproxy:latest
@@ -23,16 +24,15 @@ services:
       - JIRA_DOMAIN=${JIRA_DOMAIN}
       - JIRA_EMAIL=${JIRA_EMAIL}
       - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+      - SPRING_PROFILES_ACTIVE=json-logging
       # OpenTelemetry Java agent
-      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=jiraproxy
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      # FIX 4.9: Export metrics to Prometheus via OTel
-      - OTEL_METRICS_EXPORTER=prometheus
-      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
     networks:
       - backend
     restart: unless-stopped
@@ -48,15 +48,15 @@ services:
     environment:
       - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
+      - SPRING_PROFILES_ACTIVE=json-logging
       # OpenTelemetry
-      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=vehicles-api
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=prometheus
-      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
     networks:
       - backend
     restart: unless-stopped
@@ -78,15 +78,15 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/petstore?serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=${MYSQL_ROOT_USERNAME:?Set MYSQL_ROOT_USERNAME in .env}
       - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      - SPRING_PROFILES_ACTIVE=json-logging
       # OpenTelemetry
-      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=petstore
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=prometheus
-      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
     networks:
       - backend
     restart: unless-stopped
@@ -123,15 +123,15 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin&maxPoolSize=${MONGO_MAX_POOL_SIZE:-50}&minPoolSize=${MONGO_MIN_POOL_SIZE:-10}&serverSelectionTimeoutMS=5000
       - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
+      - SPRING_PROFILES_ACTIVE=json-logging
       # OpenTelemetry
-      - JAVA_TOOL_OPTIONS=${OTEL_ENABLED:+-javaagent:/opt/opentelemetry-javaagent.jar}
       - OTEL_SERVICE_NAME=cloudapp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_METRICS_EXPORTER=prometheus
-      - OTEL_EXPORTER_PROMETHEUS_PORT=9464
-      - OTEL_LOGS_EXPORTER=${OTEL_ENABLED:+otlp}
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
     networks:
       - backend
     volumes:
