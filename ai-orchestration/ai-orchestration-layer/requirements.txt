@@ -21,7 +21,7 @@ langsmith==0.5.1
 
 # LangChain integrations (NEW packages - fixes deprecation warnings)
 langchain-ollama==0.2.0
-langchain-chroma==0.1.4
+langchain-chroma==1.1.0
 
 # ============================================================================
 # VECTOR DATABASE
