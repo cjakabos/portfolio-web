@@ -256,12 +256,13 @@ jobs:
   # JOB 7: Optional Dependency Scans (non-blocking for findings)
   # =========================================================================
   dependency-scans:
-    name: "Dependency Security — Optional Audit"
+    name: "Dependency Security — Audit"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     outputs:
       npm_status: ${{ steps.npm-audit.outputs.status }}
       python_status: ${{ steps.pip-audit.outputs.status }}
+      maven_status: ${{ steps.maven-audit.outputs.status }}
       summary: ${{ steps.audit-summary.outputs.summary }}
 
     steps:
@@ -322,6 +323,30 @@ jobs:
 
           echo "status=$status" >> "$GITHUB_OUTPUT"
 
+      # Maven dependency scanning via OWASP Dependency-Check
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Audit Maven dependencies (OWASP Dependency-Check)
+        id: maven-audit
+        run: |
+          status=clean
+          for dir in backend/cloudapp backend/petstore backend/vehicles-api backend/web-proxy; do
+            name="$(basename "$dir")"
+            report="audit-reports/${name}-owasp-report.json"
+            if ! mvn -f "$dir/pom.xml" org.owasp:dependency-check-maven:check \
+              -DfailBuildOnCVSS=7 \
+              -Dformats=JSON \
+              -Dodc.outputDirectory=audit-reports \
+              --batch-mode --quiet 2>/dev/null; then
+              status=issues-found
+            fi
+          done
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
       - name: Upload dependency audit reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -330,10 +355,12 @@ jobs:
           path: audit-reports/
           retention-days: 7
 
-      - name: Summarize optional dependency scans
+      - name: Summarize dependency scans
         id: audit-summary
         run: |
-          if [ "${{ steps.npm-audit.outputs.status }}" = "clean" ] && [ "${{ steps.pip-audit.outputs.status }}" = "clean" ]; then
+          if [ "${{ steps.npm-audit.outputs.status }}" = "clean" ] \
+            && [ "${{ steps.pip-audit.outputs.status }}" = "clean" ] \
+            && [ "${{ steps.maven-audit.outputs.status }}" = "clean" ]; then
             summary="clean"
           else
             summary="issues-found (non-blocking)"
@@ -341,12 +368,13 @@ jobs:
 
           echo "summary=$summary" >> "$GITHUB_OUTPUT"
 
-          echo "## Optional Dependency Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Dependency Security Scan" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Ecosystem | Status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| npm | ${{ steps.npm-audit.outputs.status }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Python | ${{ steps.pip-audit.outputs.status }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Maven | ${{ steps.maven-audit.outputs.status }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Reports are uploaded as the \`dependency-audit-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
 

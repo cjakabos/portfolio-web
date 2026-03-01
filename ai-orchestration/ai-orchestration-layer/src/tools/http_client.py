@@ -137,7 +137,7 @@ class HTTPClient:
                     response.raise_for_status()
                     try:
                         return response.json()
-                    except:
+                    except (ValueError, TypeError):
                         return {"text": response.text, "status_code": response.status_code}
                 else:
                     session = await self._get_session()
@@ -153,7 +153,7 @@ class HTTPClient:
                         response.raise_for_status()
                         try:
                             return await response.json()
-                        except:
+                        except (ValueError, Exception):
                             text = await response.text()
                             return {"text": text, "status": response.status}
 

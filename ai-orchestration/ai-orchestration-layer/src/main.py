@@ -384,7 +384,7 @@ async def health_check():
                     services[name] = "healthy"
                 else:
                     services[name] = "degraded"
-            except:
+            except Exception:
                 services[name] = "unavailable"
 
     # Check AI Core Health

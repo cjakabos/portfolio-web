@@ -182,7 +182,7 @@
     "title": "Petstore API",
     "version": "v1"
   },
-  "openapi": "3.0.1",
+  "openapi": "3.1.0",
   "paths": {
     "/pet": {
       "get": {
