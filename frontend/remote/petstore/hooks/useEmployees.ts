@@ -45,19 +45,18 @@ export const useEmployees = () => {
         };
 
         try {
-            const response = await axios.post(
+            await axios.post(
                 'http://localhost:80/petstore/user/employee',
                 postData,
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             await getEmployees();
             // Reset form
             setEmployee(initialEmployee);
             setSelectedMultiOptions([]);
             setSelectedDayOption(["MONDAY", "TUESDAY", "FRIDAY"]);
         } catch (error: any) {
-            console.log("AXIOS ERROR: ", error.response);
+            console.error("Failed to create employee", error);
         }
     };
 
@@ -75,10 +74,9 @@ export const useEmployees = () => {
                 'http://localhost:80/petstore/user/employee',
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             setAllEmployees(response.data);
         } catch (error) {
-            console.log("AXIOS ERROR: ", error);
+            console.error("Failed to fetch employees", error);
         } finally {
             setLoading(false);
         }

@@ -9,7 +9,6 @@ export const useRooms = (username: string) => {
   // Handle session errors (error code 6 triggers page reload)
   const handleSessionError = useCallback((errorCode: number) => {
     if (errorCode === 6) {
-      console.log('Session expired, reloading page...');
       setTimeout(() => {
         if (typeof window !== 'undefined') {
           window.location.reload();
@@ -27,7 +26,6 @@ export const useRooms = (username: string) => {
           setError(res.data.err_msg);
           handleSessionError(res.data.err_code);
         } else {
-            console.log(res.data.data)
           setUserRooms(res.data.data);
           setError(null);
         }
@@ -77,7 +75,6 @@ export const useRooms = (username: string) => {
     }
 
     try {
-      console.log("trying to enter room")
       const res = await chatHttpApi.findRoom(code);
 
       if (res.data.err_code !== 0) {

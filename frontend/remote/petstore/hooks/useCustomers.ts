@@ -61,17 +61,16 @@ export const useCustomers = () => {
         };
 
         try {
-            const response = await axios.post(
+            await axios.post(
                 'http://localhost:80/petstore/user/customer',
                 postData,
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", customer.phoneNumber);
             await getCustomers();
             // Reset form
             setCustomer(initialCustomer);
         } catch (error) {
-            console.log("AXIOS ERROR: ", postData);
+            console.error("Failed to create customer", error);
         }
     };
 
@@ -89,10 +88,9 @@ export const useCustomers = () => {
                 'http://localhost:80/petstore/user/customer',
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             setAllCustomers(response.data);
         } catch (error) {
-            console.log("AXIOS ERROR: ", axiosConfig);
+            console.error("Failed to fetch customers", error);
         } finally {
             setLoading(false);
         }
@@ -122,19 +120,17 @@ export const useCustomers = () => {
         };
 
         try {
-            console.log(JSON.stringify(postData));
-            const response = await axios.post(
+            await axios.post(
                 'http://localhost:80/petstore/pet',
                 postData,
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", postData);
             // Reset pet form
             setPet(initialPet);
             setDate(new Date());
             setSelectedPetType('CAT');
         } catch (error) {
-            console.log("AXIOS ERROR: ", postData);
+            console.error("Failed to create pet", error);
         }
 
         setPetDialogOpen(false);

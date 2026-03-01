@@ -5,6 +5,22 @@
 - Main command runs all suites in order via `test-all`.
 - CI uses the same compose-based flow.
 
+## Run Modes
+- `Lean mode`: core product work and most test/debug loops. Start only the core datastores plus the app stack.
+- `Showcase mode`: full demos and AI/observability work. Start the full infrastructure stack and optionally the Ollama profile.
+
+Lean mode:
+```bash
+docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
+docker compose -f docker-compose-app.yml up -d
+```
+
+Showcase mode:
+```bash
+docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
 ## Full Run
 ```bash
 cd /portfolio-web
@@ -197,4 +213,4 @@ python3 scripts/check_frontend_native_lockfiles.py
 ```
 
 - This check guards the `Dockerfile_FE` services against missing Linux SWC and Tailwind oxide entries.
-- The AI monitor uses a separate Dockerfile fallback for Rollup native bindings.
+- The AI monitor uses a separate Dockerfile fallback for Rollup native bindings. Keep that fallback in place unless the monitor lockfile becomes reliably multi-platform in CI and nightly container builds.

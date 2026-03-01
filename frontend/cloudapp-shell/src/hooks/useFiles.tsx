@@ -24,7 +24,6 @@ export const useFiles = (username: string) => {
     }, [username]);
 
     const uploadFile = async (file: File) => {
-        console.log("dilw",file)
         const formData = new FormData();
         formData.append('fileUpload', file);
         formData.append('username', username);

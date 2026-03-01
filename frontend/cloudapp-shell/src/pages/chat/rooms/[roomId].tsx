@@ -37,7 +37,6 @@ const CloudChat: React.FC = () => {
   const onMessageReceived = useCallback((msg: any) => {
     if (msg.content === 'newUser') {
       setConnectedUsers((users) => [...users, msg.sender]);
-      console.log('New user joined:', msg.sender);
     } else {
       const newMessage: RoomMessage = {
         id: msg.id || Date.now().toString(),
@@ -63,8 +62,6 @@ const CloudChat: React.FC = () => {
   }, []);
 
   const onConnected = useCallback((usernameValue: string, roomCode: string) => {
-    console.log('Connected to room:', roomCode);
-
     // Subscribe to load message history
     client.subscribe(`/user/queue/load-history`, (message) => {
       onMessageReceived(JSON.parse(message.body));
@@ -79,7 +76,7 @@ const CloudChat: React.FC = () => {
     client.subscribe(`/topic/newUser/${roomCode}`, (message) => {
       const msg = JSON.parse(message.body);
       if (msg.sender !== usernameValue) {
-        console.log(`User ${msg.sender} has entered room`);
+        setConnectedUsers((users) => [...users, msg.sender]);
       }
     });
 
@@ -103,12 +100,11 @@ const CloudChat: React.FC = () => {
   }, [created, fetchMessages, onMessageReceived, router, sendNewUser]);
 
   const onError = useCallback((error: any) => {
-    console.log('Failed to connect to WebSocket server', error);
+    console.error('Failed to connect to WebSocket server', error);
     setConnected(false);
   }, []);
 
   const onDisconnected = useCallback(() => {
-    console.log('Disconnected from WebSocket');
     setConnected(false);
   }, []);
 

@@ -40,10 +40,9 @@ export const useSchedules = () => {
                 'http://localhost:80/petstore/pet',
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             setAllPets(response.data);
         } catch (error) {
-            console.log("AXIOS ERROR: ", error);
+            console.error("Failed to fetch pets", error);
         }
     };
 
@@ -72,11 +71,10 @@ export const useSchedules = () => {
                 postData,
                 axiosConfig
             );
-            console.log("getAvailability postData: ", postData);
             setAvailableEmployees(response.data);
             await getPets();
         } catch (error) {
-            console.log("AXIOS ERROR: ", error);
+            console.error("Failed to fetch employee availability", error);
         }
     };
 
@@ -99,8 +97,6 @@ export const useSchedules = () => {
             activities: selection
         };
 
-        console.log("scheduleSubmit postData", postData)
-
         const axiosConfig = {
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
@@ -109,15 +105,14 @@ export const useSchedules = () => {
         };
 
         try {
-            const response = await axios.post(
+            await axios.post(
                 'http://localhost:80/petstore/schedule',
                 postData,
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             await getSchedules();
         } catch (error) {
-            console.log("AXIOS ERROR: ", postData);
+            console.error("Failed to create schedule", error);
         }
     };
 
@@ -135,11 +130,10 @@ export const useSchedules = () => {
                 'http://localhost:80/petstore/schedule',
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             setSchedules(response.data);
             await getPets();
         } catch (error) {
-            console.log("AXIOS ERROR: ", error);
+            console.error("Failed to fetch schedules", error);
         } finally {
             setLoading(false);
         }

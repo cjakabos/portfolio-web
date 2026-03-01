@@ -699,9 +699,7 @@ export class OrchestrationClient {
     const wsUrl = `${this.config.aiWsUrl}/ws/stream`;
     this.ws = new WebSocket(wsUrl);
 
-    this.ws.onopen = () => {
-      console.log('WebSocket connected to', wsUrl);
-    };
+    this.ws.onopen = () => {};
 
     this.ws.onmessage = (event) => {
       try {
@@ -718,7 +716,6 @@ export class OrchestrationClient {
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket closed');
       onClose?.();
     };
 

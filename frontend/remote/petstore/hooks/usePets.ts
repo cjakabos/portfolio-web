@@ -24,10 +24,9 @@ export const usePets = () => {
                 'http://localhost:80/petstore/pet',
                 axiosConfig
             );
-            console.log("RESPONSE RECEIVED: ", response.data);
             setAllPets(response.data);
         } catch (error) {
-            console.log("AXIOS ERROR: ", error);
+            console.error("Failed to fetch pets", error);
         } finally {
             setLoading(false);
         }
