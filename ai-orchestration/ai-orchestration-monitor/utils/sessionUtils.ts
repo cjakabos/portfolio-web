@@ -24,9 +24,6 @@ export function getPersistentSessionId(): string {
     // Generate a new session ID if none exists
     sessionId = `session_${Date.now()}`;
     localStorage.setItem(SESSION_ID_KEY, sessionId);
-    console.log('[SessionUtils] Created new persistent session ID:', sessionId);
-  } else {
-    console.log('[SessionUtils] Using existing persistent session ID:', sessionId);
   }
   
   return sessionId;
@@ -41,7 +38,6 @@ export function getPersistentSessionId(): string {
 export function resetPersistentSessionId(): string {
   const newSessionId = `session_${Date.now()}`;
   localStorage.setItem(SESSION_ID_KEY, newSessionId);
-  console.log('[SessionUtils] Reset session ID to:', newSessionId);
   return newSessionId;
 }
 
@@ -51,7 +47,6 @@ export function resetPersistentSessionId(): string {
  */
 export function clearPersistentSessionId(): void {
   localStorage.removeItem(SESSION_ID_KEY);
-  console.log('[SessionUtils] Cleared persistent session ID');
 }
 
 export default {

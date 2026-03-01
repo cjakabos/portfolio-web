@@ -29,6 +29,27 @@ Example view:
 
 ## Quick Start
 
+### Run Modes
+
+Use the smallest stack that matches the work:
+
+- `Lean mode`: everyday product work. Start only the core data stores and the app stack.
+- `Showcase mode`: full-platform demos. Add observability, AI orchestration, monitor, and Ollama.
+
+Lean mode:
+```bash
+docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
+docker compose -f docker-compose-app.yml up -d
+```
+
+Showcase mode:
+```bash
+docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
+If you are only working on tests or one subsystem, prefer the targeted commands in [TESTING.md](./TESTING.md) instead of starting the full showcase stack.
+
 ### Setup with Docker
 Note: minimum 16 GB RAM and 35 GB disk space is needed to make sure all services can run.
 ```bash
@@ -40,6 +61,7 @@ Step 1. Setup and start databases and essential services with docker-compose:
 ```bash
 docker-compose -f docker-compose-infrastructure.yml up -d
 ```
+For routine frontend/backend work, the lean-mode command above is the faster default. Use the full infrastructure stack when you need observability, AI orchestration, the monitor, ChromaDB, Redis, or MongoDB A/B testing.
 Step 2. Install local ollama, for Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
 ```bash
 brew install ollama

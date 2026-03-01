@@ -52,11 +52,9 @@ export default function StreamingInterface({
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(`pending_messages_${localSessionId}`);
-      console.log('[StreamingInterface] Loading pending messages for session:', localSessionId, 'Found:', stored);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('[StreamingInterface] Restored pending messages:', parsed.length);
           setPendingUserMessages(parsed);
         }
       }
@@ -67,7 +65,6 @@ export default function StreamingInterface({
 
   // Persist pending messages to sessionStorage whenever they change
   useEffect(() => {
-    console.log('[StreamingInterface] Pending messages changed:', pendingUserMessages.length, pendingUserMessages.map(m => m.content.slice(0, 30)));
     try {
       if (pendingUserMessages.length > 0) {
         sessionStorage.setItem(
@@ -113,9 +110,6 @@ export default function StreamingInterface({
   // Merge all message sources with proper deduplication
   // ==========================================================================
   const messages = useMemo(() => {
-    console.log('[StreamingInterface] Merging messages - streaming:', streamingMessages.length,
-                'synced:', syncedMessages.length, 'pending:', pendingUserMessages.length);
-
     const streamingIds = new Set(streamingMessages.map(m => m.id));
     const syncedIds = new Set(syncedMessages.map(m => m.id));
 
@@ -132,22 +126,13 @@ export default function StreamingInterface({
     );
 
     const uniquePendingMessages = pendingUserMessages.filter(pending => {
-      if (streamingIds.has(pending.id) || syncedIds.has(pending.id)) {
-        console.log('[StreamingInterface] Filtering pending (by ID):', pending.content.slice(0, 30));
-        return false;
-      }
-      if (syncedUserContents.has(pending.content)) {
-        console.log('[StreamingInterface] Filtering pending (synced):', pending.content.slice(0, 30));
-        return false;
-      }
-      if (streamingUserContents.has(pending.content)) {
-        console.log('[StreamingInterface] Filtering pending (in streaming):', pending.content.slice(0, 30));
-        return false;
-      }
-      return true;
+      return (
+        !streamingIds.has(pending.id) &&
+        !syncedIds.has(pending.id) &&
+        !syncedUserContents.has(pending.content) &&
+        !streamingUserContents.has(pending.content)
+      );
     });
-
-    console.log('[StreamingInterface] After filtering - unique pending:', uniquePendingMessages.length);
 
     const allMessages = [...streamingMessages, ...uniqueSyncedMessages, ...uniquePendingMessages];
 

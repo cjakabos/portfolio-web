@@ -1,8 +1,8 @@
 # ===========================================================================
 # Prometheus Configuration — CloudApp Platform
 #
-# FIX 4.9: Scrapes metrics from Spring Boot Actuator (via /actuator/prometheus)
-# and OTel agent Prometheus exporters (port 9464).
+# FIX 4.9: Scrapes metrics from Spring Boot Actuator (via /actuator/prometheus).
+# Java services no longer expose a separate OTel Prometheus port.
 #
 # Place in project root as prometheus.yml
 # ===========================================================================
@@ -12,9 +12,9 @@ global:
 
 scrape_configs:
   # -----------------------------------------------------------------------
-  # Spring Boot Actuator Metrics (via micrometer-prometheus)
+  # Spring Boot Actuator metrics (via micrometer-prometheus).
   # Requires management.endpoints.web.exposure.include=prometheus in
-  # application.properties (already added in the fix).
+  # application.properties.
   # -----------------------------------------------------------------------
   - job_name: 'cloudapp'
     metrics_path: '/cloudapp/actuator/prometheus'
@@ -35,26 +35,6 @@ scrape_configs:
     metrics_path: '/jiraproxy/actuator/prometheus'
     static_configs:
       - targets: ['jiraproxy:8501']
-
-  # -----------------------------------------------------------------------
-  # OTel Java Agent Prometheus Exporter (port 9464)
-  # Exports JVM metrics, HTTP server metrics, DB connection pool metrics.
-  # -----------------------------------------------------------------------
-  - job_name: 'otel-cloudapp'
-    static_configs:
-      - targets: ['cloudapp:9464']
-
-  - job_name: 'otel-petstore'
-    static_configs:
-      - targets: ['petstore:9464']
-
-  - job_name: 'otel-vehicles-api'
-    static_configs:
-      - targets: ['vehicles-api:9464']
-
-  - job_name: 'otel-jiraproxy'
-    static_configs:
-      - targets: ['jiraproxy:9464']
 
   # -----------------------------------------------------------------------
   # ML Pipeline (Flask)

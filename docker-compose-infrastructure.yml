@@ -199,8 +199,10 @@ services:
     image: prom/prometheus:v2.51.0
     container_name: prometheus
     restart: unless-stopped
+    # Bind to localhost only — Prometheus has no built-in auth.
+    # For production: remove port mapping entirely and access via Grafana.
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -219,8 +221,9 @@ services:
     image: grafana/grafana:11.0.0
     container_name: grafana
     restart: unless-stopped
+    # Bind to localhost only for consistency with Prometheus.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}

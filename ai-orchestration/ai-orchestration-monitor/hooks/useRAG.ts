@@ -378,8 +378,6 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
         return;
       }
 
-      console.log(`Recovering ${savedJobs.size} upload jobs...`);
-
       const recoveredUploads: UploadProgress[] = [];
 
       for (const [jobId, info] of savedJobs) {
@@ -424,8 +422,6 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
             });
           } else {
             // Timeout or other error - server might be busy, assume job is still running
-            console.log(`Could not fetch status for ${jobId} (${err instanceof Error ? err.message : 'unknown error'}), will poll...`);
-
             recoveredUploads.push({
               file: placeholderFile,
               jobId,

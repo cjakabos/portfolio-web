@@ -54,7 +54,6 @@ export default function useChat() {
     const onMessageReceived = useCallback((msg) => {
         if (msg.content === 'newUser') {
             setConnectedUsers((prev) => [...prev, msg.sender]);
-            console.log("New user joined:", msg.sender);
         } else {
             setMessages((prev) => [...prev, msg]);
         }
@@ -68,7 +67,6 @@ export default function useChat() {
     }, []);
 
     const onConnected = useCallback((user, code, isCreator = false) => {
-        console.log("Connected via WebSocket");
         const client = clientRef.current;
 
         // Subscriptions
@@ -109,16 +107,13 @@ export default function useChat() {
 
         client.connect({}, 
             () => onConnected(username, code, isCreator), 
-            (err) => console.log('WebSocket Error:', err)
+            (err) => console.error('WebSocket error', err)
         );
-        
-        console.log(`Subscribing to /topic/group/${code}`);
     }, [username, onConnected]);
 
     const disconnectSocket = useCallback(() => {
         if (clientRef.current) {
             clientRef.current.disconnect(() => {
-                console.log("Disconnected via WebSocket");
                 setConnected(false);
             });
         }
@@ -127,14 +122,12 @@ export default function useChat() {
     const sendMessage = (msgText) => {
         if (clientRef.current && roomCode) {
             const msg = { sender: username, content: msgText };
-            console.log('Sending:', JSON.stringify(msg));
             clientRef.current.send(`/app/sendMessage/${roomCode}`, JSON.stringify(msg));
         }
     };
 
     // --- API Interactions ---
     const handleCreateRoom = (roomName) => {
-        console.log(`Creating room: ${roomName}`);
         chatHttpApi.createRoom(roomName, username).then(res => {
             if (res.data.err_code !== 0) {
                 handleError(res.data.err_msg);

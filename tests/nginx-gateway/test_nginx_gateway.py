@@ -385,6 +385,60 @@ class TestSecurityHeaders:
         """Responses should include X-Content-Type-Options: nosniff."""
         resp = requests.get(f"{NGINX_URL}/nginx_health", timeout=5)
         xct = resp.headers.get("X-Content-Type-Options", "")
-        # This is a best practice but may not be configured — log as warning
-        if xct:
-            assert xct == "nosniff"
+        assert xct == "nosniff", \
+            f"Expected X-Content-Type-Options: nosniff, got: '{xct}'"
+
+    def test_x_frame_options(self):
+        """Responses should include X-Frame-Options: SAMEORIGIN."""
+        resp = requests.get(f"{NGINX_URL}/nginx_health", timeout=5)
+        xfo = resp.headers.get("X-Frame-Options", "")
+        assert xfo.upper() == "SAMEORIGIN", \
+            f"Expected X-Frame-Options: SAMEORIGIN, got: '{xfo}'"
+
+    def test_referrer_policy(self):
+        """Responses should include Referrer-Policy."""
+        resp = requests.get(f"{NGINX_URL}/nginx_health", timeout=5)
+        rp = resp.headers.get("Referrer-Policy", "")
+        assert rp == "strict-origin-when-cross-origin", \
+            f"Expected Referrer-Policy: strict-origin-when-cross-origin, got: '{rp}'"
+
+    def test_content_security_policy(self):
+        """Responses should include Content-Security-Policy."""
+        resp = requests.get(f"{NGINX_URL}/nginx_health", timeout=5)
+        csp = resp.headers.get("Content-Security-Policy", "")
+        assert "default-src" in csp, \
+            f"Expected Content-Security-Policy with default-src, got: '{csp}'"
+        assert "'self'" in csp, \
+            f"Expected CSP to include 'self' directive, got: '{csp}'"
+
+    def test_strict_transport_security(self):
+        """Responses should include Strict-Transport-Security."""
+        resp = requests.get(f"{NGINX_URL}/nginx_health", timeout=5)
+        hsts = resp.headers.get("Strict-Transport-Security", "")
+        assert "max-age=" in hsts, \
+            f"Expected Strict-Transport-Security with max-age, got: '{hsts}'"
+
+    def test_security_headers_on_api_response(self):
+        """Security headers should also be present on proxied API responses."""
+        resp = requests.get(f"{BACKEND_URL}/cloudapp/actuator/health", timeout=5)
+        assert resp.headers.get("X-Content-Type-Options") == "nosniff", \
+            "X-Content-Type-Options missing on API response"
+        assert resp.headers.get("X-Frame-Options", "").upper() == "SAMEORIGIN", \
+            "X-Frame-Options missing on API response"
+
+    def test_cors_options_content_type_well_formed(self):
+        """CORS OPTIONS response Content-Type should use 'text/plain; charset=UTF-8'."""
+        headers = {
+            "Origin": "http://localhost:5001",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Authorization, Content-Type",
+        }
+        resp = requests.options(
+            f"{BACKEND_URL}/cloudapp/item",
+            headers=headers,
+            timeout=5
+        )
+        ct = resp.headers.get("Content-Type", "")
+        if "charset" in ct:
+            assert ";" in ct, \
+                f"Content-Type header malformed (missing semicolon): {ct}"

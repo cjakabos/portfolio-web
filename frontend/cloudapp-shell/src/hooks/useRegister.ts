@@ -15,7 +15,6 @@ export const useRegister = () => {
     const [errorType, setErrorType] = useState<"PASSWORD_MISMATCH" | "API_ERROR" | null>(null);
 
     const register = async (values: any) => {
-        console.log("register init")
         setLoading(true);
         setErrorType(null);
         // 1. Client-side Validation
@@ -33,13 +32,10 @@ export const useRegister = () => {
             password: values.password,
             confirmPassword: values.confirmPassword,
         };
-
-        console.log("register postData", postData)
-
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-            
-            const response = await axios.post(
+
+            await axios.post(
                 `${API_URL}/user/user-register`, 
                 postData, 
                 {

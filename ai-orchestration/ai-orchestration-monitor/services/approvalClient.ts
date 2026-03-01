@@ -228,7 +228,6 @@ class ApprovalClient {
       this.ws = new WebSocket(`${wsUrl}/approvals/ws`);
 
       this.ws.onopen = () => {
-        console.log('Approval WebSocket connected');
         this.wsReconnectAttempts = 0;
         this.connectionHandlers.forEach(handler => handler(true));
 
@@ -245,8 +244,7 @@ class ApprovalClient {
         }
       };
 
-      this.ws.onclose = (event) => {
-        console.log('Approval WebSocket closed:', event.code, event.reason);
+      this.ws.onclose = () => {
         this.connectionHandlers.forEach(handler => handler(false));
         this.stopPingInterval();
 
@@ -254,7 +252,6 @@ class ApprovalClient {
         if (this.wsReconnectAttempts < this.maxReconnectAttempts) {
           this.wsReconnectAttempts++;
           const delay = this.reconnectDelay * Math.pow(2, this.wsReconnectAttempts - 1);
-          console.log(`Reconnecting in ${delay}ms (attempt ${this.wsReconnectAttempts})`);
           setTimeout(() => this.connectWebSocket(), delay);
         }
       };

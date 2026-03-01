@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+      Structured logging configuration.
+      - Default (local dev / tests): human-readable plain text to stdout.
+      - json-logging profile (Docker / CI): JSON via logstash-logback-encoder.
+        Activate with: SPRING_PROFILES_ACTIVE=json-logging
+
+      When the OTel Java agent is active it auto-injects trace_id, span_id,
+      and trace_flags into the SLF4J MDC; the JSON encoder picks them up
+      automatically for request/trace correlation.
+    -->
+
+    <!-- ===== Plain-text console (default / local dev) ===== -->
+    <springProfile name="!json-logging">
+        <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ===== JSON console (Docker / CI / production) ===== -->
+    <springProfile name="json-logging">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${OTEL_SERVICE_NAME:-unknown}"}</customFields>
+                <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                    <shortenedClassNameLength>20</shortenedClassNameLength>
+                    <rootCauseFirst>true</rootCauseFirst>
+                </throwableConverter>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+</configuration>

@@ -23,7 +23,6 @@ export const useItems = () => {
     }, []);
 
     const createItem = async (name: string, price: string, description: string) => {
-        console.log("trying to create item2", name, price, description)
         try {
             const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
             await axios.post(`${API_URL}/item`,

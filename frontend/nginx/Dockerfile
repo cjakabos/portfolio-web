@@ -94,6 +94,8 @@ RUN groupadd -r nginx && useradd -r -g nginx -d /var/cache/nginx -s /sbin/nologi
 # Copy configuration files
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/locations.conf /etc/nginx/locations.conf.template
+COPY conf/security-headers.conf /etc/nginx/security-headers.conf
+COPY conf/cors/ /etc/nginx/cors/
 COPY localhost+3-key.pub /etc/nginx/localhost+3-key.pub
 
 # FIX 4.3: Copy TLS certificates for HTTPS

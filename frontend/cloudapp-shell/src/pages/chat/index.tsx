@@ -45,7 +45,6 @@ const Chat: React.FC = () => {
     try {
       const res = await chatHttpApi.getRooms();
       setRooms(res.data.data || []);
-      console.log(res.data.data)
     } catch (err) {
       console.error('Failed to fetch rooms', err);
     }
@@ -57,11 +56,7 @@ const Chat: React.FC = () => {
     client.debug = () => {};
 
     const onConnected = () => {
-      console.log('Connected to WebSocket');
-
-      client.subscribe(`/topic/group/${roomCode}`, (message) => {
-        console.log('Message received:', message.body);
-      });
+      client.subscribe(`/topic/group/${roomCode}`, () => {});
 
       const msg = {
         sender: username,
@@ -80,7 +75,7 @@ const Chat: React.FC = () => {
     };
 
     const onError = (error: any) => {
-      console.log('Failed to connect to WebSocket server', error);
+      console.error('Failed to connect to WebSocket server', error);
     };
 
     client.connect({}, onConnected, onError);
@@ -115,7 +110,6 @@ const Chat: React.FC = () => {
     if (!joinCode.trim()) return;
 
     try {
-    console.log("res2")
       const res = await chatHttpApi.findRoom(joinCode);
       if (res.data.err_code !== 0) {
         setError(res.data.err_msg);
