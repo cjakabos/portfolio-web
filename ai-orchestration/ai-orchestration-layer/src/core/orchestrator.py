@@ -177,8 +177,8 @@ class AIOrchestrationLayer:
         # Human-in-the-Loop
         if self.enable_hitl:
             self.hitl_manager = HumanInLoopManager()
-            # Start background tasks
-            asyncio.create_task(self.hitl_manager.start())
+            # Start background tasks — store reference for cleanup
+            self._hitl_task = asyncio.create_task(self.hitl_manager.start())
             self.logger.info("hitl_enabled", {
                 "mode": self.hitl_wait_mode,
                 "auto_approve_threshold": RISK_THRESHOLD_AUTO_APPROVE,
@@ -898,4 +898,11 @@ class AIOrchestrationLayer:
         """Cleanup resources."""
         if self.hitl_manager:
             await self.hitl_manager.stop()
+        # Cancel stored HITL background task to prevent orphaned coroutines
+        if hasattr(self, '_hitl_task') and self._hitl_task and not self._hitl_task.done():
+            self._hitl_task.cancel()
+            try:
+                await self._hitl_task
+            except asyncio.CancelledError:
+                pass
         self.logger.info("orchestrator_cleanup_complete")

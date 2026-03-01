@@ -21,6 +21,9 @@ from langchain.tools.base import ToolException
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Redis imports with fallback
 try:
     import redis.asyncio as aioredis
@@ -28,8 +31,8 @@ try:
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    print("⚠️  Redis not available - circuit breaker will use in-memory storage")
-    print("   Install: pip install redis")
+    logger.warning("Redis not available — circuit breaker will use in-memory storage. "
+                    "Install: pip install redis")
 
 
 class ErrorSeverity(Enum):
@@ -234,8 +237,7 @@ class RedisCircuitBreaker:
                     )
                     self._redis_initialized = True
                 except Exception as e:
-                    print(f"⚠️  Redis connection failed: {e}")
-                    print("   Falling back to in-memory circuit breaker")
+                    logger.warning("Redis connection failed: %s — falling back to in-memory circuit breaker", e)
                     self.use_memory_fallback = True
     
     async def _get_state(self) -> str:
@@ -249,7 +251,7 @@ class RedisCircuitBreaker:
             state = await self.redis_client.get(self.state_key)
             return state or "closed"
         except Exception as e:
-            print(f"⚠️  Redis read failed: {e}, using fallback")
+            logger.warning("Redis read failed: %s — using fallback", e)
             return self._memory_state["state"]
     
     async def _set_state(self, state: str):
@@ -263,7 +265,7 @@ class RedisCircuitBreaker:
         try:
             await self.redis_client.set(self.state_key, state)
         except Exception as e:
-            print(f"⚠️  Redis write failed: {e}, using fallback")
+            logger.warning("Redis write failed: %s — using fallback", e)
             self._memory_state["state"] = state
     
     async def _get_failure_count(self) -> int:
@@ -277,7 +279,7 @@ class RedisCircuitBreaker:
             count = await self.redis_client.get(self.failure_count_key)
             return int(count) if count else 0
         except Exception as e:
-            print(f"⚠️  Redis read failed: {e}, using fallback")
+            logger.warning("Redis read failed: %s — using fallback", e)
             return self._memory_state["failure_count"]
     
     async def _increment_failure_count(self) -> int:
@@ -292,7 +294,7 @@ class RedisCircuitBreaker:
             count = await self.redis_client.incr(self.failure_count_key)
             return count
         except Exception as e:
-            print(f"⚠️  Redis write failed: {e}, using fallback")
+            logger.warning("Redis write failed: %s — using fallback", e)
             self._memory_state["failure_count"] += 1
             return self._memory_state["failure_count"]
     
@@ -307,7 +309,7 @@ class RedisCircuitBreaker:
         try:
             await self.redis_client.set(self.failure_count_key, 0)
         except Exception as e:
-            print(f"⚠️  Redis write failed: {e}, using fallback")
+            logger.warning("Redis write failed: %s — using fallback", e)
             self._memory_state["failure_count"] = 0
     
     async def _set_last_failure_time(self):
@@ -323,7 +325,7 @@ class RedisCircuitBreaker:
         try:
             await self.redis_client.set(self.last_failure_key, timestamp)
         except Exception as e:
-            print(f"⚠️  Redis write failed: {e}, using fallback")
+            logger.warning("Redis write failed: %s — using fallback", e)
             self._memory_state["last_failure_time"] = timestamp
     
     async def _get_last_failure_time(self) -> Optional[datetime]:
@@ -338,7 +340,7 @@ class RedisCircuitBreaker:
             timestamp = await self.redis_client.get(self.last_failure_key)
             return datetime.fromisoformat(timestamp) if timestamp else None
         except Exception as e:
-            print(f"⚠️  Redis read failed: {e}, using fallback")
+            logger.warning("Redis read failed: %s — using fallback", e)
             ts = self._memory_state["last_failure_time"]
             return datetime.fromisoformat(ts) if ts else None
     
@@ -414,7 +416,7 @@ class RedisCircuitBreaker:
             try:
                 await self.redis_client.close()
             except Exception as e:
-                print(f"⚠️  Error closing Redis connection: {e}")
+                logger.warning("Error closing Redis connection: %s", e)
 
 
 class ErrorHandler:
@@ -623,7 +625,7 @@ class ErrorHandler:
                 "timestamp": context.timestamp.isoformat()
             }
         }
-        print(f"🚨 CRITICAL ERROR ALERT: {json.dumps(alert_data, indent=2)}")
+        logger.critical("CRITICAL ERROR ALERT: %s", json.dumps(alert_data, indent=2))
     
     def _update_error_metrics(
         self,

@@ -309,7 +309,7 @@ class ToolManager:
         
         try:
             return await response.json()
-        except:
+        except (ValueError, TypeError):
             text = await response.text()
             return {"response": text}
     

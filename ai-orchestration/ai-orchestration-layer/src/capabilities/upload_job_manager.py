@@ -259,7 +259,7 @@ class UploadJobManager:
                     age = (now - created).total_seconds()
                     if age > self._job_ttl_seconds:
                         to_remove.append(job_id)
-                except:
+                except (ValueError, TypeError):
                     pass
 
         for job_id in to_remove:

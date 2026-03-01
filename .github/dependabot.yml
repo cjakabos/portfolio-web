@@ -1,0 +1,82 @@
+# ===========================================================================
+# Dependabot Configuration — Automated dependency update PRs
+#
+# Weekly scans across all ecosystems. PRs are capped per ecosystem to
+# avoid PR flood.  Merge manually after CI passes.
+# ===========================================================================
+version: 2
+updates:
+  # -----------------------------------------------------------------------
+  # Maven — Java backends
+  # -----------------------------------------------------------------------
+  - package-ecosystem: "maven"
+    directory: "/backend/cloudapp"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "maven"
+    directory: "/backend/petstore"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "maven"
+    directory: "/backend/vehicles-api"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "maven"
+    directory: "/backend/web-proxy"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # -----------------------------------------------------------------------
+  # npm — frontend apps + AI monitor
+  # -----------------------------------------------------------------------
+  - package-ecosystem: "npm"
+    directory: "/frontend/cloudapp-shell"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "npm"
+    directory: "/ai-orchestration/ai-orchestration-monitor"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # -----------------------------------------------------------------------
+  # pip — Python services
+  # -----------------------------------------------------------------------
+  - package-ecosystem: "pip"
+    directory: "/backend/ml-pipeline"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "pip"
+    directory: "/ai-orchestration/ai-orchestration-layer"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # -----------------------------------------------------------------------
+  # Docker — base images (Dockerfiles in repo root)
+  # -----------------------------------------------------------------------
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+
+  # -----------------------------------------------------------------------
+  # GitHub Actions — workflow action versions
+  # -----------------------------------------------------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3

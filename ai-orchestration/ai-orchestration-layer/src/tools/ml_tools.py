@@ -28,7 +28,7 @@ async def get_segmentation(customer_data: str) -> str:
         client = ServiceHTTPClients.get_ml_client()
         try:
             payload = json.loads(customer_data)
-        except:
+        except (ValueError, TypeError, KeyError):
             payload = {"data": customer_data}
 
         response = await client.post("/mlops-segmentation/getMLInfo", json=payload)
@@ -168,7 +168,7 @@ async def explain_prediction(ml_model_id: str, input_data: str) -> str:
         client = ServiceHTTPClients.get_ml_client()
         try:
             payload = json.loads(input_data)
-        except:
+        except (ValueError, TypeError, KeyError):
             payload = {"data": input_data}
             
         response = await client.post(f"/models/{ml_model_id}/explain", json=payload)

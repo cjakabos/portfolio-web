@@ -287,7 +287,7 @@ class ApprovalStorage:
                     created = datetime.fromisoformat(h["created_at"].replace("Z", "+00:00"))
                     approved = datetime.fromisoformat(h["approved_at"].replace("Z", "+00:00"))
                     response_times.append((approved - created).total_seconds())
-                except:
+                except (ValueError, TypeError):
                     pass
 
         by_type = {}

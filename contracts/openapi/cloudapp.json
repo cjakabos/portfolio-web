@@ -315,7 +315,7 @@
     "title": "Cloudapp API",
     "version": "v0.01"
   },
-  "openapi": "3.0.1",
+  "openapi": "3.1.0",
   "paths": {
     "/cart/addToCart": {
       "post": {
@@ -487,11 +487,8 @@
             "content": {
               "application/octet-stream": {
                 "schema": {
-                  "items": {
-                    "format": "byte",
-                    "type": "string"
-                  },
-                  "type": "array"
+                  "format": "byte",
+                  "type": "string"
                 }
               }
             },
