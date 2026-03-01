@@ -33,7 +33,7 @@
     "react-dom": "19.1.2",
     "react-leaflet": "^5.0.0-rc.2",
     "sockjs-client": "^1.6.1",
-    "webpack": "5.99.9",
+    "webpack": "5.105.3",
     "webstomp-client": "^1.2.6"
   },
   "devDependencies": {
