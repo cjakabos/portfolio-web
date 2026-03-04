@@ -46,3 +46,23 @@ test-results/
 **/test-results/
 **/lcov-report/
 **/coverage/
+tests/e2e/mobile/artifacts/
+
+# Python cache noise
+**/__pycache__/
+
+# Capacitor generated native image assets (regenerable)
+frontend/cloudapp-shell/android/app/src/main/res/drawable*/splash.png
+frontend/cloudapp-shell/android/app/src/main/res/mipmap-*/ic_launcher*.png
+frontend/cloudapp-shell/ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png
+frontend/cloudapp-shell/ios/App/App/Assets.xcassets/Splash.imageset/*.png
+
+# Mobile generated build/runtime artifacts
+frontend/cloudapp-shell/android/.gradle/
+frontend/cloudapp-shell/android/build/
+frontend/cloudapp-shell/android/app/build/
+frontend/cloudapp-shell/android/local.properties
+frontend/cloudapp-shell/ios/App/Pods/
+frontend/cloudapp-shell/ios/App/build/
+frontend/cloudapp-shell/ios/DerivedData/
+frontend/cloudapp-shell/ios/App/App.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist

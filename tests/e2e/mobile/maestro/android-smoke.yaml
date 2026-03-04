@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+name: Android CloudApp smoke
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "CloudApp"
+    timeout: 20000
+- assertVisible: "Sign In"
+- assertVisible: "Username"
+- assertVisible: "Password"
+- runFlow:
+    when:
+      visible: "Don't have an account? Register"
+    commands:
+      - tapOn: "Don't have an account? Register"
+      - assertVisible: "Create Account"
+      - assertVisible: "Email"

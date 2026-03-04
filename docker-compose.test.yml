@@ -282,6 +282,15 @@ services:
   # =========================================================================
   # FRONTEND UNIT TESTS (Jest + React Testing Library)
   # =========================================================================
+  web-test:
+    image: node:22-alpine
+    working_dir: /workspace/frontend/cloudapp-shell
+    environment:
+      - CI=true
+    volumes:
+      - ./:/workspace
+      - /workspace/frontend/cloudapp-shell/node_modules
+
   test-frontend-unit:
     image: node:20-alpine
     working_dir: /app

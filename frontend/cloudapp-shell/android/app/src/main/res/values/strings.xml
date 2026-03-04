@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CloudApp</string>
+    <string name="title_activity_main">CloudApp</string>
+    <string name="package_name">com.portfolio.cloudapp</string>
+    <string name="custom_url_scheme">com.portfolio.cloudapp</string>
+</resources>

@@ -28,7 +28,7 @@ export const useRegister = () => {
         const postData = {
             firstname: values.firstname,
             lastname: values.lastname,
-            username: values.username,
+            username: (values.username ?? "").trim().toLowerCase(),
             password: values.password,
             confirmPassword: values.confirmPassword,
         };

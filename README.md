@@ -366,6 +366,87 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e
 ```
 
+## Mobile Packaging (Capacitor)
+
+This repo now includes Android/iOS Capacitor wrappers and local smoke orchestration for `frontend/cloudapp-shell`.
+
+### Mobile prerequisites
+
+- Docker Desktop
+- Node.js + npm
+- Android SDK tools in PATH (`adb`, `emulator`)
+- Java 21 (Android Gradle builds)
+- Xcode + Command Line Tools + iOS Simulator (macOS)
+- CocoaPods locally (`brew install cocoapods`) or Docker (script auto-fallback for `pod install`)
+- Maestro CLI (`curl -Ls https://get.maestro.mobile.dev | bash`)
+
+### One-time setup
+
+```bash
+cd frontend/cloudapp-shell
+npm install
+npm run mobile:doctor
+npm run mobile:add:android
+npm run mobile:add:ios
+```
+
+### Android local build + launch
+
+```bash
+# Docker-first web build + cap sync + debug APK + install + launch
+bash run_android_local_build.sh
+
+# Use local npm/node for web build + cap sync
+ANDROID_NODE_MODE=local bash run_android_local_build.sh
+
+# Run Maestro smoke after app install/launch
+ANDROID_RUN_MAESTRO_SMOKE=1 bash run_android_local_build.sh
+
+# Force bundled mode (hosted mode is default)
+ANDROID_CAP_SERVER_URL="" bash run_android_local_build.sh
+```
+
+### iOS local build + launch
+
+```bash
+# Docker-first by default (avoids local npm installs):
+# web build + cap copy iOS + pod install + xcodebuild + simulator install/launch
+bash run_ios_local_build.sh
+
+# Force local npm/node mode
+IOS_NODE_MODE=local bash run_ios_local_build.sh
+
+# Force Dockerized CocoaPods (avoids local CocoaPods install)
+IOS_POD_MODE=docker bash run_ios_local_build.sh
+
+# Force bundled mode (hosted mode is default)
+IOS_CAP_SERVER_URL="" bash run_ios_local_build.sh
+```
+
+### Mobile smoke entrypoints
+
+```bash
+make test-mobile-smoke
+make test-ios-smoke
+make test-ios-smoke-xcode
+make test-ios-smoke-simulator
+make test-ios-smoke-all
+```
+
+### Project-specific mobile defaults
+
+- Capacitor app id: `com.portfolio.cloudapp`
+- Capacitor app name: `CloudApp`
+- Android hosted mode default URL: `http://localhost:5001`
+- Android API URL default: `http://localhost:8080/cloudapp` (adb reverse `8080 -> host 80`)
+- Android Maestro flow file: `tests/e2e/mobile/maestro/android-smoke.yaml`
+
+If you run hosted mode from `docker-compose-app.yml`, rebuild the shell + gateway so the shell bundle uses the Android-safe API base:
+
+```bash
+docker compose -f docker-compose-app.yml up -d --build next-nginx-jwt next-cloudapp-shell
+```
+
 ---
 
 # Optional API services

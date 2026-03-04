@@ -27,9 +27,10 @@ const Login: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
+      const normalizedValue = name === "username" ? value.toLowerCase() : value;
       setValues({
           ...values,
-          [name]: value,
+          [name]: normalizedValue,
       });
   };
 
@@ -125,6 +126,9 @@ const Login: React.FC = () => {
                             type="text"
                             name="username"
                             id="username"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="Enter Username"
                             onChange={handleChange}
                             value={values.username}
@@ -144,6 +148,9 @@ const Login: React.FC = () => {
                             type="password"
                             name="password"
                             id="password"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="Enter Password"
                             onChange={handleChange}
                             value={values.password}
@@ -165,6 +172,9 @@ const Login: React.FC = () => {
                             type="password"
                             name="confirmPassword"
                             id="confirmPassword"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="••••••••"
                             onChange={handleChange}
                             value={values.confirmPassword}
