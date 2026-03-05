@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { Lock, User } from 'lucide-react';
 import { useLogin } from "../../hooks/useLogin";
 import { useRegister } from "../../hooks/useRegister";
+import { useAuth } from '../../hooks/useAuth';
 
 const initialValues = {
     firstname: "",
@@ -24,6 +26,14 @@ const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { isReady, isInitialized, isChecking } = useAuth();
+
+  useEffect(() => {
+    if (!isInitialized || isChecking) return;
+    if (isReady) {
+      void router.replace('/');
+    }
+  }, [isInitialized, isChecking, isReady, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
@@ -44,7 +54,11 @@ const Login: React.FC = () => {
       } else {
         await login(values);
       }
-      router.push('/');
+      if (typeof window !== 'undefined') {
+        window.location.assign('/');
+        return;
+      }
+      await router.replace('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     }

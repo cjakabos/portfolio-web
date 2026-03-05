@@ -13,8 +13,9 @@ BUNDLE_BUDGET_KB="${BUNDLE_INITIAL_JS_GZIP_BUDGET_KB:-450}"
 NEXT_PUBLIC_API_URL="${IOS_NEXT_PUBLIC_API_URL:-http://localhost:80/cloudapp}"
 NEXT_PUBLIC_CHAT_WS_API_URL="${IOS_NEXT_PUBLIC_CHAT_WS_API_URL:-http://localhost:80/cloudapp}"
 CAP_SERVER_URL="${IOS_CAP_SERVER_URL:-http://localhost:5001}"
-IOS_POD_MODE="${IOS_POD_MODE:-auto}"
-IOS_POD_DOCKER_IMAGE="${IOS_POD_DOCKER_IMAGE:-cocoapods/cocoapods:1.15.2}"
+IOS_POD_MODE="${IOS_POD_MODE:-docker}"
+IOS_POD_DOCKER_IMAGE="${IOS_POD_DOCKER_IMAGE:-ruby:3.3}"
+IOS_POD_VERSION="${IOS_POD_VERSION:-1.16.2}"
 
 IOS_APP_DIR="${IOS_APP_DIR:-${WEB_DIR}/ios/App}"
 IOS_WORKSPACE="${IOS_WORKSPACE:-App.xcworkspace}"
@@ -169,6 +170,7 @@ install_ios_pods() {
   fi
 
   resolved_mode="$(resolve_ios_pod_mode)"
+  echo "iOS pod mode: ${resolved_mode}"
   case "${resolved_mode}" in
     skip)
       echo "Skipping pod install (IOS_POD_MODE=skip)."
@@ -191,10 +193,15 @@ install_ios_pods() {
       gid="$(id -g 2>/dev/null || echo 0)"
       docker run --rm \
         --user "${uid}:${gid}" \
-        -v "${IOS_APP_DIR}:/workspace" \
-        -w /workspace \
+        -e GEM_HOME=/tmp/gems \
+        -e GEM_PATH=/tmp/gems \
+        -e HOME=/tmp/cocoapods-home \
+        -e COCOAPODS_DISABLE_STATS=true \
+        -e IOS_POD_VERSION="${IOS_POD_VERSION}" \
+        -v "${WEB_DIR}:/workspace/frontend/cloudapp-shell" \
+        -w /workspace/frontend/cloudapp-shell/ios/App \
         "${IOS_POD_DOCKER_IMAGE}" \
-        sh -lc "pod install"
+        sh -lc 'set -e; mkdir -p "$HOME"; export PATH="$GEM_HOME/bin:$PATH"; gem install --no-document cocoapods -v "$IOS_POD_VERSION" >/tmp/gem-install.log 2>&1 || { cat /tmp/gem-install.log; exit 1; }; pod install --repo-update'
       ;;
   esac
 }

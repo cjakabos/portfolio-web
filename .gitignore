@@ -30,6 +30,7 @@ backend/*/target
 backend/ml-pipeline/data/
 backend/ml-pipeline/model/
 .next
+**/.next-mobile-build/
 node_modules
 .env
 .env.local

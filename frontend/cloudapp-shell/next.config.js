@@ -25,6 +25,7 @@ const REMOTE_JIRA     = process.env.NEXT_PUBLIC_REMOTE_JIRA_URL     || "http://l
 const REMOTE_CHATLLM  = process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL  || "http://localhost:5333";
 const REMOTE_MLOPS    = process.env.NEXT_PUBLIC_REMOTE_MLOPS_URL    || "http://localhost:5005";
 const REMOTE_PETSTORE = process.env.NEXT_PUBLIC_REMOTE_PETSTORE_URL || "http://localhost:5006";
+const NEXT_DIST_DIR = process.env.NEXT_DIST_DIR || ".next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -34,6 +35,7 @@ const nextConfig = {
     },
     transpilePackages: ['@mui/x-data-grid'],
     output: 'standalone',
+    distDir: NEXT_DIST_DIR,
     webpack(config, options) {
     const { isServer } = options;
     const remoteDir = isServer ? "ssr" : "chunks";

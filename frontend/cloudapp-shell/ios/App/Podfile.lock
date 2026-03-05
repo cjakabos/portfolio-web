@@ -14,7 +14,7 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
 
 SPEC CHECKSUMS:
-  Capacitor: 0a78ec6b54580fa055c11744a4e83cd7942d98ca
+  Capacitor: 5f723a6113395cfef3bbabf0d2b8e9ca1201c681
   CapacitorCordova: ae35646a9b46cfd00d637f195509c86594026aad
 
 PODFILE CHECKSUM: e5aad413742a07f9e736126612b43b6c058babcd

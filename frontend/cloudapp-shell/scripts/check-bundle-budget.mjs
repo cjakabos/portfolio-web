@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 
-const nextDir = path.resolve(process.cwd(), ".next");
+const nextDir = path.resolve(process.cwd(), process.env.NEXT_DIST_DIR || ".next");
 const manifestPath = path.join(nextDir, "build-manifest.json");
 const budgetKb = Number(process.env.BUNDLE_INITIAL_JS_GZIP_BUDGET_KB ?? "450");
 

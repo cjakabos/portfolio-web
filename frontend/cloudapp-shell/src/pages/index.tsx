@@ -40,7 +40,7 @@ const Home: React.FC = () => {
     { title: 'Maps', desc: 'Vehicle Tracking System', icon: <Map className="text-orange-500" size={32} />, path: '/maps', color: 'bg-orange-500/10' },
     { title: 'MLOps', desc: 'Customer Segmentation Model', icon: <Brain className="text-pink-500" size={32} />, path: '/mlops', color: 'bg-pink-500/10', adminOnly: true },
     { title: 'GPT', desc: 'Local AI Assistant', icon: <Bot className="text-teal-500" size={32} />, path: '/chatllm', color: 'bg-teal-500/10' },
-    { title: 'PetStore', desc: 'Manage your pet business', icon: <Cat className="text-indigo-500" size={32} />, path: '/petstore', color: 'bg-indigo-500/10', full: true, adminOnly: true },
+    { title: 'PetStore', desc: 'Manage your pet business', icon: <Cat className="text-indigo-500" size={32} />, path: '/petstore', color: 'bg-indigo-500/10', adminOnly: true },
   ];
 
   const visibleCards = cards.filter((card) => !card.adminOnly || isAdmin);
@@ -72,9 +72,7 @@ const Home: React.FC = () => {
             key={idx}
             href={card.path}
             prefetch={false}
-            className={`block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm hover:shadow-md transition-all group ${
-              (card as any).full ? 'md:col-span-2 lg:col-span-3 xl:col-span-4' : ''
-            }`}
+            className="block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm hover:shadow-md transition-all group"
           >
             <div className="flex items-start justify-between">
               <div className="flex gap-4">
@@ -97,7 +95,7 @@ const Home: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
-              <Activity size={20} className="text-blue-500" /> Recent System Activity - Mock
+              <Activity size={20} className="text-blue-500" /> Recent System Activity
             </h2>
             <div className="flex items-center gap-2">
               <Filter size={16} className="text-gray-400" />

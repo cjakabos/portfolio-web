@@ -1,8 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { LogOut, User as UserIcon, LayoutGrid, Sun, Moon } from 'lucide-react';
+import { LogOut, User as UserIcon, LayoutGrid, Sun, Moon, Menu, X } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
 import { useLogout } from '../hooks/useLogout';
 import { useAuth } from '../hooks/useAuth';
@@ -17,6 +17,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
   const { logout } = useLogout();
   const { isAdmin, isReady, username } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -27,76 +28,67 @@ const Layout = ({ children }: LayoutProps) => {
   const publicRoutes = [
     { label: 'Login', path: '/login', icon: <LayoutGrid size={20} /> }
   ];
+  const mobileRoutes = isReady ? authedRoutes : publicRoutes;
+  const desktopNavRoutes = mobileRoutes.filter((route) => route.path !== '/');
+
+  const mobileNavRoutes = mobileRoutes.filter((route) => route.path !== '/');
+  const primaryMobileRouteCount = 5;
+  const primaryMobileRoutes = mobileNavRoutes.slice(0, primaryMobileRouteCount);
+  const overflowMobileRoutes = mobileNavRoutes.slice(primaryMobileRouteCount);
 
   const isDashboard = router.pathname === '/';
   const fullHeightRoutes = ['/jira', '/chatllm', '/maps', '/petstore', '/chat'];
   const isFullHeight = fullHeightRoutes.some((route) => router.pathname.startsWith(route));
+  const isRouteActive = (path: string) => (
+    router.pathname === path || (path !== '/' && router.pathname.startsWith(path + '/'))
+  );
+  const isMobileOverflowRouteActive = overflowMobileRoutes.some((route) => isRouteActive(route.path));
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [router.pathname]);
 
   return (
-    <div className={`flex flex-col h-screen transition-colors duration-200 overflow-hidden ${isDashboard ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
+    <div className={`flex flex-col h-[100dvh] transition-colors duration-200 overflow-x-hidden ${isDashboard ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
       {isDashboard && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           <div className="absolute -inset-[100%] w-[300%] h-[300%] leaf-pattern animate-leaf opacity-60"></div>
         </div>
       )}
 
-      <header className="bg-gray-900 dark:bg-gray-950 text-white shadow-lg z-30 shrink-0 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-16 py-2 gap-10">
-            <div className="flex items-center">
+      <header className="bg-gray-900 dark:bg-gray-950 text-white shadow-lg z-30 shrink-0 relative safe-top">
+        <div className="max-w-7xl mx-auto safe-x">
+          <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center min-h-16 py-2 gap-4">
+            <div className="justify-self-start">
               <Link href="/" className="flex-shrink-0 flex items-center gap-1">
                 <Image src="/drawing_white.svg" alt="CloudApp" width={50} height={50} />
                 <span className="hidden xl:inline font-bold text-xl tracking-tight">CloudApp</span>
               </Link>
-              <div className="hidden md:block ml-6 lg:ml-10">
-                <div className="flex items-baseline space-x-0.5 xl:space-x-1">
-                  {!isReady ? (
-                    <>
-                      {publicRoutes.map((item) => {
-                        const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
-                        return (
-                          <Link
-                            key={item.path}
-                            href={item.path}
-                            prefetch={false}
-                            className={`shrink-0 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
-                              isActive
-                                ? 'bg-gray-800 text-blue-400'
-                                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                            }`}
-                          >
-                            {item.icon}
-                            <span className="hidden xl:inline">{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <>
-                      {authedRoutes.map((item) => {
-                        const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
-                        return (
-                          <Link
-                            key={item.path}
-                            href={item.path}
-                            prefetch={false}
-                            className={`shrink-0 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
-                              isActive
-                                ? 'bg-gray-800 text-blue-400'
-                                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                            }`}
-                          >
-                            {item.icon}
-                            <span className="hidden xl:inline">{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </>
-                  )}
-                </div>
+            </div>
+
+            <div className="justify-self-center relative">
+              <div className="flex items-center justify-center gap-1">
+                {desktopNavRoutes.map((item) => {
+                  const isActive = isRouteActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      prefetch={false}
+                      aria-label={item.label}
+                      title={item.label}
+                      className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                      }`}
+                    >
+                      {item.icon}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+
+            <div className="justify-self-end flex items-center gap-2 shrink-0">
               <button
                 onClick={toggleTheme}
                 className="p-1 rounded-full text-gray-400 hover:text-yellow-400 hover:bg-gray-800 transition"
@@ -127,53 +119,135 @@ const Layout = ({ children }: LayoutProps) => {
               )}
             </div>
           </div>
-        </div>
 
-        <div className="md:hidden border-t border-gray-800 bg-gray-900 dark:bg-gray-950 overflow-x-auto">
-          <div className="flex gap-1 px-2 py-2 min-w-max">
-            {!isReady ? (
-              <>
-                {publicRoutes.map((item) => {
-                  const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
+          <div className="md:hidden flex items-center min-h-16 py-2 gap-1">
+            <Link
+              href="/"
+              prefetch={false}
+              aria-label="Home"
+              className={`flex h-10 w-10 items-center justify-center rounded-md transition-colors ${
+                isRouteActive('/') ? 'bg-gray-800' : 'hover:bg-gray-800'
+              }`}
+            >
+              <Image src="/drawing_white.svg" alt="CloudApp Home" width={36} height={36} />
+            </Link>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-center gap-1">
+                {primaryMobileRoutes.map((item) => {
+                  const isActive = isRouteActive(item.path);
                   return (
                     <Link
                       key={item.path}
                       href={item.path}
                       prefetch={false}
-                      className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
-                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
+                      aria-label={item.label}
+                      title={item.label}
+                      className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                       }`}
                     >
                       {item.icon}
                     </Link>
                   );
                 })}
-              </>
-            ) : (
-              <>
-                {authedRoutes.map((item) => {
-                  const isActive = router.pathname === item.path || (item.path !== '/' && router.pathname.startsWith(item.path + '/'));
-                  return (
-                    <Link
-                      key={item.path}
-                      href={item.path}
-                      prefetch={false}
-                      className={`flex flex-col items-center justify-center p-3 rounded-md transition-colors min-w-[60px] ${
-                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200'
-                      }`}
-                    >
-                      {item.icon}
-                    </Link>
-                  );
-                })}
-              </>
-            )}
+
+                {overflowMobileRoutes.length > 0 && (
+                  <button
+                    type="button"
+                    aria-label={isMobileMenuOpen ? 'Close more menu' : 'Open more menu'}
+                    onClick={() => setIsMobileMenuOpen((open) => !open)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                      isMobileMenuOpen || isMobileOverflowRouteActive
+                        ? 'bg-gray-800 text-blue-400'
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                    }`}
+                  >
+                    {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {username ? (
+                <>
+                  <Link
+                    href="/profile"
+                    prefetch={false}
+                    aria-label="Profile"
+                    title="Profile"
+                    className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                      isRouteActive('/profile')
+                        ? 'bg-gray-700 text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    <UserIcon size={16} />
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    aria-label="Logout"
+                    title="Logout"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition"
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  prefetch={false}
+                  aria-label="Login"
+                  title="Login"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                    isRouteActive('/login')
+                      ? 'bg-gray-700 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <UserIcon size={16} />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
+
+        {isMobileMenuOpen && overflowMobileRoutes.length > 0 && (
+          <div className="md:hidden absolute top-full left-2 right-2 mt-1 z-40">
+            <button
+              type="button"
+              aria-label="Close mobile menu"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-transparent z-30"
+            />
+            <div className="relative z-40 rounded-lg border border-gray-800 bg-gray-900/95 dark:bg-gray-950/95 shadow-xl backdrop-blur-sm p-1">
+              <div className="grid grid-cols-3 gap-1">
+                {overflowMobileRoutes.map((item) => {
+                  const isActive = isRouteActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      prefetch={false}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-md transition-colors min-h-[56px] ${
+                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      }`}
+                    >
+                      {item.icon}
+                      <span className="text-[10px] leading-none">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
-      <div className={`flex-1 relative z-10 ${isFullHeight ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'} ${isDashboard ? '' : 'bg-gray-100 dark:bg-gray-900'}`}>
-        <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isFullHeight ? 'h-full' : 'max-w-7xl py-8'}`}>
+      <div className={`flex-1 relative z-10 overflow-y-auto touch-scroll custom-scrollbar safe-bottom ${isDashboard ? '' : 'bg-gray-100 dark:bg-gray-900'}`}>
+        <div className={`${isFullHeight ? 'h-full' : 'max-w-7xl py-8 mx-auto safe-x'}`}>
           {children}
         </div>
       </div>
