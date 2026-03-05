@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { Lock, User } from 'lucide-react';
 import { useLogin } from "../../hooks/useLogin";
 import { useRegister } from "../../hooks/useRegister";
+import { useAuth } from '../../hooks/useAuth';
 
 const initialValues = {
     firstname: "",
@@ -24,12 +26,21 @@ const Login: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { isReady, isInitialized, isChecking } = useAuth();
+
+  useEffect(() => {
+    if (!isInitialized || isChecking) return;
+    if (isReady) {
+      void router.replace('/');
+    }
+  }, [isInitialized, isChecking, isReady, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
+      const normalizedValue = name === "username" ? value.toLowerCase() : value;
       setValues({
           ...values,
-          [name]: value,
+          [name]: normalizedValue,
       });
   };
 
@@ -43,7 +54,11 @@ const Login: React.FC = () => {
       } else {
         await login(values);
       }
-      router.push('/');
+      if (typeof window !== 'undefined') {
+        window.location.assign('/');
+        return;
+      }
+      await router.replace('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     }
@@ -125,6 +140,9 @@ const Login: React.FC = () => {
                             type="text"
                             name="username"
                             id="username"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="Enter Username"
                             onChange={handleChange}
                             value={values.username}
@@ -144,6 +162,9 @@ const Login: React.FC = () => {
                             type="password"
                             name="password"
                             id="password"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="Enter Password"
                             onChange={handleChange}
                             value={values.password}
@@ -165,6 +186,9 @@ const Login: React.FC = () => {
                             type="password"
                             name="confirmPassword"
                             id="confirmPassword"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                             placeholder="••••••••"
                             onChange={handleChange}
                             value={values.confirmPassword}

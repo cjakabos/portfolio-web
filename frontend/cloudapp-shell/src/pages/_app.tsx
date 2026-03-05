@@ -11,35 +11,85 @@ import { ThemeContext } from '../context/ThemeContext';
 import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
 
+type ThemePreference = 'system' | 'light' | 'dark';
+
 function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
+  const [themePreference, setThemePreference] = useState<ThemePreference>('system');
   const [hasMounted, setHasMounted] = useState(false);
   const router = useRouter();
-  const { isAdmin, isReady, isInitialized } = useAuth();
+  const { isAdmin, isReady, isInitialized, isChecking } = useAuth();
 
-  // Client-side theme initialisation — reads localStorage once after mount.
+  const getSystemDarkPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  // Client-side theme initialisation — defaults to system theme unless explicitly overridden.
   useEffect(() => {
     setHasMounted(true);
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setIsDark(true);
+
+    const storedThemePreference = localStorage.getItem('themePreference');
+    if (
+      storedThemePreference === 'system' ||
+      storedThemePreference === 'light' ||
+      storedThemePreference === 'dark'
+    ) {
+      setThemePreference(storedThemePreference);
+      setIsDark(storedThemePreference === 'dark' || (storedThemePreference === 'system' && getSystemDarkPreference()));
+      return;
     }
+
+    // Legacy migration: preserve explicit old dark preference; otherwise default to system.
+    if (localStorage.getItem('theme') === 'dark') {
+      setThemePreference('dark');
+      setIsDark(true);
+      return;
+    }
+
+    setThemePreference('system');
+    setIsDark(getSystemDarkPreference());
   }, []);
 
-  // Sync the `dark` class on <html> whenever the theme changes (client only).
+  useEffect(() => {
+    if (!hasMounted || themePreference !== 'system') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const updateFromSystemTheme = (event?: MediaQueryListEvent) => {
+      setIsDark(event ? event.matches : mediaQuery.matches);
+    };
+
+    updateFromSystemTheme();
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateFromSystemTheme);
+      return () => mediaQuery.removeEventListener('change', updateFromSystemTheme);
+    }
+
+    mediaQuery.addListener(updateFromSystemTheme);
+    return () => mediaQuery.removeListener(updateFromSystemTheme);
+  }, [hasMounted, themePreference]);
+
+  // Sync dark class and browser color-scheme on <html>.
   useEffect(() => {
     if (!hasMounted) return;
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   }, [isDark, hasMounted]);
 
+  useEffect(() => {
+    if (!hasMounted) return;
+    localStorage.setItem('themePreference', themePreference);
+    if (themePreference === 'system') {
+      localStorage.removeItem('theme');
+      return;
+    }
+    localStorage.setItem('theme', themePreference);
+  }, [themePreference, hasMounted]);
+
   const toggleTheme = () => {
-    setIsDark((prev) => !prev);
+    const systemPrefersDark = getSystemDarkPreference();
+    const currentIsDark = themePreference === 'system' ? systemPrefersDark : themePreference === 'dark';
+    const nextPreference: ThemePreference = currentIsDark ? 'light' : 'dark';
+    setThemePreference(nextPreference);
+    setIsDark(nextPreference === 'dark');
   };
 
   // Axios interceptor — redirect to login when the authenticated session expires.
@@ -60,11 +110,19 @@ function MyApp({ Component, pageProps }: AppProps) {
   // Auth guard — redirect unauthenticated users to /login (client-side only).
   useEffect(() => {
     if (hasMounted && isInitialized) {
-      if (!isReady && router.pathname !== '/login' && router.pathname !== '/logout') {
-        router.push('/login');
+      if (!isChecking && !isReady && router.pathname !== '/login' && router.pathname !== '/logout') {
+        router.replace('/login');
       }
     }
-  }, [hasMounted, isInitialized, isReady, router.pathname, router]);
+  }, [hasMounted, isInitialized, isChecking, isReady, router.pathname, router]);
+
+  // Prevent authenticated sessions from getting stuck on /login after a successful sign-in.
+  useEffect(() => {
+    if (!hasMounted || !isInitialized) return;
+    if (!isChecking && isReady && router.pathname === '/login') {
+      router.replace('/');
+    }
+  }, [hasMounted, isInitialized, isChecking, isReady, router.pathname, router]);
 
   // ---- Route-level access control (evaluated on every render) ----
   const currentRoute = allAuthedRoutes.find(r =>

@@ -20,9 +20,11 @@ export const useAuth = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
 
   const refreshAuthState = useCallback(async () => {
+    setIsChecking(true);
     try {
       const response = await axios.get<AuthCheckResponse>(`${API_URL}/user/auth-check`, {
         withCredentials: true,
@@ -45,6 +47,7 @@ export const useAuth = () => {
       setIsReady(false);
     } finally {
       setIsInitialized(true);
+      setIsChecking(false);
     }
   }, []);
 
@@ -63,7 +66,8 @@ export const useAuth = () => {
     return () => window.removeEventListener(CLOUDAPP_AUTH_STATE_CHANGED_EVENT, handleAuthChanged);
   }, [refreshAuthState]);
 
-  const isAdmin = roles.includes("ROLE_ADMIN");
+  const normalizedRoles = roles.map((role) => role.trim().toUpperCase());
+  const isAdmin = normalizedRoles.includes("ROLE_ADMIN") || normalizedRoles.includes("ADMIN");
 
-  return { username, roles, isAdmin, isReady, isInitialized };
+  return { username, roles, isAdmin, isReady, isInitialized, isChecking };
 };

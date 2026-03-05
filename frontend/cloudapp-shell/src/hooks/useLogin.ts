@@ -17,11 +17,13 @@ export const useLogin = () => {
     setError(null);
 
     try {
+      const username = values.username?.trim().toLowerCase() ?? "";
+      const password = values.password ?? "";
       // Ideally, use an environment variable for the base URL
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
       const response = await axios.post(
         `${API_URL}/user/user-login`,
-        { username: values.username, password: values.password },
+        { username, password },
         {
           headers: { "Content-Type": "application/json;charset=UTF-8" },
           withCredentials: true,

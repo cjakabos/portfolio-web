@@ -7,16 +7,30 @@
     "build": "NEXT_PRIVATE_LOCAL_WEBPACK=true next build",
     "start": "NEXT_PRIVATE_LOCAL_WEBPACK=true next start -p 5001",
     "test": "jest",
+    "test:mobile:smoke": "jest --config jest.config.cjs --runInBand --testPathPatterns=src/mobile/capacitorConfig.smoke.test.ts",
+    "test:ios:smoke": "jest --config jest.config.cjs --runInBand --testPathPatterns=src/mobile/iosPackaging.smoke.test.ts",
     "format": "prettier --write .",
     "lint": "next lint",
+    "check:bundle-budget": "node ./scripts/check-bundle-budget.mjs",
+    "build:budget": "npm run build && npm run check:bundle-budget",
     "playwright:test": "NODE_PATH=./node_modules npx playwright test -c ../../playwright.config.ts",
     "playwright:open": "NODE_PATH=./node_modules npx playwright test --ui --project=chromium -c ../../playwright.config.ts",
     "playwright:open:all": "NODE_PATH=./node_modules npx playwright test --ui --project=chromium --project=firefox --project=webkit --workers=1 --retries=2 -c ../../playwright.config.ts",
     "playwright:headed": "NODE_PATH=./node_modules npx playwright test --headed -c ../../playwright.config.ts",
     "playwright:debug": "NODE_PATH=./node_modules npx playwright test --debug -c ../../playwright.config.ts",
-    "playwright:install": "npx playwright install chromium firefox webkit"
+    "playwright:install": "npx playwright install chromium firefox webkit",
+    "mobile:doctor": "npx cap doctor",
+    "mobile:add:android": "npx cap add android",
+    "mobile:add:ios": "npx cap add ios",
+    "mobile:copy": "npm run build && npx cap copy",
+    "mobile:sync": "npm run build && npx cap sync",
+    "mobile:android": "npm run mobile:sync && npx cap open android",
+    "mobile:ios": "npm run mobile:sync && npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.5.0",
     "@ai-sdk/react": "3.0.67",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -54,6 +68,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "@capacitor/cli": "^7.0.0"
   }
 }

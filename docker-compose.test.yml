@@ -282,6 +282,33 @@ services:
   # =========================================================================
   # FRONTEND UNIT TESTS (Jest + React Testing Library)
   # =========================================================================
+  web-test:
+    image: node:22-alpine
+    working_dir: /workspace/frontend/cloudapp-shell
+    environment:
+      - CI=true
+    volumes:
+      - ./:/workspace
+      - /workspace/frontend/cloudapp-shell/node_modules
+
+  ios-pods:
+    image: ruby:3.3
+    working_dir: /workspace/frontend/cloudapp-shell/ios/App
+    environment:
+      - GEM_HOME=/tmp/gems
+      - GEM_PATH=/tmp/gems
+      - HOME=/tmp/cocoapods-home
+      - COCOAPODS_DISABLE_STATS=true
+      - POD_VERSION=1.16.2
+    volumes:
+      - ./:/workspace
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "set -e; mkdir -p \"$$HOME\"; export PATH=\"$$GEM_HOME/bin:$$PATH\"; gem install --no-document cocoapods -v \"$$POD_VERSION\" >/tmp/gem-install.log 2>&1 || { cat /tmp/gem-install.log; exit 1; }; pod install --repo-update",
+      ]
+
   test-frontend-unit:
     image: node:20-alpine
     working_dir: /app

@@ -22,9 +22,10 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web D
 - **Resilience Patterns**: Resilience4j circuit breakers on external API calls with graceful fallbacks, health indicators, and Prometheus metrics. [Resilience details](#resilience).
 - **API Contract Governance**: OpenAPI snapshot drift detection, TypeScript client generation, and NGINX-level API versioning (`/v1/` prefix). [Contract details](#api-contract-governance).
 - **CI/CD with GitHub Actions**: 6-stage parallel CI pipeline (backend, ML, NGINX, API contracts, frontend, Playwright E2E) plus nightly AI integration tests. [See workflows](./.github/workflows/).
+- **Mobile Packaging (Android + iOS)**: Capacitor-based mobile wrappers with scripted local build/bootstrap flows for clean-machine setup. [Mobile guide](#mobile-packaging-capacitor).
 
-Example view:
-![](examples/2.png)
+Example view in Android, Browser and iOS:
+![](examples/16.png)
 
 
 ## Quick Start
@@ -35,6 +36,11 @@ Use the smallest stack that matches the work:
 
 - `Lean mode`: everyday product work. Start only the core data stores and the app stack.
 - `Showcase mode`: full-platform demos. Add observability, AI orchestration, monitor, and Ollama.
+
+Needed for both - Env setup:
+```bash
+./scripts/setup-env-jwt-keys.sh
+```
 
 Lean mode:
 ```bash
@@ -55,6 +61,12 @@ Note: minimum 16 GB RAM and 35 GB disk space is needed to make sure all services
 ```bash
 brew install docker
 brew install docker-compose
+```
+
+Step 0. Initialize local JWT keys and `.env` paths (works on any user account/path):
+```bash
+./scripts/setup-env-jwt-keys.sh
+# or: make setup-env-jwt-keys
 ```
 
 Step 1. Setup and start databases and essential services with docker-compose:
@@ -364,6 +376,107 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e
+```
+
+## Mobile Packaging (Capacitor)
+
+This repo now includes Android/iOS Capacitor wrappers and local smoke orchestration for `frontend/cloudapp-shell`.
+
+### Mobile prerequisites
+
+- Docker Desktop
+- Node.js + npm
+- Android SDK tools in PATH (`adb`, `emulator`)
+- Java 21 (Android Gradle builds)
+- Xcode + Command Line Tools + iOS Simulator (macOS)
+- CocoaPods locally (`brew install cocoapods`) or Docker (default script mode runs CocoaPods in Docker)
+- Maestro CLI (`curl -Ls https://get.maestro.mobile.dev | bash`)
+
+### One-time setup
+
+```bash
+cd frontend/cloudapp-shell
+npm install
+npm run mobile:doctor
+npm run mobile:add:android
+npm run mobile:add:ios
+```
+
+### Android local build + launch
+
+```bash
+# Docker-first web build + cap sync + debug APK + install + launch
+bash run_android_local_build.sh
+
+# Use local npm/node for web build + cap sync
+ANDROID_NODE_MODE=local bash run_android_local_build.sh
+
+# Run Maestro smoke after app install/launch
+ANDROID_RUN_MAESTRO_SMOKE=1 bash run_android_local_build.sh
+
+# Force bundled mode (hosted mode is default)
+ANDROID_CAP_SERVER_URL="" bash run_android_local_build.sh
+```
+
+Android bootstrap behavior (`ANDROID_BOOTSTRAP_MODE`):
+
+- `auto` (default): install missing Android/JDK tooling automatically when possible; fallback to manual commands only when automation cannot proceed
+- `prompt`: ask before each install/create action
+- `manual`: never install anything automatically; print exact manual commands and exit on missing prerequisites
+
+### iOS local build + launch
+
+```bash
+# Docker-first by default (avoids local npm installs):
+# web build + cap copy iOS + pod install + xcodebuild + simulator install/launch
+bash run_ios_local_build.sh
+
+# Force local npm/node mode
+IOS_NODE_MODE=local bash run_ios_local_build.sh
+
+# Force Dockerized CocoaPods (avoids local CocoaPods install)
+IOS_POD_MODE=docker bash run_ios_local_build.sh
+
+# Force bundled mode (hosted mode is default)
+IOS_CAP_SERVER_URL="" bash run_ios_local_build.sh
+```
+
+`IOS_POD_MODE` options:
+
+- `docker` (default if unset): run `pod install` in Docker (no local CocoaPods required)
+- `local`: run `pod install` with local `pod`
+- `auto`: prefer local `pod`, fallback to Docker if local `pod` is missing
+- `skip`: skip `pod install` entirely
+
+In `docker` mode, the script uses a dedicated `ios-pods` one-shot service from [`docker-compose.test.yml`](./docker-compose.test.yml) and falls back to direct `docker run` only if that service invocation fails.
+
+Xcode bootstrap behavior:
+
+- By default (`IOS_XCODE_AUTO_SETUP=1`), the script attempts to auto-switch `xcode-select` to full Xcode (`/Applications/Xcode.app/Contents/Developer`) and runs first-launch/license steps.
+- Disable auto-switch with `IOS_XCODE_AUTO_SETUP=0` if you prefer fully manual Xcode management.
+
+### Mobile smoke entrypoints
+
+```bash
+make test-mobile-smoke
+make test-ios-smoke
+make test-ios-smoke-xcode
+make test-ios-smoke-simulator
+make test-ios-smoke-all
+```
+
+### Project-specific mobile defaults
+
+- Capacitor app id: `com.portfolio.cloudapp`
+- Capacitor app name: `CloudApp`
+- Android hosted mode default URL: `http://localhost:5001`
+- Android API URL default: `http://localhost:8080/cloudapp` (adb reverse `8080 -> host 80`)
+- Android Maestro flow file: `tests/e2e/mobile/maestro/android-smoke.yaml`
+
+If you run hosted mode from `docker-compose-app.yml`, rebuild the shell + gateway so the shell bundle uses the Android-safe API base:
+
+```bash
+docker compose -f docker-compose-app.yml up -d --build next-nginx-jwt next-cloudapp-shell
 ```
 
 ---
