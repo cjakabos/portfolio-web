@@ -1,80 +1,193 @@
-# Web Development and Predictive Analytics Portfolio
+# CloudApp - Portfolio Web Platform
+
+[![CI - Comprehensive Tests](https://github.com/cjakabos/portfolio-web/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/cjakabos/portfolio-web/actions/workflows/ci-tests.yml)
+[![Nightly - AI Integrations](https://github.com/cjakabos/portfolio-web/actions/workflows/nightly-ai-integrations.yml/badge.svg)](https://github.com/cjakabos/portfolio-web/actions/workflows/nightly-ai-integrations.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/cjakabos/portfolio-web?style=social)](https://github.com/cjakabos/portfolio-web/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/cjakabos/portfolio-web?style=social)](https://github.com/cjakabos/portfolio-web/network/members)
+
 <p align="center">
-  <img src="./frontend/cloudapp-shell/public/drawing_white.svg" width="150px" height="150px" />
+  <img src="./frontend/cloudapp-shell/public/drawing_white.svg" width="150" height="150" alt="CloudApp logo" />
 </p>
 
 Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web Development](https://graduation.udacity.com/confirm/QDDKHJF9), [RAG and Agentic AI](https://www.coursera.org/account/accomplishments/specialization/JMUHR8ZOHOOE?utm_source=link&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=prof) and [Predictive Analytics for Business](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811) Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces, llm and agentic solutions and robust data analytics models.
 
-## What's Inside?
+Example view of emulated Android app, browser view on PC and emulated iOS app:
+![Platform preview](./examples/16.png)
 
-- **CloudApp - Interactive Next.js 15 (React 19) App Shell and Micro Frontend**: Experience the sleek interface designed to interact seamlessly with the backend services.  [Explore the frontend](./frontend/cloudapp-shell/README.md).
-    - A micro frontend setup with an app shell solution to enable independently deployable front-end modules, improving scalability and maintainability. [Check details](#4-maps-with-vehicle-locations)
-- **Microservices Architecture**: Dive into backend API services crafted during my Nanodegree. More about backend services: [cloudapp](./backend/cloudapp/README.md), [petstore](./backend/petstore/README.md), [vehicles-api](./backend/vehicles-api/README.md), [jira-proxy](./backend/web-proxy/README.md).
-- **NGINX Gateway with Session/Auth Enforcement**: sole ingress point with CloudApp auth subrequests, admin-only protection for `/cloudapp-admin/*` and `/ai/system/*`, authenticated access for `/ai/*` and `/ai/ws/*`, rate limiting (auth 5r/s, API 30r/s, AI 60r/s), TLS 1.2/1.3, WebSocket proxying, and OTel header propagation. [See config](./frontend/nginx/conf/nginx.conf).
-- **Advanced ML Pipeline**: Leverage my Python-based machine learning pipeline for dynamic customer segmentation, developed during my Predictive Analytics Nanodegree. [See ML details](./backend/ml-pipeline/README.md).
-- **Locally hosted LLM with Ollama**: Deploy and interact with a locally hosted LLM using Ollama, featuring a configurable model setup. In this case, Qwen3 was used to provide AI-driven insights while maintaining full control over data privacy and performance. [Details on LLM integration](#5-private-local-llm-ai)
-- **Jira with local LLM refinement**: create Jira tickets and refine them with locally hosted LLM. [Details on API integration](#6-jira-with-ai-refinement).
-- **Real-Time Chat**: Engage with the Kafka-powered chat application with Confluent Kafka, WebSocket bridge, and MongoDB persistence. [Chat interface](#8-chat).
-- **AI Orchestration Layer**: FastAPI-based orchestration with LangGraph agentic workflows, RAG pipeline (ChromaDB), A/B testing, Human-in-the-Loop approval, circuit breakers, and WebSocket streaming. [Details on AI orchestration](#9-ai-orchestration-layer).
-- **AI Orchestration Monitor**: React/Vite admin dashboard for observability, RAG management, HITL approvals, error tracking, and real-time streaming visualization, reusing the CloudApp admin session via gateway-protected routes. [Monitor details](#10-admin-ai-orchestration-monitor).
-- **Observability Stack**: Distributed tracing (Jaeger), metrics (Prometheus), dashboards (Grafana), and OpenTelemetry auto-instrumentation across all services. [Observability details](#observability).
-- **Security Architecture**: RSA-signed JWT sessions, HttpOnly cookie auth for browser clients, CSRF protection, role-based access control, service-to-service auth, and non-root Docker containers. [Security details](#security).
-- **Resilience Patterns**: Resilience4j circuit breakers on external API calls with graceful fallbacks, health indicators, and Prometheus metrics. [Resilience details](#resilience).
-- **API Contract Governance**: OpenAPI snapshot drift detection, TypeScript client generation, and NGINX-level API versioning (`/v1/` prefix). [Contract details](#api-contract-governance).
-- **CI/CD with GitHub Actions**: 6-stage parallel CI pipeline (backend, ML, NGINX, API contracts, frontend, Playwright E2E) plus nightly AI integration tests. [See workflows](./.github/workflows/).
-- **Mobile Packaging (Android + iOS)**: Capacitor-based mobile wrappers with scripted local build/bootstrap flows for clean-machine setup. [Mobile guide](#mobile-packaging-capacitor).
+## What You Can Try In 10 Minutes
 
-Example view in Android, Browser and iOS:
-![](examples/16.png)
+- `/jira`: Jira ticket operations with AI refinement
+- `/notes`: create private notes securely
+- `/files`: upload files securely
+- `/shop`: full functioning shop
+- `/chat`: chat with other users
+- `/maps`: add vehicles on a map
+- `/mlops`: customer segmentation pipeline
+- `/chatllm`: local Ollama chat integration
+- `/petstore`: pet scheduling and customer workflows
+- And a separate admin interface with agentic tools and natural chat with all the above services
+
+<details>
+<summary>Feature walkthrough and screenshots</summary>
+
+## 1) CloudApp Shell (MFE Host)
+
+- Path: `frontend/cloudapp-shell/`
+    - Role: main application shell and route host for remote modules.
+
+![CloudApp login](./examples/1.png)
+
+## 2) Shop (CloudApp REST API)
+
+- Create items (admin)
+    - Add items to cart
+    - Submit orders and inspect order history
+
+![Shop module](./examples/4.png)
+
+API docs (when stack is running):
+- `http://localhost:80/cloudapp/swagger-ui/index.html#/item-controller`
+    - `http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller`
+    - `http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller`
+
+## 3) Petstore
+
+- Customer + pet lifecycle
+    - Employee scheduling and availability checks
+
+![Petstore module](./examples/5.png)
+
+## 4) Maps + Vehicle API
+
+- OpenStreetMap integration for vehicle geolocation
+    - Add/remove vehicle locations from UI
+
+![Maps module](./examples/8.png)
+
+Vehicles API docs:
+- `http://localhost:8880/vehicles/swagger-ui.html`
+
+## 5) Local LLM Chat (Ollama)
+
+- Prompt local models directly from UI
+    - Optional chain-of-thought display for models that support it
+
+![Local LLM chat](./examples/9.png)
+
+## 6) Jira + AI Refinement
+
+- Create/list/update/delete Jira tickets
+    - Refine ticket drafts and child ticket proposals with local LLM
+
+![Jira module](./examples/10.png)
+
+## 7) Notes + Files
+
+- User notes and file upload workflows
+
+![Notes](./examples/12.png)
+![Files](./examples/13.png)
+
+## 8) Real-Time Chat
+
+- Kafka-backed chat rooms
+    - WebSocket bridge + MongoDB persistence
+
+![Chat rooms](./examples/14.png)
+![Chat messages](./examples/15.png)
+
+## 9) Machine learning system for Customer Segmentation
+
+MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
+- Add new customer data point to the database.
+- Sample reference database with predefined 10-20-50-100-200 amount of samples.
 
 
-## Quick Start
+View results:
+- Graphs: correlation between parameters and the different segments.
+- Table: current list of customers from postgres db.
 
-### Run Modes
+![](examples/11.png)
 
-Use the smallest stack that matches the work:
+## 10) AI Orchestration Layer
 
-- `Lean mode`: everyday product work. Start only the core data stores and the app stack.
-- `Showcase mode`: full-platform demos. Add observability, AI orchestration, monitor, and Ollama.
+Path: `ai-orchestration/ai-orchestration-layer/`
 
-Needed for both - Env setup:
+Capabilities include:
+- LangGraph-based routing and workflow execution
+    - RAG ingestion/query over ChromaDB
+    - Human-in-the-loop approval queue
+    - A/B experimentation lifecycle and metrics
+    - Resilience/circuit breaking with graceful fallback behavior
+
+## 11) Admin AI Orchestration Monitor
+
+Path: `ai-orchestration/ai-orchestration-monitor/`
+
+Provides:
+- Streaming interface
+    - Observability dashboard
+    - RAG dashboard
+    - Approval queue
+    - Tool explorer
+    - Error dashboard
+    - Service health dashboard
+    - Model selector and unified operator view
+
+![AI monitor](./examples/d1.png)
+</details>
+
+
+## Why This Repo Exists
+
+This repository is built as a practical, end-to-end reference for people who want to study or reuse:
+- Secure gateway-driven microservice architecture with Java and Python
+- Scalable frontend composition with module federation  (Next.js 15 + React 19)
+- AI-native product patterns (local LLM, agentic tools, RAG, approvals, streaming) for the microservices
+- Jira and OpenMaps integration
+- Android and iOS deployment with Capacitor
+- Full observability, testable, containerized, CI-ready workflows
+
+## Quick Start (Lean Mode)
+
+### Prerequisites
+
+- Docker Desktop (or Docker Engine + Compose)
+- OpenSSL (`openssl`)
+- At least 16 GB RAM and 45 GB (+5-30GB depending on Ollama setup, and another + 20GB if Xcode and iOS emulator installed on Mac) free disk recommended for full showcase mode
+
+
+### 1) Create local env file abd enerate local JWT keys
+
 ```bash
 ./scripts/setup-env-jwt-keys.sh
 ```
 
-Lean mode:
+### 2) Start infrastructure + app
+
+This will start the app without Jira, Local LLM and AI orchestration Admin view
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
 ```
 
-Showcase mode:
-```bash
-docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+### 3) Open the app
+
+- Main app: http://localhost:5001
+
+Demo users:
+
+```text
+user: cloudadmin      pwd: cloudy
+user: regularuser123  pwd: 456789
 ```
 
-If you are only working on tests or one subsystem, prefer the targeted commands in [TESTING.md](./TESTING.md) instead of starting the full showcase stack.
+### 4) Optional: setup Ollama
+<details>
+<summary>See details for Mac</summary>
 
-### Setup with Docker
-Note: minimum 16 GB RAM and 35 GB disk space is needed to make sure all services can run.
-```bash
-brew install docker
-brew install docker-compose
-```
-
-Step 0. Initialize local JWT keys and `.env` paths (works on any user account/path):
-```bash
-./scripts/setup-env-jwt-keys.sh
-# or: make setup-env-jwt-keys
-```
-
-Step 1. Setup and start databases and essential services with docker-compose:
-```bash
-docker-compose -f docker-compose-infrastructure.yml up -d
-```
-For routine frontend/backend work, the lean-mode command above is the faster default. Use the full infrastructure stack when you need observability, AI orchestration, the monitor, ChromaDB, Redis, or MongoDB A/B testing.
-Step 2. Install local ollama, for Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
+Install local ollama, for Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
 ```bash
 brew install ollama
 # Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
@@ -84,303 +197,229 @@ ollama pull deepseek-r1:1.5b
 ollama pull qwen3-embedding:4b
 ollama serve
 ```
-<details>
-  <summary>Alternative Step 2 (containerized Ollama on CPU, instead of native Ollama on Apple Silicon)</summary>
-
-```bash
-docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
-```
-
-Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose-infrastructure.yml, in this example it was qwen3 with 1.7B parameter, good enough for local testing purposes.
-```dockerfile
-  ollama:
-    container_name: ollama
-    build:
-      context: ./
-      dockerfile: Dockerfile_OLLAMA
-      args:
-        NEXT_PUBLIC_LLM_MODEL: 'qwen3:1.7b'
-    ports:
-      - 11434:11434
-```
 </details>
 
-Step 3. Build and start the app stack:
+<details>
+<summary>See details for Linux and Windows</summary>
+
+Linux
 ```bash
-docker-compose -f docker-compose-app.yml up -d
+curl -fsSL https://ollama.com/install.sh | sh
 ```
+Windows:  
+Download from https://ollama.com/download
 
-Step 4. Runs the app in the production mode.
-Open http://localhost:5001 to view it in your browser. For development mode check [instructions here](./frontend/cloudapp-shell/README.md#option-2-dev-mode).
-
-If everything is correctly started, you should see a login page with optional Dark Mode:
-You can login with the following test users
-```text
-user: cloudadmin pwd: cloudy
-
-user: regularuser123 pwd: 456789
-```
-
-![](examples/1.png)
-
-And you should be able to register and log in, and see the current front-end of the api integrations from the services above:
+Follow the other steps from the Mac section of how to pull and serve models
+</details>
 
 
-## 1. Machine learning system for Customer Segmentation
+### 4) Optional: run the full app, including agentic tools and observability
 
-MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
-- Add new customer data point to the database.
-- Sample reference database with predefined 10-20-50-100-200 amount of samples.  
-
-
-View results:
-- Graphs: correlation between parameters and the different segments.
-- Table: current list of customers from postgres db.
-
-The module is built as Micro Frontend:  
-CloudApp-Shell as App Shell using the MLOps micro frontend:  
-http://localhost:5001/mlops
-
-![](examples/11.png)
-
-
-## 2. Shop interface for [Cloudapp web store REST API](backend/cloudapp/README.md), 
-![](examples/4.png)
-The user is able to:
-- Create new items (admin only).
-- Add existing items to the cart.
-- See and clear the cart.
-- Submit cart and check order history.  
-
-Shop API documentation: 
-- [Items](http://localhost:80/cloudapp/swagger-ui/index.html#/item-controller)
-- [Cart](http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller)
-- [Order](http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller)
-
-## 3. Pet Store interface for the [Pet Store's REST API](backend/petstore/README.md)
-The module is built as Micro Frontend:  
-CloudApp-Shell as App Shell using the Petstore micro frontend:  
-http://localhost:5001/petstore
-
-![](examples/5.png)
-The user is able to:
-- Add new customer.
-- Add a new Pet to existing customers.
-- Add new employees with skills and schedules.
-- Check availability based on skills and schedules.
-- Plan a new schedule for an employee and assign it to a pet.
-
-
-## 4.  Maps with vehicle locations
-The module is built as Micro Frontend:  
-CloudApp-Shell as App Shell using the Maps micro frontend:  
-http://localhost:5001/maps
-
-![](examples/8.png)
-Map interface for integrating Open Street Map with the [Vehicle location service's REST API](backend/vehicles-api/README.md).
-The user is able to:
-- Click on the map to add new vehicle locations.
-- Click on existing locations and check basic info and delete the location.  
-
-Vehicles [API documentation](http://localhost:8880/vehicles/swagger-ui.html)
-
-## 5. Private Local LLM AI
-Chat  interface for communicating with
-a locally hosted Ollama Qwen3 model, the user is able to:
-- Chat with a local LLM (and see model reasoning process, in models where it is applicable - can be toggled)
-
-The module is built as Micro Frontend:
-CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
-   http://localhost:5001/chatllm
-
-![](examples/9.png)
-
-3. Optionally one can also use command line:
 ```bash
-curl http://localhost:11434/api/generate -d '{                              
-  "model": "qwen3:1.7b",
-  "prompt": "Why is the sky blue?"
-}'
+docker compose -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
 ```
 
+- Admin AI orchestration: http://localhost:5010
 
-## 6. Jira with AI refinement
-Jira interface for communicating with
-the [Jira API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/), to use it:
-- [Register](https://www.atlassian.com/software/jira/free)
-- [Create Personal Access Token](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html)
-- [Use it for requests](https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/)
+### 5) Optional: Jira functionality
+<details>
+<summary>See details</summary>
 
-The user is able to:
+If Jira functionality is to be used, follow the instructions below:
 
-- Create/list/update/delete Jira ticket
-- Refine and edit tickets with LLM
-- Create and edit children tickets proposal with LLM
+## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
 
-CloudApp-Shell as App Shell using the Jira micro frontend:  
-   http://localhost:5001/jira
-![](examples/10.png)
-
-## 7. Notes and Files
-A service for creating personal notes and uploading personal files.
-![](examples/12.png)
-![](examples/13.png)
-- Notes [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/note-controller)
-- Files [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/file-controller)
-## 8. Chat
-A Kafka based chat service, the user is able to:
-
-- Create new chat rooms, furthermore share and enter chat room id  
-
-![](examples/14.png)
-- Talk to other users in chat rooms  
-
-![](examples/15.png)
-
-## 9. AI Orchestration Layer
-A FastAPI-based AI orchestration layer (`ai-orchestration/ai-orchestration-layer/`) providing:
-
-**LangGraph Agentic Workflow**
-- Multi-node graph: `initialize` → `classify_intent` → `route_to_capability` → capability nodes → `finalize`
-- Capability routing: conversational, multi-agent (shop/petstore/vehicle agents), workflow execution, ML pipeline, RAG query
-- SQLite-backed checkpointing with thread-based state recovery and MemorySaver fallback
-
-**RAG Pipeline (Retrieval-Augmented Generation)**
-- Async document upload with progress tracking (PDF, DOCX, TXT, MD, CSV — 10MB limit)
-- ChromaDB vector database with similarity search (configurable top-k, 1-20)
-- LLM-based answer generation with source attribution and confidence scores
-
-**A/B Testing Framework**
-- Full experiment lifecycle: DRAFT → RUNNING → PAUSED → COMPLETED
-- Deterministic variant assignment (MD5 hash), metrics tracking (impressions, conversions, latency, error rates)
-- Z-test statistical significance analysis, MongoDB storage with in-memory fallback
-
-**Human-in-the-Loop (HITL)**
-- Risk-based hybrid approach: auto-approve, flag, or require manual approval based on risk score
-- Approval types: FINANCIAL, ML_DECISION, DATA_ACCESS, WORKFLOW_BRANCH, AGENT_ACTION, EXTERNAL_API, CONTENT_GENERATION
-- WebSocket real-time notifications, TTL-based expiration, Redis storage with in-memory fallback
-
-**Circuit Breaker & Resilience**
-- Redis-backed distributed circuit breaking (CLOSED → OPEN → HALF_OPEN)
-- Graceful degradation across all components: SQLite → MemorySaver, Redis → in-memory, MongoDB → in-memory, streaming → full response
-
-**WebSocket Streaming**
-- Real-time token streaming during LLM generation with node progress events
-- HITL approval integration within streaming context
-
-**Operational API Surface (behind `/ai`)**
-- Gateway-protected with authenticated CloudApp identity; `/ai/system/*` is admin-only
-- `/orchestrate` — orchestration execution and workflow routing
-- `/rag/*` — document upload/query/management endpoints
-- `/approvals/*` — Human-in-the-Loop approval queue and actions
-- `/experiments/*` — A/B testing lifecycle and metrics
-- `/tools/*` — tool discovery and invocation
-- `/llm/*` — model discovery/selection endpoints for chat/rag/embedding
-- `/metrics`, `/health`, `/config` — operational visibility and diagnostics
-- `/conversation-sync/*` — cross-session conversation synchronization (Redis-backed when available)
-
-## 10. Admin-AI Orchestration Monitor
-![](examples/d1.png)
-
-A React/Vite admin dashboard (`ai-orchestration/ai-orchestration-monitor/`) at http://localhost:5010 providing:
-- **Streaming Interface** — real-time token/response visualization
-- **Observability Dashboard** — metrics, traces, latency charts
-- **RAG Dashboard** — document upload, query interface, document management
-- **Approval Interface** — HITL approval queue with approve/reject workflow
-- **Tools Explorer** — tool discovery and invocation testing
-- **Error Dashboard** — error tracking and analysis
-- **Services Dashboard** — service health monitoring
-- **Model Selector** — dynamic LLM model switching
-- **Unified Dashboard** — consolidated operator view across monitor capabilities
-- **Conversation Sync UI hooks** — multi-session/state synchronization support for orchestration workflows
-- **User Management** — Promoting existing users to Admin role
-
-Authentication model:
-- Uses the same CloudApp login/session as the main app
-- Browser clients authenticate with the `CLOUDAPP_AUTH` HttpOnly cookie
-- Admin monitor routes are enforced through `/cloudapp-admin/*` and admin-only `/ai/system/*` gateway checks
-
----
-
-# Architecture
-
-## Observability
-Distributed observability across all services:
-
-- **Jaeger v2** — distributed tracing via OTLP gRPC/HTTP (http://localhost:16686)
-- **Prometheus** — metrics collection with 15s scrape interval, 7-day retention (http://localhost:9090)
-- **Grafana** — dashboards and visualization (http://localhost:3000)
-- **OpenTelemetry** — Java Agent v2.25.0 auto-instrumentation on all Spring Boot services, manual instrumentation on Python services
-- **Request ID correlation** — X-Request-ID, traceparent, tracestate propagated through NGINX to all upstreams
-- **Spring Actuator** — health, info, and Prometheus endpoints exposed per service
-
-## Security
-- **JWT session authentication** — RSA asymmetric keys (PEM files), with browser clients authenticated primarily via the `CLOUDAPP_AUTH` HttpOnly cookie and validated through `/user/auth-check`
-- **CSRF protection** — CookieCsrfTokenRepository with SameSite=Lax
-- **Role-based access** — ADMIN/USER roles with method-level Spring Security authorization
-- **Service-to-service auth** — `X-Internal-Auth` token for internal requests
-- **NGINX as sole ingress** — backend services expose zero host ports
-- **Rate limiting** — auth endpoints (5 req/s), API general (30 req/s), AI endpoints (60 req/s)
-- **TLS 1.2/1.3** — modern ECDHE cipher suites
-- **Non-root containers** — non-root runtimes are used for the Next.js frontends and AI orchestration services
-
-## Resilience
-- **Resilience4j** circuit breakers on vehicles-api external calls (Maps, Pricing APIs)
-  - 50% failure threshold, 30s recovery window, COUNT_BASED sliding window (size 5)
-  - Graceful fallbacks, health indicators, and Prometheus metrics per breaker
-- **AI Layer** — Redis-backed distributed circuit breaking for tool invocations and external API calls
-
-## API Contract Governance
-- **OpenAPI snapshot export** from live services (`scripts/contracts/openapi_contracts.py`)
-- **Contract drift detection** — compares current specs against committed snapshots in CI
-- **TypeScript client generation** — typed operation clients for frontend consumers
-- **API versioning** — `/v1/` prefix rewrite at NGINX gateway layer
-
-Typical local usage (when services are running):
+NOTE: you need to rebuild jira docker once the changes are applied:
 ```bash
-python3 scripts/contracts/openapi_contracts.py export
-python3 scripts/contracts/openapi_contracts.py check --check-generated
+docker compose -f docker-compose-app.yml up -d --build --force-recreate --no-deps next-jira
+```
+Set these in your root `.env` file:
+
+```bash
+JIRA_DOMAIN='https://your-jira-instance.atlassian.net'
+JIRA_API_TOKEN='your-api-token'
+JIRA_PROJECT_KEY='yourjiraprojectkey'
+JIRA_EMAIL='youremail'
+```
+Only `JIRA_PROJECT_KEY` is exposed to the browser. Credentials stay server-side in `jiraproxy`.
+
+</details>
+
+### 6) Optional: Build and emulate Android and iOS apps
+
+```bash
+bash run_android_local_build.sh
+bash run_ios_local_build.sh
 ```
 
-Generated TypeScript operation clients are written to:
-- `frontend/cloudapp-shell/src/generated/contracts/`
 
-## Database Landscape
 
-| Database | Technology | Purpose | Port |
-|----------|-----------|---------|------|
-| postgres | PostgreSQL | CloudApp (users, items, carts, orders) | 5433 |
-| postgres-ml | PostgreSQL | ML pipeline (customer segmentation) | 5434 |
-| mysql | MySQL 8.0 | Petstore (pets, customers, employees) | 3307 |
-| mongo | MongoDB | Kafka chat messages | 27018 |
-| mongo-abtest | MongoDB | A/B testing experiments & metrics | 27019 |
-| redis | Redis 7 | AI orchestration cache, circuit breakers | 6379 |
-| chromadb | ChromaDB | RAG vector embeddings | 8000 |
-| H2 | H2 (in-memory) | Vehicles-API (dev only) | — |
+### 7) Optional: Testing
 
-## CI/CD
-- **GitHub Actions CI** (`ci-tests.yml`) — 6 parallel jobs: backend integration (4 Spring Boot services), ML Pipeline (pytest), NGINX gateway (JWT/routing/CORS), API contract drift detection, frontend unit (Jest + React Testing Library), Playwright E2E
-- **Nightly AI integration tests** (`nightly-ai-integrations.yml`) — full stack startup with Ollama, AI E2E tests, 180-minute timeout
-- **Artifact uploads** — test results, coverage reports, Playwright reports (7-14 day retention)
-- **Concurrency control** — groups by ref, cancels in-progress runs on new pushes
+Run all suites in one command:
 
-## Local Testing & Verification
-- Full local test guide: [TESTING.md](./TESTING.md)
-- Docker-based test composition: [`docker-compose.test.yml`](./docker-compose.test.yml)
-- Run all suites (backend, ML, AI orchestration layer, contracts, NGINX, frontend unit, Playwright):
 ```bash
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
 ```
-- Targeted suites (examples):
+
+### 8) Optional: Mobile HTTPS over local network (stable cert)
+<details>
+<summary>See details</summary>
+
+
+Use this if you open the app from a phone/tablet on your Wi-Fi network.
+
+1. Install mkcert once on your laptop:
+
 ```bash
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e
+brew install mkcert nss
+mkcert -install
 ```
 
-## Mobile Packaging (Capacitor)
+2. Generate a persistent LAN cert with SANs for your hostnames/IPs:
 
-This repo now includes Android/iOS Capacitor wrappers and local smoke orchestration for `frontend/cloudapp-shell`.
+```bash
+./scripts/generate-local-mobile-tls-cert.sh --force
+```
+
+If your phone uses a specific host/IP not auto-detected, include it explicitly:
+
+```bash
+./scripts/generate-local-mobile-tls-cert.sh --force --hosts "192.168.1.42,my-mac.local"
+```
+
+3. Start app stack with mobile override:
+
+```bash
+docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
+docker compose -f docker-compose-app.yml -f docker-compose.mobile.yml up -d
+```
+
+4. Install/trust CA on phone from `secrets/tls/rootCA.pem`:
+
+- iOS:
+  - Open/install profile from `rootCA.pem`
+  - Enable trust: `Settings > General > About > Certificate Trust Settings`
+- Android:
+  - Install CA certificate from file in security settings
+  - Use browser apps that trust user-installed CAs for local dev
+
+Then open `https://<your-laptop-lan-ip>` on the phone.
+</details>
+
+## Documentation
+
+<details>
+<summary>Repository map</summary>
+
+| Area | Path | Purpose |
+|---|---|---|
+| App shell + MFE host | `frontend/cloudapp-shell/` | Main Next.js application |
+| Micro frontends | `frontend/remote/` | Independent frontend modules |
+| Java microservices | `backend/` | CloudApp, Petstore, Vehicles, Web Proxy |
+| AI orchestration | `ai-orchestration/ai-orchestration-layer/` | FastAPI orchestration + RAG + HITL |
+| AI admin monitor | `ai-orchestration/ai-orchestration-monitor/` | React/Vite operator console |
+| Test suites | `tests/`, `e2e/` | Python, Java, gateway, E2E coverage |
+
+</details>
+
+<details>
+<summary>System architecture and platform design</summary>
+
+## System Overview
+
+The platform is composed of:
+- Next.js micro frontend shell + remotes
+- Spring Boot and Flask/FastAPI microservices
+- NGINX gateway as the sole ingress point
+- Optional local LLM provider (Ollama)
+- Central observability stack (Jaeger, Prometheus, Grafana)
+
+## Security Model
+
+- JWT session auth with RSA keypair
+- Browser auth with HttpOnly `CLOUDAPP_AUTH` cookie
+- CSRF protections for browser-driven state changes
+- Role-based access (ADMIN/USER)
+- Service-to-service auth token (`X-Internal-Auth`)
+- Gateway enforces route-level authorization and rate limits
+- Non-root runtime for frontend and AI services
+
+## NGINX Gateway Responsibilities
+
+- Auth subrequests against CloudApp
+- Admin-only route enforcement for `/cloudapp-admin/*` and `/ai/system/*`
+- Authenticated access requirements for `/ai/*` and `/ai/ws/*`
+- WebSocket proxying
+- API versioning rewrite (`/v1/` prefix)
+- Header propagation (`traceparent`, `tracestate`, request IDs)
+
+### Local TLS Modes
+
+- Default local mode: image-generated self-signed TLS cert for `localhost`.
+- Mobile LAN mode: `docker-compose.mobile.yml` mounts stable `mkcert` cert/key from `secrets/tls/` so phones can trust a persistent local CA.
+
+## AI Orchestration Layer
+
+Path: `ai-orchestration/ai-orchestration-layer/`
+
+Key components:
+- LangGraph orchestration state machine
+- Capability routing (chat, tools, workflow, ML, RAG) for backend endpoints
+- Checkpointing and memory fallback behavior
+- HITL approval workflows with queue/state transitions
+- A/B testing module with deterministic assignment + metrics
+- WebSocket token streaming for interactive UX
+
+## Observability
+
+- Jaeger: distributed traces (`http://localhost:16686`)
+- Prometheus: metrics scraping and retention (`http://localhost:9090`)
+- Grafana: dashboards and alerting views (`http://localhost:3000`)
+- OpenTelemetry instrumentation in Java and Python services
+
+## Resilience
+
+- Resilience4j circuit breakers in vehicles API integrations
+- Redis-backed circuit breaking and fallback in AI orchestration
+- Degraded-mode operation when optional dependencies are unavailable
+
+## API Contract Governance
+
+- OpenAPI snapshot export from running services
+- CI drift detection against committed snapshots
+- TypeScript client generation for frontend consumers
+
+Relevant script:
+- `scripts/contracts/openapi_contracts.py`
+
+## Data Layer
+
+| Database | Purpose |
+|---|---|
+| PostgreSQL (`postgres`) | CloudApp domain data |
+| PostgreSQL (`postgres-ml`) | ML segmentation data |
+| MySQL | Petstore domain data |
+| MongoDB | Chat persistence |
+| MongoDB (AB test) | Experiment metrics |
+| Redis | AI state/caches/circuit breakers |
+| ChromaDB | RAG embeddings/vector search |
+
+## CI/CD
+
+Workflows:
+- `.github/workflows/ci-tests.yml`
+- `.github/workflows/nightly-ai-integrations.yml`
+
+CI covers backend, ML, gateway, contract checks, frontend unit tests, E2E, and AI monitor checks.
+
+</details>
+
+<details>
+<summary>Mobile Packaging for Android and iOS (Capacitor)</summary>
+
+This repo includes Android/iOS Capacitor wrappers and local smoke orchestration for `frontend/cloudapp-shell`.
 
 ### Mobile prerequisites
 
@@ -478,21 +517,246 @@ If you run hosted mode from `docker-compose-app.yml`, rebuild the shell + gatewa
 ```bash
 docker compose -f docker-compose-app.yml up -d --build next-nginx-jwt next-cloudapp-shell
 ```
+</details>
 
----
+<details>
+<summary>Test strategy and commands</summary>
 
-# Optional API services
+# Testing (Minimal)
 
-If Jira functionality is to be used, follow the instructions below:
+## Strategy
+- Default path: Docker-only.
+- Main command runs all suites in order via `test-all`.
+- CI uses the same compose-based flow.
 
-## Jira API key, [how to register](https://www.atlassian.com/software/jira/free) and [how to get an API key](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
+## Run Modes
+- `Lean mode`: core product work and most test/debug loops. Start only the core datastores plus the app stack.
+- `Showcase mode`: full demos and AI/observability work. Start the full infrastructure stack and optionally the Ollama profile.
 
-Set these in your root `.env` file:
+Lean mode:
+```bash
+docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
+docker compose -f docker-compose-app.yml up -d
+```
+
+Showcase mode:
+```bash
+docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
+## Full Run
+```bash
+cd /portfolio-web
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+```
+
+## Targeted Runs
+```bash
+SERVICE=test-e2e
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
+```
+- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e`.
+
+## Nightly AI Integrations
+- Workflow: `.github/workflows/nightly-ai-integrations.yml`
+- Scope: ChatLLM (live Ollama), AI Monitor model selectors (`chat` / `rag` / `embedding`), Jira AI refine + child proposal flow with cleanup.
+- Required models:
+    - `qwen3:1.7b`
+    - `qwen3-embedding:4b`
+- Jira nightly spec auto-skips when Jira secrets are missing.
+
+## Cleanup
+```bash
+docker compose -p portfolio_test_all -f docker-compose.test.yml down -v --remove-orphans
+docker compose -f docker-compose.test.yml down -v --remove-orphans
+```
+
+## Optional (local UI debugging)
+```bash
+docker compose -f docker-compose.test.yml --profile host-ui up -d test-shell-host test-nginx-host
+```
+
+## Local Playwright (no Docker)
+Prerequisite: app endpoints must already be running on `localhost:5001` and `localhost:80`.
 
 ```bash
-JIRA_DOMAIN='https://your-jira-instance.atlassian.net'
-JIRA_API_TOKEN='your-api-token'
-JIRA_PROJECT_KEY='yourjiraprojectkey'
-JIRA_EMAIL='youremail'
+# Option A: start normal app stack (recommended for local Playwright)
+docker compose -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
 ```
-Only `JIRA_PROJECT_KEY` is exposed to the browser. Credentials stay server-side in `jiraproxy`.
+
+```bash
+# Option B: start host-ui test stack
+docker compose -f docker-compose.test.yml --profile host-ui up -d test-shell-host test-nginx-host
+```
+
+```bash
+cd /portfolio-web
+docker compose -f docker-compose.test.yml --profile host-ui down -v --remove-orphans
+docker compose -f docker-compose.test.yml --profile host-ui up -d test-shell-host test-nginx-host
+curl -sf http://localhost:5001 >/dev/null && echo shell-ok
+curl -sf http://localhost:80/nginx_health >/dev/null && echo nginx-ok
+
+cd /portfolio-web/frontend/cloudapp-shell
+npm ci --include=dev
+npm run playwright:install
+npm run playwright:open:all
+```
+
+```bash
+cd /Users/csaba/1_CODING/portfolio-web/frontend/cloudapp-shell
+npm ci
+npm run playwright:install
+npm run playwright:open
+# chromium only (recommended locally)
+# optional full matrix: npm run playwright:open:all
+# headless: npm run playwright:test
+```
+- Uses `http://localhost:5001` (frontend) and `http://localhost:80` (gateway) by default.
+- Do not use `docker compose -f docker-compose.test.yml up -d` for this mode.
+- `playwright:open:all` includes retries; transient browser crashes may show as flaky, not hard fail.
+
+## Running With Existing `portfolio-web` Containers
+- `docker-compose.test.yml` (default, no `host-ui`) is safe to run in parallel.
+- Why: isolated project-scoped networks + no host ports for test DB/services.
+- Can still clash on resources (CPU/RAM), causing slower/flakier tests.
+- `host-ui` profile can clash on ports `80`, `5001`, `5005`.
+    - If those ports are already used, stop app stack first or do not use `host-ui`.
+
+## Docker Debugging
+
+Use the smallest Compose topology that answers the question:
+
+- `docker-compose.test.yml`: isolated test stack
+- `docker-compose-app.yml`: app stack
+- `docker-compose-infrastructure.yml`: infra dependencies
+
+### Core Commands
+
+Build only what changed:
+
+```bash
+docker compose -f docker-compose.test.yml build test-shell test-e2e
+docker compose -f docker-compose.test.yml build test-nginx test-cloudapp
+docker compose -f docker-compose.test.yml build test-ai-monitor
+```
+
+Run one-off focused commands:
+
+```bash
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=chromium
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/monitor.spec.ts --project=chromium
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --grep "Logout"
+```
+
+Bring up dependencies for manual inspection:
+
+```bash
+docker compose -f docker-compose.test.yml up -d test-shell test-nginx test-ai-monitor
+docker compose -f docker-compose-app.yml up -d
+docker compose -f docker-compose-infrastructure.yml up -d
+```
+
+Inspect state:
+
+```bash
+docker compose -f docker-compose.test.yml ps
+docker compose -f docker-compose-app.yml ps
+docker ps --format "table {{.Names}}\t{{.Status}}"
+docker ps -a --format "table {{.Names}}\t{{.Status}}"
+```
+
+Read logs:
+
+```bash
+docker compose -f docker-compose.test.yml logs test-nginx
+docker compose -f docker-compose.test.yml logs test-shell
+docker logs portfolio-web-test-e2e-1
+docker logs next-nginx-jwt
+```
+
+### Recommended Flow
+
+1. Rebuild only touched services.
+2. Run one failing spec or one failing test container.
+3. Check container logs before changing code again.
+4. Widen to a small subset once the first failure is fixed.
+5. Run the full suite only after the subset is green.
+6. Reset with `down -v --remove-orphans` only when you suspect stale volumes or orphaned containers.
+
+### Good Patterns
+
+For gateway or contract failures:
+
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-nginx-gateway
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
+```
+
+For E2E failures:
+
+```bash
+docker compose -f docker-compose.test.yml build test-shell test-e2e
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=webkit
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/shop.spec.ts '--project=firefox' --grep 'should create a real item and add it to cart without request stubs'
+docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts e2e/monitor.spec.ts --grep "admin|logout"
+```
+
+For AI and monitor failures:
+
+```bash
+docker compose -f docker-compose.test.yml build test-ai-monitor test-e2e
+docker compose -f docker-compose.test.yml up -d test-ai-monitor test-nginx test-shell
+docker compose -f docker-compose.test.yml logs test-ai-monitor
+```
+
+For app readiness:
+
+```bash
+docker compose -f docker-compose-app.yml up -d
+docker compose -f docker-compose-app.yml ps
+docker compose -f docker-compose-infrastructure.yml ps --all
+```
+
+### Common Failure Patterns
+
+- Rebuilding everything when only one frontend changed.
+- Running full E2E before reproducing a single failing spec.
+- Forgetting that test builds can bake env vars into the frontend at build time.
+- Debugging backend auth without checking gateway routing and `auth_request` behavior.
+- Assuming container health means route readiness. In this repo, gateway behavior can still be wrong while all services are healthy.
+
+### Platform-Specific Lockfiles
+
+- macOS-generated `package-lock.json` files can miss Linux-native packages needed by Docker builds.
+- For the Next.js remotes and shell, validate lockfiles before pushing:
+
+```bash
+python3 scripts/check_frontend_native_lockfiles.py
+```
+
+- This check guards the `Dockerfile_FE` services against missing Linux SWC and Tailwind oxide entries.
+- The AI monitor uses a separate Dockerfile fallback for Rollup native bindings. Keep that fallback in place unless the monitor lockfile becomes reliably multi-platform in CI and nightly container builds.
+
+</details>
+
+<details>
+<summary>Backend service docs</summary>
+
+  - [backend/cloudapp/README.md](./backend/cloudapp/README.md)
+  - [backend/petstore/README.md](./backend/petstore/README.md)
+  - [backend/vehicles-api/README.md](./backend/vehicles-api/README.md)
+  - [backend/web-proxy/README.md](./backend/web-proxy/README.md)
+</details>
+
+## Contributing
+
+- Read [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Report bugs or request features through GitHub Issues
+- Use [SECURITY.md](./SECURITY.md) for vulnerability reporting
+
+
+## License
+
+MIT, see [LICENSE](./LICENSE).

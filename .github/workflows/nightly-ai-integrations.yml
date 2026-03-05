@@ -38,6 +38,15 @@ jobs:
           chmod 0777 logs
           ls -ld logs
 
+      - name: Generate ephemeral JWT keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p secrets
+          openssl genrsa -out secrets/jwt-private-key.pem 2048
+          openssl rsa -in secrets/jwt-private-key.pem -pubout -out secrets/jwt-public-key.pub
+          ls -l secrets
+
       - name: Create .env for nightly stack
         shell: bash
         env:
@@ -49,8 +58,8 @@ jobs:
           cat > .env <<EOF
           JWT_SECRET=nightly-ci-jwt-secret-change-me
           JWT_EXPIRATION_MS=3600000
-          JWT_PRIVATE_KEY_FILE=${GITHUB_WORKSPACE}/localhost+3-key.pem
-          JWT_PUBLIC_KEY_FILE=${GITHUB_WORKSPACE}/localhost+3-key.pub
+          JWT_PRIVATE_KEY_FILE=${GITHUB_WORKSPACE}/secrets/jwt-private-key.pem
+          JWT_PUBLIC_KEY_FILE=${GITHUB_WORKSPACE}/secrets/jwt-public-key.pub
 
           INTERNAL_SERVICE_TOKEN=nightly-internal-token
 

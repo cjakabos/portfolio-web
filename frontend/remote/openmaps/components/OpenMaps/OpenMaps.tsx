@@ -15,6 +15,16 @@ import 'leaflet/dist/leaflet.css';
 import { useVehicleMap } from '../../hooks/useVehiclesMap';
 import type { VehicleFormData } from '../../hooks/useVehiclesMap';
 
+type NumericFieldKey = 'numberOfDoors' | 'mileage' | 'modelYear' | 'productionYear' | 'lat' | 'lon';
+const toNumericDrafts = (data: VehicleFormData): Record<NumericFieldKey, string> => ({
+    numberOfDoors: String(data.numberOfDoors),
+    mileage: String(data.mileage),
+    modelYear: String(data.modelYear),
+    productionYear: String(data.productionYear),
+    lat: String(data.lat),
+    lon: String(data.lon)
+});
+
 // Resolve icon URL: use the remote's origin when mounted in the shell, fall back to relative path for standalone
 const OPENMAPS_BASE = process.env.NEXT_PUBLIC_REMOTE_OPENMAPS_URL || '';
 const iconCar = L.icon({
@@ -54,22 +64,34 @@ export default function CloudMaps() {
     const inputClassName = "w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none";
     const labelClassName = "text-xs font-semibold text-gray-500 uppercase";
     const coordInputClassName = "w-full p-2 border rounded-lg bg-gray-100 text-gray-700 font-mono text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100";
+    const [numericDrafts, setNumericDrafts] = React.useState<Record<NumericFieldKey, string>>(toNumericDrafts(formData));
+
+    React.useEffect(() => {
+        if (showModal) {
+            setNumericDrafts(toNumericDrafts(formData));
+        }
+    }, [showModal, formData]);
 
     const updateField = <K extends keyof VehicleFormData,>(key: K, value: VehicleFormData[K]) => {
         setFormData(prev => ({ ...prev, [key]: value }));
     };
 
-    const updateNumberField = (
-        key: 'manufacturerCode' | 'numberOfDoors' | 'mileage' | 'modelYear' | 'productionYear' | 'lat' | 'lon',
-        value: string
-    ) => {
-        const parsed = Number(value);
+    const updateNumberField = (key: NumericFieldKey, value: string) => {
+        setNumericDrafts(prev => ({ ...prev, [key]: value }));
 
-        if (Number.isNaN(parsed)) {
+        if (!value.trim()) {
             return;
         }
 
-        updateField(key, parsed as VehicleFormData[typeof key]);
+        // Accept both dot/comma while typing and only sync valid numeric values to form state.
+        const parsed = Number(value.replace(',', '.'));
+        if (Number.isFinite(parsed)) {
+            updateField(key, parsed as VehicleFormData[typeof key]);
+        }
+    };
+
+    const restoreNumberDraftFromState = (key: NumericFieldKey) => {
+        setNumericDrafts(prev => ({ ...prev, [key]: String(formData[key]) }));
     };
 
     const bodySelectOptions = bodyOptions.includes(formData.body as (typeof bodyOptions)[number])
@@ -203,7 +225,7 @@ export default function CloudMaps() {
                                     <select
                                         className={inputClassName}
                                         value={formData.manufacturerCode}
-                                        onChange={e => updateNumberField('manufacturerCode', e.target.value)}
+                                        onChange={e => updateField('manufacturerCode', Number(e.target.value))}
                                         required
                                     >
                                         {manufacturers.map(manufacturer => (
@@ -296,8 +318,9 @@ export default function CloudMaps() {
                                         max={8}
                                         step={1}
                                         className={inputClassName}
-                                        value={formData.numberOfDoors}
+                                        value={numericDrafts.numberOfDoors}
                                         onChange={e => updateNumberField('numberOfDoors', e.target.value)}
+                                        onBlur={() => restoreNumberDraftFromState('numberOfDoors')}
                                         required
                                     />
                                 </div>
@@ -309,8 +332,9 @@ export default function CloudMaps() {
                                         max={2000000}
                                         step={1}
                                         className={inputClassName}
-                                        value={formData.mileage}
+                                        value={numericDrafts.mileage}
                                         onChange={e => updateNumberField('mileage', e.target.value)}
+                                        onBlur={() => restoreNumberDraftFromState('mileage')}
                                         required
                                     />
                                 </div>
@@ -325,8 +349,9 @@ export default function CloudMaps() {
                                         max={2100}
                                         step={1}
                                         className={inputClassName}
-                                        value={formData.modelYear}
+                                        value={numericDrafts.modelYear}
                                         onChange={e => updateNumberField('modelYear', e.target.value)}
+                                        onBlur={() => restoreNumberDraftFromState('modelYear')}
                                         required
                                     />
                                 </div>
@@ -338,8 +363,9 @@ export default function CloudMaps() {
                                         max={2100}
                                         step={1}
                                         className={inputClassName}
-                                        value={formData.productionYear}
+                                        value={numericDrafts.productionYear}
                                         onChange={e => updateNumberField('productionYear', e.target.value)}
+                                        onBlur={() => restoreNumberDraftFromState('productionYear')}
                                         required
                                     />
                                 </div>
@@ -354,8 +380,9 @@ export default function CloudMaps() {
                                         max={90}
                                         step="0.000001"
                                         className={coordInputClassName}
-                                        value={formData.lat}
+                                        value={numericDrafts.lat}
                                         onChange={e => updateNumberField('lat', e.target.value)}
+                                        onBlur={() => restoreNumberDraftFromState('lat')}
                                         required
                                     />
                                     <input
@@ -364,8 +391,9 @@ export default function CloudMaps() {
                                         max={180}
                                         step="0.000001"
                                         className={coordInputClassName}
-                                        value={formData.lon}
+                                        value={numericDrafts.lon}
                                         onChange={e => updateNumberField('lon', e.target.value)}
+                                        onBlur={() => restoreNumberDraftFromState('lon')}
                                         required
                                     />
                                 </div>

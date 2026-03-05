@@ -5,7 +5,7 @@
 # Usage:
 #   ./scripts/setup-env-jwt-keys.sh
 #   ./scripts/setup-env-jwt-keys.sh --force
-#   ./scripts/setup-env-jwt-keys.sh --env-file ./custom.env --keys-dir ./secrets/jwt
+#   ./scripts/setup-env-jwt-keys.sh --env-file ./custom.env --keys-dir ./secrets
 # ===========================================================================
 set -euo pipefail
 
@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 ENV_FILE="${PROJECT_ROOT}/.env"
-KEYS_DIR="${PROJECT_ROOT}/.secrets/jwt"
+KEYS_DIR="${PROJECT_ROOT}/secrets"
 FORCE=0
 
 usage() {
@@ -22,7 +22,7 @@ Generate JWT keypair and configure absolute key paths in .env.
 
 Options:
   --env-file <path>   Path to env file (default: ./.env)
-  --keys-dir <path>   Directory to store generated key files (default: ./.secrets/jwt)
+  --keys-dir <path>   Directory to store generated key files (default: ./secrets)
   --force             Regenerate keys even if they already exist
   -h, --help          Show this help
 EOF

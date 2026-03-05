@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide enough detail to reproduce it.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Clear summary of the issue.
+      placeholder: Describe the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps and inputs.
+      placeholder: |
+        1. Start stack with ...
+        2. Open ...
+        3. Click ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs/screenshots
+      description: Paste relevant logs or screenshots.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Docker version, browser, branch/commit.
+      placeholder: macOS 15, Docker 27.x, Chrome 132, main@<sha>

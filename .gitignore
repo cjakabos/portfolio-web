@@ -36,6 +36,15 @@ node_modules
 .env.local
 .env.production
 next-env.d.ts
+secrets/
+
+# Local JWT/TLS key material (generated locally, never committed)
+localhost+3.pem
+localhost+3-key.pem
+localhost+3-key.pub
+frontend/nginx/localhost+3.pem
+frontend/nginx/localhost+3-key.pem
+frontend/nginx/localhost+3-key.pub
 
 .DS_Store
 **/.DS_Store
@@ -47,6 +56,12 @@ test-results/
 **/test-results/
 **/lcov-report/
 **/coverage/
+
+# Mobile and local build artifacts (generated)
+frontend/cloudapp-shell/.next-mobile-build/
+frontend/cloudapp-shell/android/
+frontend/cloudapp-shell/ios/
+tests/e2e/mobile/artifacts/
 tests/e2e/mobile/artifacts/
 
 # Python cache noise
