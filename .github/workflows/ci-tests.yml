@@ -258,7 +258,7 @@ jobs:
   dependency-scans:
     name: "Dependency Security — Audit"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     outputs:
       npm_status: ${{ steps.npm-audit.outputs.status }}
       python_status: ${{ steps.pip-audit.outputs.status }}
