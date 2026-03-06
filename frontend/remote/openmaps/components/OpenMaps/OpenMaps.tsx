@@ -14,6 +14,13 @@ import 'leaflet/dist/leaflet.css';
 
 import { useVehicleMap } from '../../hooks/useVehiclesMap';
 import type { VehicleFormData } from '../../hooks/useVehiclesMap';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogHeader,
+    DialogTitle
+} from '../ui/dialog';
 
 type NumericFieldKey = 'numberOfDoors' | 'mileage' | 'modelYear' | 'productionYear' | 'lat' | 'lon';
 const toNumericDrafts = (data: VehicleFormData): Record<NumericFieldKey, string> => ({
@@ -198,17 +205,20 @@ export default function CloudMaps() {
             </div>
 
             {/* --- MODAL --- */}
-            {showModal && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl transform transition-all">
-                        <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-gray-700">
-                            <h3 className="font-bold text-xl text-gray-900 dark:text-white">{formMode === 'CREATE' ? 'Add Vehicle' : 'Edit Vehicle'}</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <Dialog open={showModal} onOpenChange={setShowModal}>
+                <DialogContent className="max-h-[92vh] overflow-y-auto p-0">
+                    <DialogHeader className="border-b border-gray-100 p-5 dark:border-gray-700">
+                        <DialogTitle className="text-gray-900 dark:text-white">
+                            {formMode === 'CREATE' ? 'Add Vehicle' : 'Edit Vehicle'}
+                        </DialogTitle>
+                        <DialogClose asChild>
+                            <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                                 <X size={20} />
                             </button>
-                        </div>
+                        </DialogClose>
+                    </DialogHeader>
 
-                        <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
+                    <form onSubmit={handleFormSubmit} className="p-6 space-y-5">
                             <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white dark:border-blue-900">
                                 Manufacturer options are limited to backend-supported values.
                             </div>
@@ -412,10 +422,9 @@ export default function CloudMaps() {
                                     ? (formMode === 'CREATE' ? 'Creating Vehicle...' : 'Saving Changes...')
                                     : (formMode === 'CREATE' ? 'Create Vehicle' : 'Save Changes')}
                             </button>
-                        </form>
-                    </div>
-                </div>
-            )}
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

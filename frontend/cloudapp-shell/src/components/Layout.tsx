@@ -7,6 +7,13 @@ import { ThemeContext } from '../context/ThemeContext';
 import { useLogout } from '../hooks/useLogout';
 import { useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -153,18 +160,49 @@ const Layout = ({ children }: LayoutProps) => {
                 })}
 
                 {overflowMobileRoutes.length > 0 && (
-                  <button
-                    type="button"
-                    aria-label={isMobileMenuOpen ? 'Close more menu' : 'Open more menu'}
-                    onClick={() => setIsMobileMenuOpen((open) => !open)}
-                    className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
-                      isMobileMenuOpen || isMobileOverflowRouteActive
-                        ? 'bg-gray-800 text-blue-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                    }`}
-                  >
-                    {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-                  </button>
+                  <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={isMobileMenuOpen ? 'Close more menu' : 'Open more menu'}
+                        className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
+                          isMobileMenuOpen || isMobileOverflowRouteActive
+                            ? 'bg-gray-800 text-blue-400'
+                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                        }`}
+                      >
+                        {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="md:hidden w-[min(22rem,calc(100vw-1rem))]"
+                      align="end"
+                      side="bottom"
+                      sideOffset={8}
+                    >
+                      <DropdownMenuGroup>
+                        <div className="grid grid-cols-3 gap-1">
+                          {overflowMobileRoutes.map((item) => {
+                            const isActive = isRouteActive(item.path);
+                            return (
+                              <DropdownMenuItem key={item.path} asChild>
+                                <Link
+                                  href={item.path}
+                                  prefetch={false}
+                                  className={`flex flex-col items-center justify-center gap-1 p-2 rounded-md transition-colors min-h-[56px] ${
+                                    isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                                  }`}
+                                >
+                                  {item.icon}
+                                  <span className="text-[10px] leading-none">{item.label}</span>
+                                </Link>
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </div>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
@@ -213,37 +251,6 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
 
-        {isMobileMenuOpen && overflowMobileRoutes.length > 0 && (
-          <div className="md:hidden absolute top-full left-2 right-2 mt-1 z-40">
-            <button
-              type="button"
-              aria-label="Close mobile menu"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-transparent z-30"
-            />
-            <div className="relative z-40 rounded-lg border border-gray-800 bg-gray-900/95 dark:bg-gray-950/95 shadow-xl backdrop-blur-sm p-1">
-              <div className="grid grid-cols-3 gap-1">
-                {overflowMobileRoutes.map((item) => {
-                  const isActive = isRouteActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      href={item.path}
-                      prefetch={false}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-md transition-colors min-h-[56px] ${
-                        isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                      }`}
-                    >
-                      {item.icon}
-                      <span className="text-[10px] leading-none">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       <div className={`flex-1 relative z-10 overflow-y-auto touch-scroll custom-scrollbar safe-bottom ${isDashboard ? '' : 'bg-gray-100 dark:bg-gray-900'}`}>

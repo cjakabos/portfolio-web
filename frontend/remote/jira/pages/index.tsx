@@ -8,6 +8,14 @@ import {
 } from 'lucide-react';
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from 'ai';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 // =============================================================================
 // URL CONFIGURATION
@@ -36,29 +44,33 @@ interface OllamaModel {
 // --- Sub-Components ---
 
 // 1. Modal Component
-const Modal = ({ open, onClose, title, children, actions, maxWidth = 'max-w-lg' }: any) => {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full ${maxWidth} max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700`}>
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+const Modal = ({ open, onClose, title, children, actions, maxWidth = 'max-w-lg' }: any) => (
+  <Dialog
+    open={open}
+    onOpenChange={(nextOpen) => {
+      if (!nextOpen) onClose();
+    }}
+  >
+    <DialogContent className={`${maxWidth} max-h-[90vh] overflow-hidden p-0`}>
+      <DialogHeader className="border-b border-gray-200 p-4 dark:border-gray-700">
+        <DialogTitle className="text-gray-900 dark:text-white">{title}</DialogTitle>
+        <DialogClose asChild>
+          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
             <X size={20} />
           </button>
-        </div>
-        <div className="p-6 overflow-y-auto">
-          {children}
-        </div>
-        {actions && (
-          <div className="bg-white dark:bg-gray-800 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex justify-end gap-2">
-            {actions}
-          </div>
-        )}
+        </DialogClose>
+      </DialogHeader>
+      <div className="p-6 overflow-y-auto">
+        {children}
       </div>
-    </div>
-  );
-};
+      {actions && (
+        <DialogFooter className="border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+          {actions}
+        </DialogFooter>
+      )}
+    </DialogContent>
+  </Dialog>
+);
 
 // 2. Alert Component
 const Alert = ({ severity, title, children, action }: { severity: 'error' | 'warning' | 'info', title: string, children: React.ReactNode, action?: React.ReactNode }) => {
