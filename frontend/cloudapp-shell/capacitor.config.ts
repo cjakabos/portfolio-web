@@ -7,6 +7,16 @@ const config: CapacitorConfig = {
   appId: "com.portfolio.cloudapp",
   appName: "CloudApp",
   webDir: capWebDir,
+  plugins: {
+    Keyboard: {
+      resize: "body",
+      resizeOnFullScreen: true,
+    },
+    StatusBar: {
+      overlaysWebView: false,
+      style: "DEFAULT",
+    },
+  },
   ...(serverUrl
     ? {
         server: {

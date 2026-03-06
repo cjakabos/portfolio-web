@@ -51,7 +51,7 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-28 left-0 right-0 bg-white dark:bg-gray-800 h-12 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 z-10 shadow-sm">
+      <div className="md:hidden fixed top-28 left-0 right-0 bg-white dark:bg-gray-800 h-12 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 px-safe z-10 shadow-sm">
         <span className="text-xs font-bold uppercase text-indigo-500">PetStore Manager</span>
       </div>
 
@@ -63,7 +63,7 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around p-2 z-20 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around p-2 px-safe pb-safe z-20">
         {navItems.map((item) => (
           <button 
             key={item.page} 

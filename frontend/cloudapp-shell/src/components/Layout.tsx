@@ -49,7 +49,7 @@ const Layout = ({ children }: LayoutProps) => {
   }, [router.pathname]);
 
   return (
-    <div className={`flex flex-col h-[100dvh] transition-colors duration-200 overflow-x-hidden ${isDashboard ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
+    <div className={`flex flex-col min-h-screen h-[100dvh] transition-colors duration-200 overflow-x-hidden ${isDashboard ? 'bg-white dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-900'}`}>
       {isDashboard && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           <div className="absolute -inset-[100%] w-[300%] h-[300%] leaf-pattern animate-leaf opacity-60"></div>
@@ -247,7 +247,7 @@ const Layout = ({ children }: LayoutProps) => {
       </header>
 
       <div className={`flex-1 relative z-10 overflow-y-auto touch-scroll custom-scrollbar safe-bottom ${isDashboard ? '' : 'bg-gray-100 dark:bg-gray-900'}`}>
-        <div className={`${isFullHeight ? 'h-full' : 'max-w-7xl py-8 mx-auto safe-x'}`}>
+        <div className={`${isFullHeight ? 'h-full min-h-0' : 'max-w-7xl py-8 mx-auto safe-x'}`}>
           {children}
         </div>
       </div>

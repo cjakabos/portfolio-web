@@ -216,8 +216,8 @@ const CloudChat: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="flex flex-col h-[calc(100vh-10rem)] max-w-5xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden my-4">
+    <div className="h-full min-h-0 py-4">
+      <div className="flex flex-col h-full min-h-0 w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4 shrink-0">
           <Link href="/chat" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition text-gray-500 dark:text-gray-400">
             <ArrowLeft size={20} />
