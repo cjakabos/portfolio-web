@@ -19,7 +19,7 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="flex flex-col md:flex-row h-full min-h-0 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 hidden md:flex flex-col z-10 transition-colors duration-200">
         <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800">
@@ -51,12 +51,12 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-28 left-0 right-0 bg-white dark:bg-gray-800 h-12 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 px-safe z-10 shadow-sm">
+      <div className="md:hidden shrink-0 bg-white dark:bg-gray-800 h-12 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 px-safe z-10 shadow-sm">
         <span className="text-xs font-bold uppercase text-indigo-500">PetStore Manager</span>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-4 md:p-8 pt-44 md:pt-8 bg-slate-50 dark:bg-gray-900">
+      <main className="flex-1 min-h-0 overflow-auto p-4 md:p-8 pt-4 md:pt-8 pb-24 md:pb-8 bg-slate-50 dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
           {children}
         </div>

@@ -501,7 +501,7 @@ const ChatLLM: React.FC = () => {
 
       {/* Chat Input */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <form className="shrink-0 border-t p-3" onSubmit={handleSubmit}>
+        <form className="relative shrink-0 border-t p-3" onSubmit={handleSubmit}>
           <input
             type="text"
             className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-full px-6 py-3 pr-14 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white placeholder-gray-500 disabled:opacity-50"

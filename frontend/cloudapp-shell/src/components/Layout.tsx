@@ -125,7 +125,7 @@ const Layout = ({ children }: LayoutProps) => {
               href="/"
               prefetch={false}
               aria-label="Home"
-              className={`flex h-10 w-10 items-center justify-center rounded-md transition-colors ${
+              className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
                 isRouteActive('/') ? 'bg-gray-800' : 'hover:bg-gray-800'
               }`}
             >
@@ -143,7 +143,7 @@ const Layout = ({ children }: LayoutProps) => {
                       prefetch={false}
                       aria-label={item.label}
                       title={item.label}
-                      className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                      className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
                         isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                       }`}
                     >
@@ -157,7 +157,7 @@ const Layout = ({ children }: LayoutProps) => {
                     type="button"
                     aria-label={isMobileMenuOpen ? 'Close more menu' : 'Open more menu'}
                     onClick={() => setIsMobileMenuOpen((open) => !open)}
-                    className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                    className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
                       isMobileMenuOpen || isMobileOverflowRouteActive
                         ? 'bg-gray-800 text-blue-400'
                         : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
@@ -177,7 +177,7 @@ const Layout = ({ children }: LayoutProps) => {
                     prefetch={false}
                     aria-label="Profile"
                     title="Profile"
-                    className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                    className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
                       isRouteActive('/profile')
                         ? 'bg-gray-700 text-white'
                         : 'text-gray-400 hover:text-white hover:bg-gray-800'
@@ -189,7 +189,7 @@ const Layout = ({ children }: LayoutProps) => {
                     onClick={handleLogout}
                     aria-label="Logout"
                     title="Logout"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition"
                   >
                     <LogOut size={18} />
                   </button>
@@ -200,7 +200,7 @@ const Layout = ({ children }: LayoutProps) => {
                   prefetch={false}
                   aria-label="Login"
                   title="Login"
-                  className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                  className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
                     isRouteActive('/login')
                       ? 'bg-gray-700 text-white'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'

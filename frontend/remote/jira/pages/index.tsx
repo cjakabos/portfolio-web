@@ -121,7 +121,7 @@ const TicketNode = ({ ticket, level = 0, onChat, onChatWithChildren, onEdit, onD
           <div className="text-sm font-medium text-gray-900 dark:text-white mt-0.5 truncate">{ticket.fields.summary}</div>
         </div>
 
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 ml-2">
+        <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-1 ml-2">
           {chatOpen && (
             <>
               <button onClick={() => onChat(ticket, false)} className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded" title="Chat with Ticket">
@@ -1260,7 +1260,7 @@ const CloudJira: React.FC = () => {
 
             {/* Chat Input */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
-              <form className="shrink-0 border-t p-3" onSubmit={handleChatSubmit}>
+              <form className="relative shrink-0 border-t p-3" onSubmit={handleChatSubmit}>
                 <input
                   type="text"
                   className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-full px-4 md:px-6 py-3 pr-14 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white placeholder-gray-500 text-sm md:text-base disabled:opacity-50"
@@ -1314,7 +1314,7 @@ const CloudJira: React.FC = () => {
               onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
               <select
@@ -1408,7 +1408,7 @@ const CloudJira: React.FC = () => {
             </div>
           )}
 
-          <div className="flex items-end gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2">
             <div className="flex-1">
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Count</label>
               <input
@@ -1502,7 +1502,7 @@ const CloudJira: React.FC = () => {
           </>
         }
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-100 dark:border-red-900/50">
             <h4 className="text-xs font-bold text-red-800 dark:text-red-400 uppercase mb-2">Original</h4>
             <p className="font-bold text-sm mb-1 text-gray-900 dark:text-white">{compareModal.original?.summary}</p>
