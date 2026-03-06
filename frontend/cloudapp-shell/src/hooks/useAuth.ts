@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { useRouter } from "next/router";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 export const CLOUDAPP_AUTH_STATE_CHANGED_EVENT = "cloudapp-auth-state-changed";
@@ -21,7 +20,6 @@ export const useAuth = () => {
   const [isReady, setIsReady] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const router = useRouter();
 
   const refreshAuthState = useCallback(async () => {
     setIsChecking(true);
@@ -53,7 +51,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     void refreshAuthState();
-  }, [refreshAuthState, router.asPath]);
+  }, [refreshAuthState]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;

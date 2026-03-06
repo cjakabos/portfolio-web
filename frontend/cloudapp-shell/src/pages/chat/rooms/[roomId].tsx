@@ -1,26 +1,24 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { chatHttpApi } from '../../../hooks/chatHttpApi';
 import { Send, ArrowLeft } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
 import { useAuth } from '../../../hooks/useAuth';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
 const CHAT_WS_API_URL = (
   process.env.NEXT_PUBLIC_CHAT_WS_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:80/cloudapp'
 ).replace(/\/+$/, '');
 const SOCKET_URL = `${CHAT_WS_API_URL}/ws/`;
-let client;
 
 interface RoomMessage {
   id: string;
   sender: string;
   content: string;
-  timestamp: string;
+  timestamp: number;
+  optimistic?: boolean;
 }
 
 const CloudChat: React.FC = () => {
@@ -32,28 +30,61 @@ const CloudChat: React.FC = () => {
   const [connected, setConnected] = useState(false);
   const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const clientRef = useRef<any>(null);
+  const messageSeqRef = useRef(0);
   const { username } = useAuth();
 
   const onMessageReceived = useCallback((msg: any) => {
     if (msg.content === 'newUser') {
       setConnectedUsers((users) => [...users, msg.sender]);
     } else {
+      const msgTimestamp =
+          typeof msg.timestamp === 'number' && Number.isFinite(msg.timestamp)
+              ? msg.timestamp
+              : Date.now();
       const newMessage: RoomMessage = {
-        id: msg.id || Date.now().toString(),
-        sender: msg.sender,
-        content: msg.content,
-        timestamp: msg.timestamp || new Date().toISOString(),
+        id: msg.id
+            ? String(msg.id)
+            : `${msg.sender ?? 'unknown'}-${msgTimestamp}-${messageSeqRef.current++}`,
+        sender: msg.sender ?? 'system',
+        content: msg.content ?? '',
+        timestamp: msgTimestamp,
       };
-      setMessages((messages) => [...messages, newMessage]);
+      setMessages((previousMessages) => {
+        const optimisticIndex = previousMessages.findIndex(existingMessage =>
+            existingMessage.optimistic
+            && existingMessage.sender === newMessage.sender
+            && existingMessage.content === newMessage.content
+            && Math.abs(existingMessage.timestamp - newMessage.timestamp) < 30_000
+        );
+
+        if (optimisticIndex >= 0) {
+          const mergedMessages = [...previousMessages];
+          mergedMessages[optimisticIndex] = newMessage;
+          return mergedMessages;
+        }
+
+        return [...previousMessages, newMessage];
+      });
     }
   }, []);
 
   const fetchMessages = useCallback((roomCode: string) => {
+    const client = clientRef.current;
+    if (!client) {
+      return;
+    }
+
     client.send(`/app/loadHistory/${roomCode}`, JSON.stringify({}));
     setLoading(false);
   }, []);
 
   const sendNewUser = useCallback((usernameValue: string, roomCode: string) => {
+    const client = clientRef.current;
+    if (!client) {
+      return;
+    }
+
     const msg = {
       sender: usernameValue,
       content: 'newUser',
@@ -62,6 +93,11 @@ const CloudChat: React.FC = () => {
   }, []);
 
   const onConnected = useCallback((usernameValue: string, roomCode: string) => {
+    const client = clientRef.current;
+    if (!client) {
+      return;
+    }
+
     // Subscribe to load message history
     client.subscribe(`/user/queue/load-history`, (message) => {
       onMessageReceived(JSON.parse(message.body));
@@ -104,17 +140,13 @@ const CloudChat: React.FC = () => {
     setConnected(false);
   }, []);
 
-  const onDisconnected = useCallback(() => {
-    setConnected(false);
-  }, []);
-
   const connectSocket = useCallback((roomCode: string, usernameValue: string) => {
     const socket = new SockJS(SOCKET_URL);
-    client = Stomp.over(socket);
+    const client = Stomp.over(socket);
     client.debug = () => {};
+    clientRef.current = client;
     client.connect({}, () => onConnected(usernameValue, roomCode), onError);
-    client.disconnect = onDisconnected;
-  }, [onConnected, onDisconnected, onError]);
+  }, [onConnected, onError]);
 
 
   useEffect(() => {
@@ -124,12 +156,24 @@ const CloudChat: React.FC = () => {
 
       // Cleanup on unmount
       return () => {
+        const client = clientRef.current;
         if (client && client.connected) {
-          client.disconnect();
+          client.disconnect(() => {
+            setConnected(false);
+          });
         }
+        clientRef.current = null;
       };
     }
   }, [roomId, username, connectSocket]);
+
+  useEffect(() => {
+    // Reset view state when navigating between rooms.
+    setMessages([]);
+    setConnectedUsers([]);
+    setLoading(true);
+    setConnected(false);
+  }, [roomId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -149,7 +193,23 @@ const CloudChat: React.FC = () => {
       };
 
       // Send via WebSocket
+      const client = clientRef.current;
+      if (!client) {
+        return;
+      }
       client.send(`/app/sendMessage/${roomId}`, JSON.stringify(msg));
+
+      // Optimistic local append to avoid waiting for broker roundtrip.
+      setMessages(previousMessages => [
+        ...previousMessages,
+        {
+          id: `optimistic-${messageSeqRef.current++}`,
+          sender: username || 'me',
+          content: text,
+          timestamp: Date.now(),
+          optimistic: true
+        }
+      ]);
     } catch (err) {
       console.error('Failed to send message', err);
     }

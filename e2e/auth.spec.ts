@@ -27,8 +27,41 @@ async function gotoLogin(page: import("@playwright/test").Page) {
       await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 10_000 });
       return;
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const pageUnavailable =
+        page.isClosed() ||
+        message.includes("Page crashed") ||
+        message.includes("Target page, context or browser has been closed");
+      if (pageUnavailable) {
+        throw error;
+      }
       if (attempt === 2) throw error;
-      await page.waitForTimeout(1_000);
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
+}
+
+function isOnLoginPath(page: import("@playwright/test").Page): boolean {
+  return /\/login$/.test(new URL(page.url()).pathname);
+}
+
+async function ensureAuthenticatedRoute(page: import("@playwright/test").Page) {
+  await page
+    .waitForURL((url) => !/\/login$/.test(url.pathname), { timeout: 5_000 })
+    .catch(() => undefined);
+
+  if (!isOnLoginPath(page)) {
+    return;
+  }
+
+  try {
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 30_000 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const isNavigationAbort =
+      message.includes("NS_BINDING_ABORTED") || message.includes("ERR_ABORTED");
+    if (!isNavigationAbort || isOnLoginPath(page)) {
+      throw error;
     }
   }
 }
@@ -134,9 +167,7 @@ test.describe("Authentication Flow", () => {
       }
 
       // Ensure we end on an authenticated route after token is persisted.
-      if (/\/login$/.test(new URL(page.url()).pathname)) {
-        await page.goto("/");
-      }
+      await ensureAuthenticatedRoute(page);
       await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
     });
 
@@ -217,7 +248,7 @@ test.describe("Authentication Flow", () => {
       await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
 
       for (const label of ["PetStore", "Jira", "MLOps"]) {
-        await expect(page.locator(`header >> text="${label}"`)).toBeHidden();
+        await expect(page.locator("header").getByRole("link", { name: label, exact: true })).toHaveCount(0);
       }
     });
 
@@ -227,7 +258,7 @@ test.describe("Authentication Flow", () => {
       await page.waitForLoadState("domcontentloaded");
       await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
       for (const label of ["PetStore", "Jira", "MLOps"]) {
-        await expect(page.locator(`header >> text="${label}"`)).toBeVisible();
+        await expect(page.locator("header").getByRole("link", { name: label, exact: true })).toBeVisible();
       }
 
       for (const path of adminPaths) {
@@ -245,7 +276,7 @@ test.describe("Authentication Flow", () => {
       await expect(page.locator("header")).toBeVisible({ timeout: 15_000 });
 
       for (const label of ["PetStore", "Jira", "MLOps"]) {
-        await expect(page.locator(`header >> text="${label}"`)).toBeVisible();
+        await expect(page.locator("header").getByRole("link", { name: label, exact: true })).toBeVisible();
       }
     });
   });

@@ -84,7 +84,7 @@ LABEL maintainer="TeslaGov" email="developers@teslagov.com"
 ENV NGINX_VERSION 1.25.5
 RUN set -eux; \
     apt-get update -o Acquire::Retries=5; \
-    apt-get install -y --no-install-recommends libssl1.1 gettext-base wget; \
+    apt-get install -y --no-install-recommends libssl1.1 gettext-base wget openssl; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
@@ -96,15 +96,21 @@ COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/locations.conf /etc/nginx/locations.conf.template
 COPY conf/security-headers.conf /etc/nginx/security-headers.conf
 COPY conf/cors/ /etc/nginx/cors/
-COPY localhost+3-key.pub /etc/nginx/localhost+3-key.pub
 
-# FIX 4.3: Copy TLS certificates for HTTPS
-RUN mkdir -p /etc/nginx/ssl
-COPY localhost+3.pem /etc/nginx/ssl/localhost+3.pem
-COPY localhost+3-key.pem /etc/nginx/ssl/localhost+3-key.pem
+# Generate self-signed local TLS certs at image build time.
+# JWT verification key is mounted by docker-compose at runtime.
+RUN mkdir -p /etc/nginx/ssl \
+    && openssl req -x509 -nodes -newkey rsa:2048 \
+      -keyout /etc/nginx/ssl/localhost+3-key.pem \
+      -out /etc/nginx/ssl/localhost+3.pem \
+      -days 3650 \
+      -subj "/CN=localhost" \
+      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+    && openssl rsa -in /etc/nginx/ssl/localhost+3-key.pem -pubout -out /etc/nginx/localhost+3-key.pub
 
 # FIX 4.2: Set ownership for non-root operation
 RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/ssl /tmp \
+    && chown nginx:nginx /etc/nginx/localhost+3-key.pub \
     && chmod 600 /etc/nginx/ssl/localhost+3-key.pem
 
 CMD ["/bin/sh", "-c", "envsubst '${INTERNAL_SERVICE_TOKEN}' < /etc/nginx/locations.conf.template > /etc/nginx/locations.conf && exec nginx -g 'daemon off;'"]

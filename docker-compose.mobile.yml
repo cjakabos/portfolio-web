@@ -1,0 +1,5 @@
+services:
+  next-nginx-jwt:
+    volumes:
+      - ./secrets/tls/localhost+3.pem:/etc/nginx/ssl/localhost+3.pem:ro
+      - ./secrets/tls/localhost+3-key.pem:/etc/nginx/ssl/localhost+3-key.pem:ro
