@@ -28,6 +28,19 @@ const FILE_FIXTURES = [
   },
 ];
 
+const NOTE_FIXTURES = [
+  {
+    id: 201,
+    title: "Release checklist",
+    description: "Confirm mobile workspace and shop flows before shipping.",
+  },
+  {
+    id: 202,
+    title: "Regression notes",
+    description: "Validate shell nav tap targets and combined workspace layout.",
+  },
+];
+
 const SHOP_ITEMS: CartItem[] = [
   { id: 1, name: "Starter Kit", price: 19.99, description: "Portable starter bundle" },
   { id: 2, name: "Pro Pack", price: 49.5, description: "Extended accessory pack" },
@@ -78,6 +91,7 @@ export async function stubMobileApis(page: Page): Promise<MobileMockState> {
     total: number;
     date: string;
   }> = [];
+  let notes = [...NOTE_FIXTURES];
 
   await page.route(/\/cloudapp\//, async (route) => {
     const request = route.request();
@@ -95,6 +109,41 @@ export async function stubMobileApis(page: Page): Promise<MobileMockState> {
 
     if (/\/cloudapp\/file\/user\/[^/]+$/.test(path) && method === "GET") {
       return json(route, FILE_FIXTURES);
+    }
+
+    if (/\/cloudapp\/note\/user\/[^/]+$/.test(path) && method === "GET") {
+      return json(route, notes);
+    }
+
+    if (path.endsWith("/cloudapp/note/addNote") && method === "POST") {
+      const body = request.postDataJSON() as { title?: string; description?: string } | null;
+      const nextNote = {
+        id: notes.length + 300,
+        title: body?.title || "Untitled note",
+        description: body?.description || "",
+      };
+      notes = [nextNote, ...notes];
+      return json(route, nextNote);
+    }
+
+    if (path.endsWith("/cloudapp/note/updateNote") && method === "POST") {
+      const body = request.postDataJSON() as { id?: number; title?: string; description?: string } | null;
+      notes = notes.map((note) =>
+        note.id === body?.id
+          ? {
+              ...note,
+              title: body?.title || note.title,
+              description: body?.description || note.description,
+            }
+          : note
+      );
+      return json(route, { success: true });
+    }
+
+    if (/\/cloudapp\/note\/delete\/\d+$/.test(path) && method === "DELETE") {
+      const noteId = Number(path.split("/").pop());
+      notes = notes.filter((note) => note.id !== noteId);
+      return json(route, { success: true });
     }
 
     if (/\/cloudapp\/file\/delete-file\/\d+$/.test(path) && method === "DELETE") {

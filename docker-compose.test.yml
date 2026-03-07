@@ -402,6 +402,10 @@ services:
       - BACKEND_URL=http://test-nginx:80
       - MONITOR_URL=http://test-ai-monitor:5010
     volumes:
+      # Always use the current host-side tests/snapshots/config instead of
+      # whatever was baked into an older test-e2e image.
+      - ./e2e:/e2e/e2e
+      - ./playwright.config.ts:/e2e/playwright.config.ts:ro
       # Mount report output so it's accessible on the host after the run
       - ./playwright-report:/e2e/playwright-report
       - ./test-results:/e2e/test-results
@@ -523,7 +527,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-    restart: "no"
+    restart: on-failure
 
   test-vehicles:
     build:

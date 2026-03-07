@@ -9,18 +9,20 @@ test.describe("Mobile visual regression", () => {
 
   test("dashboard route visual baseline", async ({ page }) => {
     await gotoRouteAndSettle(page, "/");
-    await expect(page.getByLabel("Home")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId("dashboard-date")).toBeVisible();
 
     await expect(page).toHaveScreenshot("dashboard.png", {
       animations: "disabled",
       caret: "hide",
+      mask: [page.getByTestId("dashboard-date")],
       maxDiffPixelRatio: 0.02,
     });
   });
 
   test("files route visual baseline", async ({ page }) => {
     await gotoRouteAndSettle(page, "/files");
-    await expect(page.getByRole("heading", { name: "My Files" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Files$/ })).toBeVisible();
 
     await expect(page).toHaveScreenshot("files.png", {
       animations: "disabled",

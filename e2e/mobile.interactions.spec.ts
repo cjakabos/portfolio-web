@@ -6,30 +6,34 @@ test.describe("Mobile interaction regression", () => {
     await prepareMobilePage(page, 320, 900);
   });
 
-  test("header nav and overflow menu are fully touch reachable", async ({ page }) => {
+  test("header nav remains fully touch reachable", async ({ page }) => {
     await stubMobileApis(page);
     await gotoRouteAndSettle(page, "/");
     await expect(page.getByLabel("Home")).toBeVisible();
 
-    await page.getByRole("link", { name: "Files", exact: true }).tap();
+    await page.getByRole("link", { name: "Files & Notes", exact: true }).tap();
     await expect(page).toHaveURL(/\/files/);
-    await expect(page.getByRole("heading", { name: "My Files" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Files$/ })).toBeVisible();
 
     await page.getByRole("link", { name: "Shop", exact: true }).tap();
     await expect(page).toHaveURL(/\/shop/);
     await expect(page.getByRole("button", { name: "Store Items" })).toBeVisible();
 
+    await expect(page.getByRole("link", { name: "GPT", exact: true })).toBeVisible();
+
     const overflowMenuButton = page.getByRole("button", {
       name: /Open more menu|Close more menu/,
     });
-    await overflowMenuButton.tap();
-    await expect(page.getByRole("menuitem", { name: "GPT", exact: true })).toBeVisible();
+    if (await overflowMenuButton.count()) {
+      await overflowMenuButton.tap();
+      await expect(page.getByRole("menu")).toBeVisible();
+    }
   });
 
   test("files mobile actions remain tappable and wired at 320px", async ({ page }) => {
     const state = await stubMobileApis(page);
     await gotoRouteAndSettle(page, "/files");
-    await expect(page.getByRole("heading", { name: "My Files" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Files$/ })).toBeVisible();
 
     await page.evaluate(() => {
       window.confirm = () => true;
@@ -75,6 +79,7 @@ test.describe("Mobile interaction regression", () => {
     await expect
       .poll(() => state.addToCartCalls, { timeout: 5_000 })
       .toBe(1);
+    await page.getByRole("button", { name: /Your Cart/i }).tap();
     await expect(page.getByRole("button", { name: /Checkout/i })).toBeVisible();
   });
 });

@@ -546,9 +546,9 @@ export default function CloudMLOps() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] gap-8 w-full">
                 {/* --- Left Column: Controls --- */}
-                <div className="lg:col-span-1 space-y-6">
+                <div className="space-y-6">
                     {/* 1. Manual Input Card */}
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                         <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -645,7 +645,7 @@ export default function CloudMLOps() {
                 </div>
 
                 {/* --- Right Column: Visuals & Data --- */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-6 min-w-0">
 
                     {/* Visualizations Panel */}
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">

@@ -42,7 +42,12 @@ const PetStoreDashboard: React.FC = () => {
                 <p className="text-3xl font-bold mt-1">{allCustomers.length}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="shrink-0 p-3 rounded-full bg-blue-500 text-white"><Users size={24} /></div>
+                <div
+                  className="shrink-0 p-3 rounded-full text-white"
+                  style={{ backgroundColor: '#3b82f6' }}
+                >
+                  <Users size={24} />
+                </div>
                 <ChevronRight className="text-gray-400" size={20} />
               </div>
             </button>
@@ -52,7 +57,12 @@ const PetStoreDashboard: React.FC = () => {
                 <p className="text-3xl font-bold mt-1">{allPets.length}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="shrink-0 p-3 rounded-full bg-indigo-500 text-white"><Cat size={24} /></div>
+                <div
+                  className="shrink-0 p-3 rounded-full text-white"
+                  style={{ backgroundColor: '#6366f1' }}
+                >
+                  <Cat size={24} />
+                </div>
                 <ChevronRight className="text-gray-400" size={20} />
               </div>
             </button>
@@ -62,7 +72,12 @@ const PetStoreDashboard: React.FC = () => {
                 <p className="text-3xl font-bold mt-1">{allEmployees.length}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="shrink-0 p-3 rounded-full bg-emerald-500 text-white"><Briefcase size={24} /></div>
+                <div
+                  className="shrink-0 p-3 rounded-full text-white"
+                  style={{ backgroundColor: '#10b981' }}
+                >
+                  <Briefcase size={24} />
+                </div>
                 <ChevronRight className="text-gray-400" size={20} />
               </div>
             </button>
@@ -72,7 +87,12 @@ const PetStoreDashboard: React.FC = () => {
                 <p className="text-3xl font-bold mt-1">{schedules.length}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="shrink-0 p-3 rounded-full bg-amber-500 text-white"><Calendar size={24} /></div>
+                <div
+                  className="shrink-0 p-3 rounded-full text-white"
+                  style={{ backgroundColor: '#f59e0b' }}
+                >
+                  <Calendar size={24} />
+                </div>
                 <ChevronRight className="text-gray-400" size={20} />
               </div>
             </button>
