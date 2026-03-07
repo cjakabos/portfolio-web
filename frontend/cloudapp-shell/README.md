@@ -180,7 +180,6 @@ The user is able to:
 ## 7. Notes and Files
 A service for creating personal notes and uploading personal files.
 ![](../../examples/12.png)
-![](../../examples/13.png)
 - Notes [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/note-controller)
 - Files [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/file-controller)
 ## 8. Chat
@@ -188,10 +187,10 @@ A Kafka based chat service, the user is able to:
 
 - Create new chat rooms, furthermore share and enter chat room id
 
-![](../../examples/13.png)
+![](../../examples/14.png)
 - Talk to other users in chat rooms
 
-![](../../examples/14.png)
+![](../../examples/15.png)
 
 
 # Optional API services

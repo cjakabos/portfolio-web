@@ -20,7 +20,7 @@ test.describe("Mobile visual regression", () => {
 
   test("files route visual baseline", async ({ page }) => {
     await gotoRouteAndSettle(page, "/files");
-    await expect(page.getByRole("heading", { name: "My Files" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Files$/ })).toBeVisible();
 
     await expect(page).toHaveScreenshot("files.png", {
       animations: "disabled",

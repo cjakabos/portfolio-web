@@ -18,8 +18,7 @@ Example view of emulated Android app, browser view on PC and emulated iOS app:
 ## What You Can Try In 10 Minutes
 
 - `/jira`: Jira ticket operations with AI refinement
-- `/notes`: create private notes securely
-- `/files`: upload files securely
+- `/files`: manage your notes and files securely
 - `/shop`: full functioning shop
 - `/chat`: chat with other users
 - `/maps`: add vehicles on a map
@@ -87,7 +86,6 @@ Vehicles API docs:
 - User notes and file upload workflows
 
 ![Notes](./examples/12.png)
-![Files](./examples/13.png)
 
 ## 8) Real-Time Chat
 

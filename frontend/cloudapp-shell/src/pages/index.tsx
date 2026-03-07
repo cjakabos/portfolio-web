@@ -31,13 +31,13 @@ const Home: React.FC = () => {
   }, []);
 
   const cards = [
-    { title: 'Jira', desc: 'Project & Issue Tracking', icon: <Trello className="text-blue-600" size={32} />, path: '/jira', color: 'bg-blue-600/10', adminOnly: true },
     { title: 'Files & Notes', desc: 'Manage your files and personal notes', icon: <Folder className="text-blue-500" size={32} />, path: '/files', color: 'bg-blue-500/10' },
     { title: 'Shop', desc: 'Purchase items & services', icon: <ShoppingCart className="text-green-500" size={32} />, path: '/shop', color: 'bg-green-500/10' },
     { title: 'Chat', desc: 'Join chat rooms', icon: <MessageSquare className="text-purple-500" size={32} />, path: '/chat', color: 'bg-purple-500/10' },
     { title: 'Maps', desc: 'Vehicle Tracking System', icon: <Map className="text-orange-500" size={32} />, path: '/maps', color: 'bg-orange-500/10' },
-    { title: 'MLOps', desc: 'Customer Segmentation Model', icon: <Brain className="text-pink-500" size={32} />, path: '/mlops', color: 'bg-pink-500/10', adminOnly: true },
     { title: 'GPT', desc: 'Local AI Assistant', icon: <Bot className="text-teal-500" size={32} />, path: '/chatllm', color: 'bg-teal-500/10' },
+    { title: 'Jira', desc: 'Project & Issue Tracking', icon: <Trello className="text-blue-600" size={32} />, path: '/jira', color: 'bg-blue-600/10', adminOnly: true },
+    { title: 'MLOps', desc: 'Customer Segmentation Model', icon: <Brain className="text-pink-500" size={32} />, path: '/mlops', color: 'bg-pink-500/10', adminOnly: true },
     { title: 'PetStore', desc: 'Manage your pet business', icon: <Cat className="text-indigo-500" size={32} />, path: '/petstore', color: 'bg-indigo-500/10', adminOnly: true },
   ];
 

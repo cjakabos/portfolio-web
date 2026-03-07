@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import type { Pet, Employee, Schedule } from "../types";
 import { getGatewayBaseUrl } from "./gatewayBaseUrl";
@@ -57,7 +57,7 @@ export const useSchedules = () => {
         getAvailability(date, selectedMultiOptions);
     };
 
-    const getAvailability = async (dateString: Date, skills: string[]) => {
+    const getAvailability = useCallback(async (dateString: Date, skills: string[]) => {
 
         const postData = {
             date: dateString,
@@ -82,7 +82,11 @@ export const useSchedules = () => {
         } catch (error) {
             console.error("Failed to fetch employee availability", error);
         }
-    };
+    }, []);
+
+    const clearAvailability = useCallback(() => {
+        setAvailableEmployees([]);
+    }, []);
 
     const handleMultiSelect = (event: { target: { options: HTMLOptionsCollection } }) => {
         const options = event.target.options;
@@ -164,6 +168,7 @@ export const useSchedules = () => {
         handleAvailabilityFetch,
         handleMultiSelect,
         scheduleSubmit,
-        getAvailability
+        getAvailability,
+        clearAvailability
     };
 };

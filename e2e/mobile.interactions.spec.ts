@@ -11,9 +11,9 @@ test.describe("Mobile interaction regression", () => {
     await gotoRouteAndSettle(page, "/");
     await expect(page.getByLabel("Home")).toBeVisible();
 
-    await page.getByRole("link", { name: "Files", exact: true }).tap();
+    await page.getByRole("link", { name: "Files & Notes", exact: true }).tap();
     await expect(page).toHaveURL(/\/files/);
-    await expect(page.getByRole("heading", { name: "My Files" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Files$/ })).toBeVisible();
 
     await page.getByRole("link", { name: "Shop", exact: true }).tap();
     await expect(page).toHaveURL(/\/shop/);
@@ -29,7 +29,7 @@ test.describe("Mobile interaction regression", () => {
   test("files mobile actions remain tappable and wired at 320px", async ({ page }) => {
     const state = await stubMobileApis(page);
     await gotoRouteAndSettle(page, "/files");
-    await expect(page.getByRole("heading", { name: "My Files" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Files$/ })).toBeVisible();
 
     await page.evaluate(() => {
       window.confirm = () => true;
@@ -75,6 +75,7 @@ test.describe("Mobile interaction regression", () => {
     await expect
       .poll(() => state.addToCartCalls, { timeout: 5_000 })
       .toBe(1);
+    await page.getByRole("button", { name: /Your Cart/i }).tap();
     await expect(page.getByRole("button", { name: /Checkout/i })).toBeVisible();
   });
 });
