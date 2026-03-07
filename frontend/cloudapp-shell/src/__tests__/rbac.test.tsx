@@ -12,7 +12,7 @@ describe("RBAC Route Configuration", () => {
 
     // Verify specific user routes
     expect(userRoutes.map((r) => r.path)).toEqual(
-      expect.arrayContaining(["/", "/notes", "/files", "/shop", "/chat", "/maps", "/chatllm"])
+      expect.arrayContaining(["/", "/files", "/shop", "/chat", "/maps", "/chatllm"])
     );
   });
 

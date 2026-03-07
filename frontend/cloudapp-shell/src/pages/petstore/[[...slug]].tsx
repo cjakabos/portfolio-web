@@ -15,7 +15,7 @@ const PetStorePage: React.FC = () => {
     }
 
     return (
-        <div className="h-screen w-full">
+        <div className="h-full min-h-0 w-full">
             <PetStore />
         </div>
     );

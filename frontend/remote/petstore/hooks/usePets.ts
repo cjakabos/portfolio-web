@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import type { Pet } from "../types";
+import { getGatewayBaseUrl } from "./gatewayBaseUrl";
+
+const PETSTORE_PET_URL = `${getGatewayBaseUrl()}/petstore/pet`;
 
 export const usePets = () => {
     const [allPets, setAllPets] = useState<Pet[]>([]);
@@ -21,7 +24,7 @@ export const usePets = () => {
 
         try {
             const response = await axios.get(
-                'http://localhost:80/petstore/pet',
+                PETSTORE_PET_URL,
                 axiosConfig
             );
             setAllPets(response.data);

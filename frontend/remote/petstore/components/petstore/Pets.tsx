@@ -5,6 +5,9 @@ import { Plus, PawPrint } from 'lucide-react';
 import PetStoreLayout from '../PetStoreLayout';
 import { usePets } from '../../hooks/usePets';
 import { useCustomers } from '../../hooks/useCustomers';
+import { getGatewayBaseUrl } from '../../hooks/gatewayBaseUrl';
+
+const PETSTORE_PET_URL = `${getGatewayBaseUrl()}/petstore/pet`;
 
 const Pets: React.FC = () => {
   const { allPets } = usePets();
@@ -45,7 +48,7 @@ const Pets: React.FC = () => {
 
     try {
       const axios = (await import('axios')).default;
-      await axios.post('http://localhost:80/petstore/pet', postData, axiosConfig);
+      await axios.post(PETSTORE_PET_URL, postData, axiosConfig);
       setFormData({ name: '', type: PetType.DOG, ownerId: '', birthDate: '', notes: '' });
       setShowForm(false);
       window.location.reload(); // Reload to fetch new data

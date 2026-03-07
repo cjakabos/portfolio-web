@@ -15,6 +15,8 @@ describe("iOS packaging smoke", () => {
   it("keeps required capacitor iOS dependencies", () => {
     expect(packageJson.dependencies?.["@capacitor/core"]).toBeTruthy();
     expect(packageJson.dependencies?.["@capacitor/ios"]).toBeTruthy();
+    expect(packageJson.dependencies?.["@capacitor/keyboard"]).toBeTruthy();
+    expect(packageJson.dependencies?.["@capacitor/status-bar"]).toBeTruthy();
     expect(packageJson.devDependencies?.["@capacitor/cli"]).toBeTruthy();
   });
 

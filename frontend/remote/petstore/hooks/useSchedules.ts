@@ -1,6 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import type { Pet, Employee, Schedule } from "../types";
+import { getGatewayBaseUrl } from "./gatewayBaseUrl";
+
+const gatewayBaseUrl = getGatewayBaseUrl();
+const PETSTORE_PET_URL = `${gatewayBaseUrl}/petstore/pet`;
+const PETSTORE_EMPLOYEE_AVAILABILITY_URL = `${gatewayBaseUrl}/petstore/user/employee/availability`;
+const PETSTORE_SCHEDULE_URL = `${gatewayBaseUrl}/petstore/schedule`;
 
 export const useSchedules = () => {
     const [availableEmployees, setAvailableEmployees] = useState<Employee[]>([]);
@@ -37,7 +43,7 @@ export const useSchedules = () => {
 
         try {
             const response = await axios.get(
-                'http://localhost:80/petstore/pet',
+                PETSTORE_PET_URL,
                 axiosConfig
             );
             setAllPets(response.data);
@@ -51,7 +57,7 @@ export const useSchedules = () => {
         getAvailability(date, selectedMultiOptions);
     };
 
-    const getAvailability = async (dateString: Date, skills: string[]) => {
+    const getAvailability = useCallback(async (dateString: Date, skills: string[]) => {
 
         const postData = {
             date: dateString,
@@ -67,7 +73,7 @@ export const useSchedules = () => {
 
         try {
             const response = await axios.post(
-                'http://localhost:80/petstore/user/employee/availability',
+                PETSTORE_EMPLOYEE_AVAILABILITY_URL,
                 postData,
                 axiosConfig
             );
@@ -76,7 +82,11 @@ export const useSchedules = () => {
         } catch (error) {
             console.error("Failed to fetch employee availability", error);
         }
-    };
+    }, []);
+
+    const clearAvailability = useCallback(() => {
+        setAvailableEmployees([]);
+    }, []);
 
     const handleMultiSelect = (event: { target: { options: HTMLOptionsCollection } }) => {
         const options = event.target.options;
@@ -106,7 +116,7 @@ export const useSchedules = () => {
 
         try {
             await axios.post(
-                'http://localhost:80/petstore/schedule',
+                PETSTORE_SCHEDULE_URL,
                 postData,
                 axiosConfig
             );
@@ -127,7 +137,7 @@ export const useSchedules = () => {
 
         try {
             const response = await axios.get(
-                'http://localhost:80/petstore/schedule',
+                PETSTORE_SCHEDULE_URL,
                 axiosConfig
             );
             setSchedules(response.data);
@@ -158,6 +168,7 @@ export const useSchedules = () => {
         handleAvailabilityFetch,
         handleMultiSelect,
         scheduleSubmit,
-        getAvailability
+        getAvailability,
+        clearAvailability
     };
 };

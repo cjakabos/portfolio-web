@@ -9,10 +9,30 @@ name: Android CloudApp smoke
 - assertVisible: "Sign In"
 - assertVisible: "Username"
 - assertVisible: "Password"
-- runFlow:
-    when:
-      visible: "Don't have an account? Register"
-    commands:
-      - tapOn: "Don't have an account? Register"
-      - assertVisible: "Create Account"
-      - assertVisible: "Email"
+- tapOn: "Don't have an account? Register"
+- assertVisible: "Create Account"
+- assertVisible: "First name"
+- assertVisible: "Last name"
+- assertVisible: "Confirm password"
+- tapOn: "Enter First Name"
+- inputText: "Maestro"
+- tapOn: "Enter Last Name"
+- inputText: "Smoke"
+- tapOn: "Enter Username"
+- inputText: "maestro_mobile"
+- tapOn: "Enter Password"
+- inputText: "wrong-pass-123"
+- tapOn: "••••••••"
+- inputText: "wrong-pass-123"
+- hideKeyboard
+- tapOn: "Already have an account? Sign In"
+- assertVisible: "Sign In"
+- tapOn: "Enter Username"
+- eraseText
+- inputText: "maestro_mobile"
+- tapOn: "Enter Password"
+- eraseText
+- inputText: "wrong-pass-123"
+- hideKeyboard
+- tapOn: "Sign In"
+- assertVisible: "CloudApp"

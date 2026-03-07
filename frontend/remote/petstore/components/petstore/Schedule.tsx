@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Skill } from '../../types';
 import { Calendar, CheckCircle, Users } from 'lucide-react';
 import PetStoreLayout from '../PetStoreLayout';
@@ -19,7 +19,8 @@ const Schedules: React.FC = () => {
     availableEmployees,
     schedules,
     scheduleSubmit,
-    getAvailability
+    getAvailability,
+    clearAvailability,
   } = useSchedules();
 
   const { allEmployees } = useEmployees();
@@ -32,6 +33,20 @@ const Schedules: React.FC = () => {
   const [selectedPet, setSelectedPet] = useState('');
   const [loadingAvailability, setLoadingAvailability] = useState(false);
 
+  const canFetchAvailability = Boolean(
+    date && selectedPet && selectedMultiOptions.length > 0
+  );
+  const hasSelectedAvailableEmployee = useMemo(
+    () => availableEmployees.some((emp) => emp.id === selectedEmployee),
+    [availableEmployees, selectedEmployee]
+  );
+  const canConfirmSchedule = hasSelectedAvailableEmployee && Boolean(selectedPet);
+
+  useEffect(() => {
+    setSelectedEmployee('');
+    clearAvailability();
+  }, [date, selectedPet, selectedMultiOptions, clearAvailability]);
+
   const handleSkillToggle = (skill: Skill) => {
     setSelectedMultiOptions(prev =>
       prev.includes(skill)
@@ -41,7 +56,7 @@ const Schedules: React.FC = () => {
   };
 
   const handleFetchAvailability = async () => {
-    if (!date || selectedMultiOptions.length === 0) return;
+    if (!canFetchAvailability) return;
 
     setLoadingAvailability(true);
 
@@ -120,8 +135,12 @@ const Schedules: React.FC = () => {
           </select>
           <button
             onClick={handleFetchAvailability}
-            disabled={!date || selectedMultiOptions.length === 0}
-            className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition disabled:bg-gray-400"
+            disabled={!canFetchAvailability}
+            className={`w-full py-2 rounded transition ${
+              canFetchAvailability
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                : 'bg-gray-300 text-black cursor-not-allowed'
+            }`}
           >
             {loadingAvailability ? 'Checking availability...' : 'Get available employees'}
           </button>
@@ -140,25 +159,37 @@ const Schedules: React.FC = () => {
                   onClick={() => setSelectedEmployee(emp.id)}
                   className={`w-full text-left p-3 rounded border transition ${
                     selectedEmployee === emp.id
-                      ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'border-indigo-600 bg-indigo-50 text-gray-900 dark:bg-indigo-200 dark:text-gray-900'
+                      : 'text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <p className="font-semibold">{emp.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p
+                    className={`text-xs ${
+                      selectedEmployee === emp.id
+                        ? 'text-gray-600 dark:text-gray-700'
+                        : 'text-gray-500 dark:text-gray-300'
+                    }`}
+                  >
                     Skills: {emp.skills.join(', ')}
                   </p>
                 </button>
               ))}
             </div>
 
-          <button
-            onClick={handleCreateSchedule}
-            disabled={!selectedEmployee || !selectedPet}
-            className="mt-4 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:bg-gray-400"
-          >
-            Confirm Schedule
-          </button>
+          {availableEmployees.length > 0 && (
+            <button
+              onClick={handleCreateSchedule}
+              disabled={!canConfirmSchedule}
+              className={`mt-4 w-full py-2 rounded transition ${
+                canConfirmSchedule
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-gray-300 text-black cursor-not-allowed'
+              }`}
+            >
+              Confirm Schedule
+            </button>
+          )}
         </div>
 
         {/* RIGHT: EXISTING SCHEDULES */}

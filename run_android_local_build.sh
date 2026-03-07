@@ -31,7 +31,14 @@ BOOT_TIMEOUT_SEC="${ANDROID_BOOT_TIMEOUT_SEC:-300}"
 APP_HTTP_PORT="${ANDROID_APP_HTTP_PORT:-5001}"
 API_HTTP_PORT="${ANDROID_API_HTTP_PORT:-8080}"
 API_HOST_PORT="${ANDROID_API_HOST_PORT:-80}"
-REMOTE_HTTP_PORTS="${ANDROID_REMOTE_HTTP_PORTS:-5002,5003,5005,5006,5333}"
+# Additional host ports Android needs to reach via localhost inside the emulator.
+# Includes:
+# - 5002/5003/5005/5006 (module federation remotes)
+# - 5333 (chat API proxy)
+# - 11434 (direct Ollama model discovery checks in Jira/ChatLLM UIs)
+# Note: adb reverse cannot reliably bind privileged device ports (<1024), so we
+# reverse host nginx :80 through device :8080 using API_HTTP_PORT/API_HOST_PORT.
+REMOTE_HTTP_PORTS="${ANDROID_REMOTE_HTTP_PORTS:-5002,5003,5005,5006,5333,11434}"
 HEALTHCHECK_URL="${ANDROID_HEALTHCHECK_URL:-http://localhost:80/nginx_health}"
 REQUIRED_JAVA_MAJOR="${ANDROID_JAVA_MAJOR:-21}"
 
@@ -1182,12 +1189,18 @@ adb -s "${DEVICE_ID}" shell settings put global animator_duration_scale 0 >/dev/
 adb -s "${DEVICE_ID}" shell input keyevent 82 >/dev/null 2>&1 || true
 
 if [[ -n "${APP_HTTP_PORT}" ]]; then
-  adb -s "${DEVICE_ID}" reverse "tcp:${APP_HTTP_PORT}" "tcp:${APP_HTTP_PORT}" >/dev/null 2>&1 || true
-  echo "adb reverse active: tcp:${APP_HTTP_PORT} -> tcp:${APP_HTTP_PORT}"
+  if adb -s "${DEVICE_ID}" reverse "tcp:${APP_HTTP_PORT}" "tcp:${APP_HTTP_PORT}" >/dev/null 2>&1; then
+    echo "adb reverse active: tcp:${APP_HTTP_PORT} -> tcp:${APP_HTTP_PORT}"
+  else
+    echo "Warning: adb reverse failed for tcp:${APP_HTTP_PORT} -> tcp:${APP_HTTP_PORT}"
+  fi
 fi
 if [[ -n "${API_HTTP_PORT}" ]] && [[ "${API_HTTP_PORT}" != "${APP_HTTP_PORT}" ]]; then
-  adb -s "${DEVICE_ID}" reverse "tcp:${API_HTTP_PORT}" "tcp:${API_HOST_PORT}" >/dev/null 2>&1 || true
-  echo "adb reverse active: tcp:${API_HTTP_PORT} -> tcp:${API_HOST_PORT}"
+  if adb -s "${DEVICE_ID}" reverse "tcp:${API_HTTP_PORT}" "tcp:${API_HOST_PORT}" >/dev/null 2>&1; then
+    echo "adb reverse active: tcp:${API_HTTP_PORT} -> tcp:${API_HOST_PORT}"
+  else
+    echo "Warning: adb reverse failed for tcp:${API_HTTP_PORT} -> tcp:${API_HOST_PORT}"
+  fi
 fi
 if [[ -n "${REMOTE_HTTP_PORTS}" ]]; then
   IFS=',' read -r -a remote_port_list <<< "${REMOTE_HTTP_PORTS}"
@@ -1197,8 +1210,11 @@ if [[ -n "${REMOTE_HTTP_PORTS}" ]]; then
     [[ "${remote_port}" =~ ^[0-9]+$ ]] || continue
     [[ "${remote_port}" = "${APP_HTTP_PORT}" ]] && continue
     [[ "${remote_port}" = "${API_HTTP_PORT}" ]] && continue
-    adb -s "${DEVICE_ID}" reverse "tcp:${remote_port}" "tcp:${remote_port}" >/dev/null 2>&1 || true
-    echo "adb reverse active: tcp:${remote_port} -> tcp:${remote_port} (module federation)"
+    if adb -s "${DEVICE_ID}" reverse "tcp:${remote_port}" "tcp:${remote_port}" >/dev/null 2>&1; then
+      echo "adb reverse active: tcp:${remote_port} -> tcp:${remote_port} (module federation)"
+    else
+      echo "Warning: adb reverse failed for tcp:${remote_port} -> tcp:${remote_port}"
+    fi
   done
 fi
 

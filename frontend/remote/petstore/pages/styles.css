@@ -59,6 +59,19 @@
   }
 }
 
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+.px-safe {
+  padding-left: max(env(safe-area-inset-left), 0px);
+  padding-right: max(env(safe-area-inset-right), 0px);
+}
+
 .MuiPaper-root.MuiDialog-paper {
   background-color: var(--dialog-bg);
   color: var(--dialog-text);
@@ -108,7 +121,12 @@
   margin-top: 0;
 }
 
-input[type="text"], input[type="number"], input[type="phone"], select, input[type="submit"], input[type="password"], button {
+input[type="text"],
+input[type="number"],
+input[type="tel"],
+select,
+input[type="submit"],
+input[type="password"] {
   width: 300px;
   padding: 8px;
   margin: 10px 0;
@@ -183,4 +201,3 @@ input[type="text"], input[type="number"], input[type="phone"], select, input[typ
   min-height: 200px;
   overflow: auto
 }
-

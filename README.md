@@ -18,8 +18,7 @@ Example view of emulated Android app, browser view on PC and emulated iOS app:
 ## What You Can Try In 10 Minutes
 
 - `/jira`: Jira ticket operations with AI refinement
-- `/notes`: create private notes securely
-- `/files`: upload files securely
+- `/files`: manage your notes and files securely
 - `/shop`: full functioning shop
 - `/chat`: chat with other users
 - `/maps`: add vehicles on a map
@@ -87,7 +86,6 @@ Vehicles API docs:
 - User notes and file upload workflows
 
 ![Notes](./examples/12.png)
-![Files](./examples/13.png)
 
 ## 8) Real-Time Chat
 
@@ -509,7 +507,8 @@ make test-ios-smoke-all
 - Capacitor app id: `com.portfolio.cloudapp`
 - Capacitor app name: `CloudApp`
 - Android hosted mode default URL: `http://localhost:5001`
-- Android API URL default: `http://localhost:8080/cloudapp` (adb reverse `8080 -> host 80`)
+- Android API URL default: `http://localhost:8080/cloudapp` (adb reverse `8080 -> host 80`, because Android cannot reliably bind reversed port `80`)
+- Android local build script also sets adb reverse for common remote/data ports by default: `5002`, `5003`, `5005`, `5006`, `5333`, `11434`
 - Android Maestro flow file: `tests/e2e/mobile/maestro/android-smoke.yaml`
 
 If you run hosted mode from `docker-compose-app.yml`, rebuild the shell + gateway so the shell bundle uses the Android-safe API base:

@@ -45,6 +45,15 @@ function isOnLoginPath(page: import("@playwright/test").Page): boolean {
   return /\/login$/.test(new URL(page.url()).pathname);
 }
 
+function isNavigationAbort(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("NS_BINDING_ABORTED") ||
+    message.includes("ERR_ABORTED") ||
+    message.includes("interrupted by another navigation")
+  );
+}
+
 async function ensureAuthenticatedRoute(page: import("@playwright/test").Page) {
   await page
     .waitForURL((url) => !/\/login$/.test(url.pathname), { timeout: 5_000 })
@@ -64,6 +73,40 @@ async function ensureAuthenticatedRoute(page: import("@playwright/test").Page) {
       throw error;
     }
   }
+}
+
+async function gotoAdminRouteWithRetry(
+  page: import("@playwright/test").Page,
+  path: string,
+  refreshAdminAuth: () => Promise<void>
+) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await page.goto(path, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    } catch (error) {
+      if (!isNavigationAbort(error)) {
+        throw error;
+      }
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+
+    await page.waitForLoadState("domcontentloaded").catch(() => undefined);
+    if (!isOnLoginPath(page)) {
+      return;
+    }
+
+    lastError = new Error(`Navigation to ${path} redirected to /login (attempt ${attempt})`);
+    if (attempt < 3) {
+      await refreshAdminAuth();
+      await page.waitForTimeout(300);
+    }
+  }
+
+  throw new Error(`Unable to reach admin route ${path} without login redirect`, {
+    cause: lastError ?? undefined,
+  });
 }
 
 async function expectUnauthenticated(page: import("@playwright/test").Page) {
@@ -262,8 +305,9 @@ test.describe("Authentication Flow", () => {
       }
 
       for (const path of adminPaths) {
-        await page.goto(path);
-        await page.waitForLoadState("domcontentloaded");
+        await gotoAdminRouteWithRetry(page, path, async () => {
+          await ensureAdminLoggedIn(request, page);
+        });
         await expect(page.getByText("Access Denied")).not.toBeVisible({ timeout: 10_000 });
       }
     });

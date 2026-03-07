@@ -20,6 +20,12 @@ test.describe("Shopping Flow", () => {
 
   const mockItem = { id: 999, name: ITEM_NAME, price: ITEM_PRICE, description: "E2E test item" };
 
+  async function openCartTab(page: import("@playwright/test").Page) {
+    const cartTab = page.getByRole("button", { name: /your cart/i });
+    await expect(cartTab).toBeVisible({ timeout: 10_000 });
+    await cartTab.click();
+  }
+
   /** Stub shop API responses so the frontend has data to display */
   async function setupShopStubs(page: import("@playwright/test").Page, items: any[] = [mockItem]) {
     let currentCart = {
@@ -233,6 +239,7 @@ test.describe("Shopping Flow", () => {
       await addToCartBtn.first().click({ force: true });
       await addPromise;
       await cartPromise;
+      await openCartTab(page);
 
       await expect(page.getByRole("button", { name: /checkout/i })).toBeVisible({
         timeout: 10_000,
@@ -256,7 +263,9 @@ test.describe("Shopping Flow", () => {
       await addToCartBtn.click({ force: true });
       await addPromise;
       await cartPromise;
+      await openCartTab(page);
 
+      await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 10_000 });
       await expect(page.getByRole("button", { name: /checkout/i })).toBeVisible({
         timeout: 10_000,
       });
@@ -279,6 +288,7 @@ test.describe("Shopping Flow", () => {
       await addToCartBtn.click({ force: true });
       await addPromise;
       await cartPromise;
+      await openCartTab(page);
 
       await expect(page.getByRole("button", { name: /checkout/i })).toBeVisible({
         timeout: 10_000,
@@ -300,11 +310,23 @@ test.describe("Shopping Flow", () => {
       await page.goto("/shop");
       await waitForPageLoad(page);
 
-      // Find and click submit/order/checkout button
-      const orderBtn = page.getByRole("button", { name: /submit|order|checkout|place|buy/i });
-      if ((await orderBtn.count()) > 0) {
-        await orderBtn.first().click({ force: true });
-      }
+      const addToCartBtn = page.getByRole("button", { name: /add to cart/i }).first();
+      const addPromise = page.waitForResponse(
+        (r) => r.url().includes("/cloudapp/cart/addToCart") && r.request().method() === "POST"
+      );
+      const cartPromise = page.waitForResponse(
+        (r) => r.url().includes("/cloudapp/cart/getCart") && r.request().method() === "POST"
+      );
+      await addToCartBtn.click({ force: true });
+      await addPromise;
+      await cartPromise;
+      await openCartTab(page);
+
+      const submitPromise = page.waitForResponse(
+        (r) => r.url().includes("/cloudapp/order/submit/") && r.request().method() === "POST"
+      );
+      await page.getByRole("button", { name: /checkout/i }).click({ force: true });
+      await submitPromise;
 
       const bodyText = (await page.locator("body").textContent())?.toLowerCase() || "";
       const hasExpected =
@@ -382,6 +404,7 @@ test.describe("Shopping Flow", () => {
       await page.getByRole("button", { name: /add to cart/i }).first().click({ force: true });
       const addResponse = await addResponsePromise;
       expect(addResponse.status()).toBe(200);
+      await openCartTab(page);
 
       await expect(page.getByRole("button", { name: /checkout/i })).toBeVisible({
         timeout: 10_000,
