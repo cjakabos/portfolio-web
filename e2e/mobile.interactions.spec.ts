@@ -23,8 +23,7 @@ test.describe("Mobile interaction regression", () => {
       name: /Open more menu|Close more menu/,
     });
     await overflowMenuButton.tap();
-    await expect(page.getByRole("link", { name: "GPT" })).toBeVisible();
-    await overflowMenuButton.tap();
+    await expect(page.getByRole("menuitem", { name: "GPT", exact: true })).toBeVisible();
   });
 
   test("files mobile actions remain tappable and wired at 320px", async ({ page }) => {

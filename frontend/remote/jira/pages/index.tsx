@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
   Plus, Trash2, MessageSquare, ChevronRight, ChevronDown, RefreshCw,
@@ -8,19 +9,51 @@ import {
 } from 'lucide-react';
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from 'ai';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog";
 
 // =============================================================================
 // URL CONFIGURATION
 // =============================================================================
-const jiraProxy = "http://localhost:80/jiraproxy/webDomain";
+const androidNativeGatewayBaseUrl = "http://localhost:8080";
+const defaultGatewayBaseUrl = "http://localhost:80";
+const isNativeAndroidRuntime = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const capacitor = (window as Window & {
+    Capacitor?: {
+      isNativePlatform?: () => boolean;
+      getPlatform?: () => string;
+      platform?: string;
+    };
+  }).Capacitor;
+
+  if (!capacitor) {
+    return false;
+  }
+
+  try {
+    if (typeof capacitor.getPlatform === "function") {
+      return capacitor.getPlatform() === "android";
+    }
+
+    if (typeof capacitor.platform === "string") {
+      return capacitor.platform === "android";
+    }
+
+    if (typeof capacitor.isNativePlatform === "function") {
+      return capacitor.isNativePlatform() && /Android/i.test(navigator.userAgent);
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+};
+const gatewayBaseUrl =
+  process.env.NEXT_PUBLIC_GATEWAY_BASE_URL
+    || (isNativeAndroidRuntime() ? androidNativeGatewayBaseUrl : defaultGatewayBaseUrl);
+const jiraProxy = `${gatewayBaseUrl}/jiraproxy/webDomain`;
 const ollamaBaseUrl = "http://localhost:11434";
 const chatApiUrl = "http://localhost:5333/api/chat";
 
@@ -44,33 +77,71 @@ interface OllamaModel {
 // --- Sub-Components ---
 
 // 1. Modal Component
-const Modal = ({ open, onClose, title, children, actions, maxWidth = 'max-w-lg' }: any) => (
-  <Dialog
-    open={open}
-    onOpenChange={(nextOpen) => {
-      if (!nextOpen) onClose();
-    }}
-  >
-    <DialogContent className={`${maxWidth} max-h-[90vh] overflow-hidden p-0`}>
-      <DialogHeader className="border-b border-gray-200 p-4 dark:border-gray-700">
-        <DialogTitle className="text-gray-900 dark:text-white">{title}</DialogTitle>
-        <DialogClose asChild>
-          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-            <X size={20} />
-          </button>
-        </DialogClose>
-      </DialogHeader>
-      <div className="p-6 overflow-y-auto">
-        {children}
+const Modal = ({
+  open,
+  onClose,
+  title,
+  children,
+  actions,
+  maxWidth = 'lg',
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  maxWidth?: 'lg' | '2xl';
+}) => {
+  if (!open || typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[2147483647]">
+      <div
+        className="absolute inset-0 z-0 bg-black/50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 z-10 flex items-start sm:items-center justify-center overflow-y-auto p-2 sm:p-4"
+        style={{
+          paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+          paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+          paddingLeft: 'max(0.5rem, env(safe-area-inset-left))',
+          paddingRight: 'max(0.5rem, env(safe-area-inset-right))',
+        }}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          className={`${maxWidth === '2xl' ? 'max-w-2xl' : 'max-w-lg'} relative z-20 w-full overflow-hidden border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 flex flex-col rounded-xl`}
+          style={{
+            maxHeight: 'calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+          }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="shrink-0 border-b border-gray-200 p-4 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="p-4 sm:p-6 overflow-y-auto min-h-0 flex-1">
+            {children}
+          </div>
+          {actions && (
+            <div className="shrink-0 border-t border-gray-200 bg-gray-50 p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-800 flex flex-wrap justify-end gap-2">
+              {actions}
+            </div>
+          )}
+        </div>
       </div>
-      {actions && (
-        <DialogFooter className="border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-          {actions}
-        </DialogFooter>
-      )}
-    </DialogContent>
-  </Dialog>
-);
+    </div>,
+    document.body
+  );
+};
 
 // 2. Alert Component
 const Alert = ({ severity, title, children, action }: { severity: 'error' | 'warning' | 'info', title: string, children: React.ReactNode, action?: React.ReactNode }) => {
@@ -136,25 +207,25 @@ const TicketNode = ({ ticket, level = 0, onChat, onChatWithChildren, onEdit, onD
         <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-1 ml-2">
           {chatOpen && (
             <>
-              <button onClick={() => onChat(ticket, false)} className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded" title="Chat with Ticket">
+              <button type="button" onClick={() => onChat(ticket, false)} className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded" title="Chat with Ticket">
                 <MessageCircle size={14} />
               </button>
               {hasChildren && (
-                <button onClick={() => onChatWithChildren(ticket, true)} className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded" title="Chat with Ticket + Children">
+                <button type="button" onClick={() => onChatWithChildren(ticket, true)} className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded" title="Chat with Ticket + Children">
                   <MessageSquare size={14} />
                 </button>
               )}
             </>
           )}
           {(ticket.fields.issuetype.name === 'Task' || ticket.fields.issuetype.name === 'Epic') && chatOpen && (
-            <button onClick={() => onBatch(ticket)} className="p-1.5 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 rounded" title="Batch Create">
+            <button type="button" onClick={() => onBatch(ticket)} className="p-1.5 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 rounded" title="Batch Create">
               <Zap size={14} />
             </button>
           )}
-          <button onClick={() => onEdit(ticket)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded" title="Edit">
+          <button type="button" onClick={() => onEdit(ticket)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded" title="Edit">
             <Edit size={14} />
           </button>
-          <button onClick={() => onDelete(ticket.key)} className="p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded" title="Delete">
+          <button type="button" onClick={() => onDelete(ticket.key)} className="p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded" title="Delete">
             <Trash2 size={14} />
           </button>
         </div>
@@ -193,6 +264,7 @@ const CloudJira: React.FC = () => {
   // Jira configuration state
   const [jiraConfigError, setJiraConfigError] = useState<string[] | null>(null);
   const [jiraApiError, setJiraApiError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Model selection state
   const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
@@ -313,6 +385,19 @@ const CloudJira: React.FC = () => {
     }
   }
 
+  function extractRequestError(error: any, fallback: string): string {
+    if (typeof error?.response?.data === 'string' && error.response.data.trim()) {
+      return error.response.data;
+    }
+    if (error?.response?.data?.message) {
+      return String(error.response.data.message);
+    }
+    if (error?.message) {
+      return String(error.message);
+    }
+    return fallback;
+  }
+
   function childTypeForParent(parentKey?: string): "Task" | "Subtask" | undefined {
     if (!parentKey) return undefined;
     const parent = tickets.find((t) => t.key === parentKey);
@@ -414,7 +499,7 @@ const CloudJira: React.FC = () => {
     }
   }
 
-  function getTickets() {
+  async function getTickets() {
     const postData = {
       jiraPath: "/rest/api/latest/search/jql?jql=project=" + process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY + "&maxResults=1000&fields=key,summary,description,issuetype,parent",
     };
@@ -428,47 +513,51 @@ const CloudJira: React.FC = () => {
 
     setLoading(true);
     setJiraApiError(null);
-    axios.post(jiraProxy + "/get", postData, axiosConfig)
-      .then((response) => {
-        setTickets(response.data.issues || []);
-        setJiraApiError(null);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch Jira tickets:", error);
-        if (error.response?.status === 401) {
-          setJiraApiError("authentication_failed");
-        } else if (error.response?.status === 403) {
-          setJiraApiError("permission_denied");
-        } else if (error.response?.status === 404) {
-          setJiraApiError("project_not_found");
-        } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
-          setJiraApiError("network_error");
-        } else {
-          setJiraApiError("unknown");
-        }
-      })
-      .finally(() => setLoading(false));
+    try {
+      const response = await axios.post(jiraProxy + "/get", postData, axiosConfig);
+      setTickets(response.data.issues || []);
+      setJiraApiError(null);
+    } catch (error: any) {
+      console.error("Failed to fetch Jira tickets:", error);
+      if (error.response?.status === 401) {
+        setJiraApiError("authentication_failed");
+      } else if (error.response?.status === 403) {
+        setJiraApiError("permission_denied");
+      } else if (error.response?.status === 404) {
+        setJiraApiError("project_not_found");
+      } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        setJiraApiError("network_error");
+      } else {
+        setJiraApiError("unknown");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function getTicketTypes() {
+  async function getTicketTypes() {
     const postData = {
       jiraPath: "/rest/api/latest/issuetype/project?projectId=10000",
     };
 
     const axiosConfig = { headers: { "Content-Type": "application/json" }, withCredentials: true };
     setLoading(true);
-    axios.post(jiraProxy + "/get", postData, axiosConfig)
-      .then((response) => setTicketTypes(response.data))
-      .finally(() => setLoading(false));
+    try {
+      const response = await axios.post(jiraProxy + "/get", postData, axiosConfig);
+      setTicketTypes(response.data);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function updateTicket(ticket: any, reference: any) {
+  async function updateTicket(ticket: any, reference: any) {
+    const issueRef = reference.key || reference.id;
     const postData = {
       update: {
         summary: [{ set: (ticket.summary || reference.fields.summary) }],
         description: [{ set: (ticket.description || reference.fields.description) }]
       },
-      jiraPath: "/rest/api/latest/issue/" + reference.id
+      jiraPath: "/rest/api/latest/issue/" + issueRef
     };
 
     const axiosConfig = {
@@ -478,12 +567,11 @@ const CloudJira: React.FC = () => {
       withCredentials: true,
     };
 
-    axios.put(jiraProxy + "/put", postData, axiosConfig)
-      .then(() => getTickets())
-      .catch((error) => console.log(error.status));
+    await axios.put(jiraProxy + "/put", postData, axiosConfig);
+    await getTickets();
   }
 
-  function deleteTicket(ticketKey: string) {
+  async function deleteTicket(ticketKey: string) {
     const postData = {
       jiraPath: "/rest/api/latest/issue/" + ticketKey
     };
@@ -495,12 +583,11 @@ const CloudJira: React.FC = () => {
       withCredentials: true,
     };
 
-    axios.post(jiraProxy + "/delete", postData, axiosConfig)
-      .then(() => getTickets())
-      .catch((error) => console.log(error));
+    await axios.post(jiraProxy + "/delete", postData, axiosConfig);
+    await getTickets();
   }
 
-  function newTicket(ticketInput: any) {
+  async function newTicket(ticketInput: any, options?: { refresh?: boolean }) {
     const postData = {
       fields: {
         project: { key: process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY },
@@ -519,9 +606,10 @@ const CloudJira: React.FC = () => {
       withCredentials: true,
     };
 
-    axios.post(jiraProxy + "/post", postData, axiosConfig)
-      .then(() => getTickets())
-      .catch((error) => console.log(error));
+    await axios.post(jiraProxy + "/post", postData, axiosConfig);
+    if (options?.refresh !== false) {
+      await getTickets();
+    }
   }
 
   // --- Event Handlers ---
@@ -642,34 +730,70 @@ const CloudJira: React.FC = () => {
     setInput('');
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (newTicketData.summary && newTicketData.issuetype) {
-      newTicket(newTicketData);
-      setNewTicketModal({ open: false });
-      setNewTicketData({ summary: "", description: "", issuetype: "", parentKey: "" });
+      setActionError(null);
+      try {
+        await newTicket(newTicketData);
+        setNewTicketModal({ open: false });
+        setNewTicketData({ summary: "", description: "", issuetype: "", parentKey: "" });
+      } catch (error: any) {
+        setActionError(extractRequestError(error, "Failed to create ticket."));
+      }
     }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (editModal.ticket) {
-      updateTicket(editModal.ticket, editModal.ticket);
-      setEditModal({ open: false });
+      setActionError(null);
+      try {
+        await updateTicket(editModal.ticket, editModal.ticket);
+        setEditModal({ open: false });
+      } catch (error: any) {
+        setActionError(extractRequestError(error, "Failed to update ticket."));
+      }
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteModal.ticketKey) {
-      deleteTicket(deleteModal.ticketKey);
-      setDeleteModal({ open: false });
+      setActionError(null);
+      try {
+        await deleteTicket(deleteModal.ticketKey);
+        setDeleteModal({ open: false });
+      } catch (error: any) {
+        setActionError(extractRequestError(error, "Failed to delete ticket."));
+      }
     }
   };
 
-  const handleBatchCreate = () => {
+  const handleBatchCreate = async () => {
     const childType = batchModal.childType || "Task";
-    batchModal.suggestions.filter((s) => s.create && s.summary).forEach((s) =>
-      newTicket({ summary: s.summary, description: s.description, issuetype: childType, parentKey: batchModal.parent?.key })
-    );
-    setBatchModal((p) => ({ ...p, open: false }));
+    const selectedSuggestions = batchModal.suggestions.filter((s) => s.create && s.summary);
+    if (selectedSuggestions.length === 0) {
+      return;
+    }
+
+    setActionError(null);
+    try {
+      await Promise.all(
+        selectedSuggestions.map((s) =>
+          newTicket(
+            {
+              summary: s.summary,
+              description: s.description,
+              issuetype: childType,
+              parentKey: batchModal.parent?.key
+            },
+            { refresh: false }
+          )
+        )
+      );
+      await getTickets();
+      setBatchModal((p) => ({ ...p, open: false }));
+    } catch (error: any) {
+      setActionError(extractRequestError(error, "Failed to create child tickets."));
+    }
   };
 
   // --- Effects ---
@@ -765,11 +889,11 @@ const CloudJira: React.FC = () => {
   }
 
   return (
-    <div className={`flex flex-col h-full w-full max-w-[1920px] mx-auto px-4 sm:px-6 py-4 overflow-hidden ${isResizing ? 'cursor-col-resize select-none' : ''}`}>
-      <div className="flex flex-1 flex-col md:flex-row overflow-hidden h-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+    <div className={`flex flex-col h-full w-full max-w-[1920px] mx-auto px-4 sm:px-6 py-4 overflow-y-auto md:overflow-hidden ${isResizing ? 'cursor-col-resize select-none' : ''}`}>
+      <div className="flex flex-1 flex-col md:flex-row overflow-hidden h-full min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
 
         {/* 1. Jira Board (Left/Top Pane) */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 min-h-0">
           <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0 bg-white dark:bg-gray-800">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -801,6 +925,20 @@ const CloudJira: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-2 bg-white dark:bg-gray-800">
+            {actionError && (
+              <Alert severity="error" title="Action Failed" action={
+                <button
+                  type="button"
+                  onClick={() => setActionError(null)}
+                  className="px-3 py-1.5 bg-red-100 dark:bg-red-800 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+                >
+                  Dismiss
+                </button>
+              }>
+                <p>{actionError}</p>
+              </Alert>
+            )}
+
             {/* Jira API Error States */}
             {jiraApiError === "authentication_failed" && (
               <Alert severity="error" title="Jira Authentication Failed" action={
@@ -931,7 +1069,7 @@ const CloudJira: React.FC = () => {
         {chatOpen && (
           <div
             ref={sidebarRef}
-            className="flex flex-col border-t border-gray-200 dark:border-gray-700 md:border-t-0 bg-white dark:bg-gray-800 h-[500px] md:h-auto"
+            className="flex flex-col border-t border-gray-200 dark:border-gray-700 md:border-t-0 bg-white dark:bg-gray-800 h-[45vh] max-h-[420px] md:h-auto"
             style={{
               width: typeof window !== 'undefined' && window.innerWidth >= 768 ? sidebarWidth : '100%'
             }}
@@ -1303,8 +1441,8 @@ const CloudJira: React.FC = () => {
         title="Create New Ticket"
         actions={
           <>
-            <button onClick={() => setNewTicketModal({ open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
-            <button onClick={handleCreate} disabled={!newTicketData.summary} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">Create</button>
+            <button type="button" onClick={() => setNewTicketModal({ open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+            <button type="button" onClick={handleCreate} disabled={!newTicketData.summary} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">Create</button>
           </>
         }
       >
@@ -1365,8 +1503,8 @@ const CloudJira: React.FC = () => {
         title="Edit Ticket"
         actions={
           <>
-            <button onClick={() => setEditModal({ open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
-            <button onClick={handleUpdate} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
+            <button type="button" onClick={() => setEditModal({ open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+            <button type="button" onClick={handleUpdate} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
           </>
         }
       >
@@ -1401,8 +1539,9 @@ const CloudJira: React.FC = () => {
         title="Batch Create Tickets"
         actions={
           <>
-            <button onClick={() => setBatchModal(p => ({ ...p, open: false }))} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Close</button>
+            <button type="button" onClick={() => setBatchModal(p => ({ ...p, open: false }))} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Close</button>
             <button
+              type="button"
               onClick={handleBatchCreate}
               disabled={batchModal.suggestions.filter(s => s.create).length === 0}
               className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
@@ -1441,7 +1580,7 @@ const CloudJira: React.FC = () => {
 
           {batchModal.error && <div className="text-red-600 text-sm">{batchModal.error}</div>}
 
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
+          <div className="space-y-3 custom-scrollbar pr-1">
             {batchModal.suggestions.map((sug, idx) => (
               <div key={idx} className="flex gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750">
                 <input
@@ -1483,8 +1622,8 @@ const CloudJira: React.FC = () => {
         title="Confirm Delete"
         actions={
           <>
-            <button onClick={() => setDeleteModal({ open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300">Cancel</button>
-            <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
+            <button type="button" onClick={() => setDeleteModal({ open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300">Cancel</button>
+            <button type="button" onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
           </>
         }
       >
@@ -1496,15 +1635,22 @@ const CloudJira: React.FC = () => {
         open={compareModal.open}
         onClose={() => setCompareModal({ original: null, proposed: null, open: false })}
         title="Compare & Approve Changes"
-        maxWidth="max-w-2xl"
+        maxWidth="2xl"
         actions={
           <>
-            <button onClick={() => setCompareModal({ original: null, proposed: null, open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300">Cancel</button>
+            <button type="button" onClick={() => setCompareModal({ original: null, proposed: null, open: false })} className="px-4 py-2 text-gray-600 dark:text-gray-300">Cancel</button>
             <button
-              onClick={() => {
-                if (selectedTicket && editableProposed) {
-                  updateTicket(editableProposed, selectedTicket);
+              type="button"
+              onClick={async () => {
+                if (!selectedTicket || !editableProposed) {
+                  return;
+                }
+                setActionError(null);
+                try {
+                  await updateTicket(editableProposed, selectedTicket);
                   setCompareModal({ original: null, proposed: null, open: false });
+                } catch (error: any) {
+                  setActionError(extractRequestError(error, "Failed to update ticket."));
                 }
               }}
               className="px-4 py-2 bg-green-600 text-white rounded-lg"

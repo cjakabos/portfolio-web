@@ -68,7 +68,12 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
           <button 
             key={item.page} 
             onClick={() => navigate(item.page)}
-            className={`p-2 rounded-full ${currentPage === item.page ? 'text-indigo-600 bg-indigo-50 dark:bg-gray-700 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}
+            aria-label={item.label}
+            className={`m-0 w-auto min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-full ${
+              currentPage === item.page
+                ? 'text-indigo-600 bg-indigo-50 dark:bg-gray-700 dark:text-indigo-400'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
           >
             {item.icon}
           </button>

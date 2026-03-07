@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LatLng } from 'leaflet';
+import { getGatewayBaseUrl } from './gatewayBaseUrl';
 
 type VehicleId = number | string;
 export type VehicleCondition = 'NEW' | 'USED';
@@ -58,7 +59,7 @@ export interface VehicleFormData {
     lon: number;
 }
 
-const VEHICLES_API_URL = 'http://localhost:80/vehicles/cars';
+const VEHICLES_API_URL = `${getGatewayBaseUrl()}/vehicles/cars`;
 const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_MANUFACTURER = MANUFACTURERS[0];
 
@@ -126,8 +127,8 @@ const validateFormData = (formData: VehicleFormData): string | null => {
         return 'Number of doors must be an integer between 1 and 8.';
     }
 
-    if (!isIntegerInRange(formData.mileage, 0, 2_000_000)) {
-        return 'Mileage must be a whole number between 0 and 2,000,000.';
+    if (!isIntegerInRange(formData.mileage, 1, 2_000_000)) {
+        return 'Mileage must be a whole number between 1 and 2,000,000.';
     }
 
     if (!isIntegerInRange(formData.modelYear, 1886, CURRENT_YEAR + 2)) {
@@ -294,13 +295,14 @@ export const useVehicleMap = () => {
     };
 
     const handleMapClick = (e: { latlng: LatLng }) => {
-        // When map is clicked, open modal in CREATE mode with these coords
+        // When map is clicked, open modal in CREATE mode with fresh defaults
+        // and the clicked coordinates.
         setFormError(null);
-        setFormData(prev => ({
-            ...prev,
+        setFormData({
+            ...INITIAL_FORM,
             lat: Number(e.latlng.lat.toFixed(6)),
             lon: Number(e.latlng.lng.toFixed(6))
-        }));
+        });
         setFormMode('CREATE');
         setSelectedId(null);
         setShowModal(true);
@@ -329,7 +331,7 @@ export const useVehicleMap = () => {
             numberOfDoors: v.details.numberOfDoors ?? 4,
             fuelType: v.details.fuelType || 'Gasoline',
             engine: v.details.engine || '',
-            mileage: v.details.mileage ?? 1,
+            mileage: Math.max(1, v.details.mileage ?? 1),
             modelYear: v.details.modelYear ?? CURRENT_YEAR,
             productionYear: v.details.productionYear ?? v.details.modelYear ?? CURRENT_YEAR,
             lat: v.location.lat,

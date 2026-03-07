@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import type { Employee } from "../types";
+import { getGatewayBaseUrl } from "./gatewayBaseUrl";
+
+const PETSTORE_EMPLOYEE_URL = `${getGatewayBaseUrl()}/petstore/user/employee`;
 
 const initialEmployee: Employee = {
     id: "",
@@ -46,7 +49,7 @@ export const useEmployees = () => {
 
         try {
             await axios.post(
-                'http://localhost:80/petstore/user/employee',
+                PETSTORE_EMPLOYEE_URL,
                 postData,
                 axiosConfig
             );
@@ -71,7 +74,7 @@ export const useEmployees = () => {
 
         try {
             const response = await axios.get(
-                'http://localhost:80/petstore/user/employee',
+                PETSTORE_EMPLOYEE_URL,
                 axiosConfig
             );
             setAllEmployees(response.data);

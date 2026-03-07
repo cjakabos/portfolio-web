@@ -12,7 +12,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className = "", ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={`fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out ${className}`}
+    className={`absolute inset-0 bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out ${className}`}
     {...props}
   />
 ));
@@ -23,14 +23,18 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className = "", children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={`fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-gray-200 bg-white shadow-2xl focus:outline-none dark:border-gray-700 dark:bg-gray-800 ${className}`}
-      {...props}
-    >
-      {children}
-    </DialogPrimitive.Content>
+    <div className="fixed inset-0 z-[12000]">
+      <DialogOverlay />
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <DialogPrimitive.Content
+          ref={ref}
+          className={`relative z-[12001] w-full max-w-3xl rounded-xl border border-gray-200 bg-white shadow-2xl focus:outline-none dark:border-gray-700 dark:bg-gray-800 ${className}`}
+          {...props}
+        >
+          {children}
+        </DialogPrimitive.Content>
+      </div>
+    </div>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;

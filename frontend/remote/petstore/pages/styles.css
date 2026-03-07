@@ -121,7 +121,12 @@
   margin-top: 0;
 }
 
-input[type="text"], input[type="number"], input[type="phone"], select, input[type="submit"], input[type="password"], button {
+input[type="text"],
+input[type="number"],
+input[type="tel"],
+select,
+input[type="submit"],
+input[type="password"] {
   width: 300px;
   padding: 8px;
   margin: 10px 0;

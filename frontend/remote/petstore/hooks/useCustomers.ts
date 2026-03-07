@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { getGatewayBaseUrl } from "./gatewayBaseUrl";
+
+const gatewayBaseUrl = getGatewayBaseUrl();
+const PETSTORE_CUSTOMER_URL = `${gatewayBaseUrl}/petstore/user/customer`;
+const PETSTORE_PET_URL = `${gatewayBaseUrl}/petstore/pet`;
 
 const initialCustomer = {
     id: "",
@@ -62,7 +67,7 @@ export const useCustomers = () => {
 
         try {
             await axios.post(
-                'http://localhost:80/petstore/user/customer',
+                PETSTORE_CUSTOMER_URL,
                 postData,
                 axiosConfig
             );
@@ -85,7 +90,7 @@ export const useCustomers = () => {
 
         try {
             const response = await axios.get(
-                'http://localhost:80/petstore/user/customer',
+                PETSTORE_CUSTOMER_URL,
                 axiosConfig
             );
             setAllCustomers(response.data);
@@ -121,7 +126,7 @@ export const useCustomers = () => {
 
         try {
             await axios.post(
-                'http://localhost:80/petstore/pet',
+                PETSTORE_PET_URL,
                 postData,
                 axiosConfig
             );
