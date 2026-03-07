@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Cat, Calendar, Briefcase } from 'lucide-react';
+import { Users, Cat, Calendar, Briefcase, ChevronRight } from 'lucide-react';
 import { usePetStoreNavigation } from '../PetStoreApp';
 import { useCustomers } from '../../hooks/useCustomers';
 import { usePets } from '../../hooks/usePets';
@@ -33,58 +33,49 @@ const PetStoreDashboard: React.FC = () => {
         <div className="space-y-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">PetStore Dashboard</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">Overview of your pet store operations</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <button type="button" onClick={() => navigate('customers')} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between text-left transition hover:shadow-md hover:border-blue-200 dark:hover:border-blue-700">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase">Customers</p>
                 <p className="text-3xl font-bold mt-1">{allCustomers.length}</p>
               </div>
-              <div className="shrink-0 p-3 rounded-full bg-blue-500 text-white"><Users size={24} /></div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 p-3 rounded-full bg-blue-500 text-white"><Users size={24} /></div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </div>
+            </button>
+            <button type="button" onClick={() => navigate('pets')} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between text-left transition hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-700">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase">Pets</p>
                 <p className="text-3xl font-bold mt-1">{allPets.length}</p>
               </div>
-              <div className="shrink-0 p-3 rounded-full bg-indigo-500 text-white"><Cat size={24} /></div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 p-3 rounded-full bg-indigo-500 text-white"><Cat size={24} /></div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </div>
+            </button>
+            <button type="button" onClick={() => navigate('employees')} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between text-left transition hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-700">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase">Employees</p>
                 <p className="text-3xl font-bold mt-1">{allEmployees.length}</p>
               </div>
-              <div className="shrink-0 p-3 rounded-full bg-emerald-500 text-white"><Briefcase size={24} /></div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 p-3 rounded-full bg-emerald-500 text-white"><Briefcase size={24} /></div>
+                <ChevronRight className="text-gray-400" size={20} />
+              </div>
+            </button>
+            <button type="button" onClick={() => navigate('schedule')} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between text-left transition hover:shadow-md hover:border-amber-200 dark:hover:border-amber-700">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase">Scheduled</p>
                 <p className="text-3xl font-bold mt-1">{schedules.length}</p>
               </div>
-              <div className="shrink-0 p-3 rounded-full bg-amber-500 text-white"><Calendar size={24} /></div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-              <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button onClick={() => navigate('customers')} className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
-                  Add Customer
-                </button>
-                <button onClick={() => navigate('pets')} className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
-                  Check In Pet
-                </button>
-                <button onClick={() => navigate('schedule')} className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
-                  New Schedule
-                </button>
-                <button onClick={() => navigate('employees')} className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-700 dark:text-blue-300 font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center cursor-pointer">
-                  Staff Availability
-                </button>
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 p-3 rounded-full bg-amber-500 text-white"><Calendar size={24} /></div>
+                <ChevronRight className="text-gray-400" size={20} />
               </div>
-            </div>
+            </button>
           </div>
         </div>
     </div>

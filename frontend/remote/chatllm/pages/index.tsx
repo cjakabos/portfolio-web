@@ -194,10 +194,20 @@ const ChatLLM: React.FC = () => {
         <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full text-green-600 dark:text-green-400">
           <Bot size={24} />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h2 className="font-bold text-gray-900 dark:text-white">Local GPT</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">Private AI Assistant</p>
         </div>
+        {!modelsError && (
+          <button
+            onClick={fetchOllamaModels}
+            disabled={modelsLoading}
+            className="shrink-0 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+          >
+            {modelsLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {modelsLoading ? "Checking..." : "Refresh Models"}
+          </button>
+        )}
       </div>
 
       {/* Model Selector */}
@@ -390,21 +400,6 @@ const ChatLLM: React.FC = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={fetchOllamaModels}
-                disabled={modelsLoading}
-                className="text-sm px-3 py-1.5 rounded flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
-              >
-                {modelsLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                {modelsLoading ? "Checking..." : "Refresh Models"}
-              </button>
-              {selectedModel && (
-                <span className="text-xs text-green-600 dark:text-green-400 font-medium bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
-                  ✓ {selectedModel}
-                </span>
-              )}
-            </div>
           </>
         )}
       </div>

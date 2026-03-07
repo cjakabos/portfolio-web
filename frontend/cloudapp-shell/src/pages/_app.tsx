@@ -19,6 +19,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [hasMounted, setHasMounted] = useState(false);
   const router = useRouter();
   const { isAdmin, isReady, isInitialized, isChecking } = useAuth();
+  const isPublicRoute = router.pathname === '/login' || router.pathname === '/logout';
 
   const getSystemDarkPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -123,6 +124,10 @@ function MyApp({ Component, pageProps }: AppProps) {
       router.replace('/');
     }
   }, [hasMounted, isInitialized, isChecking, isReady, router.pathname, router]);
+
+  if (!isPublicRoute && (!isInitialized || isChecking || !isReady)) {
+    return null;
+  }
 
   // ---- Route-level access control (evaluated on every render) ----
   const currentRoute = allAuthedRoutes.find(r =>

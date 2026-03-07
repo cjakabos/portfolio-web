@@ -14,7 +14,7 @@ import { ShoppingCart, Package, CheckCircle, Plus, X } from 'lucide-react';
 
 const CloudShop: React.FC = () => {
 
-    const [activeTab, setActiveTab] = useState<'SHOP' | 'ORDERS'>('SHOP');
+    const [activeTab, setActiveTab] = useState<'SHOP' | 'CART' | 'ORDERS'>('SHOP');
 
 
    // 1. Auth
@@ -27,6 +27,7 @@ const CloudShop: React.FC = () => {
     // 3. Local UI State
     const [formValues, setFormValues] = useState(initialFormValues);
     const [modals, setModals] = useState({ item: false, history: false, cart: false });
+    const cartItemCount = cart.items.length;
 
     // 4. Initial Data Load
     useEffect(() => {
@@ -64,7 +65,7 @@ const CloudShop: React.FC = () => {
 
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+    <div className="flex h-full flex-col gap-6">
       {/* Create Item Modal */}
       {modals.item && isAdmin && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -150,17 +151,27 @@ const CloudShop: React.FC = () => {
         </div>
       )}
 
-      <div className="lg:col-span-2 space-y-6 overflow-y-auto pr-2">
-        <div className="flex items-center gap-4 mb-6 sticky top-0 bg-gray-100 dark:bg-gray-900 pt-1 z-10">
+      <div className="flex items-center gap-6 sticky top-0 bg-gray-100 dark:bg-gray-900 pt-1 z-10 overflow-x-auto">
             <button
                 onClick={() => setActiveTab('SHOP')}
-                className={`text-lg font-bold pb-2 border-b-2 ${activeTab === 'SHOP' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
+                className={`shrink-0 text-lg font-bold pb-2 border-b-2 ${activeTab === 'SHOP' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
             >
                 Store Items
             </button>
             <button
+                onClick={() => setActiveTab('CART')}
+                className={`relative shrink-0 pr-7 text-lg font-bold pb-2 border-b-2 ${activeTab === 'CART' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
+            >
+                Your Cart
+                {cartItemCount > 0 && (
+                    <span className="absolute right-0 top-0 inline-flex min-h-5 min-w-5 -translate-y-1/3 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </span>
+                )}
+            </button>
+            <button
                 onClick={() => setActiveTab('ORDERS')}
-                className={`text-lg font-bold pb-2 border-b-2 ${activeTab === 'ORDERS' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
+                className={`shrink-0 text-lg font-bold pb-2 border-b-2 ${activeTab === 'ORDERS' ? 'text-gray-900 dark:text-white border-green-500' : 'text-gray-400 border-transparent'}`}
             >
                 My Orders
             </button>
@@ -173,9 +184,10 @@ const CloudShop: React.FC = () => {
                     Add Item
                 </button>
             )}
-        </div>
+      </div>
 
-        {activeTab === 'SHOP' ? (
+      <div className="flex-1 overflow-y-auto pr-2">
+        {activeTab === 'SHOP' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {items.map(item => (
                 <div key={item.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
@@ -198,7 +210,58 @@ const CloudShop: React.FC = () => {
                 </div>
             ))}
             </div>
-        ) : (
+        )}
+
+        {activeTab === 'CART' && (
+            <div className="max-w-2xl">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col">
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <ShoppingCart size={20} className="text-green-600 dark:text-green-400"/> Your Cart
+                        </h3>
+                        {cart.items.length > 0 && (
+                            <button
+                                onClick={clearCart}
+                                className="text-sm font-medium text-red-500 hover:text-red-600 transition"
+                            >
+                                Clear Cart
+                            </button>
+                        )}
+                    </div>
+                    {cart.items.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">Cart is empty.</p>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <div className="space-y-3">
+                                {cart.items.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center gap-4 rounded-lg border border-gray-100 bg-gray-50/60 p-3 text-sm dark:border-gray-700 dark:bg-gray-900/40">
+                                        <div>
+                                            <p className="font-medium text-gray-800 dark:text-gray-200">{item.name}</p>
+                                            <p className="text-xs text-gray-400">{item.description}</p>
+                                        </div>
+                                        <span className="shrink-0 font-semibold text-gray-900 dark:text-white">${item.price.toFixed(2)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white mb-4">
+                                    <span>Total</span>
+                                    <span>${cart.total}</span>
+                                </div>
+                                <button
+                                    onClick={submitOrder}
+                                    className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-100 dark:shadow-green-900/20 flex justify-center items-center gap-2"
+                                >
+                                    <CheckCircle size={18} /> Checkout
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
+
+        {activeTab === 'ORDERS' && (
             <div className="space-y-4">
                 {history.map(order => (
                     <div key={order.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -226,49 +289,6 @@ const CloudShop: React.FC = () => {
                 {history.length === 0 && <div className="text-gray-500 dark:text-gray-400 text-center py-8">No past orders.</div>}
             </div>
         )}
-      </div>
-
-      <div className="lg:col-span-1">
-         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 sticky top-6 flex flex-col max-h-[calc(100vh-8rem)]">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 shrink-0">
-                <ShoppingCart size={20} className="text-green-600 dark:text-green-400"/> Your Cart
-            </h3>
-{cart.items.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Cart is empty.</p>
-            ) : (
-                <div className="flex-1 flex flex-col min-h-0">
-                    {/* Cart Items List with Scroll */}
-                    <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar mb-4">
-                        {cart.items.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-sm group p-2 hover:bg-gray-50 dark:hover:bg-gray-750 rounded-lg transition-colors">
-                                <div>
-                                    <p className="font-medium text-gray-800 dark:text-gray-200">{item.name}</p>
-                                    <p className="text-xs text-gray-400">${item.price.toFixed(2)}</p>
-                                </div>
-                                <button onClick={() => clearCart()} className="text-gray-300 hover:text-red-500 p-1">
-                                    &times;
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Total Footer */}
-                    <div className="pt-4 border-t border-gray-100 dark:border-gray-700 shrink-0 mt-auto">
-                        <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white mb-4">
-                            <span>Total</span>
-                            <span>${cart.total}</span>
-                        </div>
-                        <button
-                            onClick={submitOrder}
-                            className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-100 dark:shadow-green-900/20 flex justify-center items-center gap-2"
-                        >
-                            <CheckCircle size={18} /> Checkout
-                        </button>
-                    </div>
-                </div>
-            )}
-
-         </div>
       </div>
     </div>
   );

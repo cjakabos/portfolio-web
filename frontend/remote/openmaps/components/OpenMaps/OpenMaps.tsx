@@ -217,7 +217,7 @@ export default function CloudMaps() {
         </>
     );
 
-    const renderMapSurface = (mapRef: React.RefObject<L.Map | null>, hintOffsetClassName: string, resizeKey: string) => (
+    const renderMapSurface = (mapRef: React.RefObject<L.Map | null>, resizeKey: string) => (
         <div className="relative flex-1 min-h-0">
             <MapContainer
                 ref={mapRef}
@@ -260,8 +260,18 @@ export default function CloudMaps() {
                 ))}
             </MapContainer>
 
-            <div className={`absolute ${hintOffsetClassName} bg-white/90 dark:bg-black/70 backdrop-blur px-3 py-1 rounded-md shadow text-xs font-medium z-[400] pointer-events-none`}>
-                Click anywhere on map to add vehicle
+            <div
+                className="pointer-events-none absolute top-4 max-w-[calc(100%-8rem)] rounded-md px-3 py-1 text-center text-xs font-medium shadow backdrop-blur"
+                style={{
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 1200,
+                    background: 'rgba(15, 23, 42, 0.82)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                }}
+            >
+                Click on map to add vehicle
             </div>
         </div>
     );
@@ -307,7 +317,7 @@ export default function CloudMaps() {
                         {showModal ? (
                             <div className="flex-1 min-h-0 bg-gray-100 dark:bg-gray-900" />
                         ) : (
-                            renderMapSurface(desktopMapRef, 'left-4 top-4', `desktop-${vehicles.length}`)
+                            renderMapSurface(desktopMapRef, `desktop-${vehicles.length}`)
                         )}
                     </div>
                 </div>
@@ -362,7 +372,7 @@ export default function CloudMaps() {
                             showModal ? (
                                 <div className="flex-1 min-h-[22rem] bg-gray-100 dark:bg-gray-900" />
                             ) : (
-                                renderMapSurface(mobileMapRef, 'left-4 top-4', `mobile-${vehicles.length}-${mapExpanded ? 'open' : 'closed'}`)
+                                renderMapSurface(mobileMapRef, `mobile-${vehicles.length}-${mapExpanded ? 'open' : 'closed'}`)
                             )
                         )}
                     </div>

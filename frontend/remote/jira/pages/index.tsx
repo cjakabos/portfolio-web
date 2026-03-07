@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
   Plus, Trash2, MessageSquare, ChevronRight, ChevronDown, RefreshCw,
@@ -92,11 +91,11 @@ const Modal = ({
   actions?: React.ReactNode;
   maxWidth?: 'lg' | '2xl';
 }) => {
-  if (!open || typeof document === 'undefined') {
+  if (!open) {
     return null;
   }
 
-  return createPortal(
+  return (
     <div className="fixed inset-0 z-[2147483647]">
       <div
         className="absolute inset-0 z-0 bg-black/50"
@@ -104,9 +103,9 @@ const Modal = ({
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 z-10 flex items-start sm:items-center justify-center overflow-y-auto p-2 sm:p-4"
+        className="absolute inset-0 z-10 flex items-start justify-center overflow-y-auto p-2 sm:p-4"
         style={{
-          paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+          paddingTop: 'max(5rem, env(safe-area-inset-top))',
           paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
           paddingLeft: 'max(0.5rem, env(safe-area-inset-left))',
           paddingRight: 'max(0.5rem, env(safe-area-inset-right))',
@@ -116,30 +115,31 @@ const Modal = ({
           role="dialog"
           aria-modal="true"
           aria-label={title}
-          className={`${maxWidth === '2xl' ? 'max-w-2xl' : 'max-w-lg'} relative z-20 w-full overflow-hidden border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 flex flex-col rounded-xl`}
+          className={`${maxWidth === '2xl' ? 'max-w-2xl' : 'max-w-lg'} relative z-20 flex w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800`}
           style={{
-            maxHeight: 'calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+            maxHeight: 'calc(100dvh - 5.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
           }}
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="shrink-0 border-b border-gray-200 p-4 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
-            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-              <X size={20} />
-            </button>
-          </div>
-          <div className="p-4 sm:p-6 overflow-y-auto min-h-0 flex-1">
-            {children}
-          </div>
-          {actions && (
-            <div className="shrink-0 border-t border-gray-200 bg-gray-50 p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-800 flex flex-wrap justify-end gap-2">
-              {actions}
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="shrink-0 border-b border-gray-200 p-4 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+              <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <X size={20} />
+              </button>
             </div>
-          )}
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+              {children}
+            </div>
+            {actions && (
+              <div className="shrink-0 border-t border-gray-200 bg-gray-50 p-3 sm:p-4 dark:border-gray-700 dark:bg-gray-800 flex flex-wrap justify-end gap-2">
+                {actions}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 };
 
@@ -1082,9 +1082,21 @@ const CloudJira: React.FC = () => {
                 <h2 className="font-bold text-gray-900 dark:text-white truncate">Local GPT</h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Private AI Assistant</p>
               </div>
-              <button onClick={() => setChatOpen(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {!modelsError && (
+                  <button
+                    onClick={fetchOllamaModels}
+                    disabled={modelsLoading}
+                    className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    {modelsLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                    {modelsLoading ? 'Checking...' : 'Refresh Models'}
+                  </button>
+                )}
+                <button onClick={() => setChatOpen(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             {/* Model Selector */}
@@ -1274,21 +1286,6 @@ const CloudJira: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-2 bg-white dark:bg-gray-800">
-                    <button
-                      onClick={fetchOllamaModels}
-                      disabled={modelsLoading}
-                      className="text-sm px-3 py-1.5 rounded flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
-                    >
-                      {modelsLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                      {modelsLoading ? "Checking..." : "Refresh Models"}
-                    </button>
-                    {selectedModel && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Using: {selectedModel}
-                      </span>
-                    )}
-                  </div>
                 </>
               )}
             </div>

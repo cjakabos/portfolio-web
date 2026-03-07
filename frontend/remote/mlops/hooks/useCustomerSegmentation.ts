@@ -46,12 +46,59 @@ interface FormValues {
     spending_score: string;
 }
 
-// API configuration - adjust these for your environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:80';
+const androidNativeGatewayBaseUrl = 'http://localhost:8080';
+const defaultGatewayBaseUrl = 'http://localhost:80';
 const API_PREFIX = '/mlops-segmentation';
 const getJsonHeaders = () => ({ 'Content-Type': 'application/json' });
 
+const isNativeAndroidRuntime = () => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    const capacitor = (window as Window & {
+        Capacitor?: {
+            isNativePlatform?: () => boolean;
+            getPlatform?: () => string;
+            platform?: string;
+        };
+    }).Capacitor;
+
+    if (!capacitor) {
+        return false;
+    }
+
+    try {
+        if (typeof capacitor.getPlatform === 'function') {
+            return capacitor.getPlatform() === 'android';
+        }
+
+        if (typeof capacitor.platform === 'string') {
+            return capacitor.platform === 'android';
+        }
+
+        if (typeof capacitor.isNativePlatform === 'function') {
+            return capacitor.isNativePlatform() && /Android/i.test(navigator.userAgent);
+        }
+    } catch {
+        return false;
+    }
+
+    return false;
+};
+
+const getApiBaseUrl = () => {
+    if (isNativeAndroidRuntime()) {
+        return androidNativeGatewayBaseUrl;
+    }
+
+    return process.env.NEXT_PUBLIC_GATEWAY_BASE_URL
+        || process.env.NEXT_PUBLIC_API_URL
+        || defaultGatewayBaseUrl;
+};
+
 export function useCustomerSegmentation() {
+    const apiBaseUrl = getApiBaseUrl();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [mlData, setMlData] = useState<MLData | null>(null);
     const [loading, setLoading] = useState(false);
@@ -69,7 +116,7 @@ export function useCustomerSegmentation() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${API_BASE_URL}${API_PREFIX}/getMLInfo`, {
+            const response = await fetch(`${apiBaseUrl}${API_PREFIX}/getMLInfo`, {
                 method: 'POST',
                 headers: getJsonHeaders(),
                 credentials: 'include',
@@ -90,12 +137,12 @@ export function useCustomerSegmentation() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [apiBaseUrl]);
 
     // Fetch customer list
     const fetchCustomers = useCallback(async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}${API_PREFIX}/getSegmentationCustomers`, {
+            const response = await fetch(`${apiBaseUrl}${API_PREFIX}/getSegmentationCustomers`, {
                 method: 'GET',
                 headers: getJsonHeaders(),
                 credentials: 'include',
@@ -110,7 +157,7 @@ export function useCustomerSegmentation() {
         } catch (err) {
             console.error('Error fetching customers:', err);
         }
-    }, []);
+    }, [apiBaseUrl]);
 
     // Add a new customer
     const addCustomer = useCallback(async (customerData: {
@@ -121,7 +168,7 @@ export function useCustomerSegmentation() {
         segment: number;
     }) => {
         try {
-            const response = await fetch(`${API_BASE_URL}${API_PREFIX}/addCustomer`, {
+            const response = await fetch(`${apiBaseUrl}${API_PREFIX}/addCustomer`, {
                 method: 'POST',
                 headers: getJsonHeaders(),
                 credentials: 'include',
@@ -137,7 +184,7 @@ export function useCustomerSegmentation() {
             console.error('Error adding customer:', err);
             throw err;
         }
-    }, []);
+    }, [apiBaseUrl]);
 
     // Initial data fetch
     useEffect(() => {
