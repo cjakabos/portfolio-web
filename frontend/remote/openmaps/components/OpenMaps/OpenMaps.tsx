@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import axios from 'axios';
 import { ChevronDown, ChevronUp, Map as MapIcon, MapPin, Plus, Trash2, Edit, X, CarFront } from 'lucide-react';
 import {
     MapContainer,
@@ -14,7 +15,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import { useVehicleMap } from '../../hooks/useVehiclesMap';
-import type { VehicleFormData } from '../../hooks/useVehiclesMap';
+import { getGatewayBaseUrl } from '../../hooks/gatewayBaseUrl';
+import type { Vehicle, VehicleFormData } from '../../hooks/useVehiclesMap';
 
 type NumericFieldKey = 'numberOfDoors' | 'mileage' | 'modelYear' | 'productionYear' | 'lat' | 'lon';
 const toNumericDrafts = (data: VehicleFormData): Record<NumericFieldKey, string> => ({
@@ -87,10 +89,45 @@ export default function CloudMaps() {
     const [numericDrafts, setNumericDrafts] = React.useState<Record<NumericFieldKey, string>>(toNumericDrafts(formData));
     const [mobilePanel, setMobilePanel] = React.useState<'fleet' | 'map'>('map');
     const [isDesktopViewport, setIsDesktopViewport] = React.useState(true);
+    const [canManageVehicles, setCanManageVehicles] = React.useState(false);
+    const [authResolved, setAuthResolved] = React.useState(false);
     const desktopMapRef = React.useRef<L.Map | null>(null);
     const mobileMapRef = React.useRef<L.Map | null>(null);
     const fleetExpanded = mobilePanel === 'fleet';
     const mapExpanded = mobilePanel === 'map';
+    const mapHintText = !authResolved
+        ? ''
+        : canManageVehicles
+            ? 'Click on map to add vehicle'
+            : 'Read-only vehicle map';
+
+    const openCreateIfAdmin = React.useCallback(() => {
+        if (!canManageVehicles) {
+            return;
+        }
+        openCreate();
+    }, [canManageVehicles, openCreate]);
+
+    const openEditIfAdmin = React.useCallback((vehicle: Vehicle) => {
+        if (!canManageVehicles) {
+            return;
+        }
+        openEdit(vehicle);
+    }, [canManageVehicles, openEdit]);
+
+    const deleteVehicleIfAdmin = React.useCallback((vehicleId: Vehicle['id']) => {
+        if (!canManageVehicles) {
+            return;
+        }
+        void deleteVehicle(vehicleId);
+    }, [canManageVehicles, deleteVehicle]);
+
+    const handleMapClickIfAdmin = React.useCallback((event: any) => {
+        if (!canManageVehicles) {
+            return;
+        }
+        handleMapClick(event);
+    }, [canManageVehicles, handleMapClick]);
 
     const scheduleMapResize = React.useCallback((map: L.Map | null) => {
         if (!map) {
@@ -124,6 +161,44 @@ export default function CloudMaps() {
 
         return () => {
             mediaQuery.removeEventListener('change', syncViewport);
+        };
+    }, []);
+
+    React.useEffect(() => {
+        let isCancelled = false;
+
+        const loadAuthState = async () => {
+            try {
+                const response = await axios.get<{ roles?: string[] }>(
+                    `${getGatewayBaseUrl()}/cloudapp/user/auth-check`,
+                    { withCredentials: true }
+                );
+                const normalizedRoles = Array.isArray(response.data?.roles)
+                    ? response.data.roles
+                        .filter((role): role is string => typeof role === 'string')
+                        .map((role) => role.trim().toUpperCase())
+                    : [];
+
+                if (!isCancelled) {
+                    setCanManageVehicles(
+                        normalizedRoles.includes('ROLE_ADMIN') || normalizedRoles.includes('ADMIN')
+                    );
+                }
+            } catch {
+                if (!isCancelled) {
+                    setCanManageVehicles(false);
+                }
+            } finally {
+                if (!isCancelled) {
+                    setAuthResolved(true);
+                }
+            }
+        };
+
+        void loadAuthState();
+
+        return () => {
+            isCancelled = true;
         };
     }, []);
 
@@ -201,12 +276,16 @@ export default function CloudMaps() {
                             </div>
                         </div>
                         <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEdit(v)} className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded">
-                                <Edit size={16} />
-                            </button>
-                            <button onClick={() => deleteVehicle(v.id)} className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded">
-                                <Trash2 size={16} />
-                            </button>
+                            {canManageVehicles && (
+                                <>
+                                    <button onClick={() => openEditIfAdmin(v)} className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded">
+                                        <Edit size={16} />
+                                    </button>
+                                    <button onClick={() => deleteVehicleIfAdmin(v.id)} className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                     <div className="text-xs text-gray-400 flex items-center gap-1 font-mono bg-gray-50 dark:bg-gray-900/50 p-1 rounded w-fit">
@@ -229,14 +308,20 @@ export default function CloudMaps() {
                 className="h-full min-h-[22rem] lg:min-h-0"
             >
                 <MapResizeSync resizeKey={resizeKey} onResize={scheduleMapResize} />
-                <MapClickEvent onClick={handleMapClick} />
+                <MapClickEvent onClick={handleMapClickIfAdmin} />
 
                 <LayersControl position="topright">
-                    <LayersControl.BaseLayer checked name="CartoDB Voyager">
-                        <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+                    <LayersControl.BaseLayer checked name="OpenStreetMap">
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        />
                     </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="OpenStreetMap">
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <LayersControl.BaseLayer name="CartoDB Voyager">
+                        <TileLayer
+                            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        />
                     </LayersControl.BaseLayer>
                 </LayersControl>
 
@@ -251,8 +336,12 @@ export default function CloudMaps() {
                                 <strong className="block text-sm mb-1">{v.details.manufacturer.name}</strong>
                                 <span className="text-xs text-gray-600">{v.details.model}</span>
                                 <div className="mt-2 flex gap-2">
-                                    <button onClick={() => deleteVehicle(v.id)} className="text-xs text-red-600 hover:underline">Delete</button>
-                                    <button onClick={() => openEdit(v)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                                    {canManageVehicles && (
+                                        <>
+                                            <button onClick={() => deleteVehicleIfAdmin(v.id)} className="text-xs text-red-600 hover:underline">Delete</button>
+                                            <button onClick={() => openEditIfAdmin(v)} className="text-xs text-blue-600 hover:underline">Edit</button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </Popup>
@@ -260,19 +349,21 @@ export default function CloudMaps() {
                 ))}
             </MapContainer>
 
-            <div
-                className="pointer-events-none absolute top-4 max-w-[calc(100%-8rem)] rounded-md px-3 py-1 text-center text-xs font-medium shadow backdrop-blur"
-                style={{
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    zIndex: 1200,
-                    background: 'rgba(15, 23, 42, 0.82)',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                }}
-            >
-                Click on map to add vehicle
-            </div>
+            {mapHintText && (
+                <div
+                    className="pointer-events-none absolute top-4 max-w-[calc(100%-8rem)] rounded-md px-3 py-1 text-center text-xs font-medium shadow backdrop-blur"
+                    style={{
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 1200,
+                        background: 'rgba(15, 23, 42, 0.82)',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                    }}
+                >
+                    {mapHintText}
+                </div>
+            )}
         </div>
     );
 
@@ -295,9 +386,11 @@ export default function CloudMaps() {
                                 <CarFront className="h-5 w-5 text-blue-600" />
                                 <span className="truncate">Fleet Manager</span>
                             </div>
-                            <button type="button" onClick={openCreate} className={`ml-2 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
-                                <Plus size={20} />
-                            </button>
+                            {canManageVehicles && (
+                                <button type="button" onClick={openCreateIfAdmin} className={`ml-2 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
+                                    <Plus size={20} />
+                                </button>
+                            )}
                         </div>
                         <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
                             {renderFleetList()}
@@ -310,9 +403,11 @@ export default function CloudMaps() {
                                 <MapIcon className="h-5 w-5 text-blue-600" />
                                 <span className="truncate">Map View</span>
                             </div>
-                            <button type="button" onClick={openCreate} className={`ml-2 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
-                                <Plus size={20} />
-                            </button>
+                            {canManageVehicles && (
+                                <button type="button" onClick={openCreateIfAdmin} className={`ml-2 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
+                                    <Plus size={20} />
+                                </button>
+                            )}
                         </div>
                         {showModal ? (
                             <div className="flex-1 min-h-0 bg-gray-100 dark:bg-gray-900" />
@@ -338,9 +433,11 @@ export default function CloudMaps() {
                                     {fleetExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </span>
                             </button>
-                            <button type="button" onClick={openCreate} className={`ml-3 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
-                                <Plus size={20} />
-                            </button>
+                            {canManageVehicles && (
+                                <button type="button" onClick={openCreateIfAdmin} className={`ml-3 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
+                                    <Plus size={20} />
+                                </button>
+                            )}
                         </div>
                         {fleetExpanded && (
                             <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
@@ -364,9 +461,11 @@ export default function CloudMaps() {
                                     {mapExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </span>
                             </button>
-                            <button type="button" onClick={openCreate} className={`ml-3 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
-                                <Plus size={20} />
-                            </button>
+                            {canManageVehicles && (
+                                <button type="button" onClick={openCreateIfAdmin} className={`ml-3 ${panelActionButtonClassName}`} aria-label="Add vehicle" title="Add vehicle">
+                                    <Plus size={20} />
+                                </button>
+                            )}
                         </div>
                         {mapExpanded && (
                             showModal ? (

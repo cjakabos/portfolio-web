@@ -57,6 +57,19 @@ test.describe("Module Federation — Remote Loading", () => {
     if (bodyText?.includes("Module Load Error")) throw new Error("Maps fail");
   });
 
+  test("should keep Maps read-only for regular users", async ({ authedPage: page }) => {
+    await page.goto("/maps");
+    await page.waitForLoadState("domcontentloaded");
+    await waitForPageLoad(page);
+
+    const bodyText = await page.locator("body").textContent();
+    if (bodyText?.includes("Module Load Error")) throw new Error("Maps fail");
+
+    await expect(page.getByText("Map View")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Read-only vehicle map")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByLabel("Add vehicle")).toHaveCount(0);
+  });
+
   test("should load the GPT/ChatLLM remote module", async ({ authedPage: page }) => {
     await page.goto("/chatllm");
     await page.waitForLoadState("domcontentloaded");
@@ -104,5 +117,18 @@ test.describe("Module Federation — Admin-Only Remotes", () => {
     const bodyText = await page.locator("body").textContent();
     if (bodyText?.includes("Module Load Error")) throw new Error("PetStore fail");
     await expect(page.getByText("Access Denied")).not.toBeVisible();
+  });
+
+  test("should allow admins to manage vehicles in Maps", async ({ authedPage: page }) => {
+    await page.goto("/maps");
+    await page.waitForLoadState("domcontentloaded");
+    await waitForPageLoad(page);
+
+    const bodyText = await page.locator("body").textContent();
+    if (bodyText?.includes("Module Load Error")) throw new Error("Maps fail");
+
+    await expect(page.getByText("Map View")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByLabel("Add vehicle").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Read-only vehicle map")).toHaveCount(0);
   });
 });
