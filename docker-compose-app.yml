@@ -238,6 +238,7 @@ services:
         SERVICE_PATH: frontend/remote/openmaps
         SERVICE_PORT: 5002
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: ${NEXT_PUBLIC_GATEWAY_BASE_URL:-http://localhost:8080}
     container_name: next-openmaps
     ports:
       - 5002:5002
@@ -255,6 +256,7 @@ services:
         SERVICE_PATH: frontend/remote/jira
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: ${NEXT_PUBLIC_GATEWAY_BASE_URL:-http://localhost:8080}
         NEXT_PUBLIC_LLM_MODEL: ${LLM_MODEL}
         NEXT_PUBLIC_JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY}
     container_name: next-jira
@@ -293,6 +295,7 @@ services:
         SERVICE_PATH: frontend/remote/petstore
         SERVICE_PORT: 5006
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: ${NEXT_PUBLIC_GATEWAY_BASE_URL:-http://localhost:8080}
     container_name: next-petstore
     ports:
       - 5006:5006

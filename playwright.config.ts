@@ -22,9 +22,11 @@ import { defineConfig, devices } from "@playwright/test";
 const isCI = !!process.env.CI;
 const baseURL = process.env.BASE_URL || "http://localhost:5001";
 const backendURL = process.env.BACKEND_URL || "http://localhost:80";
+const mobileSpecPattern = /mobile\.(visual|interactions)\.spec\.ts/;
 
 export default defineConfig({
   testDir: "./e2e",
+  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   fullyParallel: false, // tests share auth state — run sequentially
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
@@ -63,6 +65,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
+      testIgnore: mobileSpecPattern,
     },
 
     // --- Firefox (opt-in: npx playwright test --project=firefox) ----------
@@ -73,6 +76,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
+      testIgnore: mobileSpecPattern,
     },
 
     // --- WebKit (opt-in) --------------------------------------------------
@@ -83,6 +87,16 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
+      testIgnore: mobileSpecPattern,
+    },
+
+    // --- Mobile Chromium visual + interaction regression -------------------
+    {
+      name: "mobile-chromium",
+      testMatch: mobileSpecPattern,
+      use: {
+        ...devices["Pixel 7"],
+      },
     },
   ],
 

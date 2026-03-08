@@ -35,6 +35,16 @@ describe("Capacitor config mobile smoke", () => {
     expect(config.appName).toBe("CloudApp");
     expect(config.webDir).toBe(".next");
     expect(config.server).toBeUndefined();
+    expect(config.plugins).toMatchObject({
+      Keyboard: {
+        resize: "body",
+        resizeOnFullScreen: true,
+      },
+      StatusBar: {
+        overlaysWebView: false,
+        style: "DEFAULT",
+      },
+    });
   });
 
   it("allows overriding webDir with CAP_WEB_DIR", () => {

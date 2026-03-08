@@ -13,113 +13,109 @@
 Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web Development](https://graduation.udacity.com/confirm/QDDKHJF9), [RAG and Agentic AI](https://www.coursera.org/account/accomplishments/specialization/JMUHR8ZOHOOE?utm_source=link&utm_medium=certificate&utm_content=cert_image&utm_campaign=sharing_cta&utm_product=prof) and [Predictive Analytics for Business](https://confirm.udacity.com/e/3ac984b2-6128-11ee-a6fe-9be76f9bc811) Nanodegrees. This repository is packed with full-stack solutions, ranging from microservices to interactive front-end interfaces, llm and agentic solutions and robust data analytics models.
 
 Example view of emulated Android app, browser view on PC and emulated iOS app:
-![Platform preview](./examples/16.png)
+![Platform preview](./examples/12.png)
 
 ## What You Can Try In 10 Minutes
 
-- `/jira`: Jira ticket operations with AI refinement
-- `/notes`: create private notes securely
-- `/files`: upload files securely
+- `/files`: manage your notes and files securely
 - `/shop`: full functioning shop
 - `/chat`: chat with other users
 - `/maps`: add vehicles on a map
-- `/mlops`: customer segmentation pipeline
 - `/chatllm`: local Ollama chat integration
+- `/mlops`: customer segmentation pipeline
+- `/jira`: Jira ticket operations with AI refinement
 - `/petstore`: pet scheduling and customer workflows
 - And a separate admin interface with agentic tools and natural chat with all the above services
 
 <details>
 <summary>Feature walkthrough and screenshots</summary>
 
-## 1) CloudApp Shell (MFE Host)
+## 1) Homepage
 
-- Path: `frontend/cloudapp-shell/`
-    - Role: main application shell and route host for remote modules.
+- Role: main application shell and route host for remote modules.
+- Some functionalities and menu items only accessible for Admin type of users.
 
 ![CloudApp login](./examples/1.png)
 
-## 2) Shop (CloudApp REST API)
+## 2) Notes + Files
+
+- User notes and file upload workflows
+
+![Notes](./examples/9.png)
+
+## 3) Shop
 
 - Create items (admin)
-    - Add items to cart
-    - Submit orders and inspect order history
+- Add items to cart
+- Submit orders and inspect order history
 
-![Shop module](./examples/4.png)
+![Shop module](./examples/2.png)
 
 API docs (when stack is running):
 - `http://localhost:80/cloudapp/swagger-ui/index.html#/item-controller`
-    - `http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller`
-    - `http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller`
+- `http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller`
+- `http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller`
 
-## 3) Petstore
+## 4) Real-Time Chat
 
-- Customer + pet lifecycle
-    - Employee scheduling and availability checks
+- Create rooms or join other people's room by shared room code.
 
-![Petstore module](./examples/5.png)
+![Chat rooms](./examples/10.png)
+![Chat messages](./examples/11.png)
 
-## 4) Maps + Vehicle API
+## 5) Maps + Vehicle API
 
-- OpenStreetMap integration for vehicle geolocation
-    - Add/remove vehicle locations from UI
+- Add/remove vehicle locations on OpenStreetMap
 
-![Maps module](./examples/8.png)
+![Maps module](./examples/4.png)
 
 Vehicles API docs:
 - `http://localhost:8880/vehicles/swagger-ui.html`
 
-## 5) Local LLM Chat (Ollama)
+## 6) Local LLM Chat (Ollama)
 
-- Prompt local models directly from UI
-    - Optional chain-of-thought display for models that support it
+- Discuss with local models directly from UI
+- Optional chain-of-thought display for models that support it
 
-![Local LLM chat](./examples/9.png)
+![Local LLM chat](./examples/5.png)
 
-## 6) Jira + AI Refinement
+## 7) Jira + AI Refinement
 
 - Create/list/update/delete Jira tickets
-    - Refine ticket drafts and child ticket proposals with local LLM
+- Refine ticket drafts and batch create child ticket proposals with local LLM
 
-![Jira module](./examples/10.png)
+![Jira module](./examples/7.png)
+![Jira module](./examples/8.png)
 
-## 7) Notes + Files
-
-- User notes and file upload workflows
-
-![Notes](./examples/12.png)
-![Files](./examples/13.png)
-
-## 8) Real-Time Chat
-
-- Kafka-backed chat rooms
-    - WebSocket bridge + MongoDB persistence
-
-![Chat rooms](./examples/14.png)
-![Chat messages](./examples/15.png)
-
-## 9) Machine learning system for Customer Segmentation
+## 8) Machine learning system for Customer Segmentation
 
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
 - Add new customer data point to the database.
 - Sample reference database with predefined 10-20-50-100-200 amount of samples.
 
-
 View results:
 - Graphs: correlation between parameters and the different segments.
 - Table: current list of customers from postgres db.
 
-![](examples/11.png)
+![](examples/6.png)
+
+## 9) Petstore
+
+- Customer + pet lifecycle
+- Employee scheduling and availability checks
+
+![Petstore module](./examples/3.png)
 
 ## 10) AI Orchestration Layer
 
 Path: `ai-orchestration/ai-orchestration-layer/`
 
 Capabilities include:
-- LangGraph-based routing and workflow execution
-    - RAG ingestion/query over ChromaDB
-    - Human-in-the-loop approval queue
-    - A/B experimentation lifecycle and metrics
-    - Resilience/circuit breaking with graceful fallback behavior
+- LangGraph-based routing and workflow execution for the 1-9 services above
+- RAG ingestion/query over ChromaDB
+- Human-in-the-loop approval queue
+- A/B experimentation lifecycle and metrics
+- Resilience/circuit breaking with graceful fallback behavior
 
 ## 11) Admin AI Orchestration Monitor
 
@@ -127,13 +123,13 @@ Path: `ai-orchestration/ai-orchestration-monitor/`
 
 Provides:
 - Streaming interface
-    - Observability dashboard
-    - RAG dashboard
-    - Approval queue
-    - Tool explorer
-    - Error dashboard
-    - Service health dashboard
-    - Model selector and unified operator view
+- Observability dashboard
+- RAG dashboard
+- Approval queue
+- Tool explorer
+- Error dashboard
+- Service health dashboard
+- Model selector and unified operator view
 
 ![AI monitor](./examples/d1.png)
 </details>
@@ -509,7 +505,8 @@ make test-ios-smoke-all
 - Capacitor app id: `com.portfolio.cloudapp`
 - Capacitor app name: `CloudApp`
 - Android hosted mode default URL: `http://localhost:5001`
-- Android API URL default: `http://localhost:8080/cloudapp` (adb reverse `8080 -> host 80`)
+- Android API URL default: `http://localhost:8080/cloudapp` (adb reverse `8080 -> host 80`, because Android cannot reliably bind reversed port `80`)
+- Android local build script also sets adb reverse for common remote/data ports by default: `5002`, `5003`, `5005`, `5006`, `5333`, `11434`
 - Android Maestro flow file: `tests/e2e/mobile/maestro/android-smoke.yaml`
 
 If you run hosted mode from `docker-compose-app.yml`, rebuild the shell + gateway so the shell bundle uses the Android-safe API base:
@@ -622,7 +619,7 @@ npm run playwright:open
 - Why: isolated project-scoped networks + no host ports for test DB/services.
 - Can still clash on resources (CPU/RAM), causing slower/flakier tests.
 - `host-ui` profile can clash on ports `80`, `5001`, `5005`.
-    - If those ports are already used, stop app stack first or do not use `host-ui`.
+- If those ports are already used, stop app stack first or do not use `host-ui`.
 
 ## Docker Debugging
 

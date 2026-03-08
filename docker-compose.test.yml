@@ -402,6 +402,10 @@ services:
       - BACKEND_URL=http://test-nginx:80
       - MONITOR_URL=http://test-ai-monitor:5010
     volumes:
+      # Always use the current host-side tests/snapshots/config instead of
+      # whatever was baked into an older test-e2e image.
+      - ./e2e:/e2e/e2e
+      - ./playwright.config.ts:/e2e/playwright.config.ts:ro
       # Mount report output so it's accessible on the host after the run
       - ./playwright-report:/e2e/playwright-report
       - ./test-results:/e2e/test-results
@@ -523,7 +527,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
-    restart: "no"
+    restart: on-failure
 
   test-vehicles:
     build:
@@ -636,6 +640,7 @@ services:
         SERVICE_PATH: frontend/remote/openmaps
         SERVICE_PORT: 5002
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: http://test-nginx:80
     networks:
       - test-frontend
     healthcheck:
@@ -654,6 +659,7 @@ services:
         SERVICE_PATH: frontend/remote/jira
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: http://test-nginx:80
     networks:
       - test-frontend
     healthcheck:
@@ -694,6 +700,7 @@ services:
         SERVICE_PATH: frontend/remote/petstore
         SERVICE_PORT: 5006
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: http://test-nginx:80
     networks:
       - test-frontend
     healthcheck:

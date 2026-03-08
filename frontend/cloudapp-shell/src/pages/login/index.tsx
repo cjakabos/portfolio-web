@@ -65,16 +65,16 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-3 sm:p-4">
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
-        <div className="bg-gray-50 dark:bg-gray-900 p-8 text-center border-b border-gray-200 dark:border-gray-700">
-          <div className="mx-auto w-40 h-40 bg-gray-800 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 mb-4 shadow-inner p-2">
+        <div className="bg-gray-50 dark:bg-gray-900 px-6 py-5 sm:p-8 text-center border-b border-gray-200 dark:border-gray-700">
+          <div className="mx-auto h-24 w-24 sm:h-40 sm:w-40 bg-gray-800 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 mb-3 sm:mb-4 shadow-inner p-2">
             <Image src="/drawing_white.svg" alt="CloudApp" width={160} height={160} className="w-full h-full object-contain" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">CloudApp</h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2">Please sign in to continue</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-5 sm:space-y-6">
                   {error && (
                     <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-300 px-4 py-3 rounded-lg text-sm">
                       {error}

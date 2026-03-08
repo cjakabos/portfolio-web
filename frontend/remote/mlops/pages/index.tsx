@@ -276,36 +276,50 @@ export default function CloudMLOps() {
         }
 
         return (
-            <ResponsiveContainer width="100%" height={320}>
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 50, left: 50 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                        type="number"
-                        dataKey="x"
-                        name="PC1"
-                        tick={{ fontSize: 11 }}
-                        label={{ value: 'Principal Component 1', position: 'bottom', offset: 35, fontSize: 12 }}
-                    />
-                    <YAxis
-                        type="number"
-                        dataKey="y"
-                        name="PC2"
-                        tick={{ fontSize: 11 }}
-                        label={{ value: 'Principal Component 2', angle: -90, position: 'insideLeft', offset: -5, fontSize: 12 }}
-                    />
-                    <Tooltip content={<ClusterTooltip />} />
-                    <Legend verticalAlign="top" height={36} />
+            <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
                     {segments.map(seg => (
-                        <RechartsScatter
+                        <div
                             key={seg}
-                            name={`Segment ${seg}`}
-                            data={clusterData[Number(seg)]}
-                            fill={getSegmentColor(Number(seg))}
-                            opacity={0.7}
-                        />
+                            className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                        >
+                            <CircleDot size={12} style={{ color: getSegmentColor(Number(seg)) }} />
+                            Segment {seg}
+                        </div>
                     ))}
-                </ScatterChart>
-            </ResponsiveContainer>
+                </div>
+                <div className="w-full" style={{ height: 'clamp(320px, 42vh, 420px)' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart margin={{ top: 16, right: 20, bottom: 56, left: 40 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis
+                                type="number"
+                                dataKey="x"
+                                name="PC1"
+                                tick={{ fontSize: 11 }}
+                                label={{ value: 'Principal Component 1', position: 'bottom', offset: 28, fontSize: 12 }}
+                            />
+                            <YAxis
+                                type="number"
+                                dataKey="y"
+                                name="PC2"
+                                tick={{ fontSize: 11 }}
+                                label={{ value: 'Principal Component 2', angle: -90, position: 'insideLeft', offset: -4, fontSize: 12 }}
+                            />
+                            <Tooltip content={<ClusterTooltip />} />
+                            {segments.map(seg => (
+                                <RechartsScatter
+                                    key={seg}
+                                    name={`Segment ${seg}`}
+                                    data={clusterData[Number(seg)]}
+                                    fill={getSegmentColor(Number(seg))}
+                                    opacity={0.7}
+                                />
+                            ))}
+                        </ScatterChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         );
     };
 
@@ -532,9 +546,9 @@ export default function CloudMLOps() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] gap-8 w-full">
                 {/* --- Left Column: Controls --- */}
-                <div className="lg:col-span-1 space-y-6">
+                <div className="space-y-6">
                     {/* 1. Manual Input Card */}
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                         <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -631,7 +645,7 @@ export default function CloudMLOps() {
                 </div>
 
                 {/* --- Right Column: Visuals & Data --- */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-6 min-w-0">
 
                     {/* Visualizations Panel */}
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -640,14 +654,14 @@ export default function CloudMLOps() {
                         </h3>
 
                         {/* Visualization Tabs */}
-                        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                        <div className="grid grid-cols-3 gap-2 border-b border-gray-200 dark:border-gray-700 mb-4 pb-2">
                             {vizTabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveVizTab(tab.id)}
-                                    className={`flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${activeVizTab === tab.id
+                                    className={`px-3 py-2 text-sm font-medium transition-colors flex flex-col sm:flex-row items-center justify-center gap-1.5 rounded-lg ${activeVizTab === tab.id
                                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                                         }`}
                                 >
                                     <tab.icon size={14} />

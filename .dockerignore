@@ -20,6 +20,11 @@
 **/*.log
 **/target
 
+# Frontend mobile-native artifacts are not needed for Dockerized web/service builds.
+# Excluding them removes ~1GB of avoidable context transfer on each root-context build.
+frontend/cloudapp-shell/android
+frontend/cloudapp-shell/ios
+
 logs
 playwright-report
 test-results

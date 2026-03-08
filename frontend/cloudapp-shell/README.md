@@ -80,14 +80,12 @@ The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
 If everything is correctly started, you should see a login page with optional Dark Mode:
-<p align="center">
-  <img src="../../examples/1.png" width="210px" height="150px" />
-</p>
+![](../../examples/1.png)
 
 And you should be able to register and log in, [after starting the backend services, cloudapp is a must, the rest is optional](#2-cloudapp-api), and see the current front-end of the api integrations from the services above:
 
 ## 1. Machine learning system for Customer Segmentation
-![](../../examples/11.png)  
+![](../../examples/6.png)  
 MLOps interface for [Customer Segmentation API](../../backend/ml-pipeline/README.md), the user is able to:
 - Add new customer data point to the database.
 - Sample reference database with user specified samples.
@@ -100,7 +98,7 @@ View results:
 
 
 ## 2. Shop interface for [Cloudapp web store REST API](../../backend/cloudapp/README.md),
-![](../../examples/4.png)
+![](../../examples/2.png)
 The user is able to:
 - Create new items (admin only).
 - Add existing items to the cart.
@@ -117,7 +115,7 @@ The module is built as Micro Frontend:
 CloudApp-Shell as App Shell using the Petstore micro frontend:  
 http://localhost:5001/petstore
 
-![](../../examples/5.png)  
+![](../../examples/3.png)  
 
 The user is able to:
 - Add new customer.
@@ -132,7 +130,7 @@ The module is built as Micro Frontend:
 CloudApp-Shell as App Shell using the Maps micro frontend:  
 http://localhost:5001/maps
 
-![](../../examples/8.png)
+![](../../examples/4.png)
 Map interface for integrating Open Street Map with the [Vehicle location service's REST API](../../backend/vehicles-api/README.md).
 The user is able to:
 - Click on the map to add new vehicle locations.
@@ -149,7 +147,7 @@ The module is built as Micro Frontend:
 CloudApp-Shell as App Shell using the Local LLM AI micro frontend:  
 http://localhost:5001/chatllm
 
-![](../../examples/9.png)
+![](../../examples/5.png)
 
 3. Optionally one can also use command line:
 ```bash
@@ -175,12 +173,12 @@ The user is able to:
 
   CloudApp-Shell as App Shell using the Jira micro frontend:  
   http://localhost:5001/jira
-  ![](examples/10.png)
+  ![](../../examples/7.png)
+  ![](../../examples/8.png)
 
 ## 7. Notes and Files
 A service for creating personal notes and uploading personal files.
-![](../../examples/12.png)
-![](../../examples/13.png)
+![](../../examples/9.png)
 - Notes [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/note-controller)
 - Files [API documentation](http://localhost:80/cloudapp/swagger-ui/index.html#/file-controller)
 ## 8. Chat
@@ -188,10 +186,10 @@ A Kafka based chat service, the user is able to:
 
 - Create new chat rooms, furthermore share and enter chat room id
 
-![](../../examples/13.png)
+![](../../examples/10.png)
 - Talk to other users in chat rooms
 
-![](../../examples/14.png)
+![](../../examples/11.png)
 
 
 # Optional API services
