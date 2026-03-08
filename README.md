@@ -17,23 +17,10 @@ Example view of emulated Android app, browser view on PC and emulated iOS app:
 
 ## What You Can Try In 10 Minutes
 
-- `/files`: manage your notes and files securely
-- `/shop`: full functioning shop
-- `/chat`: chat with other users
-- `/maps`: add vehicles on a map
-- `/chatllm`: local Ollama chat integration
-- `/mlops`: customer segmentation pipeline
-- `/jira`: Jira ticket operations with AI refinement
-- `/petstore`: pet scheduling and customer workflows
-- And a separate admin interface with agentic tools and natural chat with all the above services
-
-<details>
-<summary>Feature walkthrough and screenshots</summary>
-
 ## 1) Homepage
 
-- Role: main application shell and route host for remote modules.
-- Some functionalities and menu items only accessible for Admin type of users.
+- Shared overview for regular and admin users, where regular users have access for private notes, files, shopping, chatting with other users, checking vehicle location on maps and chatting with LLM.
+- For Admin type of users: Jira for internal ticket management, MLOps for customer segmentation and PetStore for schedule management.
 
 ![CloudApp login](./examples/1.png)
 
@@ -45,16 +32,11 @@ Example view of emulated Android app, browser view on PC and emulated iOS app:
 
 ## 3) Shop
 
-- Create items (admin)
 - Add items to cart
 - Submit orders and inspect order history
+- Create new items (admin only)
 
 ![Shop module](./examples/2.png)
-
-API docs (when stack is running):
-- `http://localhost:80/cloudapp/swagger-ui/index.html#/item-controller`
-- `http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller`
-- `http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller`
 
 ## 4) Real-Time Chat
 
@@ -63,16 +45,14 @@ API docs (when stack is running):
 ![Chat rooms](./examples/10.png)
 ![Chat messages](./examples/11.png)
 
-## 5) Maps + Vehicle API
+## 5) Maps with vehicle locations
 
-- Add/remove vehicle locations on OpenStreetMap
+- Regular user: view vehicle locations on OpenStreetMap.
+- Admin user: Add/remove vehicles.
 
 ![Maps module](./examples/4.png)
 
-Vehicles API docs:
-- `http://localhost:8880/vehicles/swagger-ui.html`
-
-## 6) Local LLM Chat (Ollama)
+## 6) Local AI chat
 
 - Discuss with local models directly from UI
 - Optional chain-of-thought display for models that support it
@@ -101,7 +81,7 @@ View results:
 
 ## 9) Petstore
 
-- Customer + pet lifecycle
+- Customer + pet management
 - Employee scheduling and availability checks
 
 ![Petstore module](./examples/3.png)
@@ -122,17 +102,16 @@ Capabilities include:
 Path: `ai-orchestration/ai-orchestration-monitor/`
 
 Provides:
-- Streaming interface
+- Chat interface to talk with the services in 1-9
 - Observability dashboard
 - RAG dashboard
 - Approval queue
-- Tool explorer
+- Agentic Tool explorer for the services in 1-9
 - Error dashboard
 - Service health dashboard
 - Model selector and unified operator view
 
 ![AI monitor](./examples/d1.png)
-</details>
 
 
 ## Why This Repo Exists
@@ -411,6 +390,20 @@ Workflows:
 CI covers backend, ML, gateway, contract checks, frontend unit tests, E2E, and AI monitor checks.
 
 </details>
+
+<details>
+<summary>API docs</summary>
+
+API docs (when stack is running):
+- `http://localhost:80/cloudapp/swagger-ui/index.html#/item-controller`
+- `http://localhost:80/cloudapp/swagger-ui/index.html#/cart-controller`
+- `http://localhost:80/cloudapp/swagger-ui/index.html#/order-controller`
+
+Vehicles API docs:
+- `http://localhost:80/vehicles/swagger-ui.html`
+</details>
+
+
 
 <details>
 <summary>Mobile Packaging for Android and iOS (Capacitor)</summary>
