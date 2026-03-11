@@ -1,8 +1,9 @@
 name: Nightly - AI Integrations
 
 on:
-  schedule:
-    - cron: "0 2 * * *"
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 # Least-privilege: read-only access to repo contents.

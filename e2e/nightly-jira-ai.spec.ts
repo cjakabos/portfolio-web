@@ -198,10 +198,7 @@ async function createParentTicket(page: Page, summary: string, description: stri
   const newTicketButton = await waitForJiraBoardInteractive(page);
   await newTicketButton.click({ timeout: 30_000 });
 
-  const createModal = page
-    .locator('h3:has-text("Create New Ticket")')
-    .locator('xpath=ancestor::div[contains(@class,"max-w-lg")]')
-    .first();
+  const createModal = page.getByRole("dialog", { name: "Create New Ticket" });
   await expect(createModal).toBeVisible({ timeout: 30_000 });
 
   await createModal.locator('label:has-text("Summary *") + input').fill(summary);
@@ -273,13 +270,10 @@ test.describe("Nightly AI Integration - Jira", () => {
       const childKeysBefore = await fetchChildKeys(request, token, parentKey);
 
       await clickTicketAction(page, parentKey, "Batch Create");
-      const batchModal = page
-        .locator('h3:has-text("Batch Create Tickets")')
-        .locator('xpath=ancestor::div[contains(@class,"max-w-lg")]')
-        .first();
+      const batchModal = page.getByRole("dialog", { name: "Batch Create Tickets" });
       await expect(batchModal).toBeVisible({ timeout: 30_000 });
 
-      const countInput = batchModal.locator('label:has-text("Count") + input[type="number"]');
+      const countInput = batchModal.locator('label:has-text("Count") + input');
       await countInput.fill("2");
 
       await batchModal.getByRole("button", { name: "Ask AI for Suggestions" }).click();
