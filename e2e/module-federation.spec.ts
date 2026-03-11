@@ -70,6 +70,16 @@ test.describe("Module Federation — Remote Loading", () => {
     await expect(page.getByLabel("Add vehicle")).toHaveCount(0);
   });
 
+  test("should keep Maps read-only for non-admin users", async ({ authedPage: page }) => {
+    await page.goto("/maps");
+    await page.waitForLoadState("domcontentloaded");
+    await waitForPageLoad(page);
+
+    await expect(page.getByText("Fleet Manager")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Read-only vehicle map")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByLabel("Add vehicle")).toHaveCount(0);
+  });
+
   test("should load the GPT/ChatLLM remote module", async ({ authedPage: page }) => {
     await page.goto("/chatllm");
     await page.waitForLoadState("domcontentloaded");
@@ -130,5 +140,15 @@ test.describe("Module Federation — Admin-Only Remotes", () => {
     await expect(page.getByText("Map View")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByLabel("Add vehicle").first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Read-only vehicle map")).toHaveCount(0);
+  });
+
+  test("should show vehicle management controls to admin users on Maps", async ({ authedPage: page }) => {
+    await page.goto("/maps");
+    await page.waitForLoadState("domcontentloaded");
+    await waitForPageLoad(page);
+
+    await expect(page.getByText("Fleet Manager")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Read-only vehicle map")).toHaveCount(0);
+    await expect(page.getByLabel("Add vehicle").first()).toBeVisible({ timeout: 30_000 });
   });
 });

@@ -82,3 +82,5 @@ frontend/cloudapp-shell/ios/App/Pods/
 frontend/cloudapp-shell/ios/App/build/
 frontend/cloudapp-shell/ios/DerivedData/
 frontend/cloudapp-shell/ios/App/App.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+e2e/.auth/
