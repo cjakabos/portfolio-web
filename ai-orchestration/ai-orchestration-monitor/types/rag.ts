@@ -124,6 +124,7 @@ export interface RAGStatsResponse {
   persist_directory: string;
   collection_name: string;
   embedding_model: string;
+  rag_llm_model?: string;
 }
 
 // Health Response

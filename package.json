@@ -1,0 +1,15 @@
+{
+  "name": "portfolio-web-workspace",
+  "private": true,
+  "workspaces": [
+    "frontend/cloudapp-shell",
+    "frontend/remote/*",
+    "ai-orchestration/ai-orchestration-monitor"
+  ],
+  "scripts": {
+    "frontend:typecheck": "npm run typecheck --workspaces --if-present",
+    "frontend:lint": "npm run lint --workspaces --if-present",
+    "frontend:build": "npm run build --workspaces --if-present",
+    "frontend:test": "npm run test --workspaces --if-present"
+  }
+}

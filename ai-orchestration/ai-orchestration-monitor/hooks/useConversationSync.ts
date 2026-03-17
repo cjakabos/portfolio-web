@@ -18,6 +18,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 export interface SyncedMessage {
   request_id: string;
   user_message: string;
+  original_message?: string;
+  approval_id?: string;
   response: string;
   capabilities_used: string[];
   timestamp: string;
