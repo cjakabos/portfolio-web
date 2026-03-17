@@ -26,6 +26,11 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    public boolean userExists(String username) {
+        return username != null && !username.isBlank() && userRepository.findByUsername(username) != null;
+    }
+
+    @Override
     public UserOrder submit(String username) {
         User user = requireUser(username, "order submit");
         UserOrder order = UserOrder.createFromCart(user.getCart());

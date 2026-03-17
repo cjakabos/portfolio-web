@@ -40,6 +40,7 @@ public class OrderControllerTest {
     public void setup() {
         orderController = new OrderController(orderService, internalRequestAuthorizer);
         when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
+        when(orderService.userExists(any())).thenReturn(true);
     }
 
     @Test
@@ -84,5 +85,45 @@ public class OrderControllerTest {
         assertNotNull(ordersForUser);
         assertEquals(BigDecimal.valueOf(50000), ordersForUser.getBody().get(0).getTotal());
 
+    }
+
+    @Test
+    public void submit_returns_not_found_before_authorization_when_user_missing() {
+        when(orderService.userExists("ghostuser")).thenReturn(false);
+
+        ResponseEntity<UserOrder> response = orderController.submit(
+                "ghostuser",
+                authFor("otheruser"),
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(orderService, never()).submit(any());
+    }
+
+    @Test
+    public void submit_returns_forbidden_for_other_authenticated_user_when_target_exists() {
+        ResponseEntity<UserOrder> response = orderController.submit(
+                "testuser",
+                authFor("otheruser"),
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(orderService, never()).submit(any());
+    }
+
+    @Test
+    public void get_orders_returns_not_found_before_authorization_when_user_missing() {
+        when(orderService.userExists("ghostuser")).thenReturn(false);
+
+        ResponseEntity<List<UserOrder>> response = orderController.getOrdersForUser(
+                "ghostuser",
+                authFor("otheruser"),
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(orderService, never()).findOrdersForUser(any());
     }
 }

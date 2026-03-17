@@ -375,12 +375,84 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 8C: Optional Dependency Scans (Maven / OWASP)
+  # JOB 8C: Optional Dependency Scans (Maven / OWASP Warmup)
   # =========================================================================
-  dependency-scan-maven:
-    name: "Dependency Security — Maven Audit"
+  dependency-scan-maven-update:
+    name: "Dependency Security — Maven OWASP Warmup"
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
+    outputs:
+      status: ${{ steps.maven-warmup.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Warm OWASP Dependency-Check data
+        id: maven-warmup
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+            --quiet
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:update-only \
+            "${common_args[@]}" "${nvd_args[@]}" 2>/dev/null; then
+            status=issues-found
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Save OWASP Dependency-Check data
+        if: always() && steps.restore-odc-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ steps.restore-odc-cache.outputs.cache-primary-key }}
+
+  # =========================================================================
+  # JOB 8D: Optional Dependency Scans (Maven / OWASP per service)
+  # =========================================================================
+  dependency-scan-maven-cloudapp:
+    name: "Dependency Security — Maven Audit (CloudApp)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
     outputs:
       status: ${{ steps.maven-audit.outputs.status }}
 
@@ -395,15 +467,19 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Cache OWASP Dependency-Check data
-        uses: actions/cache@v4
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/dependency-check
-          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
           restore-keys: |
-            ${{ runner.os }}-dependency-check-
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
 
-      - name: Audit Maven dependencies (OWASP Dependency-Check)
+      - name: Audit CloudApp Maven dependencies
         id: maven-audit
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
@@ -412,6 +488,8 @@ jobs:
           data_dir="$HOME/.cache/dependency-check"
           mkdir -p "$data_dir"
           status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/cloudapp-owasp-report.json"
 
           common_args=(
             -DdataDirectory="$data_dir"
@@ -429,39 +507,356 @@ jobs:
             nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
           fi
 
-          if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:update-only \
-            "${common_args[@]}" "${nvd_args[@]}" 2>/dev/null; then
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
             status=issues-found
           fi
 
-          for dir in backend/cloudapp backend/petstore backend/vehicles-api backend/web-proxy; do
-            name="$(basename "$dir")"
-            generated_report="audit-reports/dependency-check-report.json"
-            target_report="audit-reports/${name}-owasp-report.json"
-            rm -f "$generated_report" "$target_report"
-
-            if ! mvn -f "$dir/pom.xml" org.owasp:dependency-check-maven:check \
-              "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
-              status=issues-found
-            fi
-
-            if [ -f "$generated_report" ]; then
-              mv "$generated_report" "$target_report"
-            fi
-          done
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
 
           echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload CloudApp Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-cloudapp
+          path: audit-reports/
+          retention-days: 7
+
+  dependency-scan-maven-petstore:
+    name: "Dependency Security — Maven Audit (Petstore)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit Petstore Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/petstore-owasp-report.json"
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+            --quiet
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/petstore/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Petstore Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-petstore
+          path: audit-reports/
+          retention-days: 7
+
+  dependency-scan-maven-vehicles-api:
+    name: "Dependency Security — Maven Audit (Vehicles API)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit Vehicles API Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/vehicles-api-owasp-report.json"
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+            --quiet
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/vehicles-api/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Vehicles API Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-vehicles-api
+          path: audit-reports/
+          retention-days: 7
+
+  dependency-scan-maven-web-proxy:
+    name: "Dependency Security — Maven Audit (Web Proxy)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit Web Proxy Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/web-proxy-owasp-report.json"
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+            --quiet
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/web-proxy/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Web Proxy Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-web-proxy
+          path: audit-reports/
+          retention-days: 7
+
+  # =========================================================================
+  # JOB 8E: Optional Dependency Scans (Maven / OWASP summary)
+  # =========================================================================
+  dependency-scan-maven:
+    name: "Dependency Security — Maven Audit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs:
+      [
+        dependency-scan-maven-update,
+        dependency-scan-maven-cloudapp,
+        dependency-scan-maven-petstore,
+        dependency-scan-maven-vehicles-api,
+        dependency-scan-maven-web-proxy,
+      ]
+    outputs:
+      status: ${{ steps.maven-summary.outputs.status }}
+
+    steps:
+      - name: Download Maven audit reports
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dependency-audit-maven-report-*
+          path: audit-reports/maven
+          merge-multiple: true
 
       - name: Upload Maven audit reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-audit-maven-reports
-          path: audit-reports/
+          path: audit-reports/maven/
+          if-no-files-found: warn
           retention-days: 7
 
+      - name: Summarize Maven audit
+        id: maven-summary
+        run: |
+          warmup_status="${{ needs.dependency-scan-maven-update.outputs.status }}"
+          cloudapp_status="${{ needs.dependency-scan-maven-cloudapp.outputs.status }}"
+          petstore_status="${{ needs.dependency-scan-maven-petstore.outputs.status }}"
+          vehicles_status="${{ needs.dependency-scan-maven-vehicles-api.outputs.status }}"
+          web_proxy_status="${{ needs.dependency-scan-maven-web-proxy.outputs.status }}"
+
+          if [ -z "$warmup_status" ]; then
+            warmup_status="${{ needs.dependency-scan-maven-update.result }}"
+          fi
+          if [ -z "$cloudapp_status" ]; then
+            cloudapp_status="${{ needs.dependency-scan-maven-cloudapp.result }}"
+          fi
+          if [ -z "$petstore_status" ]; then
+            petstore_status="${{ needs.dependency-scan-maven-petstore.result }}"
+          fi
+          if [ -z "$vehicles_status" ]; then
+            vehicles_status="${{ needs.dependency-scan-maven-vehicles-api.result }}"
+          fi
+          if [ -z "$web_proxy_status" ]; then
+            web_proxy_status="${{ needs.dependency-scan-maven-web-proxy.result }}"
+          fi
+
+          status=clean
+          for job_status in \
+            "$warmup_status" \
+            "$cloudapp_status" \
+            "$petstore_status" \
+            "$vehicles_status" \
+            "$web_proxy_status"; do
+            if [ "$job_status" != "clean" ]; then
+              status=issues-found
+            fi
+          done
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+          echo "## Maven Dependency Audit" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Scope | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| NVD Warmup | $warmup_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| CloudApp | $cloudapp_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Petstore | $petstore_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Vehicles API | $vehicles_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Web Proxy | $web_proxy_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Merged reports are uploaded as the \`dependency-audit-maven-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
+
   # =========================================================================
-  # JOB 8D: Optional Dependency Scan Summary
+  # JOB 8F: Optional Dependency Scan Summary
   # =========================================================================
   dependency-scans:
     name: "Dependency Security — Audit"

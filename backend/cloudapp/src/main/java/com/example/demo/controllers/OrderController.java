@@ -57,12 +57,20 @@ public class OrderController {
                 getAuthenticatedUsername(auth));
     }
 
+    private <T> ResponseEntity<T> notFound(String action, String username) {
+        log.warn("User not found during {} for username={}", action, username);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
     @PostMapping("/submit/{username}")
     public ResponseEntity<UserOrder> submit(
             @PathVariable String username,
             Authentication auth,
             HttpServletRequest request
     ) {
+        if (!orderService.userExists(username)) {
+            return notFound("order-submit", username);
+        }
         if (!isAuthorized(auth, username, request)) {
             logForbidden("order-submit", username, auth);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -77,6 +85,9 @@ public class OrderController {
             Authentication auth,
             HttpServletRequest request
     ) {
+        if (!orderService.userExists(username)) {
+            return notFound("order-history", username);
+        }
         if (!isAuthorized(auth, username, request)) {
             logForbidden("order-history", username, auth);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

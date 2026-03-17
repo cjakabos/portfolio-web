@@ -358,17 +358,17 @@ services:
 
   test-frontend-unit:
     image: node:20-alpine
-    working_dir: /app
+    working_dir: /build
     entrypoint:
       [
         "sh",
         "-lc",
-        "npm ci && npm install --save-dev @testing-library/react @testing-library/jest-dom axios-mock-adapter jest jest-environment-jsdom ts-jest @types/jest && npx jest --config jest.config.cjs --coverage",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false && npm run --workspace frontend/cloudapp-shell test -- --coverage",
       ]
     environment:
       - CI=true
     volumes:
-      - ./frontend/cloudapp-shell:/app
+      - ./:/workspace:ro
 
   # =========================================================================
   # TEST ORCHESTRATOR (single-command full matrix)
@@ -496,8 +496,8 @@ services:
   # =========================================================================
   test-ai-monitor:
     build:
-      context: ./ai-orchestration/ai-orchestration-monitor
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ai-orchestration/ai-orchestration-monitor/Dockerfile
       args:
         # Use same-origin URLs in the browser test stack and let the Playwright
         # proxy/stubs forward monitor API calls to the gateway as needed.

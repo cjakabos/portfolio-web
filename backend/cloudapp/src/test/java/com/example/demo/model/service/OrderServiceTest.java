@@ -15,7 +15,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -41,6 +43,16 @@ class OrderServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> orderService.submit("missing"));
         verify(orderRepository, never()).save(any(UserOrder.class));
+    }
+
+    @Test
+    void user_exists_reflects_repository_lookup() {
+        when(userRepository.findByUsername("testuser")).thenReturn(new User(1L, "testuser", "secret"));
+        when(userRepository.findByUsername("missing")).thenReturn(null);
+
+        assertTrue(orderService.userExists("testuser"));
+        assertFalse(orderService.userExists("missing"));
+        assertFalse(orderService.userExists("  "));
     }
 
     @Test

@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 import CloudProfile from "../pages/profile";
+import { useAuth } from "../hooks/useAuth";
+import { getCloudAppCsrfHeaders } from "../hooks/cloudappCsrf";
 
 jest.mock("next/router", () => ({
   useRouter: () => ({
@@ -15,13 +17,36 @@ jest.mock("next/router", () => ({
   }),
 }));
 
+jest.mock("../hooks/useAuth", () => ({
+  useAuth: jest.fn(),
+}));
+
+jest.mock("../hooks/cloudappCsrf", () => ({
+  getCloudAppCsrfHeaders: jest.fn(),
+}));
+
 const API_URL = "http://localhost:80/cloudapp";
+const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockedGetCloudAppCsrfHeaders =
+  getCloudAppCsrfHeaders as jest.MockedFunction<typeof getCloudAppCsrfHeaders>;
 
 describe("CloudProfile page", () => {
   let mock: MockAdapter;
 
   beforeEach(() => {
     mock = new MockAdapter(axios);
+    mockedUseAuth.mockReturnValue({
+      username: "",
+      roles: [],
+      isAdmin: false,
+      isReady: false,
+      isInitialized: true,
+      isChecking: false,
+      refreshAuthState: jest.fn(),
+    });
+    mockedGetCloudAppCsrfHeaders.mockResolvedValue({
+      "X-XSRF-TOKEN": "test-xsrf",
+    });
     window.localStorage.clear();
     document.cookie = "XSRF-TOKEN=test-xsrf; path=/";
   });
@@ -33,9 +58,14 @@ describe("CloudProfile page", () => {
   });
 
   test("shows role from auth-check and keeps username/email disabled", async () => {
-    mock.onGet(`${API_URL}/user/auth-check`).reply(200, {
+    mockedUseAuth.mockReturnValue({
       username: "alice",
       roles: ["ROLE_USER", "ROLE_ADMIN"],
+      isAdmin: true,
+      isReady: true,
+      isInitialized: true,
+      isChecking: false,
+      refreshAuthState: jest.fn(),
     });
 
     render(React.createElement(CloudProfile));
@@ -56,9 +86,14 @@ describe("CloudProfile page", () => {
   });
 
   test("submits password change with current password and csrf header", async () => {
-    mock.onGet(`${API_URL}/user/auth-check`).reply(200, {
+    mockedUseAuth.mockReturnValue({
       username: "alice",
       roles: ["ROLE_USER"],
+      isAdmin: false,
+      isReady: true,
+      isInitialized: true,
+      isChecking: false,
+      refreshAuthState: jest.fn(),
     });
     mock.onPost(`${API_URL}/user/user-change-password`).reply(200, {
       username: "alice",
