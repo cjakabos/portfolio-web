@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { AppProps } from "next/app";
 import axios from 'axios';
+import Script from 'next/script';
 import Layout from "../components/Layout";
 import AccessDenied from "../components/AccessDenied";
 import '../styles/globals.css';
@@ -10,6 +11,7 @@ import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
 import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
+import { normalizeTrackedUrl, trackPageview } from '../lib/analytics/umami';
 
 type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -17,9 +19,14 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
   const [themePreference, setThemePreference] = useState<ThemePreference>('system');
   const [hasMounted, setHasMounted] = useState(false);
+  const [isUmamiReady, setIsUmamiReady] = useState(false);
   const router = useRouter();
   const { isAdmin, isReady, isInitialized, isChecking } = useAuth();
   const isPublicRoute = router.pathname === '/login' || router.pathname === '/logout';
+  const lastTrackedUrlRef = useRef<string | null>(null);
+  const umamiHostUrl = process.env.NEXT_PUBLIC_UMAMI_HOST_URL?.replace(/\/+$/, '') || '';
+  const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
+  const shouldLoadUmami = Boolean(umamiHostUrl && umamiWebsiteId);
 
   const getSystemDarkPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -125,6 +132,29 @@ function MyApp({ Component, pageProps }: AppProps) {
     }
   }, [hasMounted, isInitialized, isChecking, isReady, router.pathname, router]);
 
+  useEffect(() => {
+    if (!hasMounted || !isUmamiReady || !router.isReady) {
+      return;
+    }
+
+    const handlePageview = (url: string) => {
+      const trackedUrl = normalizeTrackedUrl(url);
+      if (lastTrackedUrlRef.current === trackedUrl) {
+        return;
+      }
+
+      trackPageview(url);
+      lastTrackedUrlRef.current = trackedUrl;
+    };
+
+    handlePageview(router.asPath);
+    router.events.on('routeChangeComplete', handlePageview);
+
+    return () => {
+      router.events.off('routeChangeComplete', handlePageview);
+    };
+  }, [hasMounted, isUmamiReady, router]);
+
   if (!isPublicRoute && (!isInitialized || isChecking || !isReady)) {
     return null;
   }
@@ -158,6 +188,17 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+      {shouldLoadUmami && (
+        <Script
+          id="umami-tracker"
+          src={`${umamiHostUrl}/script.js`}
+          data-auto-track="false"
+          data-host-url={umamiHostUrl}
+          data-website-id={umamiWebsiteId}
+          strategy="afterInteractive"
+          onReady={() => setIsUmamiReady(true)}
+        />
+      )}
       <Layout>
         <Component {...pageProps} />
       </Layout>
