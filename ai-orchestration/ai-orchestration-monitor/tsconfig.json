@@ -26,9 +26,5 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  },
-  "exclude": [
-    "hooks/useApi.tsx",
-    "hooks/useSystemStatus.ts"
-  ]
+  }
 }
