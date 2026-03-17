@@ -582,10 +582,10 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 
 ## Targeted Runs
 ```bash
-SERVICE=test-e2e
+SERVICE=test-e2e-core
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e`.
+- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`
@@ -666,6 +666,7 @@ Use the smallest Compose topology that answers the question:
 Build only what changed:
 
 ```bash
+docker compose -f docker-compose.test.yml build test-shell-core test-e2e-core
 docker compose -f docker-compose.test.yml build test-shell test-e2e
 docker compose -f docker-compose.test.yml build test-nginx test-cloudapp
 docker compose -f docker-compose.test.yml build test-ai-monitor
@@ -674,6 +675,7 @@ docker compose -f docker-compose.test.yml build test-ai-monitor
 Run one-off focused commands:
 
 ```bash
+docker compose -f docker-compose.test.yml run --rm test-e2e-core e2e/auth.spec.ts --grep-invert "Admin-Only Routes"
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=chromium
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/monitor.spec.ts --project=chromium
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --grep "Logout"
@@ -682,6 +684,7 @@ docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --g
 Bring up dependencies for manual inspection:
 
 ```bash
+docker compose -f docker-compose.test.yml up -d test-shell-core test-nginx-core
 docker compose -f docker-compose.test.yml up -d test-shell test-nginx test-ai-monitor
 docker compose -f docker-compose-app.yml up -d
 docker compose -f docker-compose-infrastructure.yml up -d
@@ -726,7 +729,9 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 For E2E failures:
 
 ```bash
+docker compose -f docker-compose.test.yml build test-shell-core test-e2e-core
 docker compose -f docker-compose.test.yml build test-shell test-e2e
+docker compose -f docker-compose.test.yml run --rm test-e2e-core e2e/auth.spec.ts e2e/shop.spec.ts --grep-invert "Admin-Only Routes"
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts --project=webkit
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/shop.spec.ts '--project=firefox' --grep 'should create a real item and add it to cart without request stubs'
 docker compose -f docker-compose.test.yml run --rm test-e2e e2e/auth.spec.ts e2e/monitor.spec.ts --grep "admin|logout"

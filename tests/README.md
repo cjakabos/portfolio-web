@@ -22,7 +22,8 @@ services, and contract governance.
 | Frontend unit tests | `test-frontend-unit` | React and hook-level tests in the shell app |
 | Gateway integration tests | `test-nginx-gateway` | Auth enforcement, routing, rate limiting, and CORS/security headers |
 | API contract governance | `test-api-contracts` | OpenAPI drift detection and generated TypeScript contract validation |
-| End-to-end browser tests | `test-e2e` | Playwright flows across the full stack |
+| End-to-end browser tests (core) | `test-e2e-core` | Playwright flows for CloudApp shell, auth, shop, chat, and mobile regression paths |
+| End-to-end browser tests (remotes) | `test-e2e` | Playwright flows for module federation, admin remotes, MLOps, and AI monitor |
 | Docs drift checks | `python3 scripts/check_docs_drift.py` | Validates that key repo docs still match the current CI/test model |
 | Full matrix runner | `test-all` | Runs the test services sequentially in a deterministic order |
 
@@ -49,6 +50,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-unit
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-nginx-gateway
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e-core
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e
 python3 scripts/check_docs_drift.py
 ```
@@ -75,7 +77,8 @@ The CI workflow runs the following categories:
 - AI monitor static checks
 - AI monitor component tests
 - AI monitor behavior tests
-- Playwright E2E
+- Playwright E2E (core)
+- Playwright E2E (remotes)
 
 See `.github/workflows/ci-tests.yml` for the exact job graph.
 
@@ -83,7 +86,14 @@ See `.github/workflows/ci-tests.yml` for the exact job graph.
 
 The browser E2E layer uses Playwright, not Cypress.
 
-The `test-e2e` service boots a full stack with:
+The `test-e2e-core` service boots the lean CloudApp browser stack with:
+
+- shell UI
+- gateway
+- CloudApp backend
+- CloudApp datastores
+
+The `test-e2e` service boots the full routed stack with:
 
 - shell UI
 - gateway

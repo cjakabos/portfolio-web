@@ -439,6 +439,28 @@ services:
   #   BASE_URL=http://localhost:5001 BACKEND_URL=http://localhost:80 \
   #     npx playwright test --headed
   # =========================================================================
+  test-e2e-core:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PW
+    environment:
+      - CI=true
+      - BASE_URL=http://test-shell-core:5001
+      - BACKEND_URL=http://test-nginx-core:80
+    volumes:
+      - ./e2e:/e2e/e2e
+      - ./playwright.config.ts:/e2e/playwright.config.ts:ro
+      - ./playwright-report:/e2e/playwright-report
+      - ./test-results:/e2e/test-results
+    depends_on:
+      test-shell-core:
+        condition: service_healthy
+      test-nginx-core:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+
   test-e2e:
     build:
       context: ./
@@ -649,6 +671,28 @@ services:
       start_period: 30s
     restart: "no"
 
+  test-nginx-core:
+    build:
+      context: ./frontend/nginx
+      dockerfile: Dockerfile
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+    volumes:
+      - ./backend/cloudapp/src/test/resources/test-public-key.pub:/etc/nginx/localhost+3-key.pub:ro
+    depends_on:
+      test-cloudapp:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -4sf http://localhost/nginx_health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: "no"
+
   test-nginx:
     build:
       context: ./frontend/nginx
@@ -770,6 +814,33 @@ services:
       - test-frontend
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:5333/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  test-shell-core:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/cloudapp-shell
+        SERVICE_PORT: 5001
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_OPENMAPS_URL: http://test-openmaps-frontend:5002
+        NEXT_PUBLIC_REMOTE_JIRA_URL: http://test-jira-frontend:5003
+        NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
+        NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
+        NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
+        NEXT_PUBLIC_API_URL: /cloudapp
+        NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx-core/cloudapp
+    environment:
+      - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx-core/cloudapp
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5001/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
