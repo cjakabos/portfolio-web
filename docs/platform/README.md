@@ -17,6 +17,8 @@ define the current platform direction.
   core platform, operator support, and legacy/demo-derived areas
 - [frontend-version-policy.md](./frontend-version-policy.md): approved shared
   frontend dependency versions and intentional exceptions
+- [runtime-and-data-policy.md](./runtime-and-data-policy.md): operational
+  defaults and exception posture for runtimes and data stores
 - [secret-classification.md](./secret-classification.md): secret classes,
   handling rules, and local versus production expectations
 - [remaining-backlog-pr-plan.md](./remaining-backlog-pr-plan.md): sequenced PR

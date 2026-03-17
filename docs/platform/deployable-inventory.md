@@ -15,6 +15,7 @@ work is added.
 
 - [docs/platform/README.md](./README.md)
 - [secret-classification.md](./secret-classification.md)
+- [runtime-and-data-policy.md](./runtime-and-data-policy.md)
 - [adr/adr-001-gateway-policy-boundary.md](./adr/adr-001-gateway-policy-boundary.md)
 - [adr/adr-002-frontend-workspace-strategy.md](./adr/adr-002-frontend-workspace-strategy.md)
 - [adr/adr-003-ai-operator-boundary.md](./adr/adr-003-ai-operator-boundary.md)
