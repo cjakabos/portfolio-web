@@ -197,6 +197,28 @@ docker compose -f docker-compose-app.yml up -d
 
 - Admin AI orchestration: http://localhost:5010
 
+### Optional: self-hosted product analytics with Umami
+
+Set these in your root `.env` file:
+
+```bash
+UMAMI_DB_NAME=umami
+UMAMI_DB_USER=umami
+UMAMI_DB_PASSWORD=replace-me
+UMAMI_APP_SECRET=replace-me-with-openssl-rand-hex-32
+```
+
+Bootstrap the dedicated PostgreSQL database and start Umami:
+
+```bash
+make bootstrap-umami-db
+docker compose -f docker-compose-infrastructure.yml up -d umami
+```
+
+Open http://localhost:3001
+
+On a brand-new Umami database, the default sign-in is `admin` / `umami`. Change it immediately after the first login.
+
 ### 5) Optional: Jira functionality
 <details>
 <summary>See details</summary>
