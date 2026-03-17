@@ -79,8 +79,10 @@ export const useSchedules = () => {
             );
             setAvailableEmployees(response.data);
             await getPets();
+            return response.data as Employee[];
         } catch (error) {
             console.error("Failed to fetch employee availability", error);
+            return [] as Employee[];
         }
     }, []);
 
@@ -121,8 +123,10 @@ export const useSchedules = () => {
                 axiosConfig
             );
             await getSchedules();
+            return true;
         } catch (error) {
             console.error("Failed to create schedule", error);
+            return false;
         }
     };
 

@@ -17,6 +17,7 @@ import {
     Area
 } from 'recharts';
 import { useCustomerSegmentation } from '../hooks/useCustomerSegmentation';
+import { trackEvent } from '../lib/analytics';
 
 // Default segment colors
 const SEGMENT_COLORS: Record<number, string> = {
@@ -110,10 +111,23 @@ export default function CloudMLOps() {
 
     const handlePageChange = (direction: 'next' | 'prev') => {
         if (direction === 'next' && currentPage < totalPages) {
+            trackEvent('mlops_table_page_change', {
+                direction,
+                next_page: currentPage + 1
+            });
             setCurrentPage(prev => prev + 1);
         } else if (direction === 'prev' && currentPage > 1) {
+            trackEvent('mlops_table_page_change', {
+                direction,
+                next_page: currentPage - 1
+            });
             setCurrentPage(prev => prev - 1);
         }
+    };
+
+    const handleVizTabChange = (tabId: VisualizationTab) => {
+        setActiveVizTab(tabId);
+        trackEvent('mlops_viz_tab_change', { tab: tabId });
     };
 
     // Get segment color from metadata or default
@@ -658,7 +672,7 @@ export default function CloudMLOps() {
                             {vizTabs.map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveVizTab(tab.id)}
+                                    onClick={() => handleVizTabChange(tab.id)}
                                     className={`px-3 py-2 text-sm font-medium transition-colors flex flex-col sm:flex-row items-center justify-center gap-1.5 rounded-lg ${activeVizTab === tab.id
                                             ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                             : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'

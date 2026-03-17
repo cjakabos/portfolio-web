@@ -241,6 +241,39 @@ services:
       - backend
 
   # ===========================================================================
+  # PRODUCT ANALYTICS — Umami
+  #
+  # Low-overhead self-hosted analytics with its own dedicated PostgreSQL
+  # database and role. Bootstrap the database with:
+  #   make bootstrap-umami-db
+  # ===========================================================================
+  umami:
+    image: docker.umami.is/umami-software/umami:postgresql-latest
+    container_name: umami
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      DATABASE_URL: postgresql://${UMAMI_DB_USER:?Set UMAMI_DB_USER in .env}:${UMAMI_DB_PASSWORD:?Set UMAMI_DB_PASSWORD in .env}@postgres:5432/${UMAMI_DB_NAME:?Set UMAMI_DB_NAME in .env}
+      APP_SECRET: ${UMAMI_APP_SECRET:?Set UMAMI_APP_SECRET in .env}
+      DISABLE_TELEMETRY: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/login').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))\"",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - backend
+
+  # ===========================================================================
   # AI ORCHESTRATION INFRASTRUCTURE
   # ===========================================================================
   redis:

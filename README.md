@@ -197,6 +197,42 @@ docker compose -f docker-compose-app.yml up -d
 
 - Admin AI orchestration: http://localhost:5010
 
+### Optional: self-hosted product analytics with Umami
+
+Set these in your root `.env` file:
+
+```bash
+UMAMI_DB_NAME=umami
+UMAMI_DB_USER=umami
+UMAMI_DB_PASSWORD=replace-me
+UMAMI_APP_SECRET=replace-me-with-openssl-rand-hex-32
+NEXT_PUBLIC_UMAMI_HOST_URL=http://localhost:3001
+NEXT_PUBLIC_UMAMI_WEBSITE_ID=<website-id-from-umami-ui>
+NEXT_PUBLIC_UMAMI_DOMAINS=localhost,127.0.0.1
+```
+
+Bootstrap the dedicated PostgreSQL database and start Umami:
+
+```bash
+make bootstrap-umami-db
+docker compose -f docker-compose-infrastructure.yml up -d umami
+```
+
+Open http://localhost:3001
+
+On a brand-new Umami database, the default sign-in is `admin` / `umami`. Change it immediately after the first login.
+
+After you create the website entry in Umami, set `NEXT_PUBLIC_UMAMI_WEBSITE_ID` in your root `.env` and rebuild the shell app because the website ID is injected at build time.
+
+Tracker defaults in the shell app:
+
+- manual SPA pageviews
+- browser DNT respected
+- search params and hashes excluded
+- `beforeSend` payload sanitization for URLs, referrers, and custom event data
+
+Full setup, privacy rules, and the current event catalog live in [docs/umami-analytics.md](/Users/csaba/1_CODING/portfolio-web/docs/umami-analytics.md).
+
 ### 5) Optional: Jira functionality
 <details>
 <summary>See details</summary>

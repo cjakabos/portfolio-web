@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import axios from "axios";
 import { Item, Cart } from '../../types';
 import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
+import { trackEvent } from "../lib/analytics/umami";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 const JSON_HEADERS = {
@@ -52,6 +53,10 @@ export const useCart = (username: string) => {
                 { username, itemId: item.id, quantity: 1 },
                 await getUnsafeRequestConfig()
             );
+            trackEvent("shop_add_to_cart", {
+                item_id: item.id,
+                price: item.price,
+            });
             await fetchCart();
         } catch (error) {
             console.error("Add to Cart Error", error);
@@ -64,6 +69,10 @@ export const useCart = (username: string) => {
                 { username },
                 await getUnsafeRequestConfig()
             );
+            trackEvent("shop_cart_clear", {
+                item_count: cart.items.length,
+                total: cart.total,
+            });
             setCart({ id: res.data.id, items: res.data.items || [], total: res.data.total });
             setTotal(res.data.total);
         } catch (error) {
@@ -74,6 +83,10 @@ export const useCart = (username: string) => {
     const submitOrder = async () => {
         try {
             await axios.post(`${API_URL}/order/submit/${username}`, '', await getUnsafeRequestConfig());
+            trackEvent("shop_checkout_submit", {
+                item_count: cart.items.length,
+                total: cart.total,
+            });
             await clearCart();
             await fetchHistory(); // Refresh history immediately
         } catch (error) {

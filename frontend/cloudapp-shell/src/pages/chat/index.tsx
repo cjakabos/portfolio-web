@@ -6,6 +6,7 @@ import { MessageSquare, Users, Plus, LogIn } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
 import { useAuth } from '../../hooks/useAuth';
+import { trackEvent } from '../../lib/analytics/umami';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
 const CHAT_WS_API_URL = (
@@ -97,6 +98,10 @@ const Chat: React.FC = () => {
 
       // Navigate to the new room — the room page handles its own WebSocket connection
       if (res.data.data.code) {
+        trackEvent('chat_room_create', {
+          room_code: res.data.data.code,
+          room_name_length: newRoomName.trim().length,
+        });
         router.push(`/chat/rooms/${res.data.data.code}?created=true`);
       }
     } catch (err) {
@@ -118,6 +123,9 @@ const Chat: React.FC = () => {
 
       // Connect to WebSocket for the joined room
       connectSocket(joinCode, username);
+      trackEvent('chat_room_join', {
+        room_code: joinCode.trim(),
+      });
 
       router.push(`/chat/rooms/${joinCode}`)
       setJoinCode('');

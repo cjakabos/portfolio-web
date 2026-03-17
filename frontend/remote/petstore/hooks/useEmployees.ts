@@ -58,8 +58,10 @@ export const useEmployees = () => {
             setEmployee(initialEmployee);
             setSelectedMultiOptions([]);
             setSelectedDayOption(["MONDAY", "TUESDAY", "FRIDAY"]);
+            return true;
         } catch (error: any) {
             console.error("Failed to create employee", error);
+            return false;
         }
     };
 

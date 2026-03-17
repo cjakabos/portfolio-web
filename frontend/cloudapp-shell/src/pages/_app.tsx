@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { AppProps } from "next/app";
 import axios from 'axios';
+import Script from 'next/script';
 import Layout from "../components/Layout";
 import AccessDenied from "../components/AccessDenied";
 import '../styles/globals.css';
@@ -10,6 +11,14 @@ import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
 import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
+import {
+  installBeforeSendHandler,
+  normalizeTrackedUrl,
+  parseDomainList,
+  trackEvent,
+  trackPageview,
+  UMAMI_BEFORE_SEND_HANDLER,
+} from '../lib/analytics/umami';
 
 type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -17,9 +26,22 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isDark, setIsDark] = useState(false);
   const [themePreference, setThemePreference] = useState<ThemePreference>('system');
   const [hasMounted, setHasMounted] = useState(false);
+  const [isUmamiReady, setIsUmamiReady] = useState(false);
+  const [isUmamiConfigReady, setIsUmamiConfigReady] = useState(false);
   const router = useRouter();
   const { isAdmin, isReady, isInitialized, isChecking } = useAuth();
   const isPublicRoute = router.pathname === '/login' || router.pathname === '/logout';
+  const lastTrackedUrlRef = useRef<string | null>(null);
+  const lastAccessDeniedPathRef = useRef<string | null>(null);
+  const umamiHostUrl = process.env.NEXT_PUBLIC_UMAMI_HOST_URL?.replace(/\/+$/, '') || '';
+  const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
+  const umamiDomains = parseDomainList(process.env.NEXT_PUBLIC_UMAMI_DOMAINS);
+  const shouldLoadUmami = Boolean(umamiHostUrl && umamiWebsiteId);
+  const currentRoute = allAuthedRoutes.find(r =>
+    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
+  );
+  const isAdminRoute = Boolean(currentRoute?.adminOnly);
+  const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
 
   const getSystemDarkPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -125,16 +147,63 @@ function MyApp({ Component, pageProps }: AppProps) {
     }
   }, [hasMounted, isInitialized, isChecking, isReady, router.pathname, router]);
 
+  useEffect(() => {
+    if (!hasMounted || !isUmamiReady || !router.isReady) {
+      return;
+    }
+
+    const handlePageview = (url: string) => {
+      const trackedUrl = normalizeTrackedUrl(url);
+      if (lastTrackedUrlRef.current === trackedUrl) {
+        return;
+      }
+
+      trackPageview(url);
+      lastTrackedUrlRef.current = trackedUrl;
+    };
+
+    handlePageview(router.asPath);
+    router.events.on('routeChangeComplete', handlePageview);
+
+    return () => {
+      router.events.off('routeChangeComplete', handlePageview);
+    };
+  }, [hasMounted, isUmamiReady, router]);
+
+  useEffect(() => {
+    if (!hasMounted || !shouldLoadUmami) {
+      setIsUmamiConfigReady(false);
+      return;
+    }
+
+    const cleanupBeforeSendHandler = installBeforeSendHandler();
+    setIsUmamiConfigReady(true);
+
+    return () => {
+      cleanupBeforeSendHandler();
+    };
+  }, [hasMounted, shouldLoadUmami]);
+
+  useEffect(() => {
+    if (!isAccessDenied) {
+      lastAccessDeniedPathRef.current = null;
+      return;
+    }
+
+    if (lastAccessDeniedPathRef.current === router.pathname) {
+      return;
+    }
+
+    trackEvent('auth_access_denied', {
+      area: 'route_guard',
+      path: router.pathname,
+    });
+    lastAccessDeniedPathRef.current = router.pathname;
+  }, [isAccessDenied, router.pathname]);
+
   if (!isPublicRoute && (!isInitialized || isChecking || !isReady)) {
     return null;
   }
-
-  // ---- Route-level access control (evaluated on every render) ----
-  const currentRoute = allAuthedRoutes.find(r =>
-    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
-  );
-  const isAdminRoute = Boolean(currentRoute?.adminOnly);
-  const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
 
   // For admin-only routes, defer rendering until auth state is resolved so
   // we don't flash the page content before RBAC can deny access.
@@ -158,6 +227,22 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+      {shouldLoadUmami && isUmamiConfigReady && (
+        <Script
+          id="umami-tracker"
+          src={`${umamiHostUrl}/script.js`}
+          data-auto-track="false"
+          data-before-send={UMAMI_BEFORE_SEND_HANDLER}
+          data-do-not-track="true"
+          data-domains={umamiDomains.length > 0 ? umamiDomains.join(',') : undefined}
+          data-exclude-hash="true"
+          data-exclude-search="true"
+          data-host-url={umamiHostUrl}
+          data-website-id={umamiWebsiteId}
+          strategy="afterInteractive"
+          onReady={() => setIsUmamiReady(true)}
+        />
+      )}
       <Layout>
         <Component {...pageProps} />
       </Layout>

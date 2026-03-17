@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { Bot, User, Send, Sparkles, RefreshCw, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
+import { trackEvent } from '../lib/analytics';
 
 // =============================================================================
 // URL CONFIGURATION
@@ -81,7 +82,7 @@ const ChatLLM: React.FC = () => {
   }
 
   // Fetch available models from Ollama
-  async function fetchOllamaModels() {
+  async function fetchOllamaModels(source: 'initial' | 'manual' | 'retry' = 'manual') {
     setModelsLoading(true);
     setModelsError(null);
 
@@ -117,6 +118,12 @@ const ChatLLM: React.FC = () => {
       const defaultModel = models[0].name;
       setSelectedModel(defaultModel);
       setModelsError(null);
+      if (source !== 'initial') {
+        trackEvent('llm_models_refresh', {
+          source,
+          model_count: models.length,
+        });
+      }
     } catch (error: any) {
       console.warn("Ollama connection check:", error?.message || "Connection failed");
 
@@ -136,9 +143,12 @@ const ChatLLM: React.FC = () => {
   }
 
   const prevModelRef = useRef<string>("");
+  const handleManualModelRefresh = () => {
+    void fetchOllamaModels('manual');
+  };
 
   useEffect(() => {
-    fetchOllamaModels();
+    void fetchOllamaModels('initial');
   }, []);
 
   // Clear chat when model changes (but not on initial load)
@@ -170,13 +180,17 @@ const ChatLLM: React.FC = () => {
       if (!response.ok) throw new Error('Ollama not responding');
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
-      await fetchOllamaModels();
+      await fetchOllamaModels('retry');
       return;
     }
 
     // Store current model to avoid stale closure issues
     const currentModel = selectedModel;
     console.log("Sending message with model:", currentModel);
+    trackEvent('llm_prompt_submit', {
+      model: currentModel,
+      prompt_length: input.trim().length,
+    });
 
     sendMessage(
       { role: 'user', parts: [{ type: 'text', text: input }] },
@@ -200,7 +214,7 @@ const ChatLLM: React.FC = () => {
         </div>
         {!modelsError && (
           <button
-            onClick={fetchOllamaModels}
+            onClick={handleManualModelRefresh}
             disabled={modelsLoading}
             className="shrink-0 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
           >
@@ -269,7 +283,7 @@ const ChatLLM: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={handleManualModelRefresh}
               disabled={modelsLoading}
               className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -293,7 +307,7 @@ const ChatLLM: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={handleManualModelRefresh}
               disabled={modelsLoading}
               className="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -348,7 +362,7 @@ const ChatLLM: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={handleManualModelRefresh}
               disabled={modelsLoading}
               className="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -367,7 +381,7 @@ const ChatLLM: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={handleManualModelRefresh}
               disabled={modelsLoading}
               className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -385,7 +399,10 @@ const ChatLLM: React.FC = () => {
               <select
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                 value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
+                onChange={(e) => {
+                  setSelectedModel(e.target.value);
+                  trackEvent('llm_model_select', { model: e.target.value });
+                }}
                 disabled={modelsLoading || availableModels.length === 0}
               >
                 {modelsLoading ? (
@@ -516,7 +533,11 @@ const ChatLLM: React.FC = () => {
         {isChatLoading && (
           <div className="mt-2 flex justify-center">
             <button
-              onClick={() => { stop(); setMessages([]); }}
+              onClick={() => {
+                trackEvent('llm_generation_stop', { model: selectedModel });
+                stop();
+                setMessages([]);
+              }}
               className="text-xs px-3 py-1.5 rounded bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700"
             >
               Stop generating

@@ -6,6 +6,7 @@ import PetStoreLayout from '../PetStoreLayout';
 import { usePets } from '../../hooks/usePets';
 import { useCustomers } from '../../hooks/useCustomers';
 import { getGatewayBaseUrl } from '../../hooks/gatewayBaseUrl';
+import { trackPetStoreEvent } from '../../lib/analytics';
 
 const PETSTORE_PET_URL = `${getGatewayBaseUrl()}/petstore/pet`;
 
@@ -49,6 +50,9 @@ const Pets: React.FC = () => {
     try {
       const axios = (await import('axios')).default;
       await axios.post(PETSTORE_PET_URL, postData, axiosConfig);
+      trackPetStoreEvent('petstore_pet_create', {
+        pet_type: formData.type,
+      });
       setFormData({ name: '', type: PetType.DOG, ownerId: '', birthDate: '', notes: '' });
       setShowForm(false);
       window.location.reload(); // Reload to fetch new data

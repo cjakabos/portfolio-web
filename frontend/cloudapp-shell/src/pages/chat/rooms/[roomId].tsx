@@ -5,6 +5,7 @@ import { Send, ArrowLeft } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
 import { useAuth } from '../../../hooks/useAuth';
+import { trackEvent } from '../../../lib/analytics/umami';
 
 const CHAT_WS_API_URL = (
   process.env.NEXT_PUBLIC_CHAT_WS_API_URL ||
@@ -198,6 +199,10 @@ const CloudChat: React.FC = () => {
         return;
       }
       client.send(`/app/sendMessage/${roomId}`, JSON.stringify(msg));
+      trackEvent('chat_message_send', {
+        room_code: String(roomId),
+        message_length: text.length,
+      });
 
       // Optimistic local append to avoid waiting for broker roundtrip.
       setMessages(previousMessages => [

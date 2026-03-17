@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
 import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
+import { trackEvent } from "../lib/analytics/umami";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 const JSON_HEADERS = {
@@ -43,6 +44,10 @@ export const useNotes = (username: string) => {
                 { user: username, title, description },
                 await getUnsafeRequestConfig()
             );
+            trackEvent("notes_create", {
+                title_length: title.length,
+                description_length: description.length,
+            });
             await fetchNotes(); // Refresh list
         } catch (error) {
             console.error("Add Note Error", error);
@@ -55,6 +60,11 @@ export const useNotes = (username: string) => {
                 { id, title, description },
                 await getUnsafeRequestConfig()
             );
+            trackEvent("notes_update", {
+                note_id: id,
+                title_length: title.length,
+                description_length: description.length,
+            });
             await fetchNotes();
         } catch (error) {
             console.error("Update Note Error", error);
@@ -64,6 +74,7 @@ export const useNotes = (username: string) => {
     const deleteNote = async (id: number) => {
         try {
             await axios.delete(`${API_URL}/note/delete/${id}`, await getUnsafeRequestConfig());
+            trackEvent("notes_delete", { note_id: id });
             await fetchNotes();
         } catch (error) {
             console.error("Delete Note Error", error);

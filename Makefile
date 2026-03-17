@@ -1,10 +1,13 @@
 -include .env
 export
 
-.PHONY: setup-env-jwt-keys mobile-add-ios test-mobile-smoke test-ios-smoke test-ios-smoke-xcode test-ios-smoke-simulator test-ios-smoke-all
+.PHONY: setup-env-jwt-keys bootstrap-umami-db mobile-add-ios test-mobile-smoke test-ios-smoke test-ios-smoke-xcode test-ios-smoke-simulator test-ios-smoke-all
 
 setup-env-jwt-keys:
 	./scripts/setup-env-jwt-keys.sh
+
+bootstrap-umami-db:
+	./scripts/bootstrap-umami-db.sh
 
 mobile-add-ios:
 	cd frontend/cloudapp-shell && if npm ls @capacitor/ios >/dev/null 2>&1; then \

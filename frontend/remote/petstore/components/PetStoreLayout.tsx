@@ -35,7 +35,7 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
             return (
               <button
                 key={item.page}
-                onClick={() => navigate(item.page)}
+                onClick={() => navigate(item.page, 'sidebar')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-indigo-50 dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 font-medium'
@@ -62,7 +62,7 @@ const PetStoreLayout: React.FC<PetStoreLayoutProps> = ({ children }) => {
         {navItems.map((item) => (
           <button 
             key={item.page} 
-            onClick={() => navigate(item.page)}
+            onClick={() => navigate(item.page, 'mobile')}
             aria-label={item.label}
             className={`m-0 w-auto min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-full ${
               currentPage === item.page

@@ -74,8 +74,10 @@ export const useCustomers = () => {
             await getCustomers();
             // Reset form
             setCustomer(initialCustomer);
+            return true;
         } catch (error) {
             console.error("Failed to create customer", error);
+            return false;
         }
     };
 
