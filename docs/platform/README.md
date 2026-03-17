@@ -9,6 +9,10 @@ define the current platform direction.
   owner matrix, ingress map, and critical user journeys
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
   surface, operator capability matrix, and gateway-enforced route classes
+- [backend-service-standards.md](./backend-service-standards.md): Spring
+  controller/service contract for validation, error mapping, and logging
+- [backend-service-taxonomy.md](./backend-service-taxonomy.md): backend service
+  classification for core platform, AI/operator support, and demo modules
 - [module-classification.md](./module-classification.md): module labels for
   core platform, operator support, and legacy/demo-derived areas
 - [frontend-version-policy.md](./frontend-version-policy.md): approved shared

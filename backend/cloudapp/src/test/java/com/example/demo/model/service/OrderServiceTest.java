@@ -1,5 +1,7 @@
 package com.example.demo.model.service;
 
+import com.example.demo.exceptions.RequestValidationException;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.model.persistence.Cart;
 import com.example.demo.model.persistence.Item;
 import com.example.demo.model.persistence.User;
@@ -11,10 +13,14 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class OrderServiceTest {
 
@@ -30,12 +36,10 @@ class OrderServiceTest {
     }
 
     @Test
-    void submit_returns_empty_when_user_is_missing() {
+    void submit_throws_not_found_when_user_is_missing() {
         when(userRepository.findByUsername("missing")).thenReturn(null);
 
-        Optional<UserOrder> result = orderService.submit("missing");
-
-        assertTrue(result.isEmpty());
+        assertThrows(ResourceNotFoundException.class, () -> orderService.submit("missing"));
         verify(orderRepository, never()).save(any(UserOrder.class));
     }
 
@@ -50,11 +54,10 @@ class OrderServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(user);
         when(orderRepository.save(any(UserOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Optional<UserOrder> result = orderService.submit("testuser");
+        UserOrder result = orderService.submit("testuser");
 
-        assertTrue(result.isPresent());
-        assertEquals(BigDecimal.valueOf(500), result.get().getTotal());
-        assertEquals("testuser", result.get().getUser().getUsername());
+        assertEquals(BigDecimal.valueOf(500), result.getTotal());
+        assertEquals("testuser", result.getUser().getUsername());
     }
 
     @Test
@@ -65,9 +68,16 @@ class OrderServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(user);
         when(orderRepository.findByUser(user)).thenReturn(orders);
 
-        Optional<List<UserOrder>> result = orderService.findOrdersForUser("testuser");
+        List<UserOrder> result = orderService.findOrdersForUser("testuser");
 
-        assertTrue(result.isPresent());
-        assertEquals(1, result.get().size());
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void submit_rejects_blank_username() {
+        RequestValidationException ex =
+                assertThrows(RequestValidationException.class, () -> orderService.submit("  "));
+
+        assertEquals("Username must not be blank", ex.getMessage());
     }
 }

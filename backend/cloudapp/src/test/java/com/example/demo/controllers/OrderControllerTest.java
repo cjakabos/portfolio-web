@@ -51,7 +51,7 @@ public class OrderControllerTest {
         user.setCart(cart);
         UserOrder userOrder = UserOrder.createFromCart(cart);
 
-        when(orderService.submit(user.getUsername())).thenReturn(java.util.Optional.of(userOrder));
+        when(orderService.submit(user.getUsername())).thenReturn(userOrder);
         ResponseEntity<UserOrder> response = orderController.submit(
                 user.getUsername(),
                 authFor(user.getUsername()),
@@ -74,7 +74,7 @@ public class OrderControllerTest {
         List<UserOrder> userOrderResponse = new ArrayList<>();
         userOrderResponse.add(userOrder);
 
-        when(orderService.findOrdersForUser(user.getUsername())).thenReturn(java.util.Optional.of(userOrderResponse));
+        when(orderService.findOrdersForUser(user.getUsername())).thenReturn(userOrderResponse);
 
         ResponseEntity<List<UserOrder>> ordersForUser = orderController.getOrdersForUser(
                 user.getUsername(),
