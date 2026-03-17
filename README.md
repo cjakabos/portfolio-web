@@ -153,12 +153,12 @@ docker compose -f docker-compose-app.yml up -d
 
 - Main app: http://localhost:5001
 
-Demo users:
+No CloudApp demo users are created by default.
 
-```text
-user: cloudadmin      pwd: cloudy
-user: regularuser123  pwd: 456789
-```
+If you want seeded local users for manual testing, set
+`CLOUDAPP_SEED_DEMO_USERS_ENABLED=true` plus the
+`CLOUDAPP_SEED_DEMO_USERS_*` credentials in your local `.env` before starting
+the stack. Otherwise, register users through the UI.
 
 ### 4) Optional: setup Ollama
 <details>

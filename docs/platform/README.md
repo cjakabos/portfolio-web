@@ -7,6 +7,8 @@ define the current platform direction.
 
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,
   owner matrix, ingress map, and critical user journeys
+- [module-classification.md](./module-classification.md): module labels for
+  core platform, operator support, and legacy/demo-derived areas
 - [secret-classification.md](./secret-classification.md): secret classes,
   handling rules, and local versus production expectations
 - [remaining-backlog-pr-plan.md](./remaining-backlog-pr-plan.md): sequenced PR
