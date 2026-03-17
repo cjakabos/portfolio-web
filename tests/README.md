@@ -17,6 +17,8 @@ services, and contract governance.
 | AI orchestration tests | `test-ai-orchestration-layer` | FastAPI orchestration helpers, auth/config behavior, and HTTP client logic |
 | AI monitor static checks | `test-ai-monitor-lint` | Operator app install, typecheck, linting, and production build validation |
 | AI monitor behavior | `test-ai-monitor-behavior` | Playwright coverage for routed monitor/operator flows |
+| AI monitor component tests | `test-ai-monitor-component` | Operator auth/session behavior, service-health rendering, and approval workflow coverage |
+| AI monitor behavior | `test-ai-monitor-behavior` | Playwright coverage for routed monitor/operator flows |
 | Frontend unit tests | `test-frontend-unit` | React and hook-level tests in the shell app |
 | Gateway integration tests | `test-nginx-gateway` | Auth enforcement, routing, rate limiting, and CORS/security headers |
 | API contract governance | `test-api-contracts` | OpenAPI drift detection and generated TypeScript contract validation |
@@ -42,6 +44,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ml-pipeline
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-lint
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-component
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-behavior
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-unit
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-nginx-gateway
@@ -70,6 +73,7 @@ The CI workflow runs the following categories:
 - dependency audit jobs
 - AI orchestration tests
 - AI monitor static checks
+- AI monitor component tests
 - AI monitor behavior tests
 - Playwright E2E
 
@@ -117,7 +121,7 @@ gate or smoke path.
 | MLOps remote | `test-mlops-frontend` build/healthcheck in the E2E stack | `mlops.spec.ts` |
 | Petstore remote | `test-petstore-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
 | ChatLLM remote | `test-chatllm-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
-| AI monitor | `test-ai-monitor-lint` | `test-ai-monitor-behavior` via `monitor.spec.ts` |
+| AI monitor | `test-ai-monitor-lint` | `test-ai-monitor-component` for component workflows plus `test-ai-monitor-behavior` via `monitor.spec.ts` |
 
 ## Local Test Expectations
 
