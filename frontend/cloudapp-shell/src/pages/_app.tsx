@@ -11,7 +11,14 @@ import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
 import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
-import { normalizeTrackedUrl, trackEvent, trackPageview } from '../lib/analytics/umami';
+import {
+  installBeforeSendHandler,
+  normalizeTrackedUrl,
+  parseDomainList,
+  trackEvent,
+  trackPageview,
+  UMAMI_BEFORE_SEND_HANDLER,
+} from '../lib/analytics/umami';
 
 type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -20,6 +27,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [themePreference, setThemePreference] = useState<ThemePreference>('system');
   const [hasMounted, setHasMounted] = useState(false);
   const [isUmamiReady, setIsUmamiReady] = useState(false);
+  const [isUmamiConfigReady, setIsUmamiConfigReady] = useState(false);
   const router = useRouter();
   const { isAdmin, isReady, isInitialized, isChecking } = useAuth();
   const isPublicRoute = router.pathname === '/login' || router.pathname === '/logout';
@@ -27,6 +35,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const lastAccessDeniedPathRef = useRef<string | null>(null);
   const umamiHostUrl = process.env.NEXT_PUBLIC_UMAMI_HOST_URL?.replace(/\/+$/, '') || '';
   const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
+  const umamiDomains = parseDomainList(process.env.NEXT_PUBLIC_UMAMI_DOMAINS);
   const shouldLoadUmami = Boolean(umamiHostUrl && umamiWebsiteId);
   const currentRoute = allAuthedRoutes.find(r =>
     r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
@@ -162,6 +171,20 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, [hasMounted, isUmamiReady, router]);
 
   useEffect(() => {
+    if (!hasMounted || !shouldLoadUmami) {
+      setIsUmamiConfigReady(false);
+      return;
+    }
+
+    const cleanupBeforeSendHandler = installBeforeSendHandler();
+    setIsUmamiConfigReady(true);
+
+    return () => {
+      cleanupBeforeSendHandler();
+    };
+  }, [hasMounted, shouldLoadUmami]);
+
+  useEffect(() => {
     if (!isAccessDenied) {
       lastAccessDeniedPathRef.current = null;
       return;
@@ -204,11 +227,16 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      {shouldLoadUmami && (
+      {shouldLoadUmami && isUmamiConfigReady && (
         <Script
           id="umami-tracker"
           src={`${umamiHostUrl}/script.js`}
           data-auto-track="false"
+          data-before-send={UMAMI_BEFORE_SEND_HANDLER}
+          data-do-not-track="true"
+          data-domains={umamiDomains.length > 0 ? umamiDomains.join(',') : undefined}
+          data-exclude-hash="true"
+          data-exclude-search="true"
           data-host-url={umamiHostUrl}
           data-website-id={umamiWebsiteId}
           strategy="afterInteractive"
