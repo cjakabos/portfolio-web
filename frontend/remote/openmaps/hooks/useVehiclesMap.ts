@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { LatLng } from 'leaflet';
 import { getGatewayBaseUrl } from './gatewayBaseUrl';
+import { trackEvent } from '../lib/analytics';
 
 type VehicleId = number | string;
 export type VehicleCondition = 'NEW' | 'USED';
@@ -238,6 +239,11 @@ export const useVehicleMap = () => {
         const payload = buildVehiclePayload(formData);
 
         await axios.post(VEHICLES_API_URL, payload, getAxiosConfig());
+        trackEvent('maps_vehicle_create', {
+            manufacturer: payload.details.manufacturer.name,
+            body: payload.details.body,
+            condition: payload.condition,
+        });
     };
 
     const updateVehicle = async () => {
@@ -248,6 +254,12 @@ export const useVehicleMap = () => {
         const payload = buildVehiclePayload(formData);
 
         await axios.put(`${VEHICLES_API_URL}/${selectedId}`, payload, getAxiosConfig());
+        trackEvent('maps_vehicle_update', {
+            vehicle_id: String(selectedId),
+            manufacturer: payload.details.manufacturer.name,
+            body: payload.details.body,
+            condition: payload.condition,
+        });
     };
 
     const deleteVehicle = async (id: VehicleId) => {
@@ -255,6 +267,7 @@ export const useVehicleMap = () => {
 
         try {
             await axios.delete(`${VEHICLES_API_URL}/${id}`, getAxiosConfig());
+            trackEvent('maps_vehicle_delete', { vehicle_id: String(id) });
             setVehicles(prev => prev.filter(v => v.id !== id));
         } catch (error) {
             console.error("AXIOS ERROR DELETE:", error);
@@ -297,6 +310,7 @@ export const useVehicleMap = () => {
     const handleMapClick = (e: { latlng: LatLng }) => {
         // When map is clicked, open modal in CREATE mode with fresh defaults
         // and the clicked coordinates.
+        trackEvent('maps_map_click_admin');
         setFormError(null);
         setFormData({
             ...INITIAL_FORM,

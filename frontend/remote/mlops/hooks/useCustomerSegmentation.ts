@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { trackEvent } from '../lib/analytics';
 
 // Types for the ML data response
 interface SegmentMetadata {
@@ -226,6 +227,9 @@ export function useCustomerSegmentation() {
 
             // Refresh customer list
             await fetchCustomers();
+            trackEvent('mlops_manual_recluster_submit', {
+                workflow: 'manual_input',
+            });
 
             // Reset form
             setFormValues({
@@ -244,6 +248,7 @@ export function useCustomerSegmentation() {
     const handleSampleClick = async (size: number) => {
         await fetchMLInfo(size);
         await fetchCustomers();
+        trackEvent('mlops_sample_run', { sample_size: size });
     };
 
     return {

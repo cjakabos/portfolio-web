@@ -17,6 +17,7 @@ import 'leaflet/dist/leaflet.css';
 import { useVehicleMap } from '../../hooks/useVehiclesMap';
 import { getGatewayBaseUrl } from '../../hooks/gatewayBaseUrl';
 import type { Vehicle, VehicleFormData } from '../../hooks/useVehiclesMap';
+import { trackEvent } from '../../lib/analytics';
 
 type NumericFieldKey = 'numberOfDoors' | 'mileage' | 'modelYear' | 'productionYear' | 'lat' | 'lon';
 const toNumericDrafts = (data: VehicleFormData): Record<NumericFieldKey, string> => ({
@@ -128,6 +129,18 @@ export default function CloudMaps() {
         }
         handleMapClick(event);
     }, [canManageVehicles, handleMapClick]);
+
+    const toggleFleetPanel = React.useCallback(() => {
+        const nextPanel = mobilePanel === 'fleet' ? 'map' : 'fleet';
+        setMobilePanel(nextPanel);
+        trackEvent('maps_panel_toggle', { panel: nextPanel });
+    }, [mobilePanel]);
+
+    const toggleMapPanel = React.useCallback(() => {
+        const nextPanel = mobilePanel === 'map' ? 'fleet' : 'map';
+        setMobilePanel(nextPanel);
+        trackEvent('maps_panel_toggle', { panel: nextPanel });
+    }, [mobilePanel]);
 
     const scheduleMapResize = React.useCallback((map: L.Map | null) => {
         if (!map) {
@@ -422,7 +435,7 @@ export default function CloudMaps() {
                         <div className={panelHeaderClassName}>
                             <button
                                 type="button"
-                                onClick={() => setMobilePanel(current => current === 'fleet' ? 'map' : 'fleet')}
+                                onClick={toggleFleetPanel}
                                 className="flex flex-1 items-center justify-between text-left"
                             >
                                 <span className={panelTitleClassName}>
@@ -450,7 +463,7 @@ export default function CloudMaps() {
                         <div className={panelHeaderClassName}>
                             <button
                                 type="button"
-                                onClick={() => setMobilePanel(current => current === 'map' ? 'fleet' : 'map')}
+                                onClick={toggleMapPanel}
                                 className="flex flex-1 items-center justify-between text-left"
                             >
                                 <span className={panelTitleClassName}>
