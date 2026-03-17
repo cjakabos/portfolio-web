@@ -6,11 +6,13 @@
 #   2. ML Pipeline tests (Flask/pytest + real Postgres)
 #   3. NGINX gateway tests (JWT, CORS, routing)
 #   4. Frontend unit tests (React Testing Library)
-#   5. Frontend lockfile native package checks
-#   6. Optional dependency vulnerability scans (npm audit + pip-audit)
-#   7. Playwright E2E tests (full stack)
-#   8. AI Orchestration tests (pytest — auth, config, http_client, approvals)
-#   9. AI Monitor checks (TypeScript typecheck + ESLint + Vite build)
+#   5. Docs drift checks for repo-facing test/runtime docs
+#   6. Frontend lockfile native package checks
+#   7. Optional dependency vulnerability scans (npm audit + pip-audit)
+#   8. Playwright AI monitor behavior tests
+#   9. Playwright E2E tests (full stack)
+#   10. AI Orchestration tests (pytest — auth, config, http_client, approvals)
+#   11. AI Monitor static checks (TypeScript typecheck + ESLint + Vite build)
 #
 # Usage:
 #   Triggered automatically on push/PR to main/develop.
@@ -238,7 +240,22 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 6: Frontend Lockfile Native Package Checks
+  # JOB 6: Docs Drift Checks
+  # =========================================================================
+  docs-drift-checks:
+    name: "Docs — Drift Guardrails"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate docs against CI/runtime expectations
+        run: python3 scripts/check_docs_drift.py
+
+  # =========================================================================
+  # JOB 7: Frontend Lockfile Native Package Checks
   # =========================================================================
   frontend-lockfile-checks:
     name: "Frontend Lockfiles — Linux Native Packages"
@@ -253,7 +270,7 @@ jobs:
         run: python3 scripts/check_frontend_native_lockfiles.py
 
   # =========================================================================
-  # JOB 7: Optional Dependency Scans (non-blocking for findings)
+  # JOB 8: Optional Dependency Scans (non-blocking for findings)
   # =========================================================================
   dependency-scans:
     name: "Dependency Security — Audit"
@@ -379,7 +396,7 @@ jobs:
           echo "Reports are uploaded as the \`dependency-audit-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
-  # JOB 8: AI Orchestration Layer Tests (pytest)
+  # JOB 9: AI Orchestration Layer Tests (pytest)
   # =========================================================================
   ai-orchestration-tests:
     name: "AI Orchestration — pytest"
@@ -400,7 +417,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 9: AI Monitor Checks (ESLint + Vite Build)
+  # JOB 10: AI Monitor Static Checks (ESLint + Vite Build)
   # =========================================================================
   ai-monitor-checks:
     name: "AI Monitor — Lint + Build"
@@ -421,7 +438,59 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 10: Playwright E2E Tests
+  # JOB 11: AI Monitor Behavior Tests
+  # =========================================================================
+  ai-monitor-behavior-tests:
+    name: "AI Monitor — Behavior"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start routed monitor stack
+        run: |
+          set -euo pipefail
+          if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 420 \
+            test-postgres test-postgres-ml test-mysql test-mongo \
+            test-zookeeper test-kafka \
+            test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+            test-nginx test-ai-monitor; then
+            docker compose -f docker-compose.test.yml ps || true
+            docker compose -f docker-compose.test.yml logs --tail=300 \
+              test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+              test-postgres test-postgres-ml test-mysql test-mongo test-kafka test-zookeeper \
+              test-nginx test-ai-monitor || true
+            exit 1
+          fi
+
+      - name: Run AI monitor behavior tests
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
+            test-ai-monitor-behavior
+
+      - name: Collect AI monitor Playwright artifacts
+        if: always()
+        run: |
+          mkdir -p monitor-playwright-artifacts
+          cp -R playwright-report-monitor monitor-playwright-artifacts/playwright-report 2>/dev/null || true
+          cp -R test-results-monitor monitor-playwright-artifacts/test-results 2>/dev/null || true
+
+      - name: Upload AI monitor Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-monitor-playwright-results
+          path: monitor-playwright-artifacts/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 12: Playwright E2E Tests
   # =========================================================================
   e2e-tests:
     name: "E2E — Playwright"
@@ -483,7 +552,7 @@ jobs:
   test-summary:
     name: "Test Summary"
     runs-on: ubuntu-latest
-    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, e2e-tests]
+    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-behavior-tests, e2e-tests]
     if: always()
 
     steps:
@@ -498,8 +567,10 @@ jobs:
           echo "| NGINX Gateway | ${{ needs.nginx-gateway-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| API Contracts | ${{ needs.api-contract-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Unit | ${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs Drift | ${{ needs.docs-drift-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lockfiles | ${{ needs.frontend-lockfile-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Dependency Scan (optional) | ${{ needs.dependency-scans.outputs.summary }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI Orchestration (pytest) | ${{ needs.ai-orchestration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| AI Monitor (TS + Lint) | ${{ needs.ai-monitor-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Monitor (Static) | ${{ needs.ai-monitor-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Monitor (Behavior) | ${{ needs.ai-monitor-behavior-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Playwright E2E | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY

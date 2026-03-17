@@ -14,6 +14,9 @@
 #   # Run only frontend unit/hook tests:
 #   docker compose -f docker-compose.test.yml up --build test-frontend-unit --abort-on-container-exit
 #
+#   # Run only AI monitor behavior tests:
+#   docker compose -f docker-compose.test.yml up --build test-ai-monitor-behavior --abort-on-container-exit
+#
 #   # Run only NGINX gateway tests:
 #   docker compose -f docker-compose.test.yml up --build test-nginx-gateway --abort-on-container-exit
 #
@@ -280,6 +283,30 @@ services:
       - ./ai-orchestration/ai-orchestration-monitor:/src:ro
 
   # =========================================================================
+  # AI ORCHESTRATION MONITOR BEHAVIOR TESTS (Playwright monitor flow)
+  # =========================================================================
+  test-ai-monitor-behavior:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PW
+    command: ["e2e/monitor.spec.ts", "--project=chromium", "-c", "playwright.config.ts"]
+    environment:
+      - CI=true
+      - BACKEND_URL=http://test-nginx:80
+      - MONITOR_URL=http://test-ai-monitor:5010
+    volumes:
+      - ./e2e:/e2e/e2e
+      - ./playwright.config.ts:/e2e/playwright.config.ts:ro
+      - ./playwright-report-monitor:/e2e/playwright-report
+      - ./test-results-monitor:/e2e/test-results
+    depends_on:
+      test-ai-monitor:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+
+  # =========================================================================
   # FRONTEND UNIT TESTS (Jest + React Testing Library)
   # =========================================================================
   web-test:
@@ -339,7 +366,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-ai-monitor-lint test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-ai-monitor-lint test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================
