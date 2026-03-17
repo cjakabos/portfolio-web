@@ -180,6 +180,7 @@ export interface Experiment {
 
 export interface ExperimentListItem {
   id: string;
+  experiment_id?: string;
   name: string;
   description: string;
   status: ExperimentStatus;
@@ -241,10 +242,12 @@ export interface ApprovalContext {
     type?: string;
     input?: string;
     steps_completed?: number;
+    session_id?: string;
   };
   risk_score: number;
   current_results?: Record<string, unknown>;
   additional_info?: Record<string, unknown>;
+  session_id?: string;
 }
 
 export interface ApprovalRequest {
@@ -337,6 +340,7 @@ export interface OrchestrationResponse {
   approval_request_id?: string;
   risk_score?: number;
   requires_human?: boolean;
+  approval_required?: boolean;
 }
 
 // Tools
@@ -439,9 +443,13 @@ export interface ChatMessageMetadata {
 
   /** The approval request ID if resumed */
   approvalRequestId?: string;
+  approvalId?: string;
 
   /** Risk score if this was a high-risk operation */
   riskScore?: number;
+
+  /** Whether the user message is still waiting on a response */
+  pending?: boolean;
 }
 
 // =============================================================================
@@ -465,6 +473,19 @@ export interface CloudAppItem {
   description?: string;
   price: number;
   imageUrl?: string;
+}
+
+export interface CloudAppFile {
+  id: number;
+  name: string;
+  contentType: string;
+  fileSize: string;
+  userid: number;
+}
+
+export interface CloudAppRoom {
+  name: string;
+  code: string;
 }
 
 export interface CartItem {
@@ -496,13 +517,67 @@ export interface Note {
   created_at?: string;
 }
 
+export interface Employee {
+  id: number;
+  name: string;
+  skills: string[];
+  daysAvailable: string[];
+}
+
+export interface Customer {
+  id: number;
+  name: string;
+  phoneNumber: string;
+  notes?: string;
+  petIds?: number[];
+}
+
 export interface Pet {
   id: number;
   name: string;
+  type?: string;
   species: string;
+  ownerId?: number;
+  birthDate?: string;
+  notes?: string;
   breed?: string;
   age?: number;
-  status: 'available' | 'pending' | 'sold';
+  status?: 'available' | 'pending' | 'sold' | string;
+}
+
+export interface Schedule {
+  id: number;
+  employeeIds: number[];
+  petIds: number[];
+  date: string;
+  activities: string[];
+}
+
+export interface Manufacturer {
+  code?: number;
+  name: string;
+}
+
+export interface VehicleDetails {
+  body?: string;
+  model: string;
+  manufacturer: Manufacturer;
+  numberOfDoors?: number;
+  fuelType?: string;
+  engine?: string;
+  mileage?: number;
+  exteriorColor?: string;
+  productionYear?: number;
+  year?: number;
+  price?: number | string;
+}
+
+export interface VehicleLocation {
+  lat?: number;
+  lon?: number;
+  city?: string;
+  state?: string;
+  zip?: string;
 }
 
 export interface Vehicle {
@@ -511,7 +586,20 @@ export interface Vehicle {
   model: string;
   year: number;
   color?: string;
-  status: 'available' | 'reserved' | 'sold';
+  status?: 'available' | 'reserved' | 'sold' | string;
+  condition: string;
+  details: VehicleDetails;
+  location: VehicleLocation;
+  price?: string;
+  createdAt?: string;
+  modifiedAt?: string;
+}
+
+export interface VehicleStats {
+  total?: number;
+  byCondition?: Record<string, number>;
+  byManufacturer?: Record<string, number>;
+  [key: string]: unknown;
 }
 
 // ML Types
@@ -582,6 +670,8 @@ export interface SyncedMessage {
 
   /** The original user message that triggered the workflow */
   user_message: string;
+  original_message?: string;
+  approval_id?: string;
 
   /** The LLM response after workflow completion */
   response: string;

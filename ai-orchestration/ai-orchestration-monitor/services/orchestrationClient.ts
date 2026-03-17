@@ -141,6 +141,10 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+
+  get status(): number {
+    return this.statusCode;
+  }
 }
 
 export class NetworkError extends Error {
@@ -451,6 +455,20 @@ export class OrchestrationClient {
     return this.post<OrchestrationResponse>(this.aiUrl('/orchestrate'), request);
   }
 
+  async execute(
+    message: string,
+    userId: number,
+    sessionId: string,
+    context?: Record<string, unknown>
+  ): Promise<OrchestrationResponse> {
+    return this.orchestrate({
+      message,
+      user_id: userId,
+      session_id: sessionId,
+      context,
+    });
+  }
+
   // ===========================================================================
   // Metrics & Observability (AI Backend - Direct)
   // ===========================================================================
@@ -477,6 +495,10 @@ export class OrchestrationClient {
 
   async getCircuitBreakers(): Promise<CircuitBreakerListResponse> {
     return this.get<CircuitBreakerListResponse>(this.aiUrl('/system/circuit-breakers'));
+  }
+
+  async listCircuitBreakers(): Promise<CircuitBreakerListResponse> {
+    return this.getCircuitBreakers();
   }
 
   async resetCircuitBreaker(name: string): Promise<{ success: boolean; message: string }> {
@@ -591,12 +613,14 @@ export class OrchestrationClient {
     offset?: number;
     status?: string;
     approval_type?: string;
+    userId?: number;
   }): Promise<ApprovalHistoryItem[]> {
     const params = new URLSearchParams();
     if (options?.limit) params.append('limit', options.limit.toString());
     if (options?.offset) params.append('offset', options.offset.toString());
     if (options?.status) params.append('status', options.status);
     if (options?.approval_type) params.append('approval_type', options.approval_type);
+    if (options?.userId) params.append('user_id', options.userId.toString());
     const url = this.aiUrl(`/approvals/history${params.toString() ? `?${params.toString()}` : ''}`);
     return this.get<ApprovalHistoryItem[]>(url);
   }
@@ -619,17 +643,35 @@ export class OrchestrationClient {
     );
   }
 
-  async approveRequest(requestId: string, notes?: string): Promise<ApprovalHistoryItem> {
+  async approveRequest(
+    requestId: string,
+    approverIdOrNotes?: number | string,
+    notesOrModifications?: string | Record<string, unknown>,
+    modifications?: Record<string, unknown>
+  ): Promise<ApprovalHistoryItem> {
+    const notes = typeof approverIdOrNotes === 'string'
+      ? approverIdOrNotes
+      : typeof notesOrModifications === 'string'
+        ? notesOrModifications
+        : undefined;
+    const payloadModifications = typeof notesOrModifications === 'object' && notesOrModifications !== null
+      ? notesOrModifications
+      : modifications;
     return this.decideApproval(requestId, {
       approved: true,
       approval_notes: notes,
+      modifications: payloadModifications,
     });
   }
 
-  async rejectRequest(requestId: string, notes?: string): Promise<ApprovalHistoryItem> {
+  async rejectRequest(
+    requestId: string,
+    approverIdOrNotes?: number | string,
+    notes?: string
+  ): Promise<ApprovalHistoryItem> {
     return this.decideApproval(requestId, {
       approved: false,
-      approval_notes: notes,
+      approval_notes: typeof approverIdOrNotes === 'string' ? approverIdOrNotes : notes,
     });
   }
 
@@ -1078,12 +1120,23 @@ export class OrchestrationClient {
     return this.get<Customer>(this.petstoreUrl(`/user/customer/${customerId}`));
   }
 
-  async createCustomer(customer: {
-    name: string;
-    phoneNumber: string;
-    notes?: string;
-    petIds?: number[];
-  }): Promise<Customer> {
+  async getCustomerByPet(petId: number): Promise<Customer> {
+    return this.get<Customer>(this.petstoreUrl(`/user/customer/pet/${petId}`));
+  }
+
+  async createCustomer(
+    customerOrName: {
+      name: string;
+      phoneNumber: string;
+      notes?: string;
+      petIds?: number[];
+    } | string,
+    phoneNumber?: string,
+    notes?: string
+  ): Promise<Customer> {
+    const customer = typeof customerOrName === 'string'
+      ? { name: customerOrName, phoneNumber: phoneNumber || '', notes }
+      : customerOrName;
     return this.post<Customer>(this.petstoreUrl('/user/customer'), customer);
   }
 
@@ -1234,11 +1287,7 @@ export class OrchestrationClient {
     return this.searchVehicles({ minPrice, maxPrice });
   }
 
-  async createVehicle(vehicle: {
-    condition: string;
-    details: Record<string, unknown>;
-    location: Record<string, unknown>;
-  }): Promise<Vehicle> {
+  async createVehicle(vehicle: Pick<Vehicle, 'condition' | 'details' | 'location'>): Promise<Vehicle> {
     return this.post<Vehicle>(this.vehiclesUrl('/cars'), vehicle);
   }
 
@@ -1261,7 +1310,7 @@ export class OrchestrationClient {
     const response = await this.get<VehicleStats | { stats: VehicleStats }>(
       this.vehiclesUrl('/stats')
     );
-    return 'stats' in response ? response.stats : response;
+    return (response as { stats?: VehicleStats }).stats ?? (response as VehicleStats);
   }
 
   // ===========================================================================

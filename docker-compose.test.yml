@@ -272,7 +272,7 @@ services:
       [
         "sh",
         "-lc",
-        "cp -a /src/. /build/ && rm -rf /build/node_modules /build/package-lock.json && npm install --no-audit --no-fund && npm run lint && npm run build",
+        "cp -a /src/. /build/ && rm -rf /build/node_modules /build/package-lock.json && npm install --no-audit --no-fund && npm run typecheck && npm run lint && npm run build",
       ]
     environment:
       - CI=true

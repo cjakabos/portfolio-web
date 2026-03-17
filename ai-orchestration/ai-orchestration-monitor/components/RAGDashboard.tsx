@@ -781,13 +781,13 @@ const RAGDashboard: React.FC = () => {
             <ModelSelector
               target="embedding"
               compact={true}
-              showSetupGuide={false}
+              fullPageErrors={false}
               filter="embed"
             />
             <ModelSelector
               target="rag"
               compact={true}
-              showSetupGuide={false}
+              fullPageErrors={false}
               excludeFilter="embed"
             />
             {/* Status Badge */}

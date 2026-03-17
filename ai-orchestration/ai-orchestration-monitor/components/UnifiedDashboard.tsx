@@ -32,7 +32,7 @@ export default function UnifiedDashboard() {
   // Hooks for real-time data
   const { data: metrics, isLoading: metricsLoading, refresh: refreshMetrics } = useMetrics({ autoRefresh: true });
   const { circuitBreakers, isLoading: cbLoading, storageBackend } = useCircuitBreakers({ autoRefresh: true });
-  const { pendingApprovals, isLoading: approvalsLoading } = usePendingApprovals(true);
+  const { pendingApprovals, isLoading: approvalsLoading } = usePendingApprovals({ autoRefresh: true });
   const { experiments, isLoading: experimentsLoading } = useExperiments(true);
   const { isHealthy, lastCheck } = useHealth(15000);
   const { data: errorSummary } = useErrorSummary(24, { autoRefresh: true });
@@ -234,7 +234,7 @@ export default function UnifiedDashboard() {
                 </div>
               ) : experiments.length > 0 ? (
                 experiments.slice(0, 5).map((exp) => (
-                  <div key={exp.experiment_id} className="flex items-center justify-between py-1">
+                  <div key={exp.experiment_id || exp.id} className="flex items-center justify-between py-1">
                     <span className="text-sm text-gray-600 truncate mr-2">{exp.name}</span>
                     <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
                       exp.status === 'running' ? 'bg-blue-100 text-blue-700' :

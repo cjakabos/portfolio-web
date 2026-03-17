@@ -337,7 +337,7 @@ export default function ToolsExplorer({ embedded = false }: ToolsExplorerProps) 
             >
               <option value="">All Categories</option>
               {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat.name} value={cat.name}>{cat.name}</option>
               ))}
             </select>
           </div>

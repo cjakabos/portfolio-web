@@ -15,7 +15,7 @@ services, and contract governance.
 | Jira proxy integration | `test-backend-webproxy` | Proxy request validation and backend behavior |
 | ML pipeline tests | `test-ml-pipeline` | Flask endpoints, validation, and segmentation behavior |
 | AI orchestration tests | `test-ai-orchestration-layer` | FastAPI orchestration helpers, auth/config behavior, and HTTP client logic |
-| AI monitor static checks | `test-ai-monitor-lint` | Operator app install, linting, and production build validation |
+| AI monitor static checks | `test-ai-monitor-lint` | Operator app install, typecheck, linting, and production build validation |
 | Frontend unit tests | `test-frontend-unit` | React and hook-level tests in the shell app |
 | Gateway integration tests | `test-nginx-gateway` | Auth enforcement, routing, rate limiting, and CORS/security headers |
 | API contract governance | `test-api-contracts` | OpenAPI drift detection and generated TypeScript contract validation |
