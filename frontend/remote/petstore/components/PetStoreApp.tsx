@@ -7,11 +7,12 @@ import Schedule from './petstore/Schedule';
 import Customers from './petstore/Customers';
 import Pets from './petstore/Pets';
 import Employees from './petstore/Employees';
+import { trackPetStoreEvent } from '../lib/analytics';
 
 // Context for internal navigation
 interface NavigationContextType {
   currentPage: string;
-  navigate: (page: string) => void;
+  navigate: (page: string, source?: 'dashboard' | 'sidebar' | 'mobile') => void;
 }
 
 export const PetStoreNavigationContext = createContext<NavigationContextType>({
@@ -49,7 +50,14 @@ const PetStoreApp = () => {
 
   const currentPage = isStandalone ? getPageFromUrl() : internalPage;
 
-  const navigate = (page: string) => {
+  const navigate = (page: string, source: 'dashboard' | 'sidebar' | 'mobile' = 'sidebar') => {
+    const eventName = source === 'dashboard' ? 'petstore_dashboard_nav' : 'petstore_nav_click';
+    trackPetStoreEvent(eventName, {
+      destination: page,
+      source,
+      mode: isStandalone ? 'standalone' : 'embedded',
+    });
+
     if (isStandalone) {
       // Use Next.js router when standalone
       const path = page === 'dashboard' ? '/petstore' : `/petstore/${page}`;

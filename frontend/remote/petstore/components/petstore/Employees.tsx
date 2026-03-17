@@ -3,6 +3,7 @@ import { Skill, DayOfWeek } from '../../types';
 import { Plus, Briefcase } from 'lucide-react';
 import PetStoreLayout from '../PetStoreLayout';
 import { useEmployees } from '../../hooks/useEmployees';
+import { trackPetStoreEvent } from '../../lib/analytics';
 
 const Employees: React.FC = () => {
   const {
@@ -20,7 +21,13 @@ const Employees: React.FC = () => {
   const [showForm, setShowForm] = React.useState(false);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-    await handleEmployeeSubmit(e);
+    const didCreateEmployee = await handleEmployeeSubmit(e);
+    if (didCreateEmployee) {
+      trackPetStoreEvent('petstore_employee_create', {
+        skill_count: selectedMultiOptions.length,
+        available_day_count: selectedDayOption.length,
+      });
+    }
     setShowForm(false);
   };
 

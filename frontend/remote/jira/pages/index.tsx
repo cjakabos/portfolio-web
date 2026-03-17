@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from 'ai';
+import { trackJiraEvent } from '../lib/analytics';
 
 // =============================================================================
 // URL CONFIGURATION
@@ -236,7 +237,7 @@ const TicketNode = ({ ticket, level = 0, onChat, onChatWithChildren, onEdit, onD
           <button type="button" onClick={() => onEdit(ticket)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded" title="Edit">
             <Edit size={14} />
           </button>
-          <button type="button" onClick={() => onDelete(ticket.key)} className="p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded" title="Delete">
+          <button type="button" onClick={() => onDelete(ticket)} className="p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded" title="Delete">
             <Trash2 size={14} />
           </button>
         </div>
@@ -292,7 +293,7 @@ const CloudJira: React.FC = () => {
   // Modal states
   const [newTicketModal, setNewTicketModal] = useState({ open: false });
   const [editModal, setEditModal] = useState<{ open: boolean; ticket?: any }>({ open: false });
-  const [deleteModal, setDeleteModal] = useState<{ open: boolean; ticketKey?: string }>({ open: false });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; ticketKey?: string; issueType?: string }>({ open: false });
   const [batchModal, setBatchModal] = useState<{
     open: boolean;
     parent?: any;
@@ -330,11 +331,19 @@ const CloudJira: React.FC = () => {
   });
 
   const openChatPane = useCallback(() => {
+    trackJiraEvent('jira_ai_assistant_toggle', {
+      action: 'open',
+      source: 'ticket_context',
+    });
     setChatOpen(true);
     setMobileActivePane('chat');
   }, []);
 
   const closeChatPane = useCallback(() => {
+    trackJiraEvent('jira_ai_assistant_toggle', {
+      action: 'close',
+      source: 'dismiss',
+    });
     setChatOpen(false);
     setMobileActivePane('board');
   }, []);
@@ -342,6 +351,10 @@ const CloudJira: React.FC = () => {
   const toggleChatPane = useCallback(() => {
     setChatOpen((previous) => {
       const next = !previous;
+      trackJiraEvent('jira_ai_assistant_toggle', {
+        action: next ? 'open' : 'close',
+        source: 'toggle_button',
+      });
       setMobileActivePane('board');
       return next;
     });
@@ -488,7 +501,7 @@ const CloudJira: React.FC = () => {
 
   // --- API Functions ---
 
-  async function fetchOllamaModels() {
+  async function fetchOllamaModels(source: 'initial' | 'manual' | 'retry' = 'initial') {
     setModelsLoading(true);
     setModelsError(null);
 
@@ -514,6 +527,10 @@ const CloudJira: React.FC = () => {
       );
 
       if (models.length === 0) {
+        trackJiraEvent('jira_ai_models_refresh', {
+          source,
+          result: 'empty',
+        });
         setModelsError("no_models");
         setAvailableModels([]);
         setSelectedModel("");
@@ -524,6 +541,11 @@ const CloudJira: React.FC = () => {
       const defaultModel = models[0].name;
       setSelectedModel(defaultModel);
       setModelsError(null);
+      trackJiraEvent('jira_ai_models_refresh', {
+        source,
+        result: 'success',
+        model_count: models.length,
+      });
     } catch (error: any) {
       // Silently handle the error - don't let it bubble up to Next.js error overlay
       console.warn("Ollama connection check:", error?.message || "Connection failed");
@@ -538,6 +560,11 @@ const CloudJira: React.FC = () => {
 
       setAvailableModels([]);
       setSelectedModel("");
+      trackJiraEvent('jira_ai_models_refresh', {
+        source,
+        result: 'error',
+        error_type: isTimeout ? 'timeout' : 'connection_failed',
+      });
     } finally {
       setModelsLoading(false);
     }
@@ -692,7 +719,7 @@ const CloudJira: React.FC = () => {
       if (!response.ok) throw new Error('Ollama not responding');
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
-      await fetchOllamaModels();
+      await fetchOllamaModels('retry');
       openChatPane(); // Open chat to show the error
       return;
     }
@@ -700,6 +727,11 @@ const CloudJira: React.FC = () => {
     setMessages([]);
     const scope = includeChildren ? collectChildren(ticket) : [ticket];
     const scopeText = scope.map((t) => `${t.key}: ${t.fields.summary}\n${t.fields.description}`).join("\n\n");
+    trackJiraEvent('jira_chat_open', {
+      include_children: includeChildren,
+      scope_size: scope.length,
+      issue_type: ticket.fields.issuetype.name,
+    });
     sendMessage(
       { role: 'user', parts: [{ type: 'text', text: `Please review and improve the following tickets:\n\n${scopeText}` }] },
       { body: { model: selectedModel } },
@@ -721,7 +753,7 @@ const CloudJira: React.FC = () => {
       if (!response.ok) throw new Error('Ollama not responding');
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
-      await fetchOllamaModels();
+      await fetchOllamaModels('retry');
       return;
     }
 
@@ -733,6 +765,11 @@ const CloudJira: React.FC = () => {
 
     setMessages([]);
     setNewTicketData({ ...newTicketData, parentKey: parent?.fields.key });
+    trackJiraEvent('jira_batch_request_ai', {
+      count,
+      child_type: childTypeForParent(parent?.key),
+      parent_type: parent?.fields.issuetype?.name ?? 'unknown',
+    });
     setBatchModal({
       parent: parent,
       open: true,
@@ -767,10 +804,14 @@ const CloudJira: React.FC = () => {
       if (!response.ok) throw new Error('Ollama not responding');
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
-      await fetchOllamaModels();
+      await fetchOllamaModels('retry');
       return; // Don't send message, let user see the error state
     }
 
+    trackJiraEvent('jira_ai_refine_submit', {
+      scope: selectedTicket ? 'ticket' : 'general',
+      prompt_length: input.trim().length,
+    });
     sendMessage(
       { role: 'user', parts: [{ type: 'text', text: input }] },
       { body: { model: selectedModel } },
@@ -783,6 +824,10 @@ const CloudJira: React.FC = () => {
       setActionError(null);
       try {
         await newTicket(newTicketData);
+        trackJiraEvent('jira_ticket_create', {
+          issue_type: newTicketData.issuetype,
+          has_parent: Boolean(newTicketData.parentKey),
+        });
         setNewTicketModal({ open: false });
         setNewTicketData({ summary: "", description: "", issuetype: "", parentKey: "" });
       } catch (error: any) {
@@ -796,6 +841,9 @@ const CloudJira: React.FC = () => {
       setActionError(null);
       try {
         await updateTicket(editModal.ticket, editModal.ticket);
+        trackJiraEvent('jira_ticket_update', {
+          issue_type: editModal.ticket.fields.issuetype.name,
+        });
         setEditModal({ open: false });
       } catch (error: any) {
         setActionError(extractRequestError(error, "Failed to update ticket."));
@@ -808,6 +856,9 @@ const CloudJira: React.FC = () => {
       setActionError(null);
       try {
         await deleteTicket(deleteModal.ticketKey);
+        trackJiraEvent('jira_ticket_delete', {
+          issue_type: deleteModal.issueType ?? 'unknown',
+        });
         setDeleteModal({ open: false });
       } catch (error: any) {
         setActionError(extractRequestError(error, "Failed to delete ticket."));
@@ -838,6 +889,11 @@ const CloudJira: React.FC = () => {
         )
       );
       await getTickets();
+      trackJiraEvent('jira_batch_create', {
+        count: selectedSuggestions.length,
+        child_type: childType,
+        parent_type: batchModal.parent?.fields.issuetype?.name ?? 'unknown',
+      });
       setBatchModal((p) => ({ ...p, open: false }));
     } catch (error: any) {
       setActionError(extractRequestError(error, "Failed to create child tickets."));
@@ -856,7 +912,7 @@ const CloudJira: React.FC = () => {
 
     getTickets();
     getTicketTypes();
-    fetchOllamaModels();
+    fetchOllamaModels('initial');
   }, []);
 
   useEffect(() => {
@@ -1032,7 +1088,7 @@ const CloudJira: React.FC = () => {
               onChat={handleChatWithTicket}
               onChatWithChildren={handleChatWithTicket}
               onEdit={openEdit}
-              onDelete={(key: string) => setDeleteModal({ open: true, ticketKey: key })}
+              onDelete={(ticket: any) => setDeleteModal({ open: true, ticketKey: ticket.key, issueType: ticket.fields.issuetype.name })}
               onBatch={openBatchCreate}
               chatOpen={chatOpen}
             />
@@ -1047,7 +1103,7 @@ const CloudJira: React.FC = () => {
                   onChat={handleChatWithTicket}
                   onChatWithChildren={handleChatWithTicket}
                   onEdit={openEdit}
-                  onDelete={(key: string) => setDeleteModal({ open: true, ticketKey: key })}
+                  onDelete={(ticket: any) => setDeleteModal({ open: true, ticketKey: ticket.key, issueType: ticket.fields.issuetype.name })}
                   onBatch={openBatchCreate}
                   chatOpen={chatOpen}
                 />
@@ -1124,7 +1180,7 @@ const CloudJira: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={() => fetchOllamaModels('manual')}
               disabled={modelsLoading}
               className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -1147,7 +1203,7 @@ const CloudJira: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={() => fetchOllamaModels('manual')}
               disabled={modelsLoading}
               className="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -1201,7 +1257,7 @@ const CloudJira: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={() => fetchOllamaModels('manual')}
               disabled={modelsLoading}
               className="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -1219,7 +1275,7 @@ const CloudJira: React.FC = () => {
             </Alert>
 
             <button
-              onClick={fetchOllamaModels}
+              onClick={() => fetchOllamaModels('manual')}
               disabled={modelsLoading}
               className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
@@ -1486,7 +1542,7 @@ const CloudJira: React.FC = () => {
               <div className="flex items-center gap-2 shrink-0">
                 {!modelsError && (
                   <button
-                    onClick={fetchOllamaModels}
+                    onClick={() => fetchOllamaModels('manual')}
                     disabled={modelsLoading}
                     className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
                   >

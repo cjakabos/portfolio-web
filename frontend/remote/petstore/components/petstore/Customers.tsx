@@ -3,6 +3,7 @@ import { useRouter } from 'next/compat/router';
 import { Plus, User, Phone } from 'lucide-react';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useCustomers } from '../../hooks/useCustomers';
+import { trackPetStoreEvent } from '../../lib/analytics';
 
 interface CustomerRow {
   id: string;
@@ -32,7 +33,10 @@ const PetStoreCustomers: React.FC = () => {
   }, [router?.query?.action]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-    await handleCustomerSubmit(e);
+    const didCreateCustomer = await handleCustomerSubmit(e);
+    if (didCreateCustomer) {
+      trackPetStoreEvent('petstore_customer_create');
+    }
     setShowForm(false);
   };
 

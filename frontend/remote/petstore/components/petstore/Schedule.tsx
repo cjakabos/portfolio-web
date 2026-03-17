@@ -5,6 +5,7 @@ import PetStoreLayout from '../PetStoreLayout';
 import { useSchedules } from '../../hooks/useSchedules';
 import { useEmployees } from '../../hooks/useEmployees';
 import { usePets } from '../../hooks/usePets';
+import { trackPetStoreEvent } from '../../lib/analytics';
 
 const SKILL_OPTIONS: Skill[] = [
   Skill.PETTING,
@@ -61,7 +62,11 @@ const Schedules: React.FC = () => {
     setLoadingAvailability(true);
 
     try {
-      await getAvailability(new Date(date), selectedMultiOptions);
+      const available = await getAvailability(new Date(date), selectedMultiOptions);
+      trackPetStoreEvent('petstore_schedule_fetch', {
+        available_count: available.length,
+        required_skill_count: selectedMultiOptions.length,
+      });
     } finally {
       setLoadingAvailability(false);
     }
@@ -70,12 +75,20 @@ const Schedules: React.FC = () => {
   const handleCreateSchedule = async () => {
     if (!selectedEmployee || !selectedPet || !date) return;
 
-    await scheduleSubmit(
+    const didCreateSchedule = await scheduleSubmit(
       selectedEmployee,
       selectedPet,
       new Date(date),
       selectedMultiOptions
     );
+
+    if (!didCreateSchedule) {
+      return;
+    }
+
+    trackPetStoreEvent('petstore_schedule_create', {
+      activity_count: selectedMultiOptions.length,
+    });
 
     // reset only what makes sense
     setSelectedEmployee('');
