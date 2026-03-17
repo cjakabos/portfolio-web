@@ -51,8 +51,10 @@ frontend/nginx/localhost+3-key.pub
 
 test-results/*
 playwright-report/
+playwright-report-monitor/
 **/playwright-report/
 test-results/
+test-results-monitor/
 **/test-results/
 **/lcov-report/
 **/coverage/

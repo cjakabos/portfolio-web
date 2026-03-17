@@ -88,6 +88,37 @@ describe("cloudapp hooks", () => {
     expect(result.current.isReady).toBe(false);
   });
 
+  test("useAuth resolves root-relative API URLs against the current origin", async () => {
+    const previousApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    process.env.NEXT_PUBLIC_API_URL = "/cloudapp";
+
+    fetchMock.mockResolvedValueOnce(
+      createFetchResponse(JSON.stringify({
+        username: "alice",
+        roles: ["ROLE_USER"],
+      }), 200),
+    );
+
+    try {
+      const { result } = renderHook(() => useAuth());
+      await waitFor(() => expect(result.current.isInitialized).toBe(true));
+    } finally {
+      if (previousApiUrl === undefined) {
+        delete process.env.NEXT_PUBLIC_API_URL;
+      } else {
+        process.env.NEXT_PUBLIC_API_URL = previousApiUrl;
+      }
+    }
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${window.location.origin}/cloudapp/user/auth-check`,
+      expect.objectContaining({
+        credentials: "include",
+        method: "GET",
+      }),
+    );
+  });
+
   test("useItems fetches items and creates new item", async () => {
     const { result } = renderHook(() => useItems());
     const first = [{ id: 1, name: "Item A", price: 5, description: "A" }];

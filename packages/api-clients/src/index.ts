@@ -14,9 +14,22 @@ export const DEFAULT_VEHICLES_API_URL = `${DEFAULT_GATEWAY_URL}/vehicles`;
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 
+const resolveRelativeBaseUrl = (value: string) => {
+  if (!value.startsWith('/')) {
+    return value;
+  }
+
+  const runtimeOrigin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : DEFAULT_GATEWAY_URL;
+
+  return new URL(value, runtimeOrigin.endsWith('/') ? runtimeOrigin : `${runtimeOrigin}/`).toString();
+};
+
 const resolveBaseUrl = (value: string | undefined, fallback: string) => {
   const next = value?.trim();
-  return next ? trimTrailingSlash(next) : fallback;
+  return next ? trimTrailingSlash(resolveRelativeBaseUrl(next)) : fallback;
 };
 
 type CloudAppClientOptions = Omit<CloudappClientConfig, 'baseUrl'> & { baseUrl?: string };

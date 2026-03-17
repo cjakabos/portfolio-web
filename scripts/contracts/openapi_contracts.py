@@ -267,7 +267,8 @@ function buildUrl(pathTemplate: string, baseUrl: string, pathParams: Record<stri
     return encodeURIComponent(String(value));
   }});
 
-  const url = new URL(substituted, baseUrl.endsWith("/") ? baseUrl : `${{baseUrl}}/`);
+  const normalizedPath = substituted.replace(/^\/+/, "");
+  const url = new URL(normalizedPath, baseUrl.endsWith("/") ? baseUrl : `${{baseUrl}}/`);
   if (query) {{
     for (const [key, raw] of Object.entries(query)) {{
       if (raw === undefined || raw === null) continue;
@@ -294,7 +295,7 @@ export class {pascal}ApiClient {{
     this.baseUrl = config.baseUrl;
     this.defaultHeaders = config.defaultHeaders;
     this.defaultCredentials = config.defaultCredentials;
-    this.fetchImpl = config.fetchImpl ?? fetch;
+    this.fetchImpl = config.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }}
 
   async request<T = unknown>(operationId: {pascal}OperationId, options: OperationRequestOptions = {{}}): Promise<T> {{

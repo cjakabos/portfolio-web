@@ -108,6 +108,7 @@ services:
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
       - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
       - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
+      - CLOUDAPP_SECURITY_ADMIN_USERNAMES=${CLOUDAPP_SECURITY_ADMIN_USERNAMES:-}
       # Demo users (dev-only seed on startup, explicitly opt-in)
       - CLOUDAPP_SEED_DEMO_USERS_ENABLED=${CLOUDAPP_SEED_DEMO_USERS_ENABLED:-false}
       - CLOUDAPP_SEED_DEMO_USERS_ADMIN_USERNAME=${CLOUDAPP_SEED_DEMO_USERS_ADMIN_USERNAME:-}

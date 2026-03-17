@@ -380,7 +380,7 @@ jobs:
   dependency-scan-maven-update:
     name: "Dependency Security — Maven OWASP Warmup"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     outputs:
       status: ${{ steps.maven-warmup.outputs.status }}
 
@@ -416,13 +416,20 @@ jobs:
           data_dir="$HOME/.cache/dependency-check"
           mkdir -p "$data_dir"
           status=clean
+          cache_hit="${{ steps.restore-odc-cache.outputs.cache-hit }}"
+
+          echo "OWASP cache hit: ${cache_hit:-false}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
 
           common_args=(
             -DdataDirectory="$data_dir"
             -DnvdValidForHours=168
             -DnvdMaxRetryCount=3
             --batch-mode
-            --quiet
           )
 
           nvd_args=()
@@ -430,9 +437,13 @@ jobs:
             nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
           fi
 
-          if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:update-only \
-            "${common_args[@]}" "${nvd_args[@]}" 2>/dev/null; then
-            status=issues-found
+          if [ "$cache_hit" = "true" ]; then
+            echo "Exact OWASP cache hit detected; skipping update-only warmup."
+          else
+            if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:update-only \
+              "${common_args[@]}" "${nvd_args[@]}"; then
+              status=issues-found
+            fi
           fi
 
           echo "status=$status" >> "$GITHUB_OUTPUT"
@@ -472,6 +483,7 @@ jobs:
         run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/dependency-check
@@ -491,6 +503,13 @@ jobs:
           generated_report="audit-reports/dependency-check-report.json"
           target_report="audit-reports/cloudapp-owasp-report.json"
 
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
           common_args=(
             -DdataDirectory="$data_dir"
             -DfailBuildOnCVSS=7
@@ -499,7 +518,6 @@ jobs:
             -DnvdValidForHours=168
             -DnvdMaxRetryCount=3
             --batch-mode
-            --quiet
           )
 
           nvd_args=()
@@ -509,7 +527,7 @@ jobs:
 
           rm -f "$generated_report" "$target_report"
           if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:check \
-            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
             status=issues-found
           fi
 
@@ -552,6 +570,7 @@ jobs:
         run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/dependency-check
@@ -571,6 +590,13 @@ jobs:
           generated_report="audit-reports/dependency-check-report.json"
           target_report="audit-reports/petstore-owasp-report.json"
 
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
           common_args=(
             -DdataDirectory="$data_dir"
             -DfailBuildOnCVSS=7
@@ -579,7 +605,6 @@ jobs:
             -DnvdValidForHours=168
             -DnvdMaxRetryCount=3
             --batch-mode
-            --quiet
           )
 
           nvd_args=()
@@ -589,7 +614,7 @@ jobs:
 
           rm -f "$generated_report" "$target_report"
           if ! mvn -f backend/petstore/pom.xml org.owasp:dependency-check-maven:check \
-            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
             status=issues-found
           fi
 
@@ -632,6 +657,7 @@ jobs:
         run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/dependency-check
@@ -651,6 +677,13 @@ jobs:
           generated_report="audit-reports/dependency-check-report.json"
           target_report="audit-reports/vehicles-api-owasp-report.json"
 
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
           common_args=(
             -DdataDirectory="$data_dir"
             -DfailBuildOnCVSS=7
@@ -659,7 +692,6 @@ jobs:
             -DnvdValidForHours=168
             -DnvdMaxRetryCount=3
             --batch-mode
-            --quiet
           )
 
           nvd_args=()
@@ -669,7 +701,7 @@ jobs:
 
           rm -f "$generated_report" "$target_report"
           if ! mvn -f backend/vehicles-api/pom.xml org.owasp:dependency-check-maven:check \
-            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
             status=issues-found
           fi
 
@@ -712,6 +744,7 @@ jobs:
         run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
 
       - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/dependency-check
@@ -731,6 +764,13 @@ jobs:
           generated_report="audit-reports/dependency-check-report.json"
           target_report="audit-reports/web-proxy-owasp-report.json"
 
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
           common_args=(
             -DdataDirectory="$data_dir"
             -DfailBuildOnCVSS=7
@@ -739,7 +779,6 @@ jobs:
             -DnvdValidForHours=168
             -DnvdMaxRetryCount=3
             --batch-mode
-            --quiet
           )
 
           nvd_args=()
@@ -749,7 +788,7 @@ jobs:
 
           rm -f "$generated_report" "$target_report"
           if ! mvn -f backend/web-proxy/pom.xml org.owasp:dependency-check-maven:check \
-            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false 2>/dev/null; then
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
             status=issues-found
           fi
 
