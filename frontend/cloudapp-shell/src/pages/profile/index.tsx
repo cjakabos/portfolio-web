@@ -4,16 +4,9 @@ import axios from 'axios';
 import { User, Mail, Shield, Lock, Save } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getCloudAppCsrfHeaders } from '@/hooks/cloudappCsrf';
+import { CloudAppRoleBadge } from '@portfolio/ui';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp';
-
-const formatRoleLabel = (roles: string[], isAdmin: boolean) => {
-  if (roles.length === 0) return isAdmin ? 'Administrator' : 'User';
-  return roles
-    .map((role) => role.replace(/^ROLE_/, '').toLowerCase())
-    .map((role) => role.charAt(0).toUpperCase() + role.slice(1))
-    .join(', ');
-};
 
 const CloudProfile: React.FC = () => {
   const { username, roles, isAdmin, isReady } = useAuth();
@@ -37,7 +30,13 @@ const CloudProfile: React.FC = () => {
     }));
   }, [username]);
 
-  const roleLabel = useMemo(() => formatRoleLabel(roles, isAdmin), [roles, isAdmin]);
+  const roleLabel = useMemo(() => {
+    if (roles.length === 0) return isAdmin ? 'Administrator' : 'User';
+    return roles
+      .map((role) => role.replace(/^ROLE_/, '').toLowerCase())
+      .map((role) => role.charAt(0).toUpperCase() + role.slice(1))
+      .join(', ');
+  }, [roles, isAdmin]);
 
   const stats = [
 //     { label: 'Total Logins', value: 154 },
@@ -138,9 +137,7 @@ const CloudProfile: React.FC = () => {
                    </div>
                </div>
                <div className="hidden sm:block">
-                    <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">
-                        {roleLabel}
-                    </span>
+                    <CloudAppRoleBadge roles={roles} isAdmin={isAdmin} />
                </div>
            </div>
 

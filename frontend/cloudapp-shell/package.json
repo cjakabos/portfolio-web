@@ -28,6 +28,8 @@
     "mobile:ios": "npm run mobile:sync && npx cap open ios"
   },
   "dependencies": {
+    "@portfolio/auth": "0.1.0",
+    "@portfolio/ui": "0.1.0",
     "@ai-sdk/react": "3.0.67",
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",

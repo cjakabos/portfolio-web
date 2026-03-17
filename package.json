@@ -2,6 +2,7 @@
   "name": "portfolio-web-workspace",
   "private": true,
   "workspaces": [
+    "packages/*",
     "frontend/cloudapp-shell",
     "frontend/remote/*",
     "ai-orchestration/ai-orchestration-monitor"

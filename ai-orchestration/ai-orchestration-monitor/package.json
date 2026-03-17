@@ -13,6 +13,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@portfolio/auth": "0.1.0",
+    "@portfolio/ui": "0.1.0",
     "recharts": "^3.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

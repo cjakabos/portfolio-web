@@ -1,57 +1,22 @@
-import axios from "axios";
+import {
+  CLOUDAPP_CSRF_COOKIE_NAME,
+  CLOUDAPP_CSRF_HEADER_NAME,
+  ensureCloudAppCsrfToken as ensureSharedCloudAppCsrfToken,
+  getCloudAppCsrfHeaders as getSharedCloudAppCsrfHeaders,
+  getCloudAppCsrfTokenFromCookie,
+} from '@portfolio/auth';
 
-export const CLOUDAPP_CSRF_COOKIE_NAME = "XSRF-TOKEN";
-export const CLOUDAPP_CSRF_HEADER_NAME = "X-XSRF-TOKEN";
+export {
+  CLOUDAPP_CSRF_COOKIE_NAME,
+  CLOUDAPP_CSRF_HEADER_NAME,
+  getCloudAppCsrfTokenFromCookie,
+};
 
 export const getCloudAppApiUrl = () =>
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp';
 
-const readCookie = (name: string) => {
-  if (typeof document === "undefined") return "";
+export const ensureCloudAppCsrfToken = (apiUrl = getCloudAppApiUrl()) =>
+  ensureSharedCloudAppCsrfToken({ apiUrl });
 
-  const cookiePrefix = `${name}=`;
-  const match = document.cookie
-    .split(";")
-    .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith(cookiePrefix));
-
-  if (!match) return "";
-
-  try {
-    return decodeURIComponent(match.slice(cookiePrefix.length));
-  } catch {
-    return match.slice(cookiePrefix.length);
-  }
-};
-
-export const getCloudAppCsrfTokenFromCookie = () => readCookie(CLOUDAPP_CSRF_COOKIE_NAME);
-
-export const ensureCloudAppCsrfToken = async (apiUrl = getCloudAppApiUrl()) => {
-  const existingToken = getCloudAppCsrfTokenFromCookie();
-  if (existingToken) {
-    return existingToken;
-  }
-
-  const response = await axios.get(`${apiUrl}/user/csrf-token`, {
-    withCredentials: true,
-  });
-
-  const responseToken =
-    typeof response?.data?.token === "string" ? response.data.token.trim() : "";
-  if (responseToken) {
-    return responseToken;
-  }
-
-  return getCloudAppCsrfTokenFromCookie();
-};
-
-export const getCloudAppCsrfHeaders = async (apiUrl = getCloudAppApiUrl()) => {
-  const token = await ensureCloudAppCsrfToken(apiUrl);
-  if (!token) {
-    return {};
-  }
-
-  return {
-    [CLOUDAPP_CSRF_HEADER_NAME]: token,
-  };
-};
+export const getCloudAppCsrfHeaders = (apiUrl = getCloudAppApiUrl()) =>
+  getSharedCloudAppCsrfHeaders({ apiUrl });

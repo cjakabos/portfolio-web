@@ -402,10 +402,11 @@ Key components:
 
 - OpenAPI snapshot export from running services
 - CI drift detection against committed snapshots
-- TypeScript client generation for frontend consumers
+- TypeScript client generation for frontend consumers via the shared workspace packages
 
 Relevant script:
 - `scripts/contracts/openapi_contracts.py`
+- Generated output: `packages/contracts/src`
 
 ## Data Layer
 

@@ -29,6 +29,7 @@ import UnifiedDashboard from './components/UnifiedDashboard';
 import UserManagement from './components/UserManagement';
 import { ThemeContext } from './context/ThemeContext';
 import { useCloudAppAuth } from './hooks/useCloudAppAuth';
+import { CloudAppRoleBadge } from '@portfolio/ui';
 
 enum View {
   UNIFIED = 'unified',
@@ -81,6 +82,7 @@ export default function App() {
     isInitialized,
     isAuthenticated,
     username,
+    roles,
     isLoggingIn,
     error: authError,
     login,
@@ -173,7 +175,9 @@ export default function App() {
             </div>
             <div className="ml-3 min-w-0">
               <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{username}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">CloudApp session</p>
+              <div className="mt-1">
+                <CloudAppRoleBadge roles={roles} variant="subtle" />
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-3">
@@ -239,7 +243,9 @@ export default function App() {
 
           <div className="mt-6 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
             <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{username}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">CloudApp session</p>
+            <div className="mt-1">
+              <CloudAppRoleBadge roles={roles} variant="subtle" />
+            </div>
             <button
               type="button"
               onClick={() => {
