@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import axios from "axios";
 import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
+import { trackEvent } from "../lib/analytics/umami";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
@@ -32,6 +33,11 @@ export const useItems = () => {
                     withCredentials: true,
                 }
             );
+            trackEvent("shop_item_create", {
+                name_length: name.length,
+                price: Number(price),
+                description_length: description.length,
+            });
             await fetchItems(); // Refresh list
             return true;
         } catch (error) {

@@ -14,6 +14,7 @@ import {
   Bot,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { trackEvent } from '../lib/analytics/umami';
 
 const Home: React.FC = () => {
   const { username, isAdmin, isInitialized, isChecking, isReady } = useAuth();
@@ -79,6 +80,11 @@ const Home: React.FC = () => {
             key={idx}
             href={card.path}
             prefetch={false}
+            onClick={() => trackEvent('dashboard_card_click', {
+              label: card.title,
+              path: card.path,
+              admin_only: Boolean(card.adminOnly),
+            })}
             className="block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm hover:shadow-md transition-all group"
           >
             <div className="flex items-start justify-between">

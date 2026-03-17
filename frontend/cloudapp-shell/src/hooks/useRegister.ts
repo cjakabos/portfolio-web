@@ -21,7 +21,7 @@ export const useRegister = () => {
         if (values.password !== values.confirmPassword) {
             setErrorType("PASSWORD_MISMATCH");
             setLoading(false);
-            return;
+            return false;
         }
 
         // 2. Prepare Data (exclude confirmPassword if API doesn't want it)
@@ -43,10 +43,11 @@ export const useRegister = () => {
                     withCredentials: true,
                 }
             );
-            
+            return true;
         } catch (error) {
             console.error("Registration Error", error);
             setErrorType("API_ERROR");
+            return false;
         } finally {
             setLoading(false);
         }

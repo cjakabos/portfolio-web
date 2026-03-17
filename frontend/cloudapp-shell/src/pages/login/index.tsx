@@ -7,6 +7,7 @@ import { Lock, User } from 'lucide-react';
 import { useLogin } from "../../hooks/useLogin";
 import { useRegister } from "../../hooks/useRegister";
 import { useAuth } from '../../hooks/useAuth';
+import { trackEvent } from '../../lib/analytics/umami';
 
 const initialValues = {
     firstname: "",
@@ -49,10 +50,25 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       if (isRegister) {
-        await register(values);
+        const registerSucceeded = await register(values);
+        if (!registerSucceeded) {
+          return;
+        }
+        trackEvent('auth_register_success', {
+          method: 'password',
+          username_length: values.username.length,
+        });
         await login(values);
+        trackEvent('auth_login_success', {
+          method: 'register_auto_login',
+          username_length: values.username.length,
+        });
       } else {
         await login(values);
+        trackEvent('auth_login_success', {
+          method: 'password',
+          username_length: values.username.length,
+        });
       }
       if (typeof window !== 'undefined') {
         window.location.assign('/');
@@ -207,7 +223,12 @@ const Login: React.FC = () => {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => {
+                setIsRegister(!isRegister);
+                trackEvent('auth_mode_toggle', {
+                  mode: !isRegister ? 'register' : 'login',
+                });
+              }}
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
             >
               {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Register"}

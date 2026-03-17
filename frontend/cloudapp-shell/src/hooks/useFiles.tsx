@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
 import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
+import { trackEvent } from "../lib/analytics/umami";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
 
@@ -37,6 +38,11 @@ export const useFiles = (username: string) => {
                 },
                 withCredentials: true,
             });
+            trackEvent("files_upload", {
+                content_type: file.type || "unknown",
+                extension: file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() ?? "unknown" : "none",
+                size_bytes: file.size,
+            });
             await fetchFiles();
         } catch (error) {
             console.error("Upload Error", error);
@@ -50,6 +56,7 @@ export const useFiles = (username: string) => {
                 headers: csrfHeaders,
                 withCredentials: true,
             });
+            trackEvent("files_delete", { file_id: id });
             await fetchFiles();
         } catch (error) {
             console.error("Delete File Error", error);
@@ -70,6 +77,10 @@ export const useFiles = (username: string) => {
             a.download = fileName;
             document.body.appendChild(a);
             a.click();
+            trackEvent("files_download", {
+                file_id: id,
+                filename_length: fileName.length,
+            });
             setTimeout(() => {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);

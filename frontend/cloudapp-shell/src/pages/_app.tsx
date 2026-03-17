@@ -11,7 +11,7 @@ import { useRouter } from 'next/router';
 import { ThemeContext } from '../context/ThemeContext';
 import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
 import { allAuthedRoutes } from '../constants/routes';
-import { normalizeTrackedUrl, trackPageview } from '../lib/analytics/umami';
+import { normalizeTrackedUrl, trackEvent, trackPageview } from '../lib/analytics/umami';
 
 type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -24,9 +24,15 @@ function MyApp({ Component, pageProps }: AppProps) {
   const { isAdmin, isReady, isInitialized, isChecking } = useAuth();
   const isPublicRoute = router.pathname === '/login' || router.pathname === '/logout';
   const lastTrackedUrlRef = useRef<string | null>(null);
+  const lastAccessDeniedPathRef = useRef<string | null>(null);
   const umamiHostUrl = process.env.NEXT_PUBLIC_UMAMI_HOST_URL?.replace(/\/+$/, '') || '';
   const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
   const shouldLoadUmami = Boolean(umamiHostUrl && umamiWebsiteId);
+  const currentRoute = allAuthedRoutes.find(r =>
+    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
+  );
+  const isAdminRoute = Boolean(currentRoute?.adminOnly);
+  const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
 
   const getSystemDarkPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -155,16 +161,26 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, [hasMounted, isUmamiReady, router]);
 
+  useEffect(() => {
+    if (!isAccessDenied) {
+      lastAccessDeniedPathRef.current = null;
+      return;
+    }
+
+    if (lastAccessDeniedPathRef.current === router.pathname) {
+      return;
+    }
+
+    trackEvent('auth_access_denied', {
+      area: 'route_guard',
+      path: router.pathname,
+    });
+    lastAccessDeniedPathRef.current = router.pathname;
+  }, [isAccessDenied, router.pathname]);
+
   if (!isPublicRoute && (!isInitialized || isChecking || !isReady)) {
     return null;
   }
-
-  // ---- Route-level access control (evaluated on every render) ----
-  const currentRoute = allAuthedRoutes.find(r =>
-    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
-  );
-  const isAdminRoute = Boolean(currentRoute?.adminOnly);
-  const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
 
   // For admin-only routes, defer rendering until auth state is resolved so
   // we don't flash the page content before RBAC can deny access.

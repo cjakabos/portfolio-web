@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import { trackEvent } from '../lib/analytics/umami';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -27,8 +28,13 @@ const Layout = ({ children }: LayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
+    trackEvent('auth_logout', { area: 'header' });
     await logout();
     window.location.href = '/login';
+  };
+
+  const handleNavigationClick = (area: string, label: string, path: string) => {
+    trackEvent('nav_click', { area, label, path });
   };
 
   const authedRoutes = allAuthedRoutes.filter((route) => !route.adminOnly || isAdmin);
@@ -67,7 +73,11 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="max-w-7xl mx-auto safe-x">
           <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center min-h-16 py-2 gap-4">
             <div className="justify-self-start">
-              <Link href="/" className="flex-shrink-0 flex items-center gap-1">
+              <Link
+                href="/"
+                className="flex-shrink-0 flex items-center gap-1"
+                onClick={() => handleNavigationClick('desktop_brand', 'Home', '/')}
+              >
                 <Image src="/drawing_white.svg" alt="CloudApp" width={50} height={50} />
                 <span className="hidden xl:inline font-bold text-xl tracking-tight">CloudApp</span>
               </Link>
@@ -82,6 +92,7 @@ const Layout = ({ children }: LayoutProps) => {
                       key={item.path}
                       href={item.path}
                       prefetch={false}
+                      onClick={() => handleNavigationClick('desktop_nav', item.label, item.path)}
                       aria-label={item.label}
                       title={item.label}
                       className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
@@ -107,6 +118,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <>
                   <Link
                     href="/profile"
+                    onClick={() => handleNavigationClick('desktop_profile', 'Profile', '/profile')}
                     className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition group"
                   >
                     <div className="bg-gray-700 group-hover:bg-gray-600 p-1.5 rounded-full transition">
@@ -122,7 +134,13 @@ const Layout = ({ children }: LayoutProps) => {
                   </button>
                 </>
               ) : (
-                <Link href="/login" className="text-sm text-blue-400 hover:text-blue-300">Login</Link>
+                <Link
+                  href="/login"
+                  className="text-sm text-blue-400 hover:text-blue-300"
+                  onClick={() => handleNavigationClick('desktop_auth', 'Login', '/login')}
+                >
+                  Login
+                </Link>
               )}
             </div>
           </div>
@@ -131,6 +149,7 @@ const Layout = ({ children }: LayoutProps) => {
             <Link
               href="/"
               prefetch={false}
+              onClick={() => handleNavigationClick('mobile_brand', 'Home', '/')}
               aria-label="Home"
               className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
                 isRouteActive('/') ? 'bg-gray-800' : 'hover:bg-gray-800'
@@ -148,6 +167,7 @@ const Layout = ({ children }: LayoutProps) => {
                       key={item.path}
                       href={item.path}
                       prefetch={false}
+                      onClick={() => handleNavigationClick('mobile_nav', item.label, item.path)}
                       aria-label={item.label}
                       title={item.label}
                       className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
@@ -189,6 +209,7 @@ const Layout = ({ children }: LayoutProps) => {
                                 <Link
                                   href={item.path}
                                   prefetch={false}
+                                  onClick={() => handleNavigationClick('mobile_overflow', item.label, item.path)}
                                   className={`flex flex-col items-center justify-center gap-1 p-2 rounded-md transition-colors min-h-[56px] ${
                                     isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:text-white hover:bg-gray-800'
                                   }`}
@@ -213,6 +234,7 @@ const Layout = ({ children }: LayoutProps) => {
                   <Link
                     href="/profile"
                     prefetch={false}
+                    onClick={() => handleNavigationClick('mobile_profile', 'Profile', '/profile')}
                     aria-label="Profile"
                     title="Profile"
                     className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
@@ -236,6 +258,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Link
                   href="/login"
                   prefetch={false}
+                  onClick={() => handleNavigationClick('mobile_auth', 'Login', '/login')}
                   aria-label="Login"
                   title="Login"
                   className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
