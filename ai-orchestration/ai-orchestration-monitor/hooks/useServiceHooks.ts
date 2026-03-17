@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { useState, useEffect, useCallback } from 'react';
-import orchestrationClient from '../services/orchestrationClient';
+import { orchestrationClient } from '../services/orchestrationClient';
 import type {
   ToolInfo,
   ToolCategory,

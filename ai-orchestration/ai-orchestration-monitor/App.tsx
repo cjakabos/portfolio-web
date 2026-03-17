@@ -51,6 +51,112 @@ interface NavItemProps {
   onSelect: (view: View) => void;
 }
 
+type BoundaryCapability = 'Read-only' | 'Action' | 'Gateway admin';
+
+type ViewConfig = {
+  view: View;
+  icon: React.ElementType;
+  label: string;
+  summary: string;
+  capabilities: BoundaryCapability[];
+  routes: string[];
+};
+
+const VIEW_CONFIG: Record<View, ViewConfig> = {
+  [View.UNIFIED]: {
+    view: View.UNIFIED,
+    icon: Layout,
+    label: 'Command Center',
+    summary: 'Mixed operator surface that combines visibility, live orchestration, and approvals.',
+    capabilities: ['Read-only', 'Action', 'Gateway admin'],
+    routes: ['/ai/*', '/ai/system/*'],
+  },
+  [View.DASHBOARD]: {
+    view: View.DASHBOARD,
+    icon: Activity,
+    label: 'Observability',
+    summary: 'Read-only metrics, health, feature status, and circuit-breaker visibility for operators.',
+    capabilities: ['Read-only', 'Gateway admin'],
+    routes: ['/ai/health', '/ai/metrics', '/ai/system/*'],
+  },
+  [View.STREAMING]: {
+    view: View.STREAMING,
+    icon: MessageSquare,
+    label: 'Live Chat',
+    summary: 'Write-capable orchestration requests and websocket streaming against the AI layer.',
+    capabilities: ['Action'],
+    routes: ['/ai/orchestrate', '/ai/ws/stream'],
+  },
+  [View.APPROVALS]: {
+    view: View.APPROVALS,
+    icon: CheckSquare,
+    label: 'Approvals',
+    summary: 'Review, approve, reject, and resume human-in-the-loop approval workflows.',
+    capabilities: ['Read-only', 'Action'],
+    routes: ['/ai/approvals/*', '/ai/approvals/ws'],
+  },
+  [View.USER_MANAGEMENT]: {
+    view: View.USER_MANAGEMENT,
+    icon: Users,
+    label: 'User Management',
+    summary: 'Admin-only CloudApp role management through gateway-protected routes.',
+    capabilities: ['Read-only', 'Action', 'Gateway admin'],
+    routes: ['/cloudapp-admin/user/admin/*'],
+  },
+  [View.ERRORS]: {
+    view: View.ERRORS,
+    icon: AlertOctagon,
+    label: 'Error Handling',
+    summary: 'Read-only inspection of recent failures and system error summaries.',
+    capabilities: ['Read-only', 'Gateway admin'],
+    routes: ['/ai/system/errors/*'],
+  },
+  [View.TOOLS]: {
+    view: View.TOOLS,
+    icon: Wrench,
+    label: 'Tools Explorer',
+    summary: 'Tool discovery plus explicit operator-triggered tool invocation.',
+    capabilities: ['Read-only', 'Action'],
+    routes: ['/ai/tools/*'],
+  },
+  [View.SERVICES]: {
+    view: View.SERVICES,
+    icon: Car,
+    label: 'All Services',
+    summary: 'Read-only service inspection across CloudApp admin, Petstore, Vehicles, and ML routes.',
+    capabilities: ['Read-only', 'Gateway admin'],
+    routes: ['/cloudapp-admin/*', '/petstore/*', '/vehicles/*', '/mlops-segmentation/*'],
+  },
+  [View.RAG]: {
+    view: View.RAG,
+    icon: BookOpen,
+    label: 'Documents (RAG)',
+    summary: 'Document upload, async job polling, query, and delete flows for the RAG subsystem.',
+    capabilities: ['Read-only', 'Action'],
+    routes: ['/ai/rag/*'],
+  },
+};
+
+const NAV_SECTIONS: Array<{ label?: string; items: ViewConfig[] }> = [
+  { items: [VIEW_CONFIG[View.UNIFIED]] },
+  {
+    label: 'Platform',
+    items: [VIEW_CONFIG[View.DASHBOARD], VIEW_CONFIG[View.ERRORS], VIEW_CONFIG[View.TOOLS]],
+  },
+  {
+    label: 'Intelligence',
+    items: [VIEW_CONFIG[View.RAG]],
+  },
+  {
+    label: 'Services',
+    items: [VIEW_CONFIG[View.SERVICES]],
+  },
+  {
+    label: 'Operations',
+    items: [VIEW_CONFIG[View.STREAMING], VIEW_CONFIG[View.APPROVALS], VIEW_CONFIG[View.USER_MANAGEMENT]],
+  },
+];
+
 function NavItem({ view, icon: Icon, label, currentView, onSelect }: NavItemProps) {
   return (
     <button
@@ -73,6 +179,42 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 mt-6">
       {children}
     </p>
+  );
+}
+
+function BoundaryBadge({ capability }: { capability: BoundaryCapability }) {
+  const tone = capability === 'Gateway admin'
+    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/80 dark:bg-amber-950/50 dark:text-amber-300'
+    : capability === 'Action'
+      ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/80 dark:bg-blue-950/50 dark:text-blue-300'
+      : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-medium ${tone}`}>
+      {capability}
+    </span>
+  );
+}
+
+function BoundaryCard({ view }: { view: View }) {
+  const config = VIEW_CONFIG[view];
+
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        Monitor Boundary
+      </p>
+      <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{config.label}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">{config.summary}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {config.capabilities.map((capability) => (
+          <BoundaryBadge key={capability} capability={capability} />
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+        Routes: {config.routes.join(', ')}
+      </p>
+    </div>
   );
 }
 
@@ -148,23 +290,25 @@ export default function App() {
 
         <nav className="flex-1 p-4 overflow-y-auto">
           <div className="space-y-1">
-            <NavItem view={View.UNIFIED} icon={Layout} label="Command Center" currentView={currentView} onSelect={handleSelectView} />
+            {NAV_SECTIONS.map((section) => (
+              <React.Fragment key={section.label || 'root'}>
+                {section.label ? <SectionLabel>{section.label}</SectionLabel> : null}
+                {section.items.map((item) => (
+                  <NavItem
+                    key={item.view}
+                    view={item.view}
+                    icon={item.icon}
+                    label={item.label}
+                    currentView={currentView}
+                    onSelect={handleSelectView}
+                  />
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
 
-            <SectionLabel>Platform</SectionLabel>
-            <NavItem view={View.DASHBOARD} icon={Activity} label="Observability" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.ERRORS} icon={AlertOctagon} label="Error Handling" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.TOOLS} icon={Wrench} label="Tools Explorer" currentView={currentView} onSelect={handleSelectView} />
-
-            <SectionLabel>Intelligence</SectionLabel>
-            <NavItem view={View.RAG} icon={BookOpen} label="Documents (RAG)" currentView={currentView} onSelect={handleSelectView} />
-
-            <SectionLabel>Services</SectionLabel>
-            <NavItem view={View.SERVICES} icon={Car} label="All Services" currentView={currentView} onSelect={handleSelectView} />
-
-            <SectionLabel>Operations</SectionLabel>
-            <NavItem view={View.STREAMING} icon={MessageSquare} label="Live Chat" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.APPROVALS} icon={CheckSquare} label="Approvals" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.USER_MANAGEMENT} icon={Users} label="User Management" currentView={currentView} onSelect={handleSelectView} />
+          <div className="mt-6">
+            <BoundaryCard view={currentView} />
           </div>
         </nav>
 
@@ -230,16 +374,26 @@ export default function App() {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 bg-white dark:bg-slate-900 z-40 pt-16 px-4 md:hidden">
           <nav className="space-y-2">
-            <NavItem view={View.UNIFIED} icon={Layout} label="Command Center" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.DASHBOARD} icon={Activity} label="Observability" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.ERRORS} icon={AlertOctagon} label="Error Handling" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.TOOLS} icon={Wrench} label="Tools Explorer" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.RAG} icon={BookOpen} label="Documents (RAG)" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.SERVICES} icon={Car} label="All Services" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.STREAMING} icon={MessageSquare} label="Live Chat" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.APPROVALS} icon={CheckSquare} label="Approvals" currentView={currentView} onSelect={handleSelectView} />
-            <NavItem view={View.USER_MANAGEMENT} icon={Users} label="User Management" currentView={currentView} onSelect={handleSelectView} />
+            {NAV_SECTIONS.map((section) => (
+              <React.Fragment key={section.label || 'mobile-root'}>
+                {section.label ? <SectionLabel>{section.label}</SectionLabel> : null}
+                {section.items.map((item) => (
+                  <NavItem
+                    key={item.view}
+                    view={item.view}
+                    icon={item.icon}
+                    label={item.label}
+                    currentView={currentView}
+                    onSelect={handleSelectView}
+                  />
+                ))}
+              </React.Fragment>
+            ))}
           </nav>
+
+          <div className="mt-6">
+            <BoundaryCard view={currentView} />
+          </div>
 
           <div className="mt-6 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
             <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{username}</p>

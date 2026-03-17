@@ -19,8 +19,14 @@ import {
   X, RefreshCw, Loader2, AlertCircle, FileJson,
   Play, Zap, Activity, Target, Shield, Eye, ArrowLeft
 } from 'lucide-react';
-import { approvalClient, type ApprovalRequest, type ApprovalHistoryItem } from '../services/approvalClient';
-import type { ApprovalWebSocketMessage, ResumeResponse, ApprovalStatus } from '../types';
+import { orchestrationClient } from '../services/orchestrationClient';
+import type {
+  ApprovalRequest,
+  ApprovalHistoryItem,
+  ApprovalWebSocketMessage,
+  ResumeResponse,
+  ApprovalStatus,
+} from '../types';
 import { getPersistentSessionId } from '../utils/sessionUtils';
 
 interface ApprovalInterfaceProps {
@@ -66,7 +72,7 @@ export default function ApprovalInterface({
     setLoading(true);
     setError(null);
     try {
-      const data = await approvalClient.getPendingApprovals();
+      const data = await orchestrationClient.getPendingApprovals();
       setApprovals(data);
     } catch (err) {
       console.error('Failed to fetch approvals:', err);
@@ -80,7 +86,7 @@ export default function ApprovalInterface({
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
-      const data = await approvalClient.getApprovalHistory({
+      const data = await orchestrationClient.getApprovalHistory({
         limit: 50,
         include_auto_approved: true
       });
@@ -119,9 +125,9 @@ export default function ApprovalInterface({
 
   // Connect WebSocket
   useEffect(() => {
-    approvalClient.connectWebSocket(handleWsMessage, setWsConnected);
+    orchestrationClient.connectApprovalWebSocket(handleWsMessage, setWsConnected);
     return () => {
-      approvalClient.disconnectWebSocket();
+      orchestrationClient.disconnectApprovalWebSocket();
     };
   }, [handleWsMessage]);
 
@@ -176,7 +182,7 @@ export default function ApprovalInterface({
   const handleReject = async (requestId: string) => {
     setActionLoading(true);
     try {
-      await approvalClient.rejectAction(requestId, 'Rejected by user');
+      await orchestrationClient.rejectRequest(requestId, 'Rejected by user');
       setApprovals(prev => prev.filter(a => a.request_id !== requestId));
       setSelectedApproval(null);
       setNotification({ type: 'success', message: 'Action rejected' });
@@ -194,7 +200,7 @@ export default function ApprovalInterface({
     setResumeLoading(true);
     try {
       // First approve
-      await approvalClient.approveAction(requestId, 'Approved and resumed');
+      await orchestrationClient.approveRequest(requestId, 'Approved and resumed');
 
       // Get the original session ID from the approval request context
       const originalSessionId = (selectedApproval as ApprovalRequest)?.context?.session_id
@@ -203,7 +209,7 @@ export default function ApprovalInterface({
         || effectiveSessionId;
 
       // Then resume the workflow with the ORIGINAL session ID
-      const response = await approvalClient.resumeAfterApproval(
+      const response = await orchestrationClient.resumeApproval(
         requestId,
         originalSessionId
       );

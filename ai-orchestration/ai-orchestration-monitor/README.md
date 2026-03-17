@@ -27,13 +27,20 @@ set them in a local ignored `.env.local` file:
 
 ```bash
 VITE_API_URL=http://localhost:80
-VITE_AI_BASE_URL=http://localhost:80
-VITE_AI_WS_URL=ws://localhost:80
+VITE_AI_BASE_URL=http://localhost:80/ai
+VITE_AI_WS_URL=ws://localhost:80/ai
 VITE_REQUEST_TIMEOUT=15000
 ```
 
 If these variables are omitted, the app falls back to the local gateway
 defaults baked into the client services.
+
+The monitor uses a single canonical client surface in
+`services/orchestrationClient.ts`. Approval and RAG traffic are no longer
+managed by separate app-local clients.
+
+For the operator boundary and route classification, see
+[`../../docs/platform/ai-monitor-boundary.md`](../../docs/platform/ai-monitor-boundary.md).
 
 ## Quality checks
 

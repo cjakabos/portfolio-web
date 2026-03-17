@@ -511,59 +511,33 @@ export function useRealtimeApprovals(options: UseRealtimeApprovalsOptions = {}) 
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
-      // Assume orchestrationClient has a method for approval WebSocket
-      const ws = new WebSocket('ws://localhost:80/ai/approvals/ws');
-
-      ws.onopen = () => {
-        setIsConnected(true);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          if (data.type === 'approval_request') {
-            const approval = data.data as ApprovalRequest;
+      wsRef.current = orchestrationClient.connectApprovalWebSocket(
+        (message) => {
+          if (message.type === 'approval_request' && message.data) {
+            const approval = message.data as ApprovalRequest;
             setApprovals(prev => {
-              if (prev.some(a => a.request_id === approval.request_id)) {
+              if (prev.some((item) => item.request_id === approval.request_id)) {
                 return prev;
               }
               return [approval, ...prev];
             });
             callbacksRef.current.onNewApproval?.(approval);
-          } else if (data.type === 'approval_update') {
-            const approval = data.data as ApprovalRequest;
-            setApprovals(prev => {
-              // Remove if no longer pending
-              if (approval.status !== 'pending') {
-                return prev.filter(a => a.request_id !== approval.request_id);
-              }
-              // Update existing
-              return prev.map(a =>
-                a.request_id === approval.request_id ? approval : a
-              );
-            });
+            return;
+          }
+
+          if (
+            (message.type === 'approval_decided'
+              || message.type === 'approval_expired'
+              || message.type === 'approval_cancelled')
+            && message.data
+          ) {
+            const approval = message.data as ApprovalRequest;
+            setApprovals(prev => prev.filter((item) => item.request_id !== approval.request_id));
             callbacksRef.current.onApprovalUpdate?.(approval);
           }
-        } catch (err) {
-          console.error('Failed to parse WebSocket message:', err);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsConnected(false);
-      };
-
-      ws.onclose = () => {
-        setIsConnected(false);
-        // Attempt reconnect after 5 seconds
-        setTimeout(() => {
-          if (autoConnect) connect();
-        }, 5000);
-      };
-
-      wsRef.current = ws;
+        },
+        setIsConnected,
+      );
     } catch (err) {
       console.error('Failed to connect WebSocket:', err);
       setIsConnected(false);
@@ -571,10 +545,8 @@ export function useRealtimeApprovals(options: UseRealtimeApprovalsOptions = {}) 
   }, [autoConnect]);
 
   const disconnect = useCallback(() => {
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    orchestrationClient.disconnectApprovalWebSocket();
+    wsRef.current = null;
     setIsConnected(false);
   }, []);
 

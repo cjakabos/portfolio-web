@@ -7,6 +7,8 @@ define the current platform direction.
 
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,
   owner matrix, ingress map, and critical user journeys
+- [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
+  surface, operator capability matrix, and gateway-enforced route classes
 - [module-classification.md](./module-classification.md): module labels for
   core platform, operator support, and legacy/demo-derived areas
 - [frontend-version-policy.md](./frontend-version-policy.md): approved shared
