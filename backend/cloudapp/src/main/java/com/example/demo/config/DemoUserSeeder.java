@@ -38,10 +38,10 @@ public class DemoUserSeeder implements ApplicationRunner {
             PasswordEncoder passwordEncoder,
             UserRoleAuthorityService userRoleAuthorityService,
             @Value("${cloudapp.seed.demo-users.enabled:false}") boolean enabled,
-            @Value("${cloudapp.seed.demo-users.admin.username:cloudadmin}") String adminUsername,
-            @Value("${cloudapp.seed.demo-users.admin.password:cloudy}") String adminPassword,
-            @Value("${cloudapp.seed.demo-users.regular.username:regularuser123}") String regularUsername,
-            @Value("${cloudapp.seed.demo-users.regular.password:456789}") String regularPassword
+            @Value("${cloudapp.seed.demo-users.admin.username:}") String adminUsername,
+            @Value("${cloudapp.seed.demo-users.admin.password:}") String adminPassword,
+            @Value("${cloudapp.seed.demo-users.regular.username:}") String regularUsername,
+            @Value("${cloudapp.seed.demo-users.regular.password:}") String regularPassword
     ) {
         this.userRepository = userRepository;
         this.cartRepository = cartRepository;
@@ -61,13 +61,14 @@ public class DemoUserSeeder implements ApplicationRunner {
             return;
         }
 
+        log.info("Demo user seeding is enabled for this environment");
         seedOrRefreshUser(adminUsername, adminPassword, List.of("ROLE_ADMIN", "ROLE_USER"));
         seedOrRefreshUser(regularUsername, regularPassword, List.of("ROLE_USER"));
     }
 
     private void seedOrRefreshUser(String username, String rawPassword, List<String> roles) {
         if (username == null || username.isBlank() || rawPassword == null || rawPassword.isBlank()) {
-            log.warn("Skipping demo user seed because username/password is blank");
+            log.warn("Skipping demo user seed because credentials were not provided explicitly");
             return;
         }
 
