@@ -10,15 +10,22 @@
 # more reliable on glibc than on musl during CI and nightly container builds.
 FROM node:20-slim AS builder
 
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy the monorepo workspace manifests first so local @portfolio/* packages
+# resolve from the root lockfile instead of the public npm registry.
+COPY package.json package-lock.json ./
+COPY packages/contracts/package.json ./packages/contracts/package.json
+COPY packages/api-clients/package.json ./packages/api-clients/package.json
+COPY packages/auth/package.json ./packages/auth/package.json
+COPY packages/ui/package.json ./packages/ui/package.json
+COPY ai-orchestration/ai-orchestration-monitor/package.json ./ai-orchestration/ai-orchestration-monitor/package.json
 
 # Install dependencies deterministically when a lockfile is present.
 # npm intermittently misses Rollup's optional native package in containers, so
 # install the matching Linux native binding explicitly if the loader is absent.
-RUN if [ -f package-lock.json ]; then npm ci --include=optional; else npm install --include=optional; fi \
+RUN APP_DIR=ai-orchestration/ai-orchestration-monitor \
+ && npm ci --workspace "$APP_DIR" --include-workspace-root=false --include=optional \
  && case "$(node -p "process.arch")" in \
       arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; \
       x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; \
@@ -28,15 +35,19 @@ RUN if [ -f package-lock.json ]; then npm ci --include=optional; else npm instal
       echo "Unsupported architecture for Rollup native fallback: $(node -p "process.arch")" >&2; \
       exit 1; \
     fi \
- && if [ ! -d "node_modules/${ROLLUP_PACKAGE}" ]; then \
-      ROLLUP_VERSION="$(node -p "require('./node_modules/rollup/package.json').version")"; \
+ && if [ ! -d "$APP_DIR/node_modules/${ROLLUP_PACKAGE}" ]; then \
+      ROLLUP_VERSION="$(node -p "require('./${APP_DIR}/node_modules/rollup/package.json').version")"; \
       echo "Installing missing Rollup native package: ${ROLLUP_PACKAGE}@${ROLLUP_VERSION}"; \
-      npm install --no-save "${ROLLUP_PACKAGE}@${ROLLUP_VERSION}"; \
+      cd "$APP_DIR" && npm install --no-save "${ROLLUP_PACKAGE}@${ROLLUP_VERSION}" && cd /workspace; \
     fi \
- && node -e "require('rollup/dist/native.js')"
+ && node -e "require('./${APP_DIR}/node_modules/rollup/dist/native.js')"
 
-# Copy source files
-COPY . .
+# Copy shared workspace sources plus the monitor app after dependency restore.
+COPY packages/contracts ./packages/contracts
+COPY packages/api-clients ./packages/api-clients
+COPY packages/auth ./packages/auth
+COPY packages/ui ./packages/ui
+COPY ai-orchestration/ai-orchestration-monitor ./ai-orchestration/ai-orchestration-monitor
 
 # Build arguments for API URL
 ARG VITE_API_URL
@@ -48,6 +59,7 @@ ENV VITE_AI_BASE_URL=$VITE_AI_BASE_URL
 ENV VITE_AI_WS_URL=$VITE_AI_WS_URL
 
 # Build the application
+WORKDIR /workspace/ai-orchestration/ai-orchestration-monitor
 RUN npm run build
 
 # =============================================================================
@@ -61,7 +73,7 @@ WORKDIR /app
 RUN npm install -g serve
 
 # Copy built files from the builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /workspace/ai-orchestration/ai-orchestration-monitor/dist ./dist
 
 # Expose port (Serve defaults to 8700)
 EXPOSE 5010

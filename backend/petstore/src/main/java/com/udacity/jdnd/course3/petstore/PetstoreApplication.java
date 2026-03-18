@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Launches the Spring application. Unmodified from starter code.
+ * Launches the Petstore service within the portfolio platform.
  */
 @SpringBootApplication
 public class PetstoreApplication {

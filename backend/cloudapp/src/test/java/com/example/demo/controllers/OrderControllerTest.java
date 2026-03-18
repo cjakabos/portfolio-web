@@ -40,6 +40,7 @@ public class OrderControllerTest {
     public void setup() {
         orderController = new OrderController(orderService, internalRequestAuthorizer);
         when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
+        when(orderService.userExists(any())).thenReturn(true);
     }
 
     @Test
@@ -51,8 +52,7 @@ public class OrderControllerTest {
         user.setCart(cart);
         UserOrder userOrder = UserOrder.createFromCart(cart);
 
-        when(orderService.userExists(user.getUsername())).thenReturn(true);
-        when(orderService.submit(user.getUsername())).thenReturn(java.util.Optional.of(userOrder));
+        when(orderService.submit(user.getUsername())).thenReturn(userOrder);
         ResponseEntity<UserOrder> response = orderController.submit(
                 user.getUsername(),
                 authFor(user.getUsername()),
@@ -66,36 +66,6 @@ public class OrderControllerTest {
     }
 
     @Test
-    public void submit_missing_user_returns_not_found_before_auth_check() {
-        when(orderService.userExists("ghostuser")).thenReturn(false);
-
-        ResponseEntity<UserOrder> response = orderController.submit(
-                "ghostuser",
-                authFor("someone-else"),
-                new MockHttpServletRequest()
-        );
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        verify(orderService, never()).submit(anyString());
-    }
-
-    @Test
-    public void submit_forbidden_for_other_user_when_target_exists() {
-        when(orderService.userExists("target-user")).thenReturn(true);
-
-        ResponseEntity<UserOrder> response = orderController.submit(
-                "target-user",
-                authFor("someone-else"),
-                new MockHttpServletRequest()
-        );
-
-        assertNotNull(response);
-        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-        verify(orderService, never()).submit(anyString());
-    }
-
-    @Test
     public void get_orders_for_users_happy_path() {
         User user = new User(1L, "testuser", "testpassword");
         Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
@@ -105,8 +75,7 @@ public class OrderControllerTest {
         List<UserOrder> userOrderResponse = new ArrayList<>();
         userOrderResponse.add(userOrder);
 
-        when(orderService.userExists(user.getUsername())).thenReturn(true);
-        when(orderService.findOrdersForUser(user.getUsername())).thenReturn(java.util.Optional.of(userOrderResponse));
+        when(orderService.findOrdersForUser(user.getUsername())).thenReturn(userOrderResponse);
 
         ResponseEntity<List<UserOrder>> ordersForUser = orderController.getOrdersForUser(
                 user.getUsername(),
@@ -119,17 +88,42 @@ public class OrderControllerTest {
     }
 
     @Test
-    public void get_orders_for_missing_user_returns_not_found_before_auth_check() {
+    public void submit_returns_not_found_before_authorization_when_user_missing() {
+        when(orderService.userExists("ghostuser")).thenReturn(false);
+
+        ResponseEntity<UserOrder> response = orderController.submit(
+                "ghostuser",
+                authFor("otheruser"),
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(orderService, never()).submit(any());
+    }
+
+    @Test
+    public void submit_returns_forbidden_for_other_authenticated_user_when_target_exists() {
+        ResponseEntity<UserOrder> response = orderController.submit(
+                "testuser",
+                authFor("otheruser"),
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(orderService, never()).submit(any());
+    }
+
+    @Test
+    public void get_orders_returns_not_found_before_authorization_when_user_missing() {
         when(orderService.userExists("ghostuser")).thenReturn(false);
 
         ResponseEntity<List<UserOrder>> response = orderController.getOrdersForUser(
                 "ghostuser",
-                authFor("someone-else"),
+                authFor("otheruser"),
                 new MockHttpServletRequest()
         );
 
-        assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        verify(orderService, never()).findOrdersForUser(anyString());
+        verify(orderService, never()).findOrdersForUser(any());
     }
 }

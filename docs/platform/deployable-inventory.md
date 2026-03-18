@@ -11,6 +11,17 @@ services, AI services, and shared infrastructure. The goal of this inventory is
 to make operational and architectural ownership explicit before more feature
 work is added.
 
+## Related Governance Docs
+
+- [docs/platform/README.md](./README.md)
+- [secret-classification.md](./secret-classification.md)
+- [runtime-and-data-policy.md](./runtime-and-data-policy.md)
+- [adr/adr-001-gateway-policy-boundary.md](./adr/adr-001-gateway-policy-boundary.md)
+- [adr/adr-002-frontend-workspace-strategy.md](./adr/adr-002-frontend-workspace-strategy.md)
+- [adr/adr-003-ai-operator-boundary.md](./adr/adr-003-ai-operator-boundary.md)
+- [adr/adr-004-generated-contract-governance.md](./adr/adr-004-generated-contract-governance.md)
+- [adr/adr-005-runtime-and-data-store-defaults.md](./adr/adr-005-runtime-and-data-store-defaults.md)
+
 ## Ownership Model
 
 Ownership is assigned by role rather than by individual so the model remains

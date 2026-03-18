@@ -26,20 +26,41 @@ const REMOTE_CHATLLM  = process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL  || "http://l
 const REMOTE_MLOPS    = process.env.NEXT_PUBLIC_REMOTE_MLOPS_URL    || "http://localhost:5005";
 const REMOTE_PETSTORE = process.env.NEXT_PUBLIC_REMOTE_PETSTORE_URL || "http://localhost:5006";
 const NEXT_DIST_DIR = process.env.NEXT_DIST_DIR || ".next";
+const NEXT_COMPILED_REACT = require.resolve("next/dist/compiled/react");
+const NEXT_COMPILED_REACT_JSX_RUNTIME = require.resolve("next/dist/compiled/react/jsx-runtime");
+const NEXT_COMPILED_REACT_JSX_DEV_RUNTIME = require.resolve("next/dist/compiled/react/jsx-dev-runtime");
+const NEXT_COMPILED_REACT_DOM = require.resolve("next/dist/compiled/react-dom");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    experimental: {
+      externalDir: true,
+    },
     images: {
         qualities: [25, 50, 75, 100],
     },
-    transpilePackages: ['@mui/x-data-grid'],
+    transpilePackages: [
+      '@mui/x-data-grid',
+      '@portfolio/auth',
+      '@portfolio/api-clients',
+      '@portfolio/contracts',
+      '@portfolio/ui',
+    ],
     output: 'standalone',
     distDir: NEXT_DIST_DIR,
     webpack(config, options) {
     const { isServer } = options;
     const remoteDir = isServer ? "ssr" : "chunks";
     config.experiments = { topLevelAwait: true, layers: true };
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "next/dist/compiled/react$": NEXT_COMPILED_REACT,
+      "next/dist/compiled/react/jsx-runtime$": NEXT_COMPILED_REACT_JSX_RUNTIME,
+      "next/dist/compiled/react/jsx-dev-runtime$": NEXT_COMPILED_REACT_JSX_DEV_RUNTIME,
+      "next/dist/compiled/react-dom$": NEXT_COMPILED_REACT_DOM,
+    };
 
     config.plugins.push(
         new NextFederationPlugin({

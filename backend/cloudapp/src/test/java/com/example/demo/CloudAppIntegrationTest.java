@@ -281,6 +281,23 @@ public class CloudAppIntegrationTest {
     }
 
     @Test
+    @Order(67)
+    @DisplayName("POST /item — invalid admin payload returns 400 ProblemDetail")
+    void createItem_invalidPayload() throws Exception {
+        CreateItemRequest request = new CreateItemRequest();
+        request.setName(" ");
+        request.setPrice(new BigDecimal("-1.00"));
+
+        mockMvc.perform(post("/item")
+                        .header("Authorization", ensureAdminJwtToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("Item name must not be blank"));
+    }
+
+    @Test
     @Order(11)
     @DisplayName("GET /item — should return all items")
     void getItems() throws Exception {

@@ -5,12 +5,17 @@
 #   1. Backend integration tests (Spring Boot + real DBs)
 #   2. ML Pipeline tests (Flask/pytest + real Postgres)
 #   3. NGINX gateway tests (JWT, CORS, routing)
-#   4. Frontend unit tests (React Testing Library)
-#   5. Frontend lockfile native package checks
-#   6. Optional dependency vulnerability scans (npm audit + pip-audit)
-#   7. Playwright E2E tests (full stack)
-#   8. AI Orchestration tests (pytest — auth, config, http_client, approvals)
-#   9. AI Monitor checks (TypeScript typecheck + ESLint + Vite build)
+#   4. API contract governance (OpenAPI drift + TS client validation)
+#   5. Frontend unit tests (React Testing Library)
+#   6. Docs drift checks for repo-facing test/runtime docs
+#   7. Frontend lockfile native package checks
+#   8. Optional dependency vulnerability scans (npm audit + pip-audit)
+#   9. AI Orchestration tests (pytest — auth, config, http_client, approvals)
+#   10. AI Monitor static checks (TypeScript typecheck + ESLint + Vite build)
+#   11. AI Monitor component behavior tests (Vitest + jsdom)
+#   12. Playwright AI monitor behavior tests
+#   13. Playwright E2E tests (core stack)
+#   14. Playwright E2E tests (remote stack)
 #
 # Usage:
 #   Triggered automatically on push/PR to main/develop.
@@ -238,7 +243,22 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 6: Frontend Lockfile Native Package Checks
+  # JOB 6: Docs Drift Checks
+  # =========================================================================
+  docs-drift-checks:
+    name: "Docs — Drift Guardrails"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate docs against CI/runtime expectations
+        run: python3 scripts/check_docs_drift.py
+
+  # =========================================================================
+  # JOB 7: Frontend Lockfile Native Package Checks
   # =========================================================================
   frontend-lockfile-checks:
     name: "Frontend Lockfiles — Linux Native Packages"
@@ -253,17 +273,14 @@ jobs:
         run: python3 scripts/check_frontend_native_lockfiles.py
 
   # =========================================================================
-  # JOB 7: Optional Dependency Scans (non-blocking for findings)
+  # JOB 8A: Optional Dependency Scans (npm)
   # =========================================================================
-  dependency-scans:
-    name: "Dependency Security — Audit"
+  dependency-scan-npm:
+    name: "Dependency Security — npm Audit"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     outputs:
-      npm_status: ${{ steps.npm-audit.outputs.status }}
-      python_status: ${{ steps.pip-audit.outputs.status }}
-      maven_status: ${{ steps.maven-audit.outputs.status }}
-      summary: ${{ steps.audit-summary.outputs.summary }}
+      status: ${{ steps.npm-audit.outputs.status }}
 
     steps:
       - name: Checkout code
@@ -273,11 +290,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
 
       - name: Audit npm production dependencies
         id: npm-audit
@@ -299,6 +311,37 @@ jobs:
           done
 
           echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload npm audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-npm-reports
+          path: audit-reports/
+          retention-days: 7
+
+  # =========================================================================
+  # JOB 8B: Optional Dependency Scans (Python)
+  # =========================================================================
+  dependency-scan-python:
+    name: "Dependency Security — Python Audit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.pip-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/ml-pipeline/requirements.txt
+            ai-orchestration/ai-orchestration-layer/requirements.txt
 
       - name: Install pip-audit
         run: python3 -m pip install --upgrade pip pip-audit
@@ -323,63 +366,592 @@ jobs:
 
           echo "status=$status" >> "$GITHUB_OUTPUT"
 
-      # Maven dependency scanning via OWASP Dependency-Check
+      - name: Upload Python audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-python-reports
+          path: audit-reports/
+          retention-days: 7
+
+  # =========================================================================
+  # JOB 8C: Optional Dependency Scans (Maven / OWASP Warmup)
+  # =========================================================================
+  dependency-scan-maven-update:
+    name: "Dependency Security — Maven OWASP Warmup"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      status: ${{ steps.maven-warmup.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
+          cache: maven
 
-      - name: Audit Maven dependencies (OWASP Dependency-Check)
-        id: maven-audit
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Warm OWASP Dependency-Check data
+        id: maven-warmup
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
           status=clean
-          for dir in backend/cloudapp backend/petstore backend/vehicles-api backend/web-proxy; do
-            name="$(basename "$dir")"
-            report="audit-reports/${name}-owasp-report.json"
-            if ! mvn -f "$dir/pom.xml" org.owasp:dependency-check-maven:check \
-              -DfailBuildOnCVSS=7 \
-              -Dformats=JSON \
-              -Dodc.outputDirectory=audit-reports \
-              --batch-mode --quiet 2>/dev/null; then
+          cache_hit="${{ steps.restore-odc-cache.outputs.cache-hit }}"
+
+          echo "OWASP cache hit: ${cache_hit:-false}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          if [ "$cache_hit" = "true" ]; then
+            echo "Exact OWASP cache hit detected; skipping update-only warmup."
+          else
+            if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:update-only \
+              "${common_args[@]}" "${nvd_args[@]}"; then
               status=issues-found
             fi
-          done
+          fi
+
           echo "status=$status" >> "$GITHUB_OUTPUT"
 
-      - name: Upload dependency audit reports
+      - name: Save OWASP Dependency-Check data
+        if: always() && steps.restore-odc-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ steps.restore-odc-cache.outputs.cache-primary-key }}
+
+  # =========================================================================
+  # JOB 8D: Optional Dependency Scans (Maven / OWASP per service)
+  # =========================================================================
+  dependency-scan-maven-cloudapp:
+    name: "Dependency Security — Maven Audit (CloudApp)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit CloudApp Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/cloudapp-owasp-report.json"
+
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/cloudapp/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload CloudApp Maven audit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dependency-audit-reports
+          name: dependency-audit-maven-report-cloudapp
           path: audit-reports/
           retention-days: 7
 
+  dependency-scan-maven-petstore:
+    name: "Dependency Security — Maven Audit (Petstore)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit Petstore Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/petstore-owasp-report.json"
+
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/petstore/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Petstore Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-petstore
+          path: audit-reports/
+          retention-days: 7
+
+  dependency-scan-maven-vehicles-api:
+    name: "Dependency Security — Maven Audit (Vehicles API)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit Vehicles API Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/vehicles-api-owasp-report.json"
+
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/vehicles-api/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Vehicles API Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-vehicles-api
+          path: audit-reports/
+          retention-days: 7
+
+  dependency-scan-maven-web-proxy:
+    name: "Dependency Security — Maven Audit (Web Proxy)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: always()
+    needs: [dependency-scan-maven-update]
+    outputs:
+      status: ${{ steps.maven-audit.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute OWASP cache epoch
+        id: odc-cache-key
+        run: echo "epoch=$(date -u '+%G-W%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore OWASP Dependency-Check data
+        id: restore-odc-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-${{ steps.odc-cache-key.outputs.epoch }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ hashFiles('backend/**/pom.xml') }}-
+
+      - name: Audit Web Proxy Maven dependencies
+        id: maven-audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mkdir -p audit-reports
+          data_dir="$HOME/.cache/dependency-check"
+          mkdir -p "$data_dir"
+          status=clean
+          generated_report="audit-reports/dependency-check-report.json"
+          target_report="audit-reports/web-proxy-owasp-report.json"
+
+          echo "OWASP cache hit: ${{ steps.restore-odc-cache.outputs.cache-hit }}"
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            echo "NVD API key configured: yes"
+          else
+            echo "NVD API key configured: no"
+          fi
+
+          common_args=(
+            -DdataDirectory="$data_dir"
+            -DfailBuildOnCVSS=7
+            -Dformats=JSON
+            -Dodc.outputDirectory=audit-reports
+            -DnvdValidForHours=168
+            -DnvdMaxRetryCount=3
+            --batch-mode
+          )
+
+          nvd_args=()
+          if [ -n "${NVD_API_KEY:-}" ]; then
+            nvd_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+
+          rm -f "$generated_report" "$target_report"
+          if ! mvn -f backend/web-proxy/pom.xml org.owasp:dependency-check-maven:check \
+            "${common_args[@]}" "${nvd_args[@]}" -DautoUpdate=false; then
+            status=issues-found
+          fi
+
+          if [ -f "$generated_report" ]; then
+            mv "$generated_report" "$target_report"
+          fi
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Web Proxy Maven audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-report-web-proxy
+          path: audit-reports/
+          retention-days: 7
+
+  # =========================================================================
+  # JOB 8E: Optional Dependency Scans (Maven / OWASP summary)
+  # =========================================================================
+  dependency-scan-maven:
+    name: "Dependency Security — Maven Audit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs:
+      [
+        dependency-scan-maven-update,
+        dependency-scan-maven-cloudapp,
+        dependency-scan-maven-petstore,
+        dependency-scan-maven-vehicles-api,
+        dependency-scan-maven-web-proxy,
+      ]
+    outputs:
+      status: ${{ steps.maven-summary.outputs.status }}
+
+    steps:
+      - name: Download Maven audit reports
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dependency-audit-maven-report-*
+          path: audit-reports/maven
+          merge-multiple: true
+
+      - name: Upload Maven audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-maven-reports
+          path: audit-reports/maven/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Summarize Maven audit
+        id: maven-summary
+        run: |
+          warmup_status="${{ needs.dependency-scan-maven-update.outputs.status }}"
+          cloudapp_status="${{ needs.dependency-scan-maven-cloudapp.outputs.status }}"
+          petstore_status="${{ needs.dependency-scan-maven-petstore.outputs.status }}"
+          vehicles_status="${{ needs.dependency-scan-maven-vehicles-api.outputs.status }}"
+          web_proxy_status="${{ needs.dependency-scan-maven-web-proxy.outputs.status }}"
+
+          if [ -z "$warmup_status" ]; then
+            warmup_status="${{ needs.dependency-scan-maven-update.result }}"
+          fi
+          if [ -z "$cloudapp_status" ]; then
+            cloudapp_status="${{ needs.dependency-scan-maven-cloudapp.result }}"
+          fi
+          if [ -z "$petstore_status" ]; then
+            petstore_status="${{ needs.dependency-scan-maven-petstore.result }}"
+          fi
+          if [ -z "$vehicles_status" ]; then
+            vehicles_status="${{ needs.dependency-scan-maven-vehicles-api.result }}"
+          fi
+          if [ -z "$web_proxy_status" ]; then
+            web_proxy_status="${{ needs.dependency-scan-maven-web-proxy.result }}"
+          fi
+
+          status=clean
+          for job_status in \
+            "$warmup_status" \
+            "$cloudapp_status" \
+            "$petstore_status" \
+            "$vehicles_status" \
+            "$web_proxy_status"; do
+            if [ "$job_status" != "clean" ]; then
+              status=issues-found
+            fi
+          done
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+          echo "## Maven Dependency Audit" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Scope | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| NVD Warmup | $warmup_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| CloudApp | $cloudapp_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Petstore | $petstore_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Vehicles API | $vehicles_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Web Proxy | $web_proxy_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Merged reports are uploaded as the \`dependency-audit-maven-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
+
+  # =========================================================================
+  # JOB 8F: Optional Dependency Scan Summary
+  # =========================================================================
+  dependency-scans:
+    name: "Dependency Security — Audit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    needs: [dependency-scan-npm, dependency-scan-python, dependency-scan-maven]
+    outputs:
+      npm_status: ${{ steps.audit-summary.outputs.npm_status }}
+      python_status: ${{ steps.audit-summary.outputs.python_status }}
+      maven_status: ${{ steps.audit-summary.outputs.maven_status }}
+      summary: ${{ steps.audit-summary.outputs.summary }}
+
+    steps:
       - name: Summarize dependency scans
         id: audit-summary
         run: |
-          if [ "${{ steps.npm-audit.outputs.status }}" = "clean" ] \
-            && [ "${{ steps.pip-audit.outputs.status }}" = "clean" ] \
-            && [ "${{ steps.maven-audit.outputs.status }}" = "clean" ]; then
+          npm_status="${{ needs.dependency-scan-npm.outputs.status }}"
+          python_status="${{ needs.dependency-scan-python.outputs.status }}"
+          maven_status="${{ needs.dependency-scan-maven.outputs.status }}"
+
+          if [ -z "$npm_status" ]; then
+            npm_status="${{ needs.dependency-scan-npm.result }}"
+          fi
+          if [ -z "$python_status" ]; then
+            python_status="${{ needs.dependency-scan-python.result }}"
+          fi
+          if [ -z "$maven_status" ]; then
+            maven_status="${{ needs.dependency-scan-maven.result }}"
+          fi
+
+          if [ "$npm_status" = "clean" ] \
+            && [ "$python_status" = "clean" ] \
+            && [ "$maven_status" = "clean" ]; then
             summary="clean"
           else
             summary="issues-found (non-blocking)"
           fi
 
+          echo "npm_status=$npm_status" >> "$GITHUB_OUTPUT"
+          echo "python_status=$python_status" >> "$GITHUB_OUTPUT"
+          echo "maven_status=$maven_status" >> "$GITHUB_OUTPUT"
           echo "summary=$summary" >> "$GITHUB_OUTPUT"
 
           echo "## Dependency Security Scan" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Ecosystem | Status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| npm | ${{ steps.npm-audit.outputs.status }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Python | ${{ steps.pip-audit.outputs.status }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Maven | ${{ steps.maven-audit.outputs.status }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm | $npm_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Python | $python_status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Maven | $maven_status |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Reports are uploaded as the \`dependency-audit-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
+          echo "Reports are uploaded as the \`dependency-audit-npm-reports\`, \`dependency-audit-python-reports\`, and \`dependency-audit-maven-reports\` artifacts." >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
-  # JOB 8: AI Orchestration Layer Tests (pytest)
+  # JOB 9: AI Orchestration Layer Tests (pytest)
   # =========================================================================
   ai-orchestration-tests:
     name: "AI Orchestration — pytest"
@@ -400,7 +972,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 9: AI Monitor Checks (ESLint + Vite Build)
+  # JOB 10: AI Monitor Static Checks (ESLint + Vite Build)
   # =========================================================================
   ai-monitor-checks:
     name: "AI Monitor — Lint + Build"
@@ -421,29 +993,160 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 10: Playwright E2E Tests
+  # JOB 11: AI Monitor Component Behavior Tests
   # =========================================================================
-  e2e-tests:
-    name: "E2E — Playwright"
+  ai-monitor-component-tests:
+    name: "AI Monitor — Component Behavior"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: [backend-tests, ml-pipeline-tests]  # Run after backend tests pass
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start full stack
+      - name: Run AI monitor component behavior tests
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
+            test-ai-monitor-component
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 12: AI Monitor Behavior Tests
+  # =========================================================================
+  ai-monitor-behavior-tests:
+    name: "AI Monitor — Routed Browser Flow"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start routed monitor stack
         run: |
           set -euo pipefail
           if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 420 \
             test-postgres test-postgres-ml test-mysql test-mongo \
             test-zookeeper test-kafka \
             test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
-            test-nginx test-shell; then
+            test-nginx test-ai-monitor; then
             docker compose -f docker-compose.test.yml ps || true
             docker compose -f docker-compose.test.yml logs --tail=300 \
               test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+              test-postgres test-postgres-ml test-mysql test-mongo test-kafka test-zookeeper \
+              test-nginx test-ai-monitor || true
+            exit 1
+          fi
+
+      - name: Run AI monitor behavior tests
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
+            test-ai-monitor-behavior
+
+      - name: Collect AI monitor Playwright artifacts
+        if: always()
+        run: |
+          mkdir -p monitor-playwright-artifacts
+          cp -R playwright-report-monitor monitor-playwright-artifacts/playwright-report 2>/dev/null || true
+          cp -R test-results-monitor monitor-playwright-artifacts/test-results 2>/dev/null || true
+
+      - name: Upload AI monitor Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-monitor-playwright-results
+          path: monitor-playwright-artifacts/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 13: Playwright E2E Tests (Core Stack)
+  # =========================================================================
+  e2e-core-tests:
+    name: "E2E — Playwright (Core)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [backend-tests]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start core stack
+        run: |
+          set -euo pipefail
+          if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 300 \
+            test-postgres test-mongo test-zookeeper test-kafka \
+            test-cloudapp test-nginx-core test-shell-core; then
+            docker compose -f docker-compose.test.yml ps || true
+            docker compose -f docker-compose.test.yml logs --tail=300 \
+              test-cloudapp \
+              test-postgres test-mongo test-kafka test-zookeeper \
+              test-nginx-core test-shell-core || true
+            exit 1
+          fi
+
+      - name: Wait for services
+        run: |
+          docker compose -f docker-compose.test.yml ps
+
+      - name: Run Playwright core tests
+        run: |
+          docker compose -f docker-compose.test.yml build test-e2e-core
+          docker compose -f docker-compose.test.yml run --rm test-e2e-core \
+            e2e/auth.spec.ts e2e/chat.spec.ts e2e/shop.spec.ts \
+            e2e/mobile.interactions.spec.ts e2e/mobile.visual.spec.ts \
+            --grep-invert "Admin-Only Routes"
+
+      - name: Collect Playwright core artifacts
+        if: always()
+        run: |
+          mkdir -p playwright-artifacts
+          cp -R playwright-report playwright-artifacts/playwright-report 2>/dev/null || true
+          cp -R test-results playwright-artifacts/test-results 2>/dev/null || true
+
+      - name: Upload Playwright core artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-core-results
+          path: playwright-artifacts/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 14: Playwright E2E Tests (Remote Stack)
+  # =========================================================================
+  e2e-remote-tests:
+    name: "E2E — Playwright (Remotes)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [backend-tests, ml-pipeline-tests]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start remote stack
+        run: |
+          set -euo pipefail
+          if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 420 \
+            test-postgres test-postgres-ml test-mysql test-mongo \
+            test-zookeeper test-kafka \
+            test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+            test-nginx test-shell test-ai-monitor; then
+            docker compose -f docker-compose.test.yml ps || true
+            docker compose -f docker-compose.test.yml logs --tail=300 \
+              test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops test-ai-monitor \
               test-postgres test-postgres-ml test-mysql test-mongo test-kafka test-zookeeper \
               test-nginx test-shell || true
             exit 1
@@ -453,23 +1156,25 @@ jobs:
         run: |
           docker compose -f docker-compose.test.yml ps
 
-      - name: Run Playwright E2E tests
+      - name: Run Playwright remote tests
         run: |
-          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-e2e
+          docker compose -f docker-compose.test.yml build test-e2e
+          docker compose -f docker-compose.test.yml run --rm test-e2e \
+            e2e/auth.spec.ts e2e/module-federation.spec.ts e2e/mlops.spec.ts e2e/monitor.spec.ts \
+            --grep "Admin-Only Routes|Module Federation|MLOps Segmentation Flow|AI Monitor"
 
-      - name: Collect Playwright artifacts
+      - name: Collect Playwright remote artifacts
         if: always()
         run: |
           mkdir -p playwright-artifacts
           cp -R playwright-report playwright-artifacts/playwright-report 2>/dev/null || true
           cp -R test-results playwright-artifacts/test-results 2>/dev/null || true
 
-      - name: Upload Playwright artifacts
+      - name: Upload Playwright remote artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-results
+          name: playwright-remote-results
           path: playwright-artifacts/
           retention-days: 7
 
@@ -483,7 +1188,7 @@ jobs:
   test-summary:
     name: "Test Summary"
     runs-on: ubuntu-latest
-    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, e2e-tests]
+    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
     if: always()
 
     steps:
@@ -498,8 +1203,12 @@ jobs:
           echo "| NGINX Gateway | ${{ needs.nginx-gateway-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| API Contracts | ${{ needs.api-contract-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Unit | ${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs Drift | ${{ needs.docs-drift-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lockfiles | ${{ needs.frontend-lockfile-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Dependency Scan (optional) | ${{ needs.dependency-scans.outputs.summary }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI Orchestration (pytest) | ${{ needs.ai-orchestration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| AI Monitor (TS + Lint) | ${{ needs.ai-monitor-checks.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Playwright E2E | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Monitor (Static) | ${{ needs.ai-monitor-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Monitor (Component) | ${{ needs.ai-monitor-component-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Monitor (Behavior) | ${{ needs.ai-monitor-behavior-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Playwright E2E (Core) | ${{ needs.e2e-core-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Playwright E2E (Remotes) | ${{ needs.e2e-remote-tests.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -410,8 +410,8 @@ services:
   # ===========================================================================
   ai-orchestration-monitor:
     build:
-      context: ./ai-orchestration/ai-orchestration-monitor
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ai-orchestration/ai-orchestration-monitor/Dockerfile
       args:
         VITE_API_URL: http://localhost:80
         VITE_AI_BASE_URL: http://localhost:80/ai

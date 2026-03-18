@@ -21,12 +21,29 @@ jest.mock("next/router", () => ({
 }));
 
 const API_URL = "http://localhost:80/cloudapp";
+const originalFetch = global.fetch;
+const createFetchResponse = (body: string, status: number, contentType = "application/json") =>
+  ({
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get: (name: string) => (
+        name.toLowerCase() === "content-type" ? contentType : null
+      ),
+    },
+    text: async () => body,
+  } as Response);
 
 describe("cloudapp hooks", () => {
   let mock: MockAdapter;
+  let fetchMock: jest.Mock;
 
   beforeEach(() => {
     mock = new MockAdapter(axios);
+    fetchMock = jest.fn(async () => {
+      throw new Error("Unexpected fetch call");
+    });
+    global.fetch = fetchMock as typeof fetch;
     window.localStorage.clear();
     document.cookie = "XSRF-TOKEN=test-xsrf; path=/";
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -36,14 +53,17 @@ describe("cloudapp hooks", () => {
   afterEach(() => {
     document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     mock.restore();
+    global.fetch = originalFetch;
     jest.restoreAllMocks();
   });
 
   test("useAuth derives username and roles from auth-check", async () => {
-    mock.onGet(`${API_URL}/user/auth-check`).reply(200, {
-      username: "alice",
-      roles: ["ROLE_USER", "ROLE_ADMIN"],
-    });
+    fetchMock.mockResolvedValueOnce(
+      createFetchResponse(JSON.stringify({
+        username: "alice",
+        roles: ["ROLE_USER", "ROLE_ADMIN"],
+      }), 200),
+    );
 
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.isInitialized).toBe(true));
@@ -55,7 +75,9 @@ describe("cloudapp hooks", () => {
   });
 
   test("useAuth clears state on unauthorized auth-check", async () => {
-    mock.onGet(`${API_URL}/user/auth-check`).reply(401);
+    fetchMock.mockResolvedValueOnce(
+      createFetchResponse("Unauthorized", 401, "text/plain"),
+    );
 
     const { result } = renderHook(() => useAuth());
     await waitFor(() => expect(result.current.isInitialized).toBe(true));
@@ -64,6 +86,37 @@ describe("cloudapp hooks", () => {
     expect(result.current.roles).toEqual([]);
     expect(result.current.isAdmin).toBe(false);
     expect(result.current.isReady).toBe(false);
+  });
+
+  test("useAuth resolves root-relative API URLs against the current origin", async () => {
+    const previousApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    process.env.NEXT_PUBLIC_API_URL = "/cloudapp";
+
+    fetchMock.mockResolvedValueOnce(
+      createFetchResponse(JSON.stringify({
+        username: "alice",
+        roles: ["ROLE_USER"],
+      }), 200),
+    );
+
+    try {
+      const { result } = renderHook(() => useAuth());
+      await waitFor(() => expect(result.current.isInitialized).toBe(true));
+    } finally {
+      if (previousApiUrl === undefined) {
+        delete process.env.NEXT_PUBLIC_API_URL;
+      } else {
+        process.env.NEXT_PUBLIC_API_URL = previousApiUrl;
+      }
+    }
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${window.location.origin}/cloudapp/user/auth-check`,
+      expect.objectContaining({
+        credentials: "include",
+        method: "GET",
+      }),
+    );
   });
 
   test("useItems fetches items and creates new item", async () => {

@@ -1,17 +1,19 @@
 // =============================================================================
-// OrchestrationClient - API Service Layer (Split Gateway Configuration)
+// OrchestrationClient - Canonical Operator Client Surface
 // =============================================================================
 //
 // ARCHITECTURE:
-// - AI/Agentic operations go directly to ai-orchestration-layer (port 8700)
-// - CRUD operations go through nginx gateway (port 80)
+// - This file is the only supported API client surface for the AI monitor.
+// - AI routes are gateway-routed by default at /ai and can be overridden for
+//   direct backend access in local development if needed.
+// - CRUD operations for the product services go through the nginx gateway.
 //
 // ROUTES:
-// - AI Backend (localhost:8700):
+// - AI Backend (typically reached through gateway /ai):
 //   - /health, /config
 //   - /system/feature-status, /system/circuit-breakers, /system/connection-stats, /system/errors (admin-only)
 //   - /orchestrate, /metrics, /experiments, /approvals, /tools, /rag
-//   - WebSocket: ws://localhost:8700/ws/*
+//   - WebSocket: ws://<gateway>/ai/ws/*
 //
 // - Nginx Gateway (localhost:80):
 //   - /cloudapp-admin/*     → CloudApp admin monitor routes
@@ -58,6 +60,11 @@ import type {
   ApprovalHistoryItem,
   ApprovalStats,
   ApprovalDecision,
+  ApprovalType,
+  RiskLevel,
+  ApprovalStatus,
+  ResumeResponse,
+  ApprovalWebSocketMessage,
   SegmentationCustomer,
   MLInfo,
   MLDiagnostics,
@@ -65,15 +72,27 @@ import type {
   AuthResponse,
   WebProxyResponse,
 } from '../types';
+import type {
+  RAGDocument,
+  RAGDocumentListResponse,
+  RAGDeleteResponse,
+  RAGUserDeleteResponse,
+  RAGQueryRequest,
+  RAGQueryResponse,
+  RAGStatsResponse,
+  RAGHealthResponse,
+  UploadJobResponse,
+  UploadStatusResponse,
+} from '../types/rag';
 
 // =============================================================================
 // Configuration
 // =============================================================================
 
 interface ClientConfig {
-  // AI Orchestration Layer - direct connection
-  aiBaseUrl: string;       // http://localhost:8700
-  aiWsUrl: string;         // ws://localhost:8700
+  // AI Orchestration Layer - usually gateway-routed at /ai
+  aiBaseUrl: string;
+  aiWsUrl: string;
 
   // Nginx Gateway - for other services
   gatewayUrl: string;      // http://localhost:80
@@ -83,7 +102,7 @@ interface ClientConfig {
   // Service paths (relative to their base URLs)
   paths: {
     // AI paths (relative to aiBaseUrl)
-    ai: string;            // '' (root) or '/api'
+    ai: string;
 
     // Gateway paths (relative to gatewayUrl)
     cloudappAdmin: string; // /cloudapp-admin
@@ -95,13 +114,13 @@ interface ClientConfig {
 }
 
 const getConfig = (): ClientConfig => {
-  // AI Orchestration Layer - direct connection (not through nginx)
+  // AI monitor defaults to gateway-routed AI endpoints.
   const aiBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_BASE_URL)
     || 'http://localhost:80';
   const aiWsUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_WS_URL)
     || 'ws://localhost:80';
 
-  // Nginx gateway for other services
+  // Nginx gateway for the product surfaces
   const gatewayUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
     || 'http://localhost:80';
 
@@ -116,7 +135,7 @@ const getConfig = (): ClientConfig => {
     gatewayUrl,
     timeout,
     paths: {
-      ai: import.meta.env?.VITE_AI_PATH || '',  // AI endpoints are at root of aiBaseUrl
+      ai: import.meta.env?.VITE_AI_PATH || '',
       cloudappAdmin: import.meta.env?.VITE_CLOUDAPP_ADMIN_PATH || '/cloudapp-admin',
       cloudappPublic: import.meta.env?.VITE_CLOUDAPP_PUBLIC_PATH || '/cloudapp',
       petstore: import.meta.env?.VITE_PETSTORE_PATH || '/petstore',
@@ -167,7 +186,15 @@ export class TimeoutError extends Error {
 
 export class OrchestrationClient {
   private config: ClientConfig;
-  private ws: WebSocket | null = null;
+  private streamWs: WebSocket | null = null;
+  private approvalWs: WebSocket | null = null;
+  private approvalWsReconnectAttempts = 0;
+  private readonly approvalMaxReconnectAttempts = 5;
+  private readonly approvalReconnectDelayMs = 1000;
+  private approvalWsShouldReconnect = true;
+  private approvalMessageHandlers: Set<(message: ApprovalWebSocketMessage) => void> = new Set();
+  private approvalConnectionHandlers: Set<(connected: boolean) => void> = new Set();
+  private approvalPingInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(config?: Partial<ClientConfig>) {
     const defaultConfig = getConfig();
@@ -206,13 +233,14 @@ export class OrchestrationClient {
 
   private async request<T>(
     url: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    timeoutMs: number = this.config.timeout
   ): Promise<T> {
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const response = await fetch(url, {
@@ -287,34 +315,38 @@ export class OrchestrationClient {
     throw new NetworkError('Request retries exhausted', url);
   }
 
-  private async get<T>(url: string): Promise<T> {
-    return this.request<T>(url, { method: 'GET' });
+  private async get<T>(url: string, timeoutMs?: number): Promise<T> {
+    return this.request<T>(url, { method: 'GET' }, timeoutMs);
   }
 
-  private async post<T>(url: string, body?: unknown): Promise<T> {
+  private async post<T>(url: string, body?: unknown, timeoutMs?: number): Promise<T> {
     return this.request<T>(url, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
-    });
+    }, timeoutMs);
   }
 
-  private async put<T>(url: string, body?: unknown): Promise<T> {
+  private async put<T>(url: string, body?: unknown, timeoutMs?: number): Promise<T> {
     return this.request<T>(url, {
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
-    });
+    }, timeoutMs);
   }
 
-  private async delete<T>(url: string): Promise<T> {
-    return this.request<T>(url, { method: 'DELETE' });
+  private async delete<T>(url: string, timeoutMs?: number): Promise<T> {
+    return this.request<T>(url, { method: 'DELETE' }, timeoutMs);
   }
 
-  private async postFormData<T>(url: string, formData: FormData): Promise<T> {
+  private async postFormData<T>(
+    url: string,
+    formData: FormData,
+    timeoutMs: number = this.config.timeout
+  ): Promise<T> {
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const response = await fetch(url, {
@@ -593,13 +625,17 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getPendingApprovals(filters?: {
-    approval_type?: string;
-    risk_level?: string
+    approval_type?: ApprovalType;
+    risk_level?: RiskLevel;
+    min_risk_score?: number;
   }): Promise<ApprovalRequest[]> {
     let url = this.aiUrl('/approvals/pending');
     const params = new URLSearchParams();
     if (filters?.approval_type) params.append('approval_type', filters.approval_type);
     if (filters?.risk_level) params.append('risk_level', filters.risk_level);
+    if (filters?.min_risk_score !== undefined) {
+      params.append('min_risk_score', filters.min_risk_score.toString());
+    }
     if (params.toString()) url += `?${params.toString()}`;
     return this.get<ApprovalRequest[]>(url);
   }
@@ -608,12 +644,17 @@ export class OrchestrationClient {
     return this.get<ApprovalRequest>(this.aiUrl(`/approvals/pending/${encodeURIComponent(requestId)}`));
   }
 
+  async getApproval(requestId: string): Promise<ApprovalHistoryItem> {
+    return this.get<ApprovalHistoryItem>(this.aiUrl(`/approvals/${encodeURIComponent(requestId)}`));
+  }
+
   async getApprovalHistory(options?: {
     limit?: number;
     offset?: number;
-    status?: string;
-    approval_type?: string;
+    status?: ApprovalStatus;
+    approval_type?: ApprovalType;
     userId?: number;
+    include_auto_approved?: boolean;
   }): Promise<ApprovalHistoryItem[]> {
     const params = new URLSearchParams();
     if (options?.limit) params.append('limit', options.limit.toString());
@@ -621,6 +662,9 @@ export class OrchestrationClient {
     if (options?.status) params.append('status', options.status);
     if (options?.approval_type) params.append('approval_type', options.approval_type);
     if (options?.userId) params.append('user_id', options.userId.toString());
+    if (options?.include_auto_approved !== undefined) {
+      params.append('include_auto_approved', String(options.include_auto_approved));
+    }
     const url = this.aiUrl(`/approvals/history${params.toString() ? `?${params.toString()}` : ''}`);
     return this.get<ApprovalHistoryItem[]>(url);
   }
@@ -679,8 +723,105 @@ export class OrchestrationClient {
     return this.delete(this.aiUrl(`/approvals/pending/${encodeURIComponent(requestId)}`));
   }
 
+  async resumeApproval(
+    approvalId: string,
+    sessionId: string,
+    additionalContext?: Record<string, unknown>
+  ): Promise<ResumeResponse> {
+    return this.post<ResumeResponse>(
+      this.aiUrl(`/approvals/pending/${encodeURIComponent(approvalId)}/resume`),
+      {
+        session_id: sessionId,
+        additional_context: additionalContext,
+      },
+    );
+  }
+
   async getApprovalStats(): Promise<ApprovalStats> {
     return this.get<ApprovalStats>(this.aiUrl('/approvals/stats'));
+  }
+
+  async getApprovalHealth(): Promise<{
+    status: string;
+    service: string;
+    storage: string;
+    pending_count: number;
+    orchestrator_available: boolean;
+  }> {
+    return this.get(this.aiUrl('/approvals/health'));
+  }
+
+  connectApprovalWebSocket(
+    onMessage?: (message: ApprovalWebSocketMessage) => void,
+    onConnectionChange?: (connected: boolean) => void
+  ): WebSocket | null {
+    if (onMessage) this.approvalMessageHandlers.add(onMessage);
+    if (onConnectionChange) this.approvalConnectionHandlers.add(onConnectionChange);
+
+    if (this.approvalWs?.readyState === WebSocket.OPEN) {
+      onConnectionChange?.(true);
+      return this.approvalWs;
+    }
+
+    this.approvalWsShouldReconnect = true;
+
+    try {
+      const wsUrl = `${this.config.aiWsUrl}${this.config.paths.ai}/approvals/ws`;
+      this.approvalWs = new WebSocket(wsUrl);
+
+      this.approvalWs.onopen = () => {
+        this.approvalWsReconnectAttempts = 0;
+        this.approvalConnectionHandlers.forEach((handler) => handler(true));
+        this.startApprovalPingInterval();
+      };
+
+      this.approvalWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as ApprovalWebSocketMessage;
+          this.approvalMessageHandlers.forEach((handler) => handler(message));
+        } catch (error) {
+          console.error('Failed to parse approval WebSocket message:', error);
+        }
+      };
+
+      this.approvalWs.onclose = () => {
+        this.approvalConnectionHandlers.forEach((handler) => handler(false));
+        this.stopApprovalPingInterval();
+
+        if (
+          this.approvalWsShouldReconnect &&
+          this.approvalWsReconnectAttempts < this.approvalMaxReconnectAttempts
+        ) {
+          this.approvalWsReconnectAttempts += 1;
+          const delayMs = this.approvalReconnectDelayMs * (2 ** (this.approvalWsReconnectAttempts - 1));
+          setTimeout(() => this.connectApprovalWebSocket(), delayMs);
+        }
+      };
+
+      this.approvalWs.onerror = (error) => {
+        console.error('Approval WebSocket error:', error);
+      };
+
+      return this.approvalWs;
+    } catch (error) {
+      console.error('Failed to create approval WebSocket:', error);
+      return null;
+    }
+  }
+
+  disconnectApprovalWebSocket(): void {
+    this.approvalWsShouldReconnect = false;
+    this.stopApprovalPingInterval();
+    if (this.approvalWs) {
+      this.approvalWs.close(1000, 'Client disconnect');
+      this.approvalWs = null;
+    }
+    this.approvalMessageHandlers.clear();
+    this.approvalConnectionHandlers.clear();
+  }
+
+  isApprovalWebSocketConnected(): boolean {
+    return this.approvalWs?.readyState === WebSocket.OPEN;
   }
 
   // ===========================================================================
@@ -720,12 +861,88 @@ export class OrchestrationClient {
     return this.postFormData(this.aiUrl('/rag/upload'), formData);
   }
 
-  async queryRAG(query: string, k: number = 3): Promise<{ answer: string; sources: unknown[] }> {
-    return this.post(this.aiUrl('/rag/query'), { query, k });
+  async uploadDocumentAsync(
+    file: File,
+    options?: {
+      userId?: number;
+      tags?: string[];
+      category?: string;
+    }
+  ): Promise<UploadJobResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (options?.userId !== undefined) {
+      formData.append('user_id', options.userId.toString());
+    }
+    if (options?.tags?.length) {
+      formData.append('tags', options.tags.join(','));
+    }
+    if (options?.category) {
+      formData.append('category', options.category);
+    }
+
+    return this.postFormData<UploadJobResponse>(
+      this.aiUrl('/rag/documents/upload'),
+      formData,
+      60000,
+    );
   }
 
-  async getRAGStats(): Promise<unknown> {
-    return this.get(this.aiUrl('/rag/stats'));
+  async getRAGUploadStatus(jobId: string): Promise<UploadStatusResponse> {
+    return this.get<UploadStatusResponse>(
+      this.aiUrl(`/rag/documents/upload/status/${encodeURIComponent(jobId)}`),
+      10000,
+    );
+  }
+
+  async listRAGUploadJobs(limit: number = 50): Promise<UploadJobResponse[]> {
+    return this.get<UploadJobResponse[]>(
+      this.aiUrl(`/rag/documents/upload/jobs?limit=${limit}`),
+      10000,
+    );
+  }
+
+  async listRAGDocuments(options?: {
+    userId?: number;
+    limit?: number;
+  }): Promise<RAGDocumentListResponse> {
+    const params = new URLSearchParams();
+    if (options?.userId !== undefined) {
+      params.append('user_id', options.userId.toString());
+    }
+    if (options?.limit !== undefined) {
+      params.append('limit', options.limit.toString());
+    }
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return this.get<RAGDocumentListResponse>(this.aiUrl(`/rag/documents${suffix}`));
+  }
+
+  async getRAGDocument(docId: string): Promise<RAGDocument> {
+    return this.get<RAGDocument>(this.aiUrl(`/rag/documents/${encodeURIComponent(docId)}`));
+  }
+
+  async deleteRAGDocument(docId: string): Promise<RAGDeleteResponse> {
+    return this.delete<RAGDeleteResponse>(this.aiUrl(`/rag/documents/${encodeURIComponent(docId)}`));
+  }
+
+  async deleteRAGUserDocuments(userId: number): Promise<RAGUserDeleteResponse> {
+    return this.delete<RAGUserDeleteResponse>(this.aiUrl(`/rag/documents/user/${userId}`));
+  }
+
+  async queryRAG(request: string | RAGQueryRequest, k: number = 3): Promise<RAGQueryResponse> {
+    const payload = typeof request === 'string'
+      ? { query: request, top_k: k }
+      : request;
+    return this.post<RAGQueryResponse>(this.aiUrl('/rag/query'), payload);
+  }
+
+  async getRAGStats(): Promise<RAGStatsResponse> {
+    return this.get<RAGStatsResponse>(this.aiUrl('/rag/stats'), 10000);
+  }
+
+  async getRAGHealth(): Promise<RAGHealthResponse> {
+    return this.get<RAGHealthResponse>(this.aiUrl('/rag/health'), 10000);
   }
 
   // ===========================================================================
@@ -739,11 +956,11 @@ export class OrchestrationClient {
   ): WebSocket {
     // WebSocket connects directly to AI backend
     const wsUrl = `${this.config.aiWsUrl}/ws/stream`;
-    this.ws = new WebSocket(wsUrl);
+    this.streamWs = new WebSocket(wsUrl);
 
-    this.ws.onopen = () => {};
+    this.streamWs.onopen = () => {};
 
-    this.ws.onmessage = (event) => {
+    this.streamWs.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         onMessage(data);
@@ -752,16 +969,16 @@ export class OrchestrationClient {
       }
     };
 
-    this.ws.onerror = (error) => {
+    this.streamWs.onerror = (error) => {
       console.error('WebSocket error:', error);
       onError?.(error);
     };
 
-    this.ws.onclose = () => {
+    this.streamWs.onclose = () => {
       onClose?.();
     };
 
-    return this.ws;
+    return this.streamWs;
   }
 
   sendWebSocketMessage(
@@ -770,8 +987,8 @@ export class OrchestrationClient {
     sessionId: string,
     context?: Record<string, unknown>
   ): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
+    if (this.streamWs && this.streamWs.readyState === WebSocket.OPEN) {
+      this.streamWs.send(JSON.stringify({
         message,
         request_id: `req_${Date.now()}`,
         user_id: userId,
@@ -784,14 +1001,14 @@ export class OrchestrationClient {
   }
 
   closeWebSocket(): void {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.streamWs) {
+      this.streamWs.close();
+      this.streamWs = null;
     }
   }
 
   isWebSocketConnected(): boolean {
-    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+    return this.streamWs !== null && this.streamWs.readyState === WebSocket.OPEN;
   }
 
   // ===========================================================================
@@ -1382,6 +1599,22 @@ export class OrchestrationClient {
   async proxyDelete(webDomain: string, webApiKey: string): Promise<WebProxyResponse> {
     return this.post<WebProxyResponse>(this.cloudappUrl('/webDomain/delete'), { webDomain, webApiKey });
   }
+
+  private startApprovalPingInterval(): void {
+    this.stopApprovalPingInterval();
+    this.approvalPingInterval = setInterval(() => {
+      if (this.approvalWs?.readyState === WebSocket.OPEN) {
+        this.approvalWs.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000);
+  }
+
+  private stopApprovalPingInterval(): void {
+    if (this.approvalPingInterval) {
+      clearInterval(this.approvalPingInterval);
+      this.approvalPingInterval = null;
+    }
+  }
 }
 
 // =============================================================================
@@ -1389,4 +1622,3 @@ export class OrchestrationClient {
 // =============================================================================
 
 export const orchestrationClient = new OrchestrationClient();
-export default orchestrationClient;

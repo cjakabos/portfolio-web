@@ -4,17 +4,18 @@ import com.example.demo.model.persistence.Item;
 import com.example.demo.model.requests.CreateItemRequest;
 import com.example.demo.model.service.inf.IItemService;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-
-import static org.mockito.Mockito.*;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ItemControllerTest {
 
@@ -46,7 +47,7 @@ public class ItemControllerTest {
     @Test
     public void get_items_by_id_happy_path() {
         Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
-        when(itemService.findById((long) 1)).thenReturn(Optional.of(item));
+        when(itemService.findById((long) 1)).thenReturn(item);
         ResponseEntity<Item> response = itemController.getItemById(1L);
         Item savedItem = response.getBody();
         assertNotNull(savedItem);
@@ -75,7 +76,7 @@ public class ItemControllerTest {
         request.setPrice(BigDecimal.valueOf(700));
         request.setDescription("shed");
 
-        when(itemService.update(1L, request)).thenReturn(Optional.of(item));
+        when(itemService.update(1L, request)).thenReturn(item);
 
         ResponseEntity<Item> response = itemController.updateItem(1L, request);
 

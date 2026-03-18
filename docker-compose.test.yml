@@ -14,6 +14,12 @@
 #   # Run only frontend unit/hook tests:
 #   docker compose -f docker-compose.test.yml up --build test-frontend-unit --abort-on-container-exit
 #
+#   # Run only AI monitor component tests:
+#   docker compose -f docker-compose.test.yml up --build test-ai-monitor-component --abort-on-container-exit
+#
+#   # Run only AI monitor browser behavior tests:
+#   docker compose -f docker-compose.test.yml up --build test-ai-monitor-behavior --abort-on-container-exit
+#
 #   # Run only NGINX gateway tests:
 #   docker compose -f docker-compose.test.yml up --build test-nginx-gateway --abort-on-container-exit
 #
@@ -272,12 +278,53 @@ services:
       [
         "sh",
         "-lc",
-        "cp -a /src/. /build/ && rm -rf /build/node_modules /build/package-lock.json && npm install --no-audit --no-fund && npm run typecheck && npm run lint && npm run build",
+        "tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run typecheck && npm run lint && npm run build",
       ]
     environment:
       - CI=true
     volumes:
-      - ./ai-orchestration/ai-orchestration-monitor:/src:ro
+      - ./:/workspace:ro
+
+  # =========================================================================
+  # AI ORCHESTRATION MONITOR COMPONENT TESTS (Vitest + jsdom)
+  # =========================================================================
+  test-ai-monitor-component:
+    image: node:20-slim
+    working_dir: /build
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run test -- --reporter=dot",
+      ]
+    environment:
+      - CI=true
+    volumes:
+      - ./:/workspace:ro
+
+  # =========================================================================
+  # AI ORCHESTRATION MONITOR BEHAVIOR TESTS (Playwright monitor flow)
+  # =========================================================================
+  test-ai-monitor-behavior:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PW
+    command: ["e2e/monitor.spec.ts", "--project=chromium", "-c", "playwright.config.ts"]
+    environment:
+      - CI=true
+      - BACKEND_URL=http://test-nginx:80
+      - MONITOR_URL=http://test-ai-monitor:5010
+    volumes:
+      - ./e2e:/e2e/e2e
+      - ./playwright.config.ts:/e2e/playwright.config.ts:ro
+      - ./playwright-report-monitor:/e2e/playwright-report
+      - ./test-results-monitor:/e2e/test-results
+    depends_on:
+      test-ai-monitor:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
 
   # =========================================================================
   # FRONTEND UNIT TESTS (Jest + React Testing Library)
@@ -311,17 +358,17 @@ services:
 
   test-frontend-unit:
     image: node:20-alpine
-    working_dir: /app
+    working_dir: /build
     entrypoint:
       [
         "sh",
         "-lc",
-        "npm ci && npm install --save-dev @testing-library/react @testing-library/jest-dom axios-mock-adapter jest jest-environment-jsdom ts-jest @types/jest && npx jest --config jest.config.cjs --coverage",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false && npm run --workspace frontend/cloudapp-shell test -- --coverage",
       ]
     environment:
       - CI=true
     volumes:
-      - ./frontend/cloudapp-shell:/app
+      - ./:/workspace:ro
 
   # =========================================================================
   # TEST ORCHESTRATOR (single-command full matrix)
@@ -339,7 +386,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-ai-monitor-lint test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================
@@ -392,6 +439,28 @@ services:
   #   BASE_URL=http://localhost:5001 BACKEND_URL=http://localhost:80 \
   #     npx playwright test --headed
   # =========================================================================
+  test-e2e-core:
+    build:
+      context: ./
+      dockerfile: Dockerfile_PW
+    environment:
+      - CI=true
+      - BASE_URL=http://test-shell-core:5001
+      - BACKEND_URL=http://test-nginx-core:80
+    volumes:
+      - ./e2e:/e2e/e2e
+      - ./playwright.config.ts:/e2e/playwright.config.ts:ro
+      - ./playwright-report:/e2e/playwright-report
+      - ./test-results:/e2e/test-results
+    depends_on:
+      test-shell-core:
+        condition: service_healthy
+      test-nginx-core:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+
   test-e2e:
     build:
       context: ./
@@ -427,8 +496,8 @@ services:
   # =========================================================================
   test-ai-monitor:
     build:
-      context: ./ai-orchestration/ai-orchestration-monitor
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ai-orchestration/ai-orchestration-monitor/Dockerfile
       args:
         # Use same-origin URLs in the browser test stack and let the Playwright
         # proxy/stubs forward monitor API calls to the gateway as needed.
@@ -602,6 +671,28 @@ services:
       start_period: 30s
     restart: "no"
 
+  test-nginx-core:
+    build:
+      context: ./frontend/nginx
+      dockerfile: Dockerfile
+    environment:
+      - INTERNAL_SERVICE_TOKEN=test-internal-token
+    volumes:
+      - ./backend/cloudapp/src/test/resources/test-public-key.pub:/etc/nginx/localhost+3-key.pub:ro
+    depends_on:
+      test-cloudapp:
+        condition: service_healthy
+    networks:
+      - test-frontend
+      - test-backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -4sf http://localhost/nginx_health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: "no"
+
   test-nginx:
     build:
       context: ./frontend/nginx
@@ -723,6 +814,33 @@ services:
       - test-frontend
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:5333/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: "no"
+
+  test-shell-core:
+    build:
+      context: ./
+      dockerfile: Dockerfile_FE
+      args:
+        SERVICE_PATH: frontend/cloudapp-shell
+        SERVICE_PORT: 5001
+        NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_OPENMAPS_URL: http://test-openmaps-frontend:5002
+        NEXT_PUBLIC_REMOTE_JIRA_URL: http://test-jira-frontend:5003
+        NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
+        NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
+        NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
+        NEXT_PUBLIC_API_URL: /cloudapp
+        NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx-core/cloudapp
+    environment:
+      - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx-core/cloudapp
+    networks:
+      - test-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5001/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, orchestrationClient } from '../services/orchestrationClient';
+import {
+  ContractApiError,
+  getCloudAppAuthSnapshot,
+  isCloudAppAdmin,
+  loginCloudAppUser,
+  logoutCloudAppUser,
+  normalizeCloudAppRoles,
+} from '@portfolio/auth';
 
 type LoginValues = {
   username: string;
@@ -17,6 +24,9 @@ const EMPTY_AUTH_SNAPSHOT: AuthSnapshot = {
   username: '',
   roles: [],
 };
+
+const CLOUDAPP_API_URL = `${((typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+  || 'http://localhost:80').replace(/\/+$/, '')}${import.meta.env?.VITE_CLOUDAPP_PUBLIC_PATH || '/cloudapp'}`;
 
 export function useCloudAppAuth() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -38,16 +48,19 @@ export function useCloudAppAuth() {
 
   const refreshSession = useCallback(async () => {
     try {
-      const session = await orchestrationClient.getCloudAppAdminSession();
+      const session = await getCloudAppAuthSnapshot({
+        adminOnly: true,
+        apiUrl: CLOUDAPP_API_URL,
+      });
       applySnapshot({
         isAuthenticated: Boolean(session.username),
         username: session.username || '',
-        roles: Array.isArray(session.roles) ? session.roles : [],
+        roles: normalizeCloudAppRoles(session.roles),
       });
       setError(null);
     } catch (err) {
       clearAuth();
-      if (err instanceof ApiError && err.statusCode === 403) {
+      if (err instanceof ContractApiError && err.statusCode === 403) {
         setError('Only CloudApp admins can sign in to AI Orchestration Monitor.');
       } else {
         setError(null);
@@ -66,10 +79,15 @@ export function useCloudAppAuth() {
     setError(null);
 
     try {
-      const authResponse = await orchestrationClient.loginUser(username, password);
-      const nextRoles = Array.isArray(authResponse.roles) ? authResponse.roles : [];
+      const authResponse = await loginCloudAppUser({
+        username,
+        password,
+        adminOnly: true,
+        apiUrl: CLOUDAPP_API_URL,
+      });
+      const nextRoles = normalizeCloudAppRoles(authResponse.roles);
 
-      if (!nextRoles.includes('ROLE_ADMIN')) {
+      if (!isCloudAppAdmin(nextRoles)) {
         clearAuth();
         setError('Only CloudApp admins can sign in to AI Orchestration Monitor.');
         throw new Error('ADMIN_REQUIRED');
@@ -82,7 +100,7 @@ export function useCloudAppAuth() {
       });
     } catch (err) {
       clearAuth();
-      if (err instanceof ApiError && (err.statusCode === 401 || err.statusCode === 403)) {
+      if (err instanceof ContractApiError && (err.statusCode === 401 || err.statusCode === 403)) {
         setError(err.statusCode === 403
           ? 'Only CloudApp admins can sign in to AI Orchestration Monitor.'
           : 'Invalid username or password.');
@@ -99,7 +117,7 @@ export function useCloudAppAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await orchestrationClient.logoutUser();
+      await logoutCloudAppUser({ apiUrl: CLOUDAPP_API_URL });
     } finally {
       clearAuth();
       setError(null);
@@ -111,7 +129,7 @@ export function useCloudAppAuth() {
     isAuthenticated,
     username,
     roles,
-    isAdmin: roles.includes('ROLE_ADMIN'),
+    isAdmin: isCloudAppAdmin(roles),
     isLoggingIn,
     error,
     login,
