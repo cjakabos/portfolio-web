@@ -16,10 +16,10 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
- * Refactored to return RFC 7807 ProblemDetail responses instead of
- * the custom {@link ApiError} DTO.  {@code spring.mvc.problemdetails.enabled=true}
- * handles standard Spring exceptions; this handler adds validation-error
- * detail and a catch-all for unexpected exceptions.
+ * Returns RFC 7807 ProblemDetail responses for validation, not-found, and
+ * unexpected failures. {@code spring.mvc.problemdetails.enabled=true} handles
+ * standard Spring exceptions; this handler adds validation-error detail and a
+ * catch-all for unexpected exceptions.
  */
 @ControllerAdvice
 public class ErrorController extends ResponseEntityExceptionHandler {

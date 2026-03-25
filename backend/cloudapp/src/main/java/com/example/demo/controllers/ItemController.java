@@ -1,9 +1,8 @@
 package com.example.demo.controllers;
 
-import java.util.List;
-
 import com.example.demo.model.requests.CreateItemRequest;
 import com.example.demo.model.service.inf.IItemService;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,33 +25,27 @@ public class ItemController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Item> getItemById(@PathVariable Long id) {
-        return ResponseEntity.of(itemService.findById(id));
+        return ResponseEntity.ok(itemService.findById(id));
     }
 
     @PostMapping
     public ResponseEntity<Item> addItem(@RequestBody CreateItemRequest createItemRequest) {
-        return ResponseEntity.of(itemService.create(createItemRequest));
+        return ResponseEntity.ok(itemService.create(createItemRequest));
     }
 
     @GetMapping("/name/{name}")
     public ResponseEntity<List<Item>> getItemsByName(@PathVariable String name) {
-        List<Item> items = itemService.findByName(name);
-        return items == null || items.isEmpty() ? ResponseEntity.notFound().build()
-                : ResponseEntity.ok(items);
-
+        return ResponseEntity.ok(itemService.findByName(name));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Item> updateItem(@PathVariable Long id, @RequestBody CreateItemRequest updateItemRequest) {
-        return ResponseEntity.of(itemService.update(id, updateItemRequest));
+        return ResponseEntity.ok(itemService.update(id, updateItemRequest));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
-        if (!itemService.deleteById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
+        itemService.deleteById(id);
         return ResponseEntity.ok().build();
     }
 

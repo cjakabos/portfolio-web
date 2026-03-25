@@ -13,3 +13,21 @@ export interface OperationRequestOptions {
   credentials?: RequestCredentials;
   signal?: AbortSignal;
 }
+
+export class ContractApiError extends Error {
+  constructor(
+    message: string,
+    public readonly operationId: string,
+    public readonly method: string,
+    public readonly path: string,
+    public readonly statusCode: number,
+    public readonly responseBody?: string
+  ) {
+    super(message);
+    this.name = "ContractApiError";
+  }
+
+  get status(): number {
+    return this.statusCode;
+  }
+}

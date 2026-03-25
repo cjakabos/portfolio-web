@@ -1,10 +1,9 @@
 // ============================================================================
-// File: frontend-ai/src/hooks/useRAG.ts
-// RAG Hooks - With Async Upload, Polling, and Job Recovery
+// RAG Hooks - Async uploads, polling, and job recovery
 // ============================================================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ragClient, RAGApiError } from '../services/ragClient';
+import { ApiError, orchestrationClient } from '../services/orchestrationClient';
 import type {
   RAGDocument,
   RAGDocumentListResponse,
@@ -65,7 +64,7 @@ function useFetch<T>(
         const message = err instanceof Error ? err.message : 'An error occurred';
         setError(message);
         // Don't log timeout errors - they're expected when server is busy
-        if (!(err instanceof RAGApiError && err.statusCode === 408)) {
+        if (!(err instanceof ApiError && err.statusCode === 408)) {
           console.error('RAG fetch error:', err);
         }
       }
@@ -108,7 +107,7 @@ export interface UseRAGHealthOptions {
 export function useRAGHealth(options: UseRAGHealthOptions = {}) {
   const { autoRefresh = true, refreshInterval = 30000 } = options;
 
-  const fetchHealth = useCallback(() => ragClient.getHealth(), []);
+  const fetchHealth = useCallback(() => orchestrationClient.getRAGHealth(), []);
 
   const result = useFetch<RAGHealthResponse>(fetchHealth, {
     autoFetch: true,
@@ -130,7 +129,7 @@ export function useRAGHealth(options: UseRAGHealthOptions = {}) {
 export function useRAGStats(options: UseRAGHealthOptions = {}) {
   const { autoRefresh = false, refreshInterval = 60000 } = options;
 
-  const fetchStats = useCallback(() => ragClient.getStats(), []);
+  const fetchStats = useCallback(() => orchestrationClient.getRAGStats(), []);
 
   const result = useFetch<RAGStatsResponse>(fetchStats, {
     autoFetch: true,
@@ -164,7 +163,7 @@ export function useRAGDocuments(options: UseRAGDocumentsOptions = {}) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const fetchDocuments = useCallback(
-    () => ragClient.listDocuments({ userId, limit }),
+    () => orchestrationClient.listRAGDocuments({ userId, limit }),
     [userId, limit]
   );
 
@@ -176,7 +175,7 @@ export function useRAGDocuments(options: UseRAGDocumentsOptions = {}) {
   const deleteDocument = useCallback(async (docId: string) => {
     setIsDeleting(docId);
     try {
-      await ragClient.deleteDocument(docId);
+      await orchestrationClient.deleteRAGDocument(docId);
       await result.refresh();
       return true;
     } catch (err) {
@@ -276,7 +275,7 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
       if (!isMounted.current) return;
 
       try {
-        const status = await ragClient.getUploadStatus(jobId);
+        const status = await orchestrationClient.getRAGUploadStatus(jobId);
 
         if (!isMounted.current) return;
 
@@ -335,13 +334,13 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
         if (!isMounted.current) return;
 
         // Don't stop polling on timeout - server might just be busy
-        if (err instanceof RAGApiError && err.statusCode === 408) {
+        if (err instanceof ApiError && err.statusCode === 408) {
           console.debug(`Polling timeout for ${jobId}, will retry...`);
           return;
         }
 
         // On 404, the job doesn't exist (server restarted and lost it)
-        if (err instanceof RAGApiError && err.statusCode === 404) {
+        if (err instanceof ApiError && err.statusCode === 404) {
           console.warn(`Job ${jobId} not found on server, marking as failed`);
           setUploads(prev => prev.map(u =>
             u.jobId === jobId
@@ -385,7 +384,7 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
 
         try {
           // Check if job still exists on server
-          const status = await ragClient.getUploadStatus(jobId);
+          const status = await orchestrationClient.getRAGUploadStatus(jobId);
 
           recoveredUploads.push({
             file: placeholderFile,
@@ -409,7 +408,7 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
         } catch (err) {
           // Only mark as truly lost if we get a 404 (job doesn't exist)
           // For timeouts or other errors, assume job is still running and start polling
-          if (err instanceof RAGApiError && err.statusCode === 404) {
+          if (err instanceof ApiError && err.statusCode === 404) {
             console.warn(`Job ${jobId} not found on server (404), marking as lost`);
             clearActiveJob(jobId);
 
@@ -467,7 +466,7 @@ export function useRAGUpload(options: UseRAGUploadOptions = {}) {
 
     try {
       // Start async upload
-      const response = await ragClient.uploadDocumentAsync(file, {
+      const response = await orchestrationClient.uploadDocumentAsync(file, {
         userId,
         tags,
         category,
@@ -616,7 +615,7 @@ export function useRAGQuery(options: UseRAGQueryOptions = {}) {
     setError(null);
 
     try {
-      const response = await ragClient.query({
+      const response = await orchestrationClient.queryRAG({
         query: q,
         user_id: userId,
         top_k: topK,

@@ -3,19 +3,14 @@ package com.example.demo.controllers;
 import com.example.demo.security.InternalRequestAuthorizer;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Optional;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
 import com.example.demo.model.persistence.*;
 import com.example.demo.model.service.inf.IOrderService;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("order")
@@ -54,6 +49,19 @@ public class OrderController {
         return authenticated != null && authenticated.equals(username);
     }
 
+    private void logForbidden(String action, String username, Authentication auth) {
+        log.warn(
+                "Rejected {} request for username={} from authenticatedUser={}",
+                action,
+                username,
+                getAuthenticatedUsername(auth));
+    }
+
+    private <T> ResponseEntity<T> notFound(String action, String username) {
+        log.warn("User not found during {} for username={}", action, username);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
     @PostMapping("/submit/{username}")
     public ResponseEntity<UserOrder> submit(
             @PathVariable String username,
@@ -61,22 +69,14 @@ public class OrderController {
             HttpServletRequest request
     ) {
         if (!orderService.userExists(username)) {
-            log.error("User not found during order submit: {}", username);
-            return ResponseEntity.notFound().build();
+            return notFound("order-submit", username);
         }
-
         if (!isAuthorized(auth, username, request)) {
+            logForbidden("order-submit", username, auth);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Optional<UserOrder> order = orderService.submit(username);
-        if (order.isEmpty()) {
-            log.error("User not found during order submit: {}", username);
-            return ResponseEntity.notFound().build();
-        }
-
-        log.info("Userorder creation successful for : {}", username);
-        return ResponseEntity.ok(order.get());
+        return ResponseEntity.ok(orderService.submit(username));
     }
 
     @GetMapping("/history/{username}")
@@ -86,21 +86,13 @@ public class OrderController {
             HttpServletRequest request
     ) {
         if (!orderService.userExists(username)) {
-            log.error("User not found during order history: {}", username);
-            return ResponseEntity.notFound().build();
+            return notFound("order-history", username);
         }
-
         if (!isAuthorized(auth, username, request)) {
+            logForbidden("order-history", username, auth);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Optional<List<UserOrder>> orders = orderService.findOrdersForUser(username);
-        if (orders.isEmpty()) {
-            log.error("User not found during order history: {}", username);
-            return ResponseEntity.notFound().build();
-        }
-
-        log.info("User order history fetch is successful for : {}", username);
-        return ResponseEntity.ok(orders.get());
+        return ResponseEntity.ok(orderService.findOrdersForUser(username));
     }
 }

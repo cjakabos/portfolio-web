@@ -1,8 +1,15 @@
 import { type Page, type Route } from "@playwright/test";
 import { test, expect } from "./fixtures/test-base";
-import { ensureAdminLoggedIn } from "./fixtures/helpers";
 
 const MONITOR_URL = process.env.MONITOR_URL || "http://localhost:5010";
+const GATEWAY_PROXY_ROUTE = /^https?:\/\/[^/]+\/(?:cloudapp|mlops-segmentation|petstore|vehicles)\//;
+
+test.use({
+  storageState: {
+    cookies: [],
+    origins: [],
+  },
+});
 
 function fulfillJson(route: Route, body: unknown, status = 200, headers?: Record<string, string>) {
   return route.fulfill({
@@ -15,13 +22,66 @@ function fulfillJson(route: Route, body: unknown, status = 200, headers?: Record
   });
 }
 
-async function mockBaselineMonitorApis(page: Page): Promise<void> {
-  await page.route("**/cloudapp/user/admin/auth-check", async (route) =>
-    fulfillJson(route, {
+async function installMonitorAuthMocks(page: Page): Promise<void> {
+  await page.addInitScript(({ authSnapshot, loginResponse }) => {
+    const originalFetch = window.fetch.bind(window);
+
+    window.fetch = async (input, init) => {
+      const rawUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      const method =
+        init?.method
+        || (typeof input === "object" && input && "method" in input
+          ? input.method
+          : "GET");
+      const pathname = new URL(rawUrl, window.location.origin).pathname;
+
+      if (
+        pathname === "/cloudapp/user/admin/auth-check"
+        || pathname === "/user/admin/auth-check"
+      ) {
+        return new Response(JSON.stringify(authSnapshot), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        });
+      }
+
+      if (
+        method.toUpperCase() === "POST"
+        && (pathname === "/cloudapp/user/user-login" || pathname === "/user/user-login")
+      ) {
+        return new Response(JSON.stringify(loginResponse), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        });
+      }
+
+      return originalFetch(input, init);
+    };
+  }, {
+    authSnapshot: {
       username: "integrationadmin",
       roles: ["ROLE_ADMIN", "ROLE_USER"],
-    })
-  );
+    },
+    loginResponse: {
+      success: true,
+      username: "integrationadmin",
+      roles: ["ROLE_ADMIN", "ROLE_USER"],
+    },
+  });
+}
+
+async function mockBaselineMonitorApis(page: Page): Promise<void> {
+  await page.unroute(GATEWAY_PROXY_ROUTE);
+  await installMonitorAuthMocks(page);
 
   await page.route("**/ai/**", async (route) => {
     const url = new URL(route.request().url());
@@ -142,10 +202,19 @@ async function mockBaselineMonitorApis(page: Page): Promise<void> {
   await page.route("**/vehicles/**", (route) => fulfillJson(route, []));
 }
 
-test.describe("AI Monitor", () => {
-  test("loads Services Dashboard with admin user dropdown and scoped user fetch", async ({ page, request }) => {
-    await ensureAdminLoggedIn(request, page);
+async function openMonitor(page: Page): Promise<void> {
+  await page.goto(MONITOR_URL, { waitUntil: "domcontentloaded" });
 
+  const signInButton = page.getByRole("button", { name: "Sign In" });
+  if (await signInButton.isVisible().catch(() => false)) {
+    await page.getByLabel("Username").fill("integrationadmin");
+    await page.getByLabel("Password").fill("SecureE2EPass123");
+    await signInButton.click();
+  }
+}
+
+test.describe("AI Monitor", () => {
+  test("loads Services Dashboard with admin user dropdown and scoped user fetch", async ({ page }) => {
     await mockBaselineMonitorApis(page);
 
     let usersAuthorizationHeader: string | undefined;
@@ -166,7 +235,7 @@ test.describe("AI Monitor", () => {
       });
     });
 
-    await page.goto(MONITOR_URL, { waitUntil: "domcontentloaded" });
+    await openMonitor(page);
     await page.getByRole("button", { name: "All Services" }).click();
 
     await expect(page.getByText("Services Dashboard")).toBeVisible();
@@ -182,9 +251,7 @@ test.describe("AI Monitor", () => {
     expect(requestedCartUsername).toBe("alice");
   });
 
-  test("retries tool discovery on 429 and invokes tool with auth + params", async ({ page, request }) => {
-    await ensureAdminLoggedIn(request, page);
-
+  test("retries tool discovery on 429 and invokes tool with auth + params", async ({ page }) => {
     await mockBaselineMonitorApis(page);
 
     let discoverToolsCalls = 0;
@@ -241,7 +308,7 @@ test.describe("AI Monitor", () => {
       });
     });
 
-    await page.goto(MONITOR_URL, { waitUntil: "domcontentloaded" });
+    await openMonitor(page);
     await page.getByRole("button", { name: "Tools Explorer" }).click();
 
     await expect(page.getByRole("heading", { name: "Tools Explorer" })).toBeVisible();

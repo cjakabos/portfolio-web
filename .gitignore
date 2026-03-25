@@ -50,11 +50,11 @@ frontend/nginx/localhost+3-key.pub
 **/.DS_Store
 
 test-results/*
-test-results-monitor/*
 playwright-report/
-playwright-report-monitor/*
+playwright-report-monitor/
 **/playwright-report/
 test-results/
+test-results-monitor/
 **/test-results/
 **/lcov-report/
 **/coverage/

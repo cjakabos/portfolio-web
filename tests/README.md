@@ -16,10 +16,15 @@ services, and contract governance.
 | ML pipeline tests | `test-ml-pipeline` | Flask endpoints, validation, and segmentation behavior |
 | AI orchestration tests | `test-ai-orchestration-layer` | FastAPI orchestration helpers, auth/config behavior, and HTTP client logic |
 | AI monitor static checks | `test-ai-monitor-lint` | Operator app install, typecheck, linting, and production build validation |
+| AI monitor behavior | `test-ai-monitor-behavior` | Playwright coverage for routed monitor/operator flows |
+| AI monitor component tests | `test-ai-monitor-component` | Operator auth/session behavior, service-health rendering, and approval workflow coverage |
+| AI monitor behavior | `test-ai-monitor-behavior` | Playwright coverage for routed monitor/operator flows |
 | Frontend unit tests | `test-frontend-unit` | React and hook-level tests in the shell app |
 | Gateway integration tests | `test-nginx-gateway` | Auth enforcement, routing, rate limiting, and CORS/security headers |
 | API contract governance | `test-api-contracts` | OpenAPI drift detection and generated TypeScript contract validation |
-| End-to-end browser tests | `test-e2e` | Playwright flows across the full stack |
+| End-to-end browser tests (core) | `test-e2e-core` | Playwright flows for CloudApp shell, auth, shop, chat, and mobile regression paths |
+| End-to-end browser tests (remotes) | `test-e2e` | Playwright flows for module federation, admin remotes, MLOps, and AI monitor |
+| Docs drift checks | `python3 scripts/check_docs_drift.py` | Validates that key repo docs still match the current CI/test model |
 | Full matrix runner | `test-all` | Runs the test services sequentially in a deterministic order |
 
 ## Main Commands
@@ -40,10 +45,14 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ml-pipeline
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-lint
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-component
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-behavior
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-unit
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-nginx-gateway
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-api-contracts
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e-core
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-e2e
+python3 scripts/check_docs_drift.py
 ```
 
 ### Cleanup
@@ -61,11 +70,15 @@ The CI workflow runs the following categories:
 - gateway integration tests
 - OpenAPI contract governance
 - frontend unit tests
+- docs drift checks
 - frontend native lockfile validation
 - dependency audit jobs
 - AI orchestration tests
-- AI monitor checks
-- Playwright E2E
+- AI monitor static checks
+- AI monitor component tests
+- AI monitor behavior tests
+- Playwright E2E (core)
+- Playwright E2E (remotes)
 
 See `.github/workflows/ci-tests.yml` for the exact job graph.
 
@@ -73,7 +86,14 @@ See `.github/workflows/ci-tests.yml` for the exact job graph.
 
 The browser E2E layer uses Playwright, not Cypress.
 
-The `test-e2e` service boots a full stack with:
+The `test-e2e-core` service boots the lean CloudApp browser stack with:
+
+- shell UI
+- gateway
+- CloudApp backend
+- CloudApp datastores
+
+The `test-e2e` service boots the full routed stack with:
 
 - shell UI
 - gateway
@@ -97,6 +117,21 @@ The contract test service:
 - validates generated TypeScript contract output
 
 This is the primary protection against backend/frontend drift.
+
+## Browser Surface Quality Gates
+
+Every browser-facing surface should have one static gate and one behavioral
+gate or smoke path.
+
+| Browser surface | Static gate | Behavioral gate or smoke path |
+| --- | --- | --- |
+| CloudApp shell | `test-frontend-unit` plus `test-shell` build/healthcheck in the E2E stack | `auth.spec.ts`, `shop.spec.ts`, `chat.spec.ts` |
+| OpenMaps remote | `test-openmaps-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
+| Jira remote | `test-jira-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
+| MLOps remote | `test-mlops-frontend` build/healthcheck in the E2E stack | `mlops.spec.ts` |
+| Petstore remote | `test-petstore-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
+| ChatLLM remote | `test-chatllm-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
+| AI monitor | `test-ai-monitor-lint` | `test-ai-monitor-component` for component workflows plus `test-ai-monitor-behavior` via `monitor.spec.ts` |
 
 ## Local Test Expectations
 
