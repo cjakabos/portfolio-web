@@ -11,6 +11,10 @@ define the current platform direction.
   owner matrix, ingress map, and critical user journeys
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
   surface, operator capability matrix, and gateway-enforced route classes
+- [ai-product-boundary.md](./ai-product-boundary.md): current classification of
+  AI capabilities as core product, operator-only, or experimental
+- [ai-slos-and-dashboards.md](./ai-slos-and-dashboards.md): SLO targets,
+  endpoint-backed dashboard queries, and load-test expectations for AI flows
 - [backend-service-standards.md](./backend-service-standards.md): Spring
   controller/service contract for validation, error mapping, and logging
 - [backend-service-taxonomy.md](./backend-service-taxonomy.md): backend service

@@ -118,6 +118,24 @@ The contract test service:
 
 This is the primary protection against backend/frontend drift.
 
+## AI Synthetic Load Tests
+
+Synthetic AI load checks live in `tests/ai-load/` and back the current AI SLO
+document in `docs/platform/ai-slos-and-dashboards.md`.
+
+Run them with `k6` against either the direct AI service or the gateway-routed
+AI prefix:
+
+```bash
+k6 run tests/ai-load/orchestration.js
+k6 run tests/ai-load/approvals.js
+k6 run tests/ai-load/rag-upload.js
+```
+
+These scripts are not part of the default CI matrix yet, but they are the
+governed synthetic baseline for orchestration latency, approval visibility, and
+RAG upload success.
+
 ## Browser Surface Quality Gates
 
 Every browser-facing surface should have one static gate and one behavioral
