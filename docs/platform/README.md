@@ -19,12 +19,21 @@ define the current platform direction.
   controller/service contract for validation, error mapping, and logging
 - [backend-service-taxonomy.md](./backend-service-taxonomy.md): backend service
   classification for core platform, AI/operator support, and demo modules
+- [contract-release-discipline.md](./contract-release-discipline.md): contract
+  snapshot versioning rules, generated client release expectations, and review
+  triggers
 - [module-classification.md](./module-classification.md): module labels for
   core platform, operator support, and legacy/demo-derived areas
 - [frontend-version-policy.md](./frontend-version-policy.md): approved shared
   frontend dependency versions and intentional exceptions
 - [runtime-and-data-policy.md](./runtime-and-data-policy.md): operational
   defaults and exception posture for runtimes and data stores
+- [release-checklist.md](./release-checklist.md): release readiness checklist
+  for contracts, gateway/auth, environment changes, and operator impacts
+- [release-dry-run-example.md](./release-dry-run-example.md): representative
+  dry-run of the release checklist against a governed contract change
+- [release-promotion-criteria.md](./release-promotion-criteria.md): promotion
+  gates for gateway, auth, AI, and contract-touching changes
 - [secret-classification.md](./secret-classification.md): secret classes,
   handling rules, and local versus production expectations
 - [remaining-backlog-pr-plan.md](./remaining-backlog-pr-plan.md): sequenced PR

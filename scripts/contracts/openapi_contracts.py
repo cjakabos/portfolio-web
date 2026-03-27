@@ -25,6 +25,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SNAPSHOT_DIR = ROOT / "contracts" / "openapi"
+DEFAULT_MANIFEST_PATH = DEFAULT_SNAPSHOT_DIR / "manifest.json"
 DEFAULT_TS_OUT_DIR = ROOT / "packages" / "contracts" / "src"
 
 HTTP_METHODS = ("get", "post", "put", "patch", "delete", "options", "head")
@@ -70,6 +71,116 @@ def _normalize(obj: Any) -> Any:
 
 def _json_dumps(data: Any) -> str:
     return json.dumps(data, indent=2, sort_keys=True, ensure_ascii=True) + "\n"
+
+
+def _iter_snapshot_paths(snapshot_dir: Path, manifest_path: Path) -> list[Path]:
+    manifest_resolved = manifest_path.resolve()
+    return [
+        path
+        for path in sorted(snapshot_dir.glob("*.json"))
+        if path.resolve() != manifest_resolved
+    ]
+
+
+def validate_contract_manifest(snapshot_dir: Path, manifest_path: Path) -> tuple[dict[str, Any] | None, int]:
+    if not manifest_path.exists():
+        print(f"[manifest] missing manifest: {manifest_path}", file=sys.stderr)
+        return None, 1
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"[manifest] invalid JSON in {manifest_path}: {exc}", file=sys.stderr)
+        return None, 1
+
+    failures = 0
+    if manifest.get("schemaVersion") != 1:
+        print("[manifest] schemaVersion must be 1", file=sys.stderr)
+        failures += 1
+
+    services = manifest.get("services")
+    if not isinstance(services, dict):
+        print("[manifest] services must be an object", file=sys.stderr)
+        return manifest, failures + 1
+
+    snapshot_paths = _iter_snapshot_paths(snapshot_dir, manifest_path)
+    snapshot_names = {path.stem for path in snapshot_paths}
+    manifest_names = set(services.keys())
+
+    missing_from_manifest = sorted(snapshot_names - manifest_names)
+    extra_in_manifest = sorted(manifest_names - snapshot_names)
+    if missing_from_manifest:
+        print(
+            f"[manifest] services missing from manifest: {', '.join(missing_from_manifest)}",
+            file=sys.stderr,
+        )
+        failures += 1
+    if extra_in_manifest:
+        print(
+            f"[manifest] manifest has entries without snapshots: {', '.join(extra_in_manifest)}",
+            file=sys.stderr,
+        )
+        failures += 1
+
+    for snapshot_path in snapshot_paths:
+        service_name = snapshot_path.stem
+        service_manifest = services.get(service_name)
+        if not isinstance(service_manifest, dict):
+            print(
+                f"[manifest] service entry must be an object: {service_name}",
+                file=sys.stderr,
+            )
+            failures += 1
+            continue
+
+        spec = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        info = spec.get("info", {}) if isinstance(spec.get("info"), dict) else {}
+        source_title = str(info.get("title") or "")
+        upstream_version = str(info.get("version") or "")
+
+        revision = service_manifest.get("snapshotRevision")
+        if not isinstance(revision, int) or revision < 1:
+            print(
+                f"[manifest] snapshotRevision must be a positive integer for {service_name}",
+                file=sys.stderr,
+            )
+            failures += 1
+
+        owner = service_manifest.get("owner")
+        if not isinstance(owner, str) or not owner.strip():
+            print(
+                f"[manifest] owner must be a non-empty string for {service_name}",
+                file=sys.stderr,
+            )
+            failures += 1
+
+        release_critical = service_manifest.get("releaseCritical")
+        if not isinstance(release_critical, bool):
+            print(
+                f"[manifest] releaseCritical must be a boolean for {service_name}",
+                file=sys.stderr,
+            )
+            failures += 1
+
+        if service_manifest.get("sourceTitle") != source_title:
+            print(
+                f"[manifest] sourceTitle mismatch for {service_name}: "
+                f"expected {source_title!r}",
+                file=sys.stderr,
+            )
+            failures += 1
+
+        if service_manifest.get("upstreamVersion") != upstream_version:
+            print(
+                f"[manifest] upstreamVersion mismatch for {service_name}: "
+                f"expected {upstream_version!r}",
+                file=sys.stderr,
+            )
+            failures += 1
+
+    if failures == 0:
+        print(f"[manifest] {manifest_path.name}: OK")
+    return manifest, failures
 
 
 def export_snapshots(snapshot_dir: Path) -> int:
@@ -209,6 +320,33 @@ export class ContractApiError extends Error {
 """
 
 
+def _render_ts_versions(manifest: dict[str, Any]) -> str:
+    revisions = {
+        service_name: service["snapshotRevision"]
+        for service_name, service in sorted(manifest["services"].items())
+    }
+    upstream_versions = {
+        service_name: service["upstreamVersion"]
+        for service_name, service in sorted(manifest["services"].items())
+    }
+    manifest_literal = _json_dumps(manifest).rstrip()
+    revisions_literal = _json_dumps(revisions).rstrip()
+    upstream_versions_literal = _json_dumps(upstream_versions).rstrip()
+
+    return f"""/* eslint-disable */
+// Generated by scripts/contracts/openapi_contracts.py from contracts/openapi/manifest.json
+
+export const CONTRACT_SNAPSHOT_MANIFEST = {manifest_literal} as const;
+
+export type ContractManifest = typeof CONTRACT_SNAPSHOT_MANIFEST;
+export type ContractServiceName = keyof ContractManifest["services"];
+export type ContractServiceManifest = ContractManifest["services"][ContractServiceName];
+
+export const CONTRACT_SNAPSHOT_REVISIONS = {revisions_literal} as const;
+export const CONTRACT_UPSTREAM_VERSIONS = {upstream_versions_literal} as const;
+"""
+
+
 def _render_ts_client(service_name: str, spec: dict[str, Any]) -> str:
     pascal = _pascal_case(service_name)
     const_name = f"{service_name.upper()}_OPERATIONS"
@@ -267,7 +405,7 @@ function buildUrl(pathTemplate: string, baseUrl: string, pathParams: Record<stri
     return encodeURIComponent(String(value));
   }});
 
-  const normalizedPath = substituted.replace(/^\/+/, "");
+  const normalizedPath = substituted.replace(/^\\/+/, "");
   const url = new URL(normalizedPath, baseUrl.endsWith("/") ? baseUrl : `${{baseUrl}}/`);
   if (query) {{
     for (const [key, raw] of Object.entries(query)) {{
@@ -355,9 +493,13 @@ export class {pascal}ApiClient {{
 """
 
 
-def generate_ts_clients(snapshot_dir: Path, out_dir: Path, check: bool) -> int:
+def generate_ts_clients(snapshot_dir: Path, out_dir: Path, check: bool, manifest_path: Path) -> int:
+    manifest, manifest_failures = validate_contract_manifest(snapshot_dir, manifest_path)
+    if manifest is None:
+        return 1
+
     out_dir.mkdir(parents=True, exist_ok=True)
-    failures = 0
+    failures = manifest_failures
     generated_files: list[str] = []
 
     # Write (or check) the shared types module first.
@@ -374,7 +516,21 @@ def generate_ts_clients(snapshot_dir: Path, out_dir: Path, check: bool) -> int:
         common_path.write_text(common_content, encoding="utf-8")
         print(f"[ts-gen] wrote {common_path}")
 
-    for snapshot_path in sorted(snapshot_dir.glob("*.json")):
+    versions_content = _render_ts_versions(manifest)
+    versions_path = out_dir / "versions.ts"
+    generated_files.append(versions_path.name)
+    if check:
+        current = versions_path.read_text(encoding="utf-8") if versions_path.exists() else None
+        if current != versions_content:
+            print(f"[ts-check] generated client drift: {versions_path}", file=sys.stderr)
+            failures += 1
+        else:
+            print("[ts-check] versions.ts: OK")
+    else:
+        versions_path.write_text(versions_content, encoding="utf-8")
+        print(f"[ts-gen] wrote {versions_path}")
+
+    for snapshot_path in _iter_snapshot_paths(snapshot_dir, manifest_path):
         service_name = snapshot_path.stem
         spec = json.loads(snapshot_path.read_text(encoding="utf-8"))
         ts_content = _render_ts_client(service_name, spec)
@@ -430,11 +586,13 @@ def parse_args() -> argparse.Namespace:
 
     check_parser = sub.add_parser("check", help="Check live OpenAPI docs against snapshots")
     check_parser.add_argument("--snapshot-dir", type=Path, default=DEFAULT_SNAPSHOT_DIR)
+    check_parser.add_argument("--manifest-path", type=Path, default=DEFAULT_MANIFEST_PATH)
     check_parser.add_argument("--check-generated", action="store_true", help="Also validate generated TS clients")
     check_parser.add_argument("--ts-out-dir", type=Path, default=DEFAULT_TS_OUT_DIR)
 
     gen_parser = sub.add_parser("generate-ts", help="Generate typed TS operation clients from snapshots")
     gen_parser.add_argument("--snapshot-dir", type=Path, default=DEFAULT_SNAPSHOT_DIR)
+    gen_parser.add_argument("--manifest-path", type=Path, default=DEFAULT_MANIFEST_PATH)
     gen_parser.add_argument("--ts-out-dir", type=Path, default=DEFAULT_TS_OUT_DIR)
     gen_parser.add_argument("--check", action="store_true", help="Check generated files are up to date")
 
@@ -448,10 +606,23 @@ def main() -> int:
     if args.command == "check":
         rc = check_snapshots(args.snapshot_dir)
         if args.check_generated:
-            rc = rc or generate_ts_clients(args.snapshot_dir, args.ts_out_dir, check=True)
+            rc = rc or generate_ts_clients(
+                args.snapshot_dir,
+                args.ts_out_dir,
+                check=True,
+                manifest_path=args.manifest_path,
+            )
+        else:
+            manifest_failures = validate_contract_manifest(args.snapshot_dir, args.manifest_path)[1]
+            rc = rc or (1 if manifest_failures else 0)
         return rc
     if args.command == "generate-ts":
-        return generate_ts_clients(args.snapshot_dir, args.ts_out_dir, check=args.check)
+        return generate_ts_clients(
+            args.snapshot_dir,
+            args.ts_out_dir,
+            check=args.check,
+            manifest_path=args.manifest_path,
+        )
     print(f"Unknown command: {args.command}", file=sys.stderr)
     return 2
 

@@ -124,7 +124,7 @@ This repository is built as a practical, end-to-end reference for people who wan
 - Android and iOS deployment with Capacitor
 - Full observability, testable, containerized, CI-ready workflows
 
-Platform governance docs live in [docs/platform/](./docs/platform/README.md), including the deployable inventory, ADRs, secret-classification rules, and the remaining backlog PR plan.
+Platform governance docs live in [docs/platform/](./docs/platform/README.md), including the deployable inventory, ADRs, secret-classification rules, AI runbooks, SLOs, release-discipline docs, and the remaining backlog PR plan.
 
 ## Quick Start (Lean Mode)
 
@@ -401,6 +401,7 @@ Key components:
 ## API Contract Governance
 
 - OpenAPI snapshot export from running services
+- Snapshot manifest versioning for governed browser-facing contracts
 - CI drift detection against committed snapshots
 - TypeScript client generation for frontend consumers via the shared workspace packages
 

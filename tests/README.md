@@ -114,6 +114,7 @@ The contract test service:
 
 - starts the relevant backend services
 - compares live OpenAPI output to checked-in snapshots
+- validates `contracts/openapi/manifest.json`
 - validates generated TypeScript contract output
 
 This is the primary protection against backend/frontend drift.
