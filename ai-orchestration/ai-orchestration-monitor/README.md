@@ -42,6 +42,14 @@ managed by separate app-local clients.
 For the operator boundary and route classification, see
 [`../../docs/platform/ai-monitor-boundary.md`](../../docs/platform/ai-monitor-boundary.md).
 
+For degraded-mode expectations and operator incident response, see:
+
+- [`../../docs/platform/ai-degraded-mode.md`](../../docs/platform/ai-degraded-mode.md)
+- [`../../docs/platform/runbooks/ai-startup-degradation.md`](../../docs/platform/runbooks/ai-startup-degradation.md)
+- [`../../docs/platform/runbooks/ai-approvals-failure.md`](../../docs/platform/runbooks/ai-approvals-failure.md)
+- [`../../docs/platform/runbooks/ai-rag-ingestion-failure.md`](../../docs/platform/runbooks/ai-rag-ingestion-failure.md)
+- [`../../docs/platform/runbooks/ai-operator-access-failure.md`](../../docs/platform/runbooks/ai-operator-access-failure.md)
+
 ## Quality checks
 
 ```bash

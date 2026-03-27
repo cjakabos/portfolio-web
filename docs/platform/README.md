@@ -5,6 +5,8 @@ define the current platform direction.
 
 ## Core Docs
 
+- [ai-degraded-mode.md](./ai-degraded-mode.md): dependency failure matrix,
+  degraded-mode expectations, and incident-detection signals for the AI stack
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,
   owner matrix, ingress map, and critical user journeys
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
@@ -23,6 +25,13 @@ define the current platform direction.
   handling rules, and local versus production expectations
 - [remaining-backlog-pr-plan.md](./remaining-backlog-pr-plan.md): sequenced PR
   plan for unfinished backlog work
+
+## Runbooks
+
+- [runbooks/ai-approvals-failure.md](./runbooks/ai-approvals-failure.md)
+- [runbooks/ai-rag-ingestion-failure.md](./runbooks/ai-rag-ingestion-failure.md)
+- [runbooks/ai-startup-degradation.md](./runbooks/ai-startup-degradation.md)
+- [runbooks/ai-operator-access-failure.md](./runbooks/ai-operator-access-failure.md)
 
 ## Architecture Decision Records
 
