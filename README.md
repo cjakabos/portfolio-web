@@ -99,7 +99,7 @@ Capabilities include:
 
 ## 11) Admin AI Orchestration Monitor
 
-Path: `ai-orchestration/ai-orchestration-monitor/`
+Path: `http://localhost:5010`
 
 Provides:
 - Chat interface to talk with the services in 1-9
@@ -113,6 +113,19 @@ Provides:
 
 ![AI monitor](./examples/d1.png)
 
+## 12) Umami - privacy-focused analytics platform. An open-source alternative to Google Analytics.
+
+Path: `http://localhost:3001`
+
+Provides:
+- Privacy-focused, self-hosted web analytics  
+- Tracks pageviews, sessions, referrers, devices, browsers, and locations 
+- Supports custom events for product actions and funnels 
+- Lets you define websites, teams, users, and role-based access 
+- Provides dashboards, filters, date ranges, and traffic trends 
+- Works without sending data to a third-party analytics provider 
+
+![AI monitor](./examples/d2.png)
 
 ## Why This Repo Exists
 
@@ -124,7 +137,7 @@ This repository is built as a practical, end-to-end reference for people who wan
 - Android and iOS deployment with Capacitor
 - Full observability, testable, containerized, CI-ready workflows
 
-Platform governance docs live in [docs/platform/](./docs/platform/README.md), including the deployable inventory, ADRs, secret-classification rules, and the remaining backlog PR plan.
+Platform governance docs live in [docs/platform/](./docs/platform/README.md), including the deployable inventory, ADRs, secret-classification rules, AI runbooks, SLOs, release-discipline docs, and the remaining backlog PR plan.
 
 ## Quick Start (Lean Mode)
 
@@ -159,6 +172,9 @@ If you want seeded local users for manual testing, set
 `CLOUDAPP_SEED_DEMO_USERS_ENABLED=true` plus the
 `CLOUDAPP_SEED_DEMO_USERS_*` credentials in your local `.env` before starting
 the stack. Otherwise, register users through the UI.
+
+See [env.example](./env.example) for the
+optional demo-user environment variables and local bootstrap examples.
 
 ### 4) Optional: setup Ollama
 <details>
@@ -204,7 +220,7 @@ docker compose -f docker-compose-app.yml up -d
 Set these in your root `.env` file:
 
 ```bash
-UMAMI_DB_NAME=umami
+UMAMI_DB_NAME=umamiportfolio
 UMAMI_DB_USER=umami
 UMAMI_DB_PASSWORD=replace-me
 UMAMI_APP_SECRET=replace-me-with-openssl-rand-hex-32
@@ -213,11 +229,10 @@ NEXT_PUBLIC_UMAMI_WEBSITE_ID=<website-id-from-umami-ui>
 NEXT_PUBLIC_UMAMI_DOMAINS=localhost,127.0.0.1
 ```
 
-Bootstrap the dedicated PostgreSQL database and start Umami:
+Start the dedicated Umami database and app:
 
 ```bash
-make bootstrap-umami-db
-docker compose -f docker-compose-infrastructure.yml up -d umami
+docker compose -f docker-compose-infrastructure.yml up -d umami-portfolio-db umami-portfolio
 ```
 
 Open http://localhost:3001
@@ -233,7 +248,7 @@ Tracker defaults in the shell app:
 - search params and hashes excluded
 - `beforeSend` payload sanitization for URLs, referrers, and custom event data
 
-Full setup, privacy rules, and the current event catalog live in [docs/umami-analytics.md](/Users/csaba/1_CODING/portfolio-web/docs/umami-analytics.md).
+Full setup, privacy rules, and the current event catalog live in [docs/umami-analytics.md](./docs/umami-analytics.md).
 
 ### 5) Optional: Jira functionality
 <details>
@@ -401,6 +416,7 @@ Key components:
 ## API Contract Governance
 
 - OpenAPI snapshot export from running services
+- Snapshot manifest versioning for governed browser-facing contracts
 - CI drift detection against committed snapshots
 - TypeScript client generation for frontend consumers via the shared workspace packages
 
@@ -634,7 +650,7 @@ npm run playwright:open:all
 ```
 
 ```bash
-cd /Users/csaba/1_CODING/portfolio-web/frontend/cloudapp-shell
+cd /portfolio-web/frontend/cloudapp-shell
 npm ci
 npm run playwright:install
 npm run playwright:open

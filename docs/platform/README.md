@@ -5,24 +5,46 @@ define the current platform direction.
 
 ## Core Docs
 
+- [ai-degraded-mode.md](./ai-degraded-mode.md): dependency failure matrix,
+  degraded-mode expectations, and incident-detection signals for the AI stack
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,
   owner matrix, ingress map, and critical user journeys
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
   surface, operator capability matrix, and gateway-enforced route classes
+- [ai-product-boundary.md](./ai-product-boundary.md): current classification of
+  AI capabilities as core product, operator-only, or experimental
+- [ai-slos-and-dashboards.md](./ai-slos-and-dashboards.md): SLO targets,
+  endpoint-backed dashboard queries, and load-test expectations for AI flows
 - [backend-service-standards.md](./backend-service-standards.md): Spring
   controller/service contract for validation, error mapping, and logging
 - [backend-service-taxonomy.md](./backend-service-taxonomy.md): backend service
   classification for core platform, AI/operator support, and demo modules
+- [contract-release-discipline.md](./contract-release-discipline.md): contract
+  snapshot versioning rules, generated client release expectations, and review
+  triggers
 - [module-classification.md](./module-classification.md): module labels for
   core platform, operator support, and legacy/demo-derived areas
 - [frontend-version-policy.md](./frontend-version-policy.md): approved shared
   frontend dependency versions and intentional exceptions
 - [runtime-and-data-policy.md](./runtime-and-data-policy.md): operational
   defaults and exception posture for runtimes and data stores
+- [release-checklist.md](./release-checklist.md): release readiness checklist
+  for contracts, gateway/auth, environment changes, and operator impacts
+- [release-dry-run-example.md](./release-dry-run-example.md): representative
+  dry-run of the release checklist against a governed contract change
+- [release-promotion-criteria.md](./release-promotion-criteria.md): promotion
+  gates for gateway, auth, AI, and contract-touching changes
 - [secret-classification.md](./secret-classification.md): secret classes,
   handling rules, and local versus production expectations
 - [remaining-backlog-pr-plan.md](./remaining-backlog-pr-plan.md): sequenced PR
   plan for unfinished backlog work
+
+## Runbooks
+
+- [runbooks/ai-approvals-failure.md](./runbooks/ai-approvals-failure.md)
+- [runbooks/ai-rag-ingestion-failure.md](./runbooks/ai-rag-ingestion-failure.md)
+- [runbooks/ai-startup-degradation.md](./runbooks/ai-startup-degradation.md)
+- [runbooks/ai-operator-access-failure.md](./runbooks/ai-operator-access-failure.md)
 
 ## Architecture Decision Records
 

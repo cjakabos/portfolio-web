@@ -81,7 +81,7 @@ npm run playwright:open:all
 ```
 
 ```bash
-cd /Users/csaba/1_CODING/portfolio-web/frontend/cloudapp-shell
+cd /portfolio-web/frontend/cloudapp-shell
 npm ci
 npm run playwright:install
 npm run playwright:open

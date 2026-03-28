@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "services": {
+    "cloudapp": {
+      "owner": "cloudapp",
+      "releaseCritical": true,
+      "snapshotRevision": 1,
+      "sourceTitle": "Cloudapp API",
+      "upstreamVersion": "v0.01"
+    },
+    "petstore": {
+      "owner": "petstore",
+      "releaseCritical": false,
+      "snapshotRevision": 1,
+      "sourceTitle": "Petstore API",
+      "upstreamVersion": "v1"
+    },
+    "vehicles": {
+      "owner": "vehicles-api",
+      "releaseCritical": false,
+      "snapshotRevision": 1,
+      "sourceTitle": "Vehicle REST API",
+      "upstreamVersion": "v1.0"
+    }
+  }
+}

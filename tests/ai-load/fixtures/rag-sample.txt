@@ -1,0 +1,10 @@
+CloudApp synthetic RAG load-test document.
+
+This small fixture exists to exercise upload, embedding, indexing, and delete
+flows without relying on external sample assets.
+
+Key facts:
+- the AI monitor is an operator-facing application
+- approvals are admin-controlled workflows
+- degraded mode should be visible through health endpoints
+- contract governance and platform docs are checked into this repository

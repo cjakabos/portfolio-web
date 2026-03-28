@@ -97,7 +97,7 @@ jobs:
 
           OTEL_ENABLED=false
           GRAFANA_PASSWORD=nightly-grafana-pass
-          UMAMI_DB_NAME=umami
+          UMAMI_DB_NAME=umamiportfolio
           UMAMI_DB_USER=umami
           UMAMI_DB_PASSWORD=nightly_umami_pass
           UMAMI_APP_SECRET=nightly-umami-app-secret-change-me
@@ -133,12 +133,6 @@ jobs:
           LOG_FORMAT=json
           ENABLE_FILE_LOGGING=false
           EOF
-
-      - name: Bootstrap Umami database
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./scripts/bootstrap-umami-db.sh --env-file ./.env
 
       - name: Start infrastructure stack (with Ollama profile)
         run: |
