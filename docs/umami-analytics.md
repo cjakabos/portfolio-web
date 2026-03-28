@@ -7,7 +7,7 @@ This repo uses a self-hosted Umami instance for privacy-first product analytics.
 Root `.env` values:
 
 ```bash
-UMAMI_DB_NAME=umami
+UMAMI_DB_NAME=umamiportfolio
 UMAMI_DB_USER=umami
 UMAMI_DB_PASSWORD=replace-me
 UMAMI_APP_SECRET=replace-me-with-openssl-rand-hex-32
@@ -124,8 +124,7 @@ Suggested funnels:
 
 ## Local Validation
 
-1. Run `make bootstrap-umami-db`.
-2. Run `docker compose -f docker-compose-infrastructure.yml up -d umami`.
-3. Create the website entry in Umami and copy the website ID into `.env`.
-4. Rebuild the shell app so the public website ID is included.
-5. Open the app, navigate through the main modules, and verify pageviews and events in the Umami dashboard.
+1. Run `docker compose -f docker-compose-infrastructure.yml up -d umami-portfolio-db umami-portfolio`.
+2. Create the website entry in Umami and copy the website ID into `.env`.
+3. Rebuild the shell app so the public website ID is included.
+4. Open the app, navigate through the main modules, and verify pageviews and events in the Umami dashboard.

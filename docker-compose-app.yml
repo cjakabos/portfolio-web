@@ -230,6 +230,9 @@ services:
       - 5001:5001
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      - NEXT_PUBLIC_UMAMI_HOST_URL=${NEXT_PUBLIC_UMAMI_HOST_URL:-}
+      - NEXT_PUBLIC_UMAMI_WEBSITE_ID=${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-}
+      - NEXT_PUBLIC_UMAMI_DOMAINS=${NEXT_PUBLIC_UMAMI_DOMAINS:-}
     networks:
       - frontend
     restart: unless-stopped

@@ -160,6 +160,12 @@ If you want seeded local users for manual testing, set
 `CLOUDAPP_SEED_DEMO_USERS_*` credentials in your local `.env` before starting
 the stack. Otherwise, register users through the UI.
 
+Left and example in the env.example file for an admin and regular user:
+```bash
+user: cloudadmin      pwd: cloudy
+user: regularuser123  pwd: 456789
+```
+
 ### 4) Optional: setup Ollama
 <details>
 <summary>See details for Mac</summary>
@@ -204,7 +210,7 @@ docker compose -f docker-compose-app.yml up -d
 Set these in your root `.env` file:
 
 ```bash
-UMAMI_DB_NAME=umami
+UMAMI_DB_NAME=umamiportfolio
 UMAMI_DB_USER=umami
 UMAMI_DB_PASSWORD=replace-me
 UMAMI_APP_SECRET=replace-me-with-openssl-rand-hex-32
@@ -213,11 +219,10 @@ NEXT_PUBLIC_UMAMI_WEBSITE_ID=<website-id-from-umami-ui>
 NEXT_PUBLIC_UMAMI_DOMAINS=localhost,127.0.0.1
 ```
 
-Bootstrap the dedicated PostgreSQL database and start Umami:
+Start the dedicated Umami database and app:
 
 ```bash
-make bootstrap-umami-db
-docker compose -f docker-compose-infrastructure.yml up -d umami
+docker compose -f docker-compose-infrastructure.yml up -d umami-portfolio-db umami-portfolio
 ```
 
 Open http://localhost:3001

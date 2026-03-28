@@ -244,21 +244,39 @@ services:
   # PRODUCT ANALYTICS — Umami
   #
   # Low-overhead self-hosted analytics with its own dedicated PostgreSQL
-  # database and role. Bootstrap the database with:
-  #   make bootstrap-umami-db
+  # database and role.
   # ===========================================================================
-  umami:
+  umami-portfolio-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${UMAMI_DB_NAME:-umami}
+      POSTGRES_USER: ${UMAMI_DB_USER:-umami}
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"",
+        ]
+      interval: 5s
+      retries: 5
+    volumes:
+      - umami-portfolio-pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  umami-portfolio:
     image: docker.umami.is/umami-software/umami:postgresql-latest
-    container_name: umami
+    container_name: umami-portfolio
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3000"
     environment:
-      DATABASE_URL: postgresql://${UMAMI_DB_USER:?Set UMAMI_DB_USER in .env}:${UMAMI_DB_PASSWORD:?Set UMAMI_DB_PASSWORD in .env}@postgres:5432/${UMAMI_DB_NAME:?Set UMAMI_DB_NAME in .env}
+      DATABASE_URL: postgresql://${UMAMI_DB_USER:?Set UMAMI_DB_USER in .env}:${UMAMI_DB_PASSWORD:?Set UMAMI_DB_PASSWORD in .env}@umami-portfolio-db:5432/${UMAMI_DB_NAME:?Set UMAMI_DB_NAME in .env}
       APP_SECRET: ${UMAMI_APP_SECRET:?Set UMAMI_APP_SECRET in .env}
       DISABLE_TELEMETRY: "1"
     depends_on:
-      postgres:
+      umami-portfolio-db:
         condition: service_healthy
     healthcheck:
       test:
@@ -445,6 +463,8 @@ volumes:
     name: prometheus-data
   grafana_data:
     name: grafana-data
+  umami-portfolio-pgdata:
+    name: umami-portfolio-pgdata
 
 # ===========================================================================
 # NETWORKS - Must match docker-compose-app.yml
