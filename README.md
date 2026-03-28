@@ -99,7 +99,7 @@ Capabilities include:
 
 ## 11) Admin AI Orchestration Monitor
 
-Path: `ai-orchestration/ai-orchestration-monitor/`
+Path: `http://localhost:5010`
 
 Provides:
 - Chat interface to talk with the services in 1-9
@@ -113,6 +113,19 @@ Provides:
 
 ![AI monitor](./examples/d1.png)
 
+## 12) Umami - privacy-focused analytics platform. An open-source alternative to Google Analytics.
+
+Path: `http://localhost:3001`
+
+Provides:
+- Privacy-focused, self-hosted web analytics  
+- Tracks pageviews, sessions, referrers, devices, browsers, and locations 
+- Supports custom events for product actions and funnels 
+- Lets you define websites, teams, users, and role-based access 
+- Provides dashboards, filters, date ranges, and traffic trends 
+- Works without sending data to a third-party analytics provider 
+
+![AI monitor](./examples/d2.png)
 
 ## Why This Repo Exists
 
@@ -160,11 +173,8 @@ If you want seeded local users for manual testing, set
 `CLOUDAPP_SEED_DEMO_USERS_*` credentials in your local `.env` before starting
 the stack. Otherwise, register users through the UI.
 
-Left and example in the env.example file for an admin and regular user:
-```bash
-user: cloudadmin      pwd: cloudy
-user: regularuser123  pwd: 456789
-```
+See [env.example](./env.example) for the
+optional demo-user environment variables and local bootstrap examples.
 
 ### 4) Optional: setup Ollama
 <details>
@@ -238,7 +248,7 @@ Tracker defaults in the shell app:
 - search params and hashes excluded
 - `beforeSend` payload sanitization for URLs, referrers, and custom event data
 
-Full setup, privacy rules, and the current event catalog live in [docs/umami-analytics.md](/Users/csaba/1_CODING/portfolio-web/docs/umami-analytics.md).
+Full setup, privacy rules, and the current event catalog live in [docs/umami-analytics.md](./docs/umami-analytics.md).
 
 ### 5) Optional: Jira functionality
 <details>
@@ -640,7 +650,7 @@ npm run playwright:open:all
 ```
 
 ```bash
-cd /Users/csaba/1_CODING/portfolio-web/frontend/cloudapp-shell
+cd /portfolio-web/frontend/cloudapp-shell
 npm ci
 npm run playwright:install
 npm run playwright:open
