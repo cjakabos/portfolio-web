@@ -15,6 +15,10 @@ define the current platform direction.
   and AI/operator walkthroughs
 - [showcase-smoke-paths.md](./showcase-smoke-paths.md): CI tiering and
   automated smoke-path mapping for the official tours
+- [showcase-architecture.md](./showcase-architecture.md): system, request, and
+  AI/operator diagrams for the flagship story
+- [showcase-evidence-pack.md](./showcase-evidence-pack.md): curated screenshots
+  and visuals for hero and supporting showcase surfaces
 - [showcase-demo-contract.md](./showcase-demo-contract.md): supported setup
   modes, required dependencies, and graceful-degradation rules
 - [frontend-federation-contracts.md](./frontend-federation-contracts.md):

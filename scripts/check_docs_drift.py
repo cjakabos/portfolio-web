@@ -29,11 +29,14 @@ def main() -> int:
     workflow = read(".github/workflows/ci-tests.yml")
     compose = read("docker-compose.test.yml")
     smoke_paths = read("docs/platform/showcase-smoke-paths.md")
+    platform_docs = read("docs/platform/README.md")
 
     for required in [
         "No CloudApp demo users are created by default.",
         "CLOUDAPP_SEED_DEMO_USERS_ENABLED=true",
         "docs/platform/",
+        "showcase-architecture.md",
+        "showcase-evidence-pack.md",
     ]:
         require_contains(readme, required, "README.md", failures)
 
@@ -99,6 +102,13 @@ def main() -> int:
         require_contains(
             smoke_paths, required, "docs/platform/showcase-smoke-paths.md", failures
         )
+
+    for required in [
+        "showcase-architecture.md",
+        "showcase-evidence-pack.md",
+        "showcase-smoke-paths.md",
+    ]:
+        require_contains(platform_docs, required, "docs/platform/README.md", failures)
 
     for required in [
         "test-ai-monitor-behavior:",

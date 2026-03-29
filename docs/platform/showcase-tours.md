@@ -2,6 +2,12 @@
 
 This document defines the intended walkthroughs for the flagship platform.
 
+Reference material:
+- use `showcase-architecture.md` for the diagrams behind the architect and AI
+  tours
+- use `showcase-evidence-pack.md` for the curated screenshot set
+- use `showcase-smoke-paths.md` when you need to explain automated coverage
+
 ## 1. 10-Minute Demo
 
 Audience:

@@ -177,6 +177,15 @@ including the deployable inventory, ADRs, secret-classification rules, AI
 runbooks, showcase taxonomy and tours, release-discipline docs, and the
 flagship-showcase PR plan.
 
+## Architecture At A Glance
+
+- System, request, and AI/operator diagrams:
+  [docs/platform/showcase-architecture.md](./docs/platform/showcase-architecture.md)
+- Curated screenshots for the hero and supporting modules:
+  [docs/platform/showcase-evidence-pack.md](./docs/platform/showcase-evidence-pack.md)
+- Tour-to-test mapping and CI tiers:
+  [docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md)
+
 ## Quick Start (Hero Setup)
 
 ### Prerequisites
