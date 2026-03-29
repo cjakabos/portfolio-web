@@ -6,18 +6,29 @@
 - CI uses the same compose-based flow.
 
 ## Run Modes
-- `Lean mode`: core product work and most test/debug loops. Start only the core datastores plus the app stack.
-- `Showcase mode`: full demos and AI/observability work. Start the full infrastructure stack and optionally the Ollama profile.
+- `Hero setup`: the supported default for the flagship `10-minute demo`. Start
+  only the core datastores plus the app stack.
+- `Extended setup`: broader platform demo and most architect deep-dive loops.
+  Start the full app stack and optional integrations as needed.
+- `AI/operator setup`: the operator-focused path for the AI monitor and
+  orchestration layer.
 
-Lean mode:
+Hero setup:
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
 ```
 
-Showcase mode:
+Extended setup:
 ```bash
 docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
+AI/operator setup:
+```bash
+./scripts/showcase-preflight.sh --mode ai-operator
+docker compose -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 

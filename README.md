@@ -175,13 +175,26 @@ including the deployable inventory, ADRs, secret-classification rules, AI
 runbooks, showcase taxonomy and tours, release-discipline docs, and the
 flagship-showcase PR plan.
 
-## Quick Start (Lean Mode)
+## Quick Start (Hero Setup)
 
 ### Prerequisites
 
 - Docker Desktop (or Docker Engine + Compose)
 - OpenSSL (`openssl`)
 - At least 16 GB RAM and 45 GB (+5-30GB depending on Ollama setup, and another + 20GB if Xcode and iOS emulator installed on Mac) free disk recommended for full showcase mode
+
+### 0) Run the showcase preflight
+
+```bash
+./scripts/showcase-preflight.sh --mode hero
+```
+
+This validates the supported hero path. For the broader platform story, use:
+
+```bash
+./scripts/showcase-preflight.sh --mode extended
+./scripts/showcase-preflight.sh --mode ai-operator
+```
 
 
 ### 1) Create local env file abd enerate local JWT keys
@@ -192,7 +205,8 @@ flagship-showcase PR plan.
 
 ### 2) Start infrastructure + app
 
-This will start the app without Jira, Local LLM and AI orchestration Admin view
+This is the supported `hero setup`. It starts the main app without Jira, local
+LLM, or the AI orchestration operator view.
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
@@ -249,6 +263,7 @@ docker compose -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 
+- This is the `extended setup` used for the architect tour.
 - Admin AI orchestration: http://localhost:5010
 
 ### Optional: self-hosted product analytics with Umami
