@@ -49,6 +49,7 @@ define the current platform direction.
 
 ## Runbooks
 
+- [runbooks/showcase-reset-and-recovery.md](./runbooks/showcase-reset-and-recovery.md)
 - [runbooks/ai-approvals-failure.md](./runbooks/ai-approvals-failure.md)
 - [runbooks/ai-rag-ingestion-failure.md](./runbooks/ai-rag-ingestion-failure.md)
 - [runbooks/ai-startup-degradation.md](./runbooks/ai-startup-degradation.md)

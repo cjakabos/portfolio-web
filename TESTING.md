@@ -32,6 +32,11 @@ docker compose -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 
+Reset to the known-good demo baseline:
+```bash
+./scripts/showcase-reset.sh --mode hero
+```
+
 ## Full Run
 ```bash
 cd /portfolio-web

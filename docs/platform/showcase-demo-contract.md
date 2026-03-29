@@ -51,3 +51,5 @@ AI/operator setup focuses on the orchestration and operator story.
 - Missing optional dependencies must produce clear warnings, not vague failures.
 - `./scripts/showcase-preflight.sh` is the required local readiness check for
   official showcase tours.
+- `./scripts/showcase-reset.sh` is the supported path back to a deterministic
+  demo state.

@@ -203,6 +203,13 @@ This validates the supported hero path. For the broader platform story, use:
 ./scripts/setup-env-jwt-keys.sh
 ```
 
+If you want to return to the supported demo baseline with seeded showcase
+users, run:
+
+```bash
+./scripts/showcase-reset.sh --mode hero
+```
+
 ### 2) Start infrastructure + app
 
 This is the supported `hero setup`. It starts the main app without Jira, local
