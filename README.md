@@ -15,6 +15,38 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web D
 Example view of emulated Android app, browser view on PC and emulated iOS app:
 ![Platform preview](./examples/12.png)
 
+## Official Tours
+
+This repository is curated as a flagship platform showcase. If you are opening
+it for the first time, pick one of these tours:
+
+| Tour | Audience | Primary goal | Recommended mode |
+| --- | --- | --- | --- |
+| `10-minute demo` | Recruiters, hiring managers, first-time visitors | Reach a strong first impression quickly with the shell and one standout integration | Lean mode |
+| `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Lean mode, then selective extensions |
+| `AI/operator tour` | AI engineers, platform engineers, operators | Focus on orchestration, approvals, RAG, observability, and degraded-mode behavior | Showcase mode |
+
+## Showcase Tiers
+
+- `Hero`: the main platform story and the first surfaces a reader should see.
+- `Supporting`: integrated modules that add breadth and credibility.
+- `Optional`: extra depth that is valuable, but not required for the first
+  impression.
+- `Operator tooling`: operator-only surfaces that support or govern the
+  platform.
+
+Current highlight mapping:
+
+- `Hero`: CloudApp shell, NGINX gateway, CloudApp backend, AI orchestration
+  layer
+- `Supporting`: OpenMaps, ChatLLM, Jira, MLOps, observability stack
+- `Optional`: Petstore, Vehicles API, Umami analytics, mobile packaging
+- `Operator tooling`: AI orchestration monitor
+
+See [docs/platform/showcase-taxonomy.md](./docs/platform/showcase-taxonomy.md)
+and [docs/platform/showcase-tours.md](./docs/platform/showcase-tours.md) for
+the maintained version of these labels.
+
 ## What You Can Try In 10 Minutes
 
 ## 1) Homepage
@@ -129,7 +161,8 @@ Provides:
 
 ## Why This Repo Exists
 
-This repository is built as a practical, end-to-end reference for people who want to study or reuse:
+This repository is built as a practical, end-to-end reference for people who
+want to study or reuse:
 - Secure gateway-driven microservice architecture with Java and Python
 - Scalable frontend composition with module federation  (Next.js 15 + React 19)
 - AI-native product patterns (local LLM, agentic tools, RAG, approvals, streaming) for the microservices
@@ -137,7 +170,10 @@ This repository is built as a practical, end-to-end reference for people who wan
 - Android and iOS deployment with Capacitor
 - Full observability, testable, containerized, CI-ready workflows
 
-Platform governance docs live in [docs/platform/](./docs/platform/README.md), including the deployable inventory, ADRs, secret-classification rules, AI runbooks, SLOs, release-discipline docs, and the remaining backlog PR plan.
+Platform governance docs live in [docs/platform/](./docs/platform/README.md),
+including the deployable inventory, ADRs, secret-classification rules, AI
+runbooks, showcase taxonomy and tours, release-discipline docs, and the
+flagship-showcase PR plan.
 
 ## Quick Start (Lean Mode)
 
