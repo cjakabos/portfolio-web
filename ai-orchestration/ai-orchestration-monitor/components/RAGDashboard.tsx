@@ -28,7 +28,6 @@ import {
   Loader2,
   Sparkles,
   XCircle,
-  Settings,
 } from 'lucide-react';
 
 import { useRAGDocuments, useRAGUpload, useRAGQuery, useRAGStats, useRAGHealth } from '../hooks/useRAG';
@@ -234,7 +233,6 @@ const UploadProgressItem: React.FC<{ upload: UploadProgress }> = ({ upload }) =>
 interface UploadZoneProps {
   onFilesSelected: (files: File[]) => void;
   isUploading: boolean;
-  uploads: UploadProgress[];
   activeUploads: UploadProgress[];
   completedUploads: UploadProgress[];
   failedUploads: UploadProgress[];
@@ -245,7 +243,6 @@ interface UploadZoneProps {
 const UploadZone: React.FC<UploadZoneProps> = ({
   onFilesSelected,
   isUploading,
-  uploads,
   activeUploads,
   completedUploads,
   failedUploads,
@@ -507,7 +504,6 @@ const QueryInterface: React.FC<{
 
   // Get embedding model status (models WITH "embed" in name)
   const {
-    embeddingModel,
     isConnected: ollamaConnected,
     isLoading: ollamaLoading,
     filteredModels: embeddingModels,
@@ -518,7 +514,6 @@ const QueryInterface: React.FC<{
   // Also check for chat models (models WITHOUT "embed" in name)
   const {
     filteredModels: chatModels,
-    currentRagModel,
   } = useOllamaModels({ autoFetch: true, excludeFilter: 'embed' });
 
   const hasEmbeddingModels = embeddingModels.length > 0;
@@ -726,7 +721,6 @@ const RAGDashboard: React.FC = () => {
 
   // Upload hook
   const {
-    uploads,
     activeUploads,
     completedUploads,
     failedUploads,
@@ -895,7 +889,6 @@ const RAGDashboard: React.FC = () => {
               <UploadZone
                 onFilesSelected={handleFilesSelected}
                 isUploading={isUploading}
-                uploads={uploads}
                 activeUploads={activeUploads}
                 completedUploads={completedUploads}
                 failedUploads={failedUploads}

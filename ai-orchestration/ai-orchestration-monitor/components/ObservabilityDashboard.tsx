@@ -4,7 +4,7 @@
 // Fully integrated with backend - no mock data
 // =============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Activity, TrendingUp, Clock, RefreshCw, PlayCircle, PauseCircle,
   StopCircle, CheckCircle, AlertTriangle, Plus, X, BarChart3,
@@ -19,12 +19,8 @@ import {
   useExperimentStats 
 } from '../hooks/useOrchestrationHooks';
 import type { 
-  Metrics, 
-  Experiment, 
-  ExperimentListItem, 
   ExperimentStatus,
   ExperimentCreateRequest,
-  VariantConfig
 } from '../types';
 
 interface ObservabilityDashboardProps {
@@ -75,7 +71,7 @@ export default function ObservabilityDashboard({ embedded = false }: Observabili
   const { experiments, isLoading: experimentsLoading, error: experimentsError, refresh: refreshExperiments } = 
     useExperiments(autoRefresh);
   
-  const { experiment: selectedExperiment, isLoading: experimentLoading, refresh: refreshExperiment } = 
+  const { experiment: selectedExperiment, refresh: refreshExperiment } = 
     useExperiment(selectedExperimentId);
   
   const { data: experimentStats, refresh: refreshStats } = useExperimentStats();

@@ -6,9 +6,8 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  Send, Bot, User, Zap, Activity, Brain, Database,
-  Workflow, RefreshCw, Wifi, WifiOff, Loader2, X,
-  AlertCircle, Settings, Trash2, Copy, Check, Clock, Cpu
+  Send, Bot, User, Zap, RefreshCw, Wifi, WifiOff,
+  Loader2, X, AlertCircle, Settings, Copy, Check, Clock
 } from 'lucide-react';
 import { useStreaming } from '../hooks/useOrchestrationHooks';
 import { useConversationSync, SyncedMessage } from '../hooks/useConversationSync';
@@ -32,11 +31,10 @@ export default function StreamingInterface({
   const [showSettings, setShowSettings] = useState(false);
   // FIX: Use persistent session ID if none provided
   const effectiveSessionId = sessionId || getPersistentSessionId();
-  const [localSessionId, setLocalSessionId] = useState(effectiveSessionId);
+  const [localSessionId] = useState(effectiveSessionId);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
 
   // ==========================================================================
   // FIX: Local state for synced messages from approval resumes
@@ -90,10 +88,8 @@ export default function StreamingInterface({
     isConnected,
     isStreaming,
     messages: streamingMessages,
-    activeNodes,
     currentStreamingContent,
     connect,
-    disconnect,
     sendMessage: sendStreamingMessage,
     clearMessages,
   } = useStreaming({

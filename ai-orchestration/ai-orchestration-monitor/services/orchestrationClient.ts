@@ -1157,21 +1157,29 @@ export class OrchestrationClient {
   // ===========================================================================
 
   async getCart(username: string): Promise<Cart> {
-    const response = await this.post<{ items?: any[]; total?: number }>(
+    type CloudAppCartItemResponse = {
+      id?: number;
+      name?: string;
+      price?: number | string;
+    };
+
+    const response = await this.post<{ items?: CloudAppCartItemResponse[]; total?: number }>(
       this.cloudappUrl('/cart/getCart'),
       { username }
     );
 
-    const items = (response.items || []).map((item: any) => ({
+    const items = (response.items || []).map((item) => ({
       itemId: item.id || 0,
       itemName: item.name || '',
       quantity: 1,
-      price: parseFloat(item.price) || 0,
+      price: typeof item.price === 'number'
+        ? item.price
+        : parseFloat(item.price || '0') || 0,
     }));
 
     return {
       items,
-      total: response.total || items.reduce((sum: number, item: any) => sum + item.price, 0),
+      total: response.total || items.reduce((sum, item) => sum + item.price, 0),
     };
   }
 
