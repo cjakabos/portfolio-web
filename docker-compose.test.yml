@@ -14,6 +14,9 @@
 #   # Run only frontend unit/hook tests:
 #   docker compose -f docker-compose.test.yml up --build test-frontend-unit --abort-on-container-exit
 #
+#   # Run only frontend static checks across the shell, remotes, and monitor:
+#   docker compose -f docker-compose.test.yml up --build test-frontend-static --abort-on-container-exit
+#
 #   # Run only AI monitor component tests:
 #   docker compose -f docker-compose.test.yml up --build test-ai-monitor-component --abort-on-container-exit
 #
@@ -370,6 +373,20 @@ services:
     volumes:
       - ./:/workspace:ro
 
+  test-frontend-static:
+    image: node:20-slim
+    working_dir: /build
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --ignore-scripts --workspaces --include-workspace-root=false --include=optional && npm run frontend:check-versions && npm run frontend:static",
+      ]
+    environment:
+      - CI=true
+    volumes:
+      - ./:/workspace:ro
+
   # =========================================================================
   # TEST ORCHESTRATOR (single-command full matrix)
   #
@@ -386,7 +403,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-static test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================
