@@ -13,6 +13,8 @@ define the current platform direction.
   hero, supporting, optional, and operator surfaces
 - [showcase-tours.md](./showcase-tours.md): the official 10-minute, architect,
   and AI/operator walkthroughs
+- [showcase-smoke-paths.md](./showcase-smoke-paths.md): CI tiering and
+  automated smoke-path mapping for the official tours
 - [showcase-demo-contract.md](./showcase-demo-contract.md): supported setup
   modes, required dependencies, and graceful-degradation rules
 - [frontend-federation-contracts.md](./frontend-federation-contracts.md):

@@ -64,25 +64,14 @@ docker compose -f docker-compose.test.yml down -v --remove-orphans
 
 ## CI Coverage Summary
 
-The CI workflow runs the following categories:
+The CI workflow is intentionally split into showcase tiers:
 
-- backend integration suites for CloudApp, Petstore, Vehicles API, and Jira proxy
-- ML pipeline tests
-- gateway integration tests
-- OpenAPI contract governance
-- frontend unit tests
-- docs drift checks
-- frontend native lockfile validation
-- dependency audit jobs
-- AI orchestration tests
-- frontend static checks
-- AI monitor static checks
-- AI monitor component tests
-- AI monitor behavior tests
-- Playwright E2E (core)
-- Playwright E2E (remotes)
+- `Core showcase`: backend integration, gateway integration, OpenAPI contract governance, frontend unit tests, frontend static checks, docs drift checks, frontend native lockfile validation, and Playwright E2E for the hero tour.
+- `Extended showcase`: ML pipeline tests, AI orchestration tests, AI monitor static/component/browser checks, and Playwright E2E for remotes and operator flows.
+- `Optional security posture`: dependency audit jobs for npm, Python, and Maven.
 
 See `.github/workflows/ci-tests.yml` for the exact job graph.
+See `docs/platform/showcase-smoke-paths.md` for the tour-to-test mapping.
 
 ## Playwright Notes
 

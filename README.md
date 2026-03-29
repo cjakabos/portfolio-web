@@ -22,9 +22,9 @@ it for the first time, pick one of these tours:
 
 | Tour | Audience | Primary goal | Recommended mode |
 | --- | --- | --- | --- |
-| `10-minute demo` | Recruiters, hiring managers, first-time visitors | Reach a strong first impression quickly with the shell and one standout integration | Lean mode |
-| `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Lean mode, then selective extensions |
-| `AI/operator tour` | AI engineers, platform engineers, operators | Focus on orchestration, approvals, RAG, observability, and degraded-mode behavior | Showcase mode |
+| `10-minute demo` | Recruiters, hiring managers, first-time visitors | Reach a strong first impression quickly with the shell and one standout integration | Hero setup |
+| `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Hero setup, then selective extended modules |
+| `AI/operator tour` | AI engineers, platform engineers, operators | Focus on orchestration, approvals, RAG, observability, and degraded-mode behavior | AI/operator setup |
 
 ## Showcase Tiers
 
@@ -45,7 +45,9 @@ Current highlight mapping:
 
 See [docs/platform/showcase-taxonomy.md](./docs/platform/showcase-taxonomy.md)
 and [docs/platform/showcase-tours.md](./docs/platform/showcase-tours.md) for
-the maintained version of these labels.
+the maintained version of these labels. Automated tour coverage and CI tiering
+live in
+[docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md).
 
 ## What You Can Try In 10 Minutes
 
@@ -633,33 +635,43 @@ docker compose -f docker-compose-app.yml up -d --build next-nginx-jwt next-cloud
 - CI uses the same compose-based flow.
 
 ## Run Modes
-- `Lean mode`: core product work and most test/debug loops. Start only the core datastores plus the app stack.
-- `Showcase mode`: full demos and AI/observability work. Start the full infrastructure stack and optionally the Ollama profile.
+- `Hero setup`: the supported default for the flagship `10-minute demo`.
+- `Extended setup`: broader platform demo and most architect deep-dive loops.
+- `AI/operator setup`: the operator-focused path for the AI monitor and orchestration layer.
 
-Lean mode:
+Hero setup:
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
 ```
 
-Showcase mode:
+Extended setup:
 ```bash
 docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
+AI/operator setup:
+```bash
+./scripts/showcase-preflight.sh --mode ai-operator
+docker compose -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 
 ## Full Run
 ```bash
 cd /portfolio-web
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+docker compose -p portfolio_test_all -f docker-compose.test.yml up --build --abort-on-container-exit test-all
 ```
 
 ## Targeted Runs
 ```bash
+PROJECT=portfolio_focus
 SERVICE=test-e2e-core
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
+docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
 - Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See [docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md).
 
 ## Frontend Static Checks
 ```bash
@@ -678,7 +690,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 ## Cleanup
 ```bash
 docker compose -p portfolio_test_all -f docker-compose.test.yml down -v --remove-orphans
-docker compose -f docker-compose.test.yml down -v --remove-orphans
+docker compose -p portfolio_focus -f docker-compose.test.yml down -v --remove-orphans
 ```
 
 ## Optional (local UI debugging)

@@ -40,15 +40,17 @@ Reset to the known-good demo baseline:
 ## Full Run
 ```bash
 cd /portfolio-web
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+docker compose -p portfolio_test_all -f docker-compose.test.yml up --build --abort-on-container-exit test-all
 ```
 
 ## Targeted Runs
 ```bash
+PROJECT=portfolio_focus
 SERVICE=test-e2e-core
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
+docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
 - Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
 
 ## Frontend Static Checks
 ```bash
@@ -67,7 +69,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 ## Cleanup
 ```bash
 docker compose -p portfolio_test_all -f docker-compose.test.yml down -v --remove-orphans
-docker compose -f docker-compose.test.yml down -v --remove-orphans
+docker compose -p portfolio_focus -f docker-compose.test.yml down -v --remove-orphans
 ```
 
 ## Optional (local UI debugging)

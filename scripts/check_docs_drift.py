@@ -28,6 +28,7 @@ def main() -> int:
     tests_readme = read("tests/README.md")
     workflow = read(".github/workflows/ci-tests.yml")
     compose = read("docker-compose.test.yml")
+    smoke_paths = read("docs/platform/showcase-smoke-paths.md")
 
     for required in [
         "No CloudApp demo users are created by default.",
@@ -66,18 +67,38 @@ def main() -> int:
         "`module-federation.spec.ts`",
         "`mlops.spec.ts`",
         "python3 scripts/check_docs_drift.py",
+        "Core showcase",
+        "Extended showcase",
+        "Optional security posture",
     ]:
         require_contains(tests_readme, required, "tests/README.md", failures)
 
     for required in [
         "docs-drift-checks:",
+        "frontend-static-checks:",
         "ai-monitor-behavior-tests:",
         "python3 scripts/check_docs_drift.py",
         "test-ai-monitor-behavior",
-        "Docs Drift",
+        "Core Showcase",
+        "Extended Showcase",
+        "Optional Security",
+        "Frontend Static",
         "AI Monitor (Behavior)",
     ]:
         require_contains(workflow, required, ".github/workflows/ci-tests.yml", failures)
+
+    for required in [
+        "10-minute demo",
+        "Architect deep dive",
+        "AI/operator tour",
+        "`frontend-static-checks`",
+        "`e2e-core-tests`",
+        "`e2e-remote-tests`",
+        "`ai-monitor-behavior-tests`",
+    ]:
+        require_contains(
+            smoke_paths, required, "docs/platform/showcase-smoke-paths.md", failures
+        )
 
     for required in [
         "test-ai-monitor-behavior:",
