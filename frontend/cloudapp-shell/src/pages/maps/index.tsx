@@ -1,10 +1,7 @@
 import React from "react";
-import dynamic from "next/dynamic";
+import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 
-// @ts-ignore
-const Maps = dynamic(() => import("remote/openmaps"), {
-  ssr: false,
-});
+const Maps = loadRemoteComponent(() => import("remote/openmaps"));
 
 const Index: React.FC = () => {
   return (

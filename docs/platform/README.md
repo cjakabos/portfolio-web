@@ -15,6 +15,8 @@ define the current platform direction.
   and AI/operator walkthroughs
 - [showcase-demo-contract.md](./showcase-demo-contract.md): supported setup
   modes, required dependencies, and graceful-degradation rules
+- [frontend-federation-contracts.md](./frontend-federation-contracts.md):
+  typed route-to-remote contracts for the shell and module-federated remotes
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
   surface, operator capability matrix, and gateway-enforced route classes
 - [ai-product-boundary.md](./ai-product-boundary.md): current classification of

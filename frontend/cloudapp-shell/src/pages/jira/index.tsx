@@ -1,11 +1,8 @@
 import React from "react";
-import dynamic from "next/dynamic";
+import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 import { useAuth } from "../../hooks/useAuth";
 
-// @ts-ignore
-const Jira = dynamic(() => import("remote2/jira"), {
-    ssr: false,
-});
+const Jira = loadRemoteComponent(() => import("remote2/jira"));
 
 const Index: React.FC = () => {
     const { isAdmin, isReady, isInitialized } = useAuth();

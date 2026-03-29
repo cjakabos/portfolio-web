@@ -1,10 +1,7 @@
 import React from "react";
-import dynamic from "next/dynamic";
+import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 
-// @ts-ignore
-const ChatLLM = dynamic(() => import("remote3/chatllm"), {
-    ssr: false,
-});
+const ChatLLM = loadRemoteComponent(() => import("remote3/chatllm"));
 
 const Index: React.FC = () => {
     return (
