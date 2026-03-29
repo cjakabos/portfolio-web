@@ -19,6 +19,8 @@ define the current platform direction.
   AI/operator diagrams for the flagship story
 - [showcase-evidence-pack.md](./showcase-evidence-pack.md): curated screenshots
   and visuals for hero and supporting showcase surfaces
+- [showcase-stewardship.md](./showcase-stewardship.md): promotion rules,
+  review cadence, and curation expectations for showcase modules
 - [showcase-demo-contract.md](./showcase-demo-contract.md): supported setup
   modes, required dependencies, and graceful-degradation rules
 - [frontend-federation-contracts.md](./frontend-federation-contracts.md):

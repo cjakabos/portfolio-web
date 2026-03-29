@@ -16,6 +16,7 @@ work is added.
 - [docs/platform/README.md](./README.md)
 - [secret-classification.md](./secret-classification.md)
 - [runtime-and-data-policy.md](./runtime-and-data-policy.md)
+- [showcase-stewardship.md](./showcase-stewardship.md)
 - [adr/adr-001-gateway-policy-boundary.md](./adr/adr-001-gateway-policy-boundary.md)
 - [adr/adr-002-frontend-workspace-strategy.md](./adr/adr-002-frontend-workspace-strategy.md)
 - [adr/adr-003-ai-operator-boundary.md](./adr/adr-003-ai-operator-boundary.md)
@@ -88,6 +89,15 @@ useful as the team evolves.
 
 The gateway is the platform policy boundary. Browser clients should not talk
 directly to internal services when a routed gateway path exists.
+
+## Showcase Stewardship Hooks
+
+- `Hero` modules in this inventory should always have a matching `Core
+  showcase` smoke path in `showcase-smoke-paths.md`.
+- Supporting and optional modules should be reviewed quarterly using the
+  keep/refresh/archive posture in `showcase-stewardship.md`.
+- New deployables should answer “what new capability does this demonstrate?”
+  before they are added to the flagship story.
 
 ## Critical User Journeys
 

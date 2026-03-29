@@ -33,9 +33,9 @@ flowchart LR
   end
 
   subgraph stores["Core stores and platform dependencies"]
-    postgres["Postgres"]
     postgres_ml["Postgres ML"]
     mysql["MySQL"]
+    postgres["Postgres"]
     mongo["MongoDB"]
     kafka["Kafka"]
     redis["Redis"]
@@ -65,17 +65,14 @@ flowchart LR
   cloudapp --> postgres
   cloudapp --> mongo
   cloudapp --> kafka
-  vehicles --> gateway
   petstore_api --> mysql
-  jiraproxy --> gateway
   ml_api --> postgres_ml
   ai --> redis
   ai --> experiments
   ai --> chroma
-  ai --> gateway
 
   chatllm -. local model calls .-> ollama
-  jiraproxy -. optional AI refinement .-> ollama
+  jira -. optional AI refinement via remote API .-> ollama
   ai -. chat, tool, and embedding calls .-> ollama
 ```
 
@@ -84,6 +81,8 @@ What this shows:
 - the shell is the primary user entrypoint and loads breadth modules through
   module federation
 - the gateway remains the policy boundary for both product and operator traffic
+- the Jira integration is split: Jira CRUD goes through the gateway and
+  `jiraproxy`, while the Jira remote owns its local Ollama-assisted AI features
 - the AI layer is part of the platform spine, not an isolated side project
 
 ## 2. Gateway-Routed Request Flow

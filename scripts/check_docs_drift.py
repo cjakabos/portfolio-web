@@ -107,6 +107,7 @@ def main() -> int:
         "showcase-architecture.md",
         "showcase-evidence-pack.md",
         "showcase-smoke-paths.md",
+        "showcase-stewardship.md",
     ]:
         require_contains(platform_docs, required, "docs/platform/README.md", failures)
 
