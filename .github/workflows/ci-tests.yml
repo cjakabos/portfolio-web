@@ -2,27 +2,29 @@
 # .github/workflows/ci-tests.yml — Comprehensive CI Test Pipeline
 #
 # Runs all test layers on every push and PR:
-#   1. Backend integration tests (Spring Boot + real DBs)
-#   2. ML Pipeline tests (Flask/pytest + real Postgres)
-#   3. NGINX gateway tests (JWT, CORS, routing)
-#   4. API contract governance (OpenAPI drift + TS client validation)
-#   5. Frontend unit tests (React Testing Library)
-#   6. Docs drift checks for repo-facing test/runtime docs
-#   7. Frontend lockfile native package checks
-#   8. Optional dependency vulnerability scans (npm audit + pip-audit)
-#   9. AI Orchestration tests (pytest — auth, config, http_client, approvals)
-#   10. AI Monitor static checks (TypeScript typecheck + ESLint + Vite build)
-#   11. AI Monitor component behavior tests (Vitest + jsdom)
-#   12. Playwright AI monitor behavior tests
-#   13. Playwright E2E tests (core stack)
-#   14. Playwright E2E tests (remote stack)
+#   1. Core showcase backend integration tests (Spring Boot + real DBs)
+#   2. Extended showcase ML pipeline tests (Flask/pytest + real Postgres)
+#   3. Core showcase NGINX gateway tests (JWT, CORS, routing)
+#   4. Core showcase API contract governance (OpenAPI drift + TS clients)
+#   5. Core showcase frontend unit tests (React Testing Library)
+#   6. Core showcase frontend static gates (typecheck/lint/version checks)
+#   7. Core showcase frontend bundle budget checks (hero/operator surfaces)
+#   8. Core showcase docs drift checks for repo-facing test/runtime docs
+#   9. Core showcase frontend lockfile native package checks
+#   10. Optional dependency vulnerability scans (npm audit + pip-audit)
+#   11. Extended showcase AI Orchestration tests
+#   12. Extended showcase AI Monitor static checks
+#   13. Extended showcase AI Monitor component behavior tests
+#   14. Extended showcase Playwright AI monitor behavior tests
+#   15. Core showcase Playwright E2E tests (hero tour)
+#   16. Extended showcase Playwright E2E tests (remote/admin/operator stack)
 #
 # Usage:
 #   Triggered automatically on push/PR to main/develop.
 #   Can also be triggered manually via workflow_dispatch.
 # ===========================================================================
 
-name: CI — Comprehensive Tests
+name: CI — Flagship Showcase Matrix
 
 on:
   push:
@@ -46,7 +48,7 @@ jobs:
   # JOB 1: Backend Integration Tests (Spring Boot)
   # =========================================================================
   backend-tests:
-    name: "Backend — Spring Boot Integration"
+    name: "Core Showcase — Backend Integration"
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -122,7 +124,7 @@ jobs:
   # JOB 2: ML Pipeline Tests (Flask/pytest)
   # =========================================================================
   ml-pipeline-tests:
-    name: "ML Pipeline — pytest"
+    name: "Extended Showcase — ML Pipeline"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -143,7 +145,7 @@ jobs:
   # JOB 3: NGINX Gateway Tests
   # =========================================================================
   nginx-gateway-tests:
-    name: "NGINX — Gateway Integration"
+    name: "Core Showcase — Gateway Integration"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -182,7 +184,7 @@ jobs:
   # JOB 4: API Contract Governance Tests
   # =========================================================================
   api-contract-tests:
-    name: "API Contracts — OpenAPI Drift + TS Clients"
+    name: "Core Showcase — API Contracts"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -217,7 +219,7 @@ jobs:
   # JOB 5: Frontend Unit Tests
   # =========================================================================
   frontend-unit-tests:
-    name: "Frontend — React Unit Tests"
+    name: "Core Showcase — Frontend Unit"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -243,10 +245,52 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 6: Docs Drift Checks
+  # JOB 6: Frontend Static Gates
+  # =========================================================================
+  frontend-static-checks:
+    name: "Core Showcase — Frontend Static"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run frontend static gates
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
+            test-frontend-static
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 7: Frontend Bundle Budget Checks
+  # =========================================================================
+  frontend-budget-checks:
+    name: "Core Showcase — Frontend Budget"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run frontend budget checks
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
+            test-frontend-budgets
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 8: Docs Drift Checks
   # =========================================================================
   docs-drift-checks:
-    name: "Docs — Drift Guardrails"
+    name: "Core Showcase — Docs Drift"
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -258,10 +302,10 @@ jobs:
         run: python3 scripts/check_docs_drift.py
 
   # =========================================================================
-  # JOB 7: Frontend Lockfile Native Package Checks
+  # JOB 9: Frontend Lockfile Native Package Checks
   # =========================================================================
   frontend-lockfile-checks:
-    name: "Frontend Lockfiles — Linux Native Packages"
+    name: "Core Showcase — Frontend Lockfiles"
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -273,10 +317,10 @@ jobs:
         run: python3 scripts/check_frontend_native_lockfiles.py
 
   # =========================================================================
-  # JOB 8A: Optional Dependency Scans (npm)
+  # JOB 10A: Optional Dependency Scans (npm)
   # =========================================================================
   dependency-scan-npm:
-    name: "Dependency Security — npm Audit"
+    name: "Optional Security — npm Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -321,10 +365,10 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 8B: Optional Dependency Scans (Python)
+  # JOB 10B: Optional Dependency Scans (Python)
   # =========================================================================
   dependency-scan-python:
-    name: "Dependency Security — Python Audit"
+    name: "Optional Security — Python Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -375,10 +419,10 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 8C: Optional Dependency Scans (Maven / OWASP Warmup)
+  # JOB 10C: Optional Dependency Scans (Maven / OWASP Warmup)
   # =========================================================================
   dependency-scan-maven-update:
-    name: "Dependency Security — Maven OWASP Warmup"
+    name: "Optional Security — Maven OWASP Warmup"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -456,10 +500,10 @@ jobs:
           key: ${{ steps.restore-odc-cache.outputs.cache-primary-key }}
 
   # =========================================================================
-  # JOB 8D: Optional Dependency Scans (Maven / OWASP per service)
+  # JOB 10D: Optional Dependency Scans (Maven / OWASP per service)
   # =========================================================================
   dependency-scan-maven-cloudapp:
-    name: "Dependency Security — Maven Audit (CloudApp)"
+    name: "Optional Security — Maven Audit (CloudApp)"
     runs-on: ubuntu-latest
     timeout-minutes: 12
     if: always()
@@ -546,7 +590,7 @@ jobs:
           retention-days: 7
 
   dependency-scan-maven-petstore:
-    name: "Dependency Security — Maven Audit (Petstore)"
+    name: "Optional Security — Maven Audit (Petstore)"
     runs-on: ubuntu-latest
     timeout-minutes: 12
     if: always()
@@ -633,7 +677,7 @@ jobs:
           retention-days: 7
 
   dependency-scan-maven-vehicles-api:
-    name: "Dependency Security — Maven Audit (Vehicles API)"
+    name: "Optional Security — Maven Audit (Vehicles API)"
     runs-on: ubuntu-latest
     timeout-minutes: 12
     if: always()
@@ -720,7 +764,7 @@ jobs:
           retention-days: 7
 
   dependency-scan-maven-web-proxy:
-    name: "Dependency Security — Maven Audit (Web Proxy)"
+    name: "Optional Security — Maven Audit (Web Proxy)"
     runs-on: ubuntu-latest
     timeout-minutes: 12
     if: always()
@@ -807,10 +851,10 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 8E: Optional Dependency Scans (Maven / OWASP summary)
+  # JOB 10E: Optional Dependency Scans (Maven / OWASP summary)
   # =========================================================================
   dependency-scan-maven:
-    name: "Dependency Security — Maven Audit"
+    name: "Optional Security — Maven Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: always()
@@ -895,10 +939,10 @@ jobs:
           echo "Merged reports are uploaded as the \`dependency-audit-maven-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
-  # JOB 8F: Optional Dependency Scan Summary
+  # JOB 10F: Optional Dependency Scan Summary
   # =========================================================================
   dependency-scans:
-    name: "Dependency Security — Audit"
+    name: "Optional Security — Audit Summary"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -940,7 +984,7 @@ jobs:
           echo "maven_status=$maven_status" >> "$GITHUB_OUTPUT"
           echo "summary=$summary" >> "$GITHUB_OUTPUT"
 
-          echo "## Dependency Security Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Optional Security Posture" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Ecosystem | Status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
@@ -951,10 +995,10 @@ jobs:
           echo "Reports are uploaded as the \`dependency-audit-npm-reports\`, \`dependency-audit-python-reports\`, and \`dependency-audit-maven-reports\` artifacts." >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
-  # JOB 9: AI Orchestration Layer Tests (pytest)
+  # JOB 11: AI Orchestration Layer Tests (pytest)
   # =========================================================================
   ai-orchestration-tests:
-    name: "AI Orchestration — pytest"
+    name: "Extended Showcase — AI Orchestration"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -972,10 +1016,10 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 10: AI Monitor Static Checks (ESLint + Vite Build)
+  # JOB 12: AI Monitor Static Checks (ESLint + Vite Build)
   # =========================================================================
   ai-monitor-checks:
-    name: "AI Monitor — Lint + Build"
+    name: "Extended Showcase — AI Monitor Static"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -993,10 +1037,10 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 11: AI Monitor Component Behavior Tests
+  # JOB 13: AI Monitor Component Behavior Tests
   # =========================================================================
   ai-monitor-component-tests:
-    name: "AI Monitor — Component Behavior"
+    name: "Extended Showcase — AI Monitor Component"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -1014,10 +1058,10 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 12: AI Monitor Behavior Tests
+  # JOB 14: AI Monitor Behavior Tests
   # =========================================================================
   ai-monitor-behavior-tests:
-    name: "AI Monitor — Routed Browser Flow"
+    name: "Extended Showcase — AI Monitor Browser"
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -1066,10 +1110,10 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 13: Playwright E2E Tests (Core Stack)
+  # JOB 15: Playwright E2E Tests (Core Stack)
   # =========================================================================
   e2e-core-tests:
-    name: "E2E — Playwright (Core)"
+    name: "Core Showcase — Playwright Hero Tour"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [backend-tests]
@@ -1124,10 +1168,10 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 14: Playwright E2E Tests (Remote Stack)
+  # JOB 16: Playwright E2E Tests (Remote Stack)
   # =========================================================================
   e2e-remote-tests:
-    name: "E2E — Playwright (Remotes)"
+    name: "Extended Showcase — Playwright Remotes"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [backend-tests, ml-pipeline-tests]
@@ -1188,27 +1232,43 @@ jobs:
   test-summary:
     name: "Test Summary"
     runs-on: ubuntu-latest
-    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
+    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, frontend-budget-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
     if: always()
 
     steps:
       - name: Report status
         run: |
-          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Flagship Showcase CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Core Showcase — Must Pass" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Layer | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend (Spring Boot) | ${{ needs.backend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ML Pipeline (pytest) | ${{ needs.ml-pipeline-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| NGINX Gateway | ${{ needs.nginx-gateway-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| API Contracts | ${{ needs.api-contract-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Unit | ${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Static | ${{ needs.frontend-static-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Budget | ${{ needs.frontend-budget-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Docs Drift | ${{ needs.docs-drift-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lockfiles | ${{ needs.frontend-lockfile-checks.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Scan (optional) | ${{ needs.dependency-scans.outputs.summary }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Playwright E2E (Hero Tour) | ${{ needs.e2e-core-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Extended Showcase — Breadth Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Layer | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ML Pipeline (pytest) | ${{ needs.ml-pipeline-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI Orchestration (pytest) | ${{ needs.ai-orchestration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI Monitor (Static) | ${{ needs.ai-monitor-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI Monitor (Component) | ${{ needs.ai-monitor-component-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| AI Monitor (Behavior) | ${{ needs.ai-monitor-behavior-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Playwright E2E (Core) | ${{ needs.e2e-core-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Playwright E2E (Remotes) | ${{ needs.e2e-remote-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Optional Security — Informational" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Layer | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scans.outputs.summary }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Official tour-to-test mapping lives in docs/platform/showcase-smoke-paths.md." >> $GITHUB_STEP_SUMMARY

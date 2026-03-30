@@ -14,10 +14,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  CheckCircle, XCircle, Clock, AlertTriangle,
-  ChevronRight, ExternalLink, ShieldAlert, Check,
+  CheckCircle, Clock, AlertTriangle, ShieldAlert, Check,
   X, RefreshCw, Loader2, AlertCircle, FileJson,
-  Play, Zap, Activity, Target, Shield, Eye, ArrowLeft
+  Play, Zap, Activity, Target, Eye, ArrowLeft
 } from 'lucide-react';
 import { orchestrationClient } from '../services/orchestrationClient';
 import type {
@@ -45,9 +44,9 @@ type SelectedItem = (ApprovalRequest | ApprovalHistoryItem) & {
 };
 
 export default function ApprovalInterface({
-  embedded = false,
-  userId = 1,
-  currentUserId,
+  embedded: _embedded = false,
+  userId: _userId = 1,
+  currentUserId: _currentUserId,
   sessionId,
   onResumeComplete
 }: ApprovalInterfaceProps) {

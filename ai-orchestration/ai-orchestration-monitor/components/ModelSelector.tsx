@@ -410,7 +410,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     models,
     filteredModels,
     isLoading,
-    error,
     ollamaUrl,
     isConnected,
     currentChatModel,
@@ -418,7 +417,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     embeddingModel,
     fetchModels,
     setModel,
-    hasModels,
   } = useOllamaModels({ filter, excludeFilter });
 
   // Use filtered models for display

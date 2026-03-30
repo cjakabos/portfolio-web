@@ -22,6 +22,7 @@ import type {
   SegmentationCustomer,
   MLInfo,
   MLDiagnostics,
+  MLSummaryStatistics,
   ApprovalRequest,
   ApprovalHistoryItem,
   RecentError,
@@ -52,7 +53,7 @@ export function useTools() {
     }
   }, []);
 
-  const invokeTool = useCallback(async (toolName: string, parameters: Record<string, any>): Promise<ToolInvocationResponse> => {
+  const invokeTool = useCallback(async (toolName: string, parameters: Record<string, unknown>): Promise<ToolInvocationResponse> => {
     return orchestrationClient.invokeTool(toolName, parameters);
   }, []);
 
@@ -546,7 +547,7 @@ export function useMLPipeline() {
     return orchestrationClient.getModelScore();
   }, []);
 
-  const getStats = useCallback(async (): Promise<any> => {
+  const getStats = useCallback(async (): Promise<MLSummaryStatistics> => {
     return orchestrationClient.getSummaryStatistics();
   }, []);
 

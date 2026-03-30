@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "check:bundle-budget": "node ./scripts/check-bundle-budget.mjs",
+    "build:budget": "npm run build && npm run check:bundle-budget",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

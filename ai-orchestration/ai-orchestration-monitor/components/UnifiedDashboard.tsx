@@ -4,11 +4,11 @@
 // Fully integrated with backend - no mock data
 // =============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Activity, TrendingUp, Clock, AlertTriangle, CheckCircle, Users,
-  MessageSquare, Shield, Zap, BarChart3, Beaker, RefreshCw,
-  Loader2, WifiOff, Wifi, ArrowUpRight, ArrowDownRight
+  MessageSquare, Shield, BarChart3, Beaker, RefreshCw,
+  Loader2, WifiOff, Wifi
 } from 'lucide-react';
 import {
   useMetrics,
@@ -34,7 +34,7 @@ export default function UnifiedDashboard() {
   const { circuitBreakers, isLoading: cbLoading, storageBackend } = useCircuitBreakers({ autoRefresh: true });
   const { pendingApprovals, isLoading: approvalsLoading } = usePendingApprovals({ autoRefresh: true });
   const { experiments, isLoading: experimentsLoading } = useExperiments(true);
-  const { isHealthy, lastCheck } = useHealth(15000);
+  const { isHealthy } = useHealth(15000);
   const { data: errorSummary } = useErrorSummary(24, { autoRefresh: true });
 
   // Derived stats

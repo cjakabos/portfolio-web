@@ -9,6 +9,22 @@ define the current platform direction.
   degraded-mode expectations, and incident-detection signals for the AI stack
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,
   owner matrix, ingress map, and critical user journeys
+- [showcase-taxonomy.md](./showcase-taxonomy.md): audience-facing labels for
+  hero, supporting, optional, and operator surfaces
+- [showcase-tours.md](./showcase-tours.md): the official 10-minute, architect,
+  and AI/operator walkthroughs
+- [showcase-smoke-paths.md](./showcase-smoke-paths.md): CI tiering and
+  automated smoke-path mapping for the official tours
+- [showcase-architecture.md](./showcase-architecture.md): system, request, and
+  AI/operator diagrams for the flagship story
+- [showcase-evidence-pack.md](./showcase-evidence-pack.md): curated screenshots
+  and visuals for hero and supporting showcase surfaces
+- [showcase-stewardship.md](./showcase-stewardship.md): promotion rules,
+  review cadence, and curation expectations for showcase modules
+- [showcase-demo-contract.md](./showcase-demo-contract.md): supported setup
+  modes, required dependencies, and graceful-degradation rules
+- [frontend-federation-contracts.md](./frontend-federation-contracts.md):
+  typed route-to-remote contracts for the shell and module-federated remotes
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
   surface, operator capability matrix, and gateway-enforced route classes
 - [ai-product-boundary.md](./ai-product-boundary.md): current classification of
@@ -22,8 +38,8 @@ define the current platform direction.
 - [contract-release-discipline.md](./contract-release-discipline.md): contract
   snapshot versioning rules, generated client release expectations, and review
   triggers
-- [module-classification.md](./module-classification.md): module labels for
-  core platform, operator support, and legacy/demo-derived areas
+- [module-classification.md](./module-classification.md): governance labels for
+  core platform, operator support, showcase integrations, and templates
 - [frontend-version-policy.md](./frontend-version-policy.md): approved shared
   frontend dependency versions and intentional exceptions
 - [runtime-and-data-policy.md](./runtime-and-data-policy.md): operational
@@ -36,11 +52,14 @@ define the current platform direction.
   gates for gateway, auth, AI, and contract-touching changes
 - [secret-classification.md](./secret-classification.md): secret classes,
   handling rules, and local versus production expectations
+- [flagship-showcase-pr-plan.md](./flagship-showcase-pr-plan.md): sequenced PR
+  plan for the flagship-platform curation roadmap
 - [remaining-backlog-pr-plan.md](./remaining-backlog-pr-plan.md): sequenced PR
-  plan for unfinished backlog work
+  plan for unfinished backlog work on the earlier productization track
 
 ## Runbooks
 
+- [runbooks/showcase-reset-and-recovery.md](./runbooks/showcase-reset-and-recovery.md)
 - [runbooks/ai-approvals-failure.md](./runbooks/ai-approvals-failure.md)
 - [runbooks/ai-rag-ingestion-failure.md](./runbooks/ai-rag-ingestion-failure.md)
 - [runbooks/ai-startup-degradation.md](./runbooks/ai-startup-degradation.md)
@@ -61,4 +80,5 @@ Use these documents as the baseline when:
 - proposing a new runtime, data store, or browser surface
 - changing ingress, auth, or operator capabilities
 - reviewing API-contract changes between backend and frontend
-- evaluating whether a module is product-bearing, operator-only, or legacy/demo
+- evaluating whether a module is product-bearing, operator-only, supporting,
+  or optional in the flagship story

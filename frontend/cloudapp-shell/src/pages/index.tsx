@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Folder,
-  ShoppingCart,
-  MessageSquare,
-  Cat,
   ArrowRight,
   Filter,
   Activity,
-  Trello,
-  Map,
-  Brain,
-  Bot,
 } from 'lucide-react';
+import { getVisibleDashboardRoutes } from '../constants/routes';
+import { useRemoteModules } from '../context/RemoteModulesContext';
 import { useAuth } from '../hooks/useAuth';
 import { trackEvent } from '../lib/analytics/umami';
 
 const Home: React.FC = () => {
   const { username, isAdmin, isInitialized, isChecking, isReady } = useAuth();
+  const { remoteStatus, hasLoaded: remoteStatusLoaded } = useRemoteModules();
   const [activityFilter, setActivityFilter] = useState<'ALL' | 'SYSTEM' | 'LOGIN' | 'FILE'>('ALL');
   const [dateStr, setDateStr] = useState('');
 
@@ -31,24 +26,17 @@ const Home: React.FC = () => {
     );
   }, []);
 
-  const cards = [
-    { title: 'Files & Notes', desc: 'Manage your files and personal notes', icon: <Folder className="text-blue-500" size={32} />, path: '/files', color: 'bg-blue-500/10' },
-    { title: 'Shop', desc: 'Purchase items & services', icon: <ShoppingCart className="text-green-500" size={32} />, path: '/shop', color: 'bg-green-500/10' },
-    { title: 'Chat', desc: 'Join chat rooms', icon: <MessageSquare className="text-purple-500" size={32} />, path: '/chat', color: 'bg-purple-500/10' },
-    { title: 'Maps', desc: 'Vehicle Tracking System', icon: <Map className="text-orange-500" size={32} />, path: '/maps', color: 'bg-orange-500/10' },
-    { title: 'GPT', desc: 'Local AI Assistant', icon: <Bot className="text-teal-500" size={32} />, path: '/chatllm', color: 'bg-teal-500/10' },
-    { title: 'Jira', desc: 'Project & Issue Tracking', icon: <Trello className="text-blue-600" size={32} />, path: '/jira', color: 'bg-blue-600/10', adminOnly: true },
-    { title: 'MLOps', desc: 'Customer Segmentation Model', icon: <Brain className="text-pink-500" size={32} />, path: '/mlops', color: 'bg-pink-500/10', adminOnly: true },
-    { title: 'PetStore', desc: 'Manage your pet business', icon: <Cat className="text-indigo-500" size={32} />, path: '/petstore', color: 'bg-indigo-500/10', adminOnly: true },
-  ];
-
-  const visibleCards = cards.filter((card) => !card.adminOnly || isAdmin);
+  const visibleCards = getVisibleDashboardRoutes({
+    isAdmin,
+    remoteStatus,
+    remoteStatusLoaded,
+  });
 
   const activities = [
-    { id: 1, type: 'SYSTEM', title: 'System Update', desc: 'CloudApp v0.01 released with PetStore integration.', time: '2 mins ago', color: 'bg-green-500' },
-    { id: 2, type: 'LOGIN', title: 'Login Detected', desc: 'New login detected from localhost.', time: '1 hour ago', color: 'bg-blue-500' },
-    { id: 3, type: 'FILE', title: 'File Upload', desc: 'project_specs.pdf was uploaded.', time: '3 hours ago', color: 'bg-purple-500' },
-    { id: 4, type: 'SYSTEM', title: 'Maintenance Scheduled', desc: 'Server maintenance scheduled for Sunday.', time: '5 hours ago', color: 'bg-yellow-500' },
+    { id: 1, type: 'SYSTEM', title: 'Portfolio Mode Ready', desc: 'Core showcase path is active with the OpenMaps remote.', time: 'Just now', color: 'bg-green-500' },
+    { id: 2, type: 'LOGIN', title: 'Demo Session Ready', desc: 'Seeded showcase users are available for repeatable walkthroughs.', time: '1 hour ago', color: 'bg-blue-500' },
+    { id: 3, type: 'FILE', title: 'Starter Note Seeded', desc: 'A deterministic portfolio note is available in Files & Notes.', time: '3 hours ago', color: 'bg-purple-500' },
+    { id: 4, type: 'SYSTEM', title: 'Optional Modules Deferred', desc: 'AI, Jira, MLOps, and PetStore stay opt-in for the default story.', time: '5 hours ago', color: 'bg-yellow-500' },
   ];
 
   const filteredActivities = activityFilter === 'ALL' ? activities : activities.filter((a) => a.type === activityFilter);
@@ -64,7 +52,7 @@ const Home: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Welcome back{username ? `, ${username}` : ''}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">Here is what&apos;s happening in your cloud workspace today.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Here is the curated portfolio path through your cloud workspace today.</p>
         </div>
         <div
           data-testid="dashboard-date"
@@ -77,11 +65,11 @@ const Home: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {visibleCards.map((card, idx) => (
           <Link
-            key={idx}
+            key={card.id || idx}
             href={card.path}
             prefetch={false}
             onClick={() => trackEvent('dashboard_card_click', {
-              label: card.title,
+              label: card.label,
               path: card.path,
               admin_only: Boolean(card.adminOnly),
             })}
@@ -89,12 +77,12 @@ const Home: React.FC = () => {
           >
             <div className="flex items-start justify-between">
               <div className="flex gap-4">
-                <div className={`p-3 rounded-lg ${card.color}`}>{card.icon}</div>
+                <div className={`p-3 rounded-lg ${card.homeColorClass}`}>{card.icon({ className: card.homeIconClassName, size: 32 })}</div>
                 <div>
                   <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                    {card.title}
+                    {card.label}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{card.desc}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{card.homeDescription}</p>
                 </div>
               </div>
               <ArrowRight className="text-gray-300 dark:text-gray-600 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition" size={20} />

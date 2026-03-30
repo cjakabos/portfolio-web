@@ -1,16 +1,16 @@
 import React from "react";
-import dynamic from "next/dynamic";
+import RemoteModuleRoute from "../../components/RemoteModuleRoute";
+import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 
-// @ts-ignore
-const Maps = dynamic(() => import("remote/openmaps"), {
-  ssr: false,
-});
+const Maps = loadRemoteComponent(() => import("remote/openmaps"));
 
 const Index: React.FC = () => {
   return (
-    <div className="h-full min-h-0 w-full [&>*]:h-full">
-      <Maps />
-    </div>
+    <RemoteModuleRoute remoteKey="openmaps">
+      <div className="h-full min-h-0 w-full [&>*]:h-full">
+        <Maps />
+      </div>
+    </RemoteModuleRoute>
   );
 };
 

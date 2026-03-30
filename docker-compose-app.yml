@@ -11,6 +11,7 @@ services:
   # OTel remains traces/logs only when OTEL_ENABLED=true.
   # ===========================================================================
   jiraproxy:
+    profiles: ["extended"]
     image: jiraproxy:latest
     container_name: jiraproxy
     build:
@@ -48,6 +49,7 @@ services:
     environment:
       - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
+      - VEHICLES_SEED_PORTFOLIO_DATA_ENABLED=${VEHICLES_SEED_PORTFOLIO_DATA_ENABLED:-false}
       - SPRING_PROFILES_ACTIVE=json-logging
       # OpenTelemetry
       - OTEL_SERVICE_NAME=vehicles-api
@@ -62,6 +64,7 @@ services:
     restart: unless-stopped
 
   petstore:
+    profiles: ["extended"]
     image: petstore:latest
     container_name: petstore
     build:
@@ -115,6 +118,7 @@ services:
       - CLOUDAPP_SEED_DEMO_USERS_ADMIN_PASSWORD=${CLOUDAPP_SEED_DEMO_USERS_ADMIN_PASSWORD:-}
       - CLOUDAPP_SEED_DEMO_USERS_REGULAR_USERNAME=${CLOUDAPP_SEED_DEMO_USERS_REGULAR_USERNAME:-}
       - CLOUDAPP_SEED_DEMO_USERS_REGULAR_PASSWORD=${CLOUDAPP_SEED_DEMO_USERS_REGULAR_PASSWORD:-}
+      - CLOUDAPP_SEED_DEMO_CONTENT_ENABLED=${CLOUDAPP_SEED_DEMO_CONTENT_ENABLED:-false}
       # FIX 4.1: DB credentials from .env
       # Use internal Docker DNS for CI/Linux compatibility across split compose stacks.
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
@@ -141,6 +145,7 @@ services:
     restart: unless-stopped
 
   mlops-segmentation:
+    profiles: ["extended"]
     build:
       context: ./
       dockerfile: Dockerfile_PY
@@ -194,13 +199,7 @@ services:
     depends_on:
       cloudapp:
         condition: service_healthy
-      petstore:
-        condition: service_healthy
-      jiraproxy:
-        condition: service_healthy
       vehicles-api:
-        condition: service_healthy
-      mlops-segmentation:
         condition: service_healthy
     restart: unless-stopped
 
@@ -222,6 +221,11 @@ services:
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: ${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
         NEXT_PUBLIC_REMOTE_MLOPS_URL: ${NEXT_PUBLIC_REMOTE_MLOPS_URL:-http://localhost:5005}
         NEXT_PUBLIC_REMOTE_PETSTORE_URL: ${NEXT_PUBLIC_REMOTE_PETSTORE_URL:-http://localhost:5006}
+        NEXT_PUBLIC_ENABLE_OPENMAPS: ${NEXT_PUBLIC_ENABLE_OPENMAPS:-true}
+        NEXT_PUBLIC_ENABLE_CHATLLM: ${NEXT_PUBLIC_ENABLE_CHATLLM:-false}
+        NEXT_PUBLIC_ENABLE_JIRA: ${NEXT_PUBLIC_ENABLE_JIRA:-false}
+        NEXT_PUBLIC_ENABLE_MLOPS: ${NEXT_PUBLIC_ENABLE_MLOPS:-false}
+        NEXT_PUBLIC_ENABLE_PETSTORE: ${NEXT_PUBLIC_ENABLE_PETSTORE:-false}
         NEXT_PUBLIC_UMAMI_HOST_URL: ${NEXT_PUBLIC_UMAMI_HOST_URL:-}
         NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-}
         NEXT_PUBLIC_UMAMI_DOMAINS: ${NEXT_PUBLIC_UMAMI_DOMAINS:-}
@@ -230,9 +234,26 @@ services:
       - 5001:5001
     environment:
       - DOCKER_HOST_IP=host.docker.internal
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/cloudapp}
+      - NEXT_PUBLIC_CHAT_WS_API_URL=${NEXT_PUBLIC_CHAT_WS_API_URL:-http://localhost:8080/cloudapp}
+      - NEXT_PUBLIC_REMOTE_OPENMAPS_URL=${NEXT_PUBLIC_REMOTE_OPENMAPS_URL:-http://localhost:5002}
+      - NEXT_PUBLIC_REMOTE_JIRA_URL=${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
+      - NEXT_PUBLIC_REMOTE_CHATLLM_URL=${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
+      - NEXT_PUBLIC_REMOTE_MLOPS_URL=${NEXT_PUBLIC_REMOTE_MLOPS_URL:-http://localhost:5005}
+      - NEXT_PUBLIC_REMOTE_PETSTORE_URL=${NEXT_PUBLIC_REMOTE_PETSTORE_URL:-http://localhost:5006}
+      - NEXT_PUBLIC_ENABLE_OPENMAPS=${NEXT_PUBLIC_ENABLE_OPENMAPS:-true}
+      - NEXT_PUBLIC_ENABLE_CHATLLM=${NEXT_PUBLIC_ENABLE_CHATLLM:-false}
+      - NEXT_PUBLIC_ENABLE_JIRA=${NEXT_PUBLIC_ENABLE_JIRA:-false}
+      - NEXT_PUBLIC_ENABLE_MLOPS=${NEXT_PUBLIC_ENABLE_MLOPS:-false}
+      - NEXT_PUBLIC_ENABLE_PETSTORE=${NEXT_PUBLIC_ENABLE_PETSTORE:-false}
       - NEXT_PUBLIC_UMAMI_HOST_URL=${NEXT_PUBLIC_UMAMI_HOST_URL:-}
       - NEXT_PUBLIC_UMAMI_WEBSITE_ID=${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-}
       - NEXT_PUBLIC_UMAMI_DOMAINS=${NEXT_PUBLIC_UMAMI_DOMAINS:-}
+      - REMOTE_STATUS_OPENMAPS_URL=${REMOTE_STATUS_OPENMAPS_URL:-http://next-openmaps:5002}
+      - REMOTE_STATUS_CHATLLM_URL=${REMOTE_STATUS_CHATLLM_URL:-http://next-chatllm:5333}
+      - REMOTE_STATUS_JIRA_URL=${REMOTE_STATUS_JIRA_URL:-http://next-jira:5003}
+      - REMOTE_STATUS_MLOPS_URL=${REMOTE_STATUS_MLOPS_URL:-http://next-mlops:5005}
+      - REMOTE_STATUS_PETSTORE_URL=${REMOTE_STATUS_PETSTORE_URL:-http://next-petstore:5006}
     networks:
       - frontend
     restart: unless-stopped
@@ -256,6 +277,7 @@ services:
     restart: unless-stopped
 
   next-jira:
+    profiles: ["extended"]
     build:
       context: ./
       dockerfile: Dockerfile_FE
@@ -277,6 +299,7 @@ services:
     restart: unless-stopped
 
   next-mlops:
+    profiles: ["extended"]
     build:
       context: ./
       dockerfile: Dockerfile_FE
@@ -295,6 +318,7 @@ services:
     restart: unless-stopped
 
   next-petstore:
+    profiles: ["extended"]
     build:
       context: ./
       dockerfile: Dockerfile_FE
@@ -313,6 +337,7 @@ services:
     restart: unless-stopped
 
   next-chatllm:
+    profiles: ["extended"]
     build:
       context: ./
       dockerfile: Dockerfile_FE

@@ -7,17 +7,25 @@
 ## REACT front-end
 
 ### Option 1. Out of the box mode with Docker:
-Note: minimum 16 GB RAM and 35 GB disk space is needed to make sure all services can run.
+Note: minimum 16 GB RAM and 35 GB disk space is needed to make sure all
+services can run. The supported default is now `portfolio mode`, which keeps
+the first-run story focused on the shell, gateway, CloudApp, and OpenMaps.
 ```bash
 brew install docker
 brew install docker-compose
 ```
 
-Step 1. Setup and start databases and essential services with docker-compose:
+Step 1. Setup env, keys, and start the curated portfolio stack:
 ```bash
-docker-compose -f docker-compose-infrastructure.yml up -d
+./scripts/showcase-up.sh --mode portfolio
 ```
-Step 2. Install local ollama, for Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
+
+Step 2. If you want the extended remotes as well, switch to:
+```bash
+./scripts/showcase-up.sh --mode extended
+```
+
+Step 3. Install local ollama, for Apple Silicon computers, GPU acceleration is not available via Docker, thus one needs to run it outside of docker:
 ```bash
 brew install ollama
 # Get a few thinking AND tools model https://ollama.com/search?c=tools&c=thinking
@@ -48,11 +56,6 @@ Note: configure Ollama model to use with NEXT_PUBLIC_LLM_MODEL in docker-compose
 ```
 </details>
 
-Step 3. Build and start the app stack:
-```bash
-docker-compose -f docker-compose-app.yml up -d
-```
-
 Step 4. Runs the app in the production mode.\
 Open http://localhost:5001 to view it in your browser. For development mode check [instructions here](./frontend/cloudapp-shell/README.md#option-2-dev-mode).
 
@@ -60,10 +63,10 @@ Open http://localhost:5001 to view it in your browser. For development mode chec
 If everything is working as expected, you should be able to:
 - Open [http://localhost:5001](http://localhost:5001) for the main Cludapp app-shell to view micro-frontends.
 - Open [http://localhost:5002](http://localhost:5002) for the OpenMaps micro-frontend.
-- Open [http://localhost:5003](http://localhost:5003) for the Jira micro-frontend.
-- Open [http://localhost:5333](http://localhost:5333) for the Local LLM AI micro-frontend.
-- Open [http://localhost:5005](http://localhost:5005) for the MLOps micro-frontend.
-- Open [http://localhost:5006](http://localhost:5006) for the Petstore micro-frontend.
+- In `extended mode`, also open [http://localhost:5003](http://localhost:5003) for the Jira micro-frontend.
+- In `extended mode`, also open [http://localhost:5333](http://localhost:5333) for the Local LLM AI micro-frontend.
+- In `extended mode`, also open [http://localhost:5005](http://localhost:5005) for the MLOps micro-frontend.
+- In `extended mode`, also open [http://localhost:5006](http://localhost:5006) for the Petstore micro-frontend.
 
 ### Option 2. Dev mode:
 

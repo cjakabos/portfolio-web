@@ -1,11 +1,9 @@
 import React from "react";
-import dynamic from "next/dynamic";
+import RemoteModuleRoute from "../../components/RemoteModuleRoute";
+import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 import { useAuth } from "../../hooks/useAuth";
 
-// @ts-ignore
-const MLOps = dynamic(() => import("remote4/mlops"), {
-    ssr: false,
-});
+const MLOps = loadRemoteComponent(() => import("remote4/mlops"));
 
 const Index: React.FC = () => {
     const { isAdmin, isReady, isInitialized } = useAuth();
@@ -15,9 +13,9 @@ const Index: React.FC = () => {
     }
 
     return (
-        <>
+        <RemoteModuleRoute remoteKey="mlops">
             <MLOps />
-        </>
+        </RemoteModuleRoute>
     );
 };
 

@@ -14,6 +14,12 @@
 #   # Run only frontend unit/hook tests:
 #   docker compose -f docker-compose.test.yml up --build test-frontend-unit --abort-on-container-exit
 #
+#   # Run only frontend static checks across the shell, remotes, and monitor:
+#   docker compose -f docker-compose.test.yml up --build test-frontend-static --abort-on-container-exit
+#
+#   # Run only hero/operator UI bundle budget checks:
+#   docker compose -f docker-compose.test.yml up --build test-frontend-budgets --abort-on-container-exit
+#
 #   # Run only AI monitor component tests:
 #   docker compose -f docker-compose.test.yml up --build test-ai-monitor-component --abort-on-container-exit
 #
@@ -278,7 +284,7 @@ services:
       [
         "sh",
         "-lc",
-        "tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run typecheck && npm run lint && npm run build",
+        "tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run typecheck && npm run lint && npm run build:budget",
       ]
     environment:
       - CI=true
@@ -370,6 +376,34 @@ services:
     volumes:
       - ./:/workspace:ro
 
+  test-frontend-static:
+    image: node:20-slim
+    working_dir: /build
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --ignore-scripts --workspaces --include-workspace-root=false --include=optional && npm run frontend:check-versions && npm run frontend:static",
+      ]
+    environment:
+      - CI=true
+    volumes:
+      - ./:/workspace:ro
+
+  test-frontend-budgets:
+    image: node:20-slim
+    working_dir: /build
+    entrypoint:
+      [
+        "sh",
+        "-lc",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false --include=optional && case \"$(node -p \"process.arch\")\" in arm64) NATIVE_SUFFIX='arm64-gnu' ;; x64) NATIVE_SUFFIX='x64-gnu' ;; arm) NATIVE_SUFFIX='arm-gnueabihf' ;; *) NATIVE_SUFFIX='' ;; esac && MISSING_NATIVE_PACKAGES='' && if [ -n \"$${NATIVE_SUFFIX}\" ]; then if [ ! -d \"frontend/cloudapp-shell/node_modules/lightningcss-linux-$${NATIVE_SUFFIX}\" ]; then LIGHTNING_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/lightningcss/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} lightningcss-linux-$${NATIVE_SUFFIX}@$${LIGHTNING_VERSION}\"; fi && if [ -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide\" ] && [ ! -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide-linux-$${NATIVE_SUFFIX}\" ]; then OXIDE_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/@tailwindcss/oxide/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} @tailwindcss/oxide-linux-$${NATIVE_SUFFIX}@$${OXIDE_VERSION}\"; fi && if [ -n \"$${MISSING_NATIVE_PACKAGES}\" ]; then npm install --workspace frontend/cloudapp-shell --no-save $${MISSING_NATIVE_PACKAGES}; fi; fi && node -e \"require('./frontend/cloudapp-shell/node_modules/lightningcss')\" && npm run --workspace frontend/cloudapp-shell build:budget",
+      ]
+    environment:
+      - CI=true
+    volumes:
+      - ./:/workspace:ro
+
   # =========================================================================
   # TEST ORCHESTRATOR (single-command full matrix)
   #
@@ -386,7 +420,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-static test-frontend-budgets test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$$BASE_PROJECT_$$svc\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================
@@ -833,10 +867,20 @@ services:
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
         NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
+        NEXT_PUBLIC_ENABLE_OPENMAPS: "true"
+        NEXT_PUBLIC_ENABLE_CHATLLM: "false"
+        NEXT_PUBLIC_ENABLE_JIRA: "false"
+        NEXT_PUBLIC_ENABLE_MLOPS: "false"
+        NEXT_PUBLIC_ENABLE_PETSTORE: "false"
         NEXT_PUBLIC_API_URL: /cloudapp
         NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx-core/cloudapp
     environment:
       - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx-core/cloudapp
+      - NEXT_PUBLIC_ENABLE_OPENMAPS=true
+      - NEXT_PUBLIC_ENABLE_CHATLLM=false
+      - NEXT_PUBLIC_ENABLE_JIRA=false
+      - NEXT_PUBLIC_ENABLE_MLOPS=false
+      - NEXT_PUBLIC_ENABLE_PETSTORE=false
     networks:
       - test-frontend
     healthcheck:
@@ -860,10 +904,25 @@ services:
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
         NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
+        NEXT_PUBLIC_ENABLE_OPENMAPS: "true"
+        NEXT_PUBLIC_ENABLE_CHATLLM: "true"
+        NEXT_PUBLIC_ENABLE_JIRA: "true"
+        NEXT_PUBLIC_ENABLE_MLOPS: "true"
+        NEXT_PUBLIC_ENABLE_PETSTORE: "true"
         NEXT_PUBLIC_API_URL: /cloudapp
         NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx/cloudapp
     environment:
       - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx/cloudapp
+      - NEXT_PUBLIC_ENABLE_OPENMAPS=true
+      - NEXT_PUBLIC_ENABLE_CHATLLM=true
+      - NEXT_PUBLIC_ENABLE_JIRA=true
+      - NEXT_PUBLIC_ENABLE_MLOPS=true
+      - NEXT_PUBLIC_ENABLE_PETSTORE=true
+      - REMOTE_STATUS_OPENMAPS_URL=http://test-openmaps-frontend:5002
+      - REMOTE_STATUS_CHATLLM_URL=http://test-chatllm-frontend:5333
+      - REMOTE_STATUS_JIRA_URL=http://test-jira-frontend:5003
+      - REMOTE_STATUS_MLOPS_URL=http://test-mlops-frontend:5005
+      - REMOTE_STATUS_PETSTORE_URL=http://test-petstore-frontend:5006
     depends_on:
       test-openmaps-frontend:
         condition: service_healthy
