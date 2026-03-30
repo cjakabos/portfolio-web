@@ -4,9 +4,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { LogOut, User as UserIcon, LayoutGrid, Sun, Moon, Menu, X } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext';
+import { useRemoteModules } from '../context/RemoteModulesContext';
 import { useLogout } from '../hooks/useLogout';
 import { useAuth } from '../hooks/useAuth';
-import { allAuthedRoutes } from '../constants/routes';
+import { getVisibleAuthedRoutes, type RouteItem } from '../constants/routes';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
   const { logout } = useLogout();
   const { isAdmin, isReady, username } = useAuth();
+  const { remoteStatus, hasLoaded: remoteStatusLoaded } = useRemoteModules();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -37,9 +39,19 @@ const Layout = ({ children }: LayoutProps) => {
     trackEvent('nav_click', { area, label, path });
   };
 
-  const authedRoutes = allAuthedRoutes.filter((route) => !route.adminOnly || isAdmin);
-  const publicRoutes = [
-    { label: 'Login', path: '/login', icon: <LayoutGrid size={20} /> }
+  const authedRoutes = getVisibleAuthedRoutes({
+    isAdmin,
+    remoteStatus,
+    remoteStatusLoaded,
+  });
+  const publicRoutes: RouteItem[] = [
+    {
+      id: 'login',
+      label: 'Login',
+      path: '/login',
+      icon: ({ size = 20 } = {}) => <LayoutGrid size={size} />,
+      adminOnly: false,
+    }
   ];
   const mobileRoutes = isReady ? authedRoutes : publicRoutes;
   const desktopNavRoutes = mobileRoutes.filter((route) => route.path !== '/');
@@ -99,7 +111,7 @@ const Layout = ({ children }: LayoutProps) => {
                         isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                       }`}
                     >
-                      {item.icon}
+                      {item.icon({ size: 20 })}
                     </Link>
                   );
                 })}
@@ -174,7 +186,7 @@ const Layout = ({ children }: LayoutProps) => {
                         isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                       }`}
                     >
-                      {item.icon}
+                      {item.icon({ size: 20 })}
                     </Link>
                   );
                 })}
@@ -214,7 +226,7 @@ const Layout = ({ children }: LayoutProps) => {
                                     isActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:text-white hover:bg-gray-800'
                                   }`}
                                 >
-                                  {item.icon}
+                                  {item.icon({ size: 20 })}
                                   <span className="text-[10px] leading-none">{item.label}</span>
                                 </Link>
                               </DropdownMenuItem>

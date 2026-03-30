@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
 
   postgres-ml:
+    profiles: ["extended"]
     image: postgres:15
     volumes:
       - "./init-ml.sql:/docker-entrypoint-initdb.d/init-ml.sql"
@@ -47,6 +48,7 @@ services:
     restart: unless-stopped
 
   mysql:
+    profiles: ["extended"]
     image: mysql:8.0
     container_name: mysql-petstore
     ports:
@@ -171,6 +173,7 @@ services:
   # OBSERVABILITY — Distributed Tracing (Jaeger v2)
   # ===========================================================================
   jaeger:
+    profiles: ["observability"]
     image: jaegertracing/jaeger:2.15.0
     container_name: jaeger
     restart: unless-stopped
@@ -200,6 +203,7 @@ services:
   # Grafana UI:    http://localhost:3000 (admin / $GRAFANA_PASSWORD)
   # ===========================================================================
   prometheus:
+    profiles: ["observability"]
     image: prom/prometheus:v2.51.0
     container_name: prometheus
     restart: unless-stopped
@@ -223,6 +227,7 @@ services:
       retries: 3
 
   grafana:
+    profiles: ["observability"]
     image: grafana/grafana:11.0.0
     container_name: grafana
     restart: unless-stopped
@@ -247,6 +252,7 @@ services:
   # database and role.
   # ===========================================================================
   umami-portfolio-db:
+    profiles: ["extended"]
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${UMAMI_DB_NAME:-umami}
@@ -266,6 +272,7 @@ services:
       - backend
 
   umami-portfolio:
+    profiles: ["extended"]
     image: docker.umami.is/umami-software/umami:postgresql-latest
     container_name: umami-portfolio
     restart: unless-stopped
@@ -295,6 +302,7 @@ services:
   # AI ORCHESTRATION INFRASTRUCTURE
   # ===========================================================================
   redis:
+    profiles: ["ai-operator"]
     image: redis:7-alpine
     container_name: redis-cache
     restart: unless-stopped
@@ -312,6 +320,7 @@ services:
       - backend
 
   mongodb-abtest:
+    profiles: ["ai-operator"]
     image: mongo:7
     container_name: mongodb-abtest
     restart: unless-stopped
@@ -335,6 +344,7 @@ services:
       - backend
 
   chromadb:
+    profiles: ["ai-operator"]
     image: chromadb/chroma:0.6.3
     container_name: chromadb
     restart: unless-stopped
@@ -359,6 +369,7 @@ services:
   # APPLICATION SERVICES (in infra compose)
   # ===========================================================================
   ai-orchestration-layer:
+    profiles: ["ai-operator"]
     build:
       context: ./ai-orchestration/ai-orchestration-layer
       dockerfile: Dockerfile
@@ -427,6 +438,7 @@ services:
   # AI MONITOR DASHBOARD
   # ===========================================================================
   ai-orchestration-monitor:
+    profiles: ["ai-operator"]
     build:
       context: ./
       dockerfile: ai-orchestration/ai-orchestration-monitor/Dockerfile

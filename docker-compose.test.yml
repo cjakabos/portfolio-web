@@ -397,7 +397,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false && npm run --workspace frontend/cloudapp-shell build:budget",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false --include=optional && case \"$(node -p \"process.arch\")\" in arm64) NATIVE_SUFFIX='arm64-gnu' ;; x64) NATIVE_SUFFIX='x64-gnu' ;; arm) NATIVE_SUFFIX='arm-gnueabihf' ;; *) NATIVE_SUFFIX='' ;; esac && MISSING_NATIVE_PACKAGES='' && if [ -n \"$${NATIVE_SUFFIX}\" ]; then if [ ! -d \"frontend/cloudapp-shell/node_modules/lightningcss-linux-$${NATIVE_SUFFIX}\" ]; then LIGHTNING_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/lightningcss/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} lightningcss-linux-$${NATIVE_SUFFIX}@$${LIGHTNING_VERSION}\"; fi && if [ -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide\" ] && [ ! -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide-linux-$${NATIVE_SUFFIX}\" ]; then OXIDE_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/@tailwindcss/oxide/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} @tailwindcss/oxide-linux-$${NATIVE_SUFFIX}@$${OXIDE_VERSION}\"; fi && if [ -n \"$${MISSING_NATIVE_PACKAGES}\" ]; then npm install --workspace frontend/cloudapp-shell --no-save $${MISSING_NATIVE_PACKAGES}; fi; fi && node -e \"require('./frontend/cloudapp-shell/node_modules/lightningcss')\" && npm run --workspace frontend/cloudapp-shell build:budget",
       ]
     environment:
       - CI=true
@@ -867,10 +867,20 @@ services:
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
         NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
+        NEXT_PUBLIC_ENABLE_OPENMAPS: "true"
+        NEXT_PUBLIC_ENABLE_CHATLLM: "false"
+        NEXT_PUBLIC_ENABLE_JIRA: "false"
+        NEXT_PUBLIC_ENABLE_MLOPS: "false"
+        NEXT_PUBLIC_ENABLE_PETSTORE: "false"
         NEXT_PUBLIC_API_URL: /cloudapp
         NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx-core/cloudapp
     environment:
       - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx-core/cloudapp
+      - NEXT_PUBLIC_ENABLE_OPENMAPS=true
+      - NEXT_PUBLIC_ENABLE_CHATLLM=false
+      - NEXT_PUBLIC_ENABLE_JIRA=false
+      - NEXT_PUBLIC_ENABLE_MLOPS=false
+      - NEXT_PUBLIC_ENABLE_PETSTORE=false
     networks:
       - test-frontend
     healthcheck:
@@ -894,10 +904,25 @@ services:
         NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
         NEXT_PUBLIC_REMOTE_MLOPS_URL: http://test-mlops-frontend:5005
         NEXT_PUBLIC_REMOTE_PETSTORE_URL: http://test-petstore-frontend:5006
+        NEXT_PUBLIC_ENABLE_OPENMAPS: "true"
+        NEXT_PUBLIC_ENABLE_CHATLLM: "true"
+        NEXT_PUBLIC_ENABLE_JIRA: "true"
+        NEXT_PUBLIC_ENABLE_MLOPS: "true"
+        NEXT_PUBLIC_ENABLE_PETSTORE: "true"
         NEXT_PUBLIC_API_URL: /cloudapp
         NEXT_PUBLIC_CHAT_WS_API_URL: http://test-nginx/cloudapp
     environment:
       - NEXT_PUBLIC_CHAT_WS_API_URL=http://test-nginx/cloudapp
+      - NEXT_PUBLIC_ENABLE_OPENMAPS=true
+      - NEXT_PUBLIC_ENABLE_CHATLLM=true
+      - NEXT_PUBLIC_ENABLE_JIRA=true
+      - NEXT_PUBLIC_ENABLE_MLOPS=true
+      - NEXT_PUBLIC_ENABLE_PETSTORE=true
+      - REMOTE_STATUS_OPENMAPS_URL=http://test-openmaps-frontend:5002
+      - REMOTE_STATUS_CHATLLM_URL=http://test-chatllm-frontend:5333
+      - REMOTE_STATUS_JIRA_URL=http://test-jira-frontend:5003
+      - REMOTE_STATUS_MLOPS_URL=http://test-mlops-frontend:5005
+      - REMOTE_STATUS_PETSTORE_URL=http://test-petstore-frontend:5006
     depends_on:
       test-openmaps-frontend:
         condition: service_healthy

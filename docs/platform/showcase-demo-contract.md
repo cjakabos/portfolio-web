@@ -4,14 +4,17 @@ This document defines the supported setup modes for the flagship platform.
 
 ## Supported Modes
 
-### Hero setup
+### Portfolio mode
 
-Hero setup is the default entrypoint for the flagship platform.
+Portfolio mode is the default entrypoint for the flagship platform.
 
 - Goal: produce the shortest path to a strong first impression.
 - Required dependencies: Docker, OpenSSL, `.env`, JWT keys.
-- Required services: gateway, shell, CloudApp backend, core datastores.
-- Expected outcome: the 10-minute demo is runnable without optional services.
+- Required services: gateway, shell, CloudApp backend, OpenMaps, vehicles API,
+  and the core datastores behind those paths.
+- Expected outcome: the 10-minute demo is runnable with seeded demo users,
+  seeded portfolio content, deterministic paths, and no optional remotes in the
+  shell navigation.
 
 ### Extended setup
 
@@ -21,8 +24,8 @@ Extended setup expands the platform breadth.
   Petstore.
 - Additional dependencies: more local resources and optional integration
   credentials.
-- Expected outcome: supporting modules are available, but hero setup remains
-  the default support path.
+- Expected outcome: supporting modules are available, but portfolio mode
+  remains the default support path.
 
 ### AI/operator setup
 
@@ -35,7 +38,7 @@ AI/operator setup focuses on the orchestration and operator story.
 
 ## Required Vs Optional Dependencies
 
-| Dependency | Hero setup | Extended setup | AI/operator setup |
+| Dependency | Portfolio mode | Extended setup | AI/operator setup |
 | --- | --- | --- | --- |
 | Docker daemon | required | required | required |
 | OpenSSL | required | required | required |
@@ -46,10 +49,13 @@ AI/operator setup focuses on the orchestration and operator story.
 
 ## Guardrails
 
-- Hero setup is the default support path for first-time readers.
-- Supporting and optional modules must not silently redefine the hero path.
+- Portfolio mode is the default support path for first-time readers.
+- Supporting and optional modules must not silently redefine the default
+  walkthrough.
 - Missing optional dependencies must produce clear warnings, not vague failures.
 - `./scripts/showcase-preflight.sh` is the required local readiness check for
   official showcase tours.
 - `./scripts/showcase-reset.sh` is the supported path back to a deterministic
   demo state.
+- `./scripts/showcase-up.sh` is the supported one-command startup path for all
+  showcase modes.

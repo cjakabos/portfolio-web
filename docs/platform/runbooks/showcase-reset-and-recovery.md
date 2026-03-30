@@ -5,10 +5,10 @@ state and you need to get back to the supported demo baseline quickly.
 
 ## 1. Reset To The Known-Good Demo Baseline
 
-Hero path:
+Portfolio path:
 
 ```bash
-./scripts/showcase-reset.sh --mode hero
+./scripts/showcase-reset.sh --mode portfolio
 ```
 
 Extended path:
@@ -34,25 +34,24 @@ What the script does:
 ## 2. Re-Run The Supported Preflight
 
 ```bash
-./scripts/showcase-preflight.sh --mode hero
+./scripts/showcase-preflight.sh --mode portfolio
 ```
 
 If you are running a broader tour, use `extended` or `ai-operator` instead.
 
 ## 3. Start The Stack Again
 
-Hero setup:
+Portfolio setup:
 
 ```bash
-docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode portfolio
 ```
 
 Extended or AI/operator setup:
 
 ```bash
-docker compose -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode extended
+./scripts/showcase-up.sh --mode ai-operator
 ```
 
 ## 4. Common Recovery Scenarios

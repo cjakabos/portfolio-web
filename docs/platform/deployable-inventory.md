@@ -42,7 +42,7 @@ useful as the team evolves.
 | Deployable | Runtime | Local URL | Public ingress path | Owner role | Showcase tier | Main user journeys |
 | --- | --- | --- | --- | --- | --- | --- |
 | `next-cloudapp-shell` | Next.js | `http://localhost:5001` | User entrypoint UI; backend traffic routed via gateway | Frontend platform engineer | `Hero` | Login, shop, notes, files, chat, remote module navigation |
-| `next-openmaps` | Next.js remote | `http://localhost:5002` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Vehicle location management |
+| `next-openmaps` | Next.js remote | `http://localhost:5002` | Loaded by shell via module federation | Frontend platform engineer | `Hero` | Vehicle location management |
 | `next-jira` | Next.js remote | `http://localhost:5003` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Jira CRUD and AI refinement |
 | `next-mlops` | Next.js remote | `http://localhost:5005` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Customer segmentation workflows |
 | `next-petstore` | Next.js remote | `http://localhost:5006` | Loaded by shell via module federation | Frontend platform engineer | `Optional` | Pet, employee, and schedule workflows |
@@ -55,10 +55,10 @@ useful as the team evolves.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `cloudapp` | Spring Boot | `8099` | `/cloudapp`, `/cloudapp-admin` | Backend engineer | `Hero` | Postgres, MongoDB, Kafka | Identity, catalog, cart, orders, notes, files, chat rooms |
 | `petstore` | Spring Boot | `8083` | `/petstore` | Backend engineer | `Optional` | MySQL | Customer, pet, employee, and scheduling flows |
-| `vehicles-api` | Spring Boot | `8880` | `/vehicles` | Backend engineer | `Optional` | H2/runtime-local state, downstream clients | Vehicle CRUD and enrichment |
+| `vehicles-api` | Spring Boot | `8880` | `/vehicles` | Backend engineer | `Hero` | H2/runtime-local state, downstream clients | Vehicle CRUD and enrichment for the default OpenMaps story |
 | `jiraproxy` | Spring Boot | `8501` | `/jiraproxy` | Backend engineer | `Supporting` | Jira external API | Server-side proxy for Jira credentials and request validation |
 | `mlops-segmentation` | Flask | `8600` | `/mlops-segmentation` | AI/platform engineer | `Supporting` | Postgres (ML) | Customer segmentation and chart generation |
-| `ai-orchestration-layer` | FastAPI | `8700` | `/ai`, `/ai/ws` via gateway | AI/platform engineer | `Hero` | Redis, MongoDB, ChromaDB, Ollama, gateway-backed services | Orchestration, approvals, RAG, experiments, system endpoints |
+| `ai-orchestration-layer` | FastAPI | `8700` | `/ai`, `/ai/ws` via gateway | AI/platform engineer | `Operator tooling` | Redis, MongoDB, ChromaDB, Ollama, gateway-backed services | Orchestration, approvals, RAG, experiments, system endpoints for the second-act operator story |
 
 ## Shared Infrastructure Deployables
 

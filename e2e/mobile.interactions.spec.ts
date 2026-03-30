@@ -10,6 +10,9 @@ test.describe("Mobile interaction regression", () => {
     await stubMobileApis(page);
     await gotoRouteAndSettle(page, "/");
     await expect(page.getByLabel("Home")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Chat", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Maps", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "GPT", exact: true })).toHaveCount(0);
 
     await page.getByRole("link", { name: "Files & Notes", exact: true }).tap();
     await expect(page).toHaveURL(/\/files/);
@@ -19,15 +22,10 @@ test.describe("Mobile interaction regression", () => {
     await expect(page).toHaveURL(/\/shop/);
     await expect(page.getByRole("button", { name: "Store Items" })).toBeVisible();
 
-    await expect(page.getByRole("link", { name: "GPT", exact: true })).toBeVisible();
-
     const overflowMenuButton = page.getByRole("button", {
       name: /Open more menu|Close more menu/,
     });
-    if (await overflowMenuButton.count()) {
-      await overflowMenuButton.tap();
-      await expect(page.getByRole("menu")).toBeVisible();
-    }
+    await expect(overflowMenuButton).toHaveCount(0);
   });
 
   test("files mobile actions remain tappable and wired at 320px", async ({ page }) => {

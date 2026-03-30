@@ -93,6 +93,19 @@ export async function stubMobileApis(page: Page): Promise<MobileMockState> {
   }> = [];
   let notes = [...NOTE_FIXTURES];
 
+  await page.route(/\/api\/remotes\/status$/, async (route) =>
+    json(route, {
+      checkedAt: "2026-01-01T12:00:00.000Z",
+      remotes: {
+        openmaps: { enabled: true, available: true },
+        chatllm: { enabled: false, available: null },
+        jira: { enabled: false, available: null },
+        mlops: { enabled: false, available: null },
+        petstore: { enabled: false, available: null },
+      },
+    })
+  );
+
   await page.route(/\/cloudapp\//, async (route) => {
     const request = route.request();
     const method = request.method().toUpperCase();

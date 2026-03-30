@@ -78,12 +78,15 @@ flowchart LR
 
 What this shows:
 
+- the default portfolio runtime is intentionally small: shell, gateway,
+  CloudApp, OpenMaps, and the vehicles backend behind it
 - the shell is the primary user entrypoint and loads breadth modules through
-  module federation
+  module federation when extended profiles are enabled
 - the gateway remains the policy boundary for both product and operator traffic
 - the Jira integration is split: Jira CRUD goes through the gateway and
   `jiraproxy`, while the Jira remote owns its local Ollama-assisted AI features
-- the AI layer is part of the platform spine, not an isolated side project
+- the AI layer is a deliberate second act for the operator story, not a
+  requirement for the default portfolio walkthrough
 
 ## 2. Gateway-Routed Request Flow
 

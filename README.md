@@ -22,8 +22,8 @@ it for the first time, pick one of these tours:
 
 | Tour | Audience | Primary goal | Recommended mode |
 | --- | --- | --- | --- |
-| `10-minute demo` | Recruiters, hiring managers, first-time visitors | Reach a strong first impression quickly with the shell and one standout integration | Hero setup |
-| `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Hero setup, then selective extended modules |
+| `10-minute demo` | Recruiters, hiring managers, first-time visitors | Reach a strong first impression quickly with the shell and one standout integration | Portfolio mode |
+| `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Portfolio mode, then selective extended modules |
 | `AI/operator tour` | AI engineers, platform engineers, operators | Focus on orchestration, approvals, RAG, observability, and degraded-mode behavior | AI/operator setup |
 
 ## Showcase Tiers
@@ -37,10 +37,9 @@ it for the first time, pick one of these tours:
 
 Current highlight mapping:
 
-- `Hero`: CloudApp shell, NGINX gateway, CloudApp backend, AI orchestration
-  layer
-- `Supporting`: OpenMaps, ChatLLM, Jira, MLOps, observability stack
-- `Optional`: Petstore, Vehicles API, Umami analytics, mobile packaging
+- `Hero`: CloudApp shell, NGINX gateway, CloudApp backend, OpenMaps
+- `Supporting`: Vehicles API, AI orchestration layer, ChatLLM, Jira, MLOps
+- `Optional`: Petstore, Umami analytics, mobile packaging
 - `Operator tooling`: AI orchestration monitor
 
 See [docs/platform/showcase-taxonomy.md](./docs/platform/showcase-taxonomy.md)
@@ -53,8 +52,10 @@ live in
 
 ## 1) Homepage
 
-- Shared overview for regular and admin users, where regular users have access for private notes, files, shopping, chatting with other users, checking vehicle location on maps and chatting with LLM.
-- For Admin type of users: Jira for internal ticket management, MLOps for customer segmentation and PetStore for schedule management.
+- Portfolio mode keeps the default walkthrough focused on private notes, files,
+  shopping, chat, and vehicle tracking on maps.
+- Jira, ChatLLM, MLOps, and PetStore stay available as opt-in extended modules
+  instead of competing with the first impression.
 
 ![CloudApp login](./examples/1.png)
 
@@ -179,6 +180,76 @@ flagship-showcase PR plan.
 
 ## Architecture At A Glance
 
+```mermaid
+flowchart LR
+  user["User browser"]
+  operator["Operator browser"]
+
+  subgraph browser["Browser surfaces"]
+    shell["CloudApp shell (Next.js)"]
+    openmaps["OpenMaps remote"]
+    jira["Jira remote"]
+    mlops["MLOps remote"]
+    petstore_ui["Petstore remote"]
+    chatllm["ChatLLM remote"]
+    monitor["AI monitor (Vite/React)"]
+  end
+
+  gateway["NGINX gateway"]
+
+  subgraph services["Routed services"]
+    cloudapp["CloudApp (Spring Boot)"]
+    vehicles["Vehicles API (Spring Boot)"]
+    petstore_api["Petstore (Spring Boot)"]
+    jiraproxy["Jira proxy (Spring Boot)"]
+    ml_api["ML pipeline (Flask)"]
+    ai["AI orchestration layer (FastAPI)"]
+  end
+
+  subgraph stores["Core stores and platform dependencies"]
+    postgres_ml["Postgres ML"]
+    mysql["MySQL"]
+    postgres["Postgres"]
+    mongo["MongoDB"]
+    kafka["Kafka"]
+    redis["Redis"]
+    experiments["MongoDB AB test"]
+    chroma["ChromaDB"]
+    ollama["Ollama (optional)"]
+  end
+
+  user --> shell
+  shell -. module federation .-> openmaps
+  shell -. module federation .-> jira
+  shell -. module federation .-> mlops
+  shell -. module federation .-> petstore_ui
+  shell -. module federation .-> chatllm
+  shell --> gateway
+
+  operator --> monitor
+  monitor --> gateway
+
+  gateway --> cloudapp
+  gateway --> vehicles
+  gateway --> petstore_api
+  gateway --> jiraproxy
+  gateway --> ml_api
+  gateway --> ai
+
+  cloudapp --> postgres
+  cloudapp --> mongo
+  cloudapp --> kafka
+  petstore_api --> mysql
+  ml_api --> postgres_ml
+  ai --> redis
+  ai --> experiments
+  ai --> chroma
+
+  chatllm -. local model calls .-> ollama
+  jira -. optional AI refinement via remote API .-> ollama
+  ai -. chat, tool, and embedding calls .-> ollama
+```
+
 - System, request, and AI/operator diagrams:
   [docs/platform/showcase-architecture.md](./docs/platform/showcase-architecture.md)
 - Curated screenshots for the hero and supporting modules:
@@ -186,7 +257,7 @@ flagship-showcase PR plan.
 - Tour-to-test mapping and CI tiers:
   [docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md)
 
-## Quick Start (Hero Setup)
+## Quick Start (Portfolio Mode)
 
 ### Prerequisites
 
@@ -197,10 +268,11 @@ flagship-showcase PR plan.
 ### 0) Run the showcase preflight
 
 ```bash
-./scripts/showcase-preflight.sh --mode hero
+./scripts/showcase-preflight.sh --mode portfolio
 ```
 
-This validates the supported hero path. For the broader platform story, use:
+This validates the supported default portfolio path. For the broader platform
+story, use:
 
 ```bash
 ./scripts/showcase-preflight.sh --mode extended
@@ -208,7 +280,7 @@ This validates the supported hero path. For the broader platform story, use:
 ```
 
 
-### 1) Create local env file abd enerate local JWT keys
+### 1) Create local env file and generate local JWT keys
 
 ```bash
 ./scripts/setup-env-jwt-keys.sh
@@ -218,31 +290,39 @@ If you want to return to the supported demo baseline with seeded showcase
 users, run:
 
 ```bash
-./scripts/showcase-reset.sh --mode hero
+./scripts/showcase-reset.sh --mode portfolio
 ```
 
-### 2) Start infrastructure + app
+### 2) Start the supported portfolio stack
 
-This is the supported `hero setup`. It starts the main app without Jira, local
-LLM, or the AI orchestration operator view.
 ```bash
-docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode portfolio
+```
+
+This one-command path resets to a deterministic demo baseline, enables seeded
+portfolio users and content, and starts the default runtime:
+`shell + gateway + cloudapp + openmaps` with the vehicles backend behind it.
+
+For the broader platform story, use:
+
+```bash
+./scripts/showcase-up.sh --mode extended
+./scripts/showcase-up.sh --mode ai-operator
 ```
 
 ### 3) Open the app
 
 - Main app: http://localhost:5001
+- Demo users:
+  - `showcaseuser / ShowcaseUser123`
+  - `showcaseadmin / ShowcaseAdmin123`
 
-No CloudApp demo users are created by default.
-
-If you want seeded local users for manual testing, set
-`CLOUDAPP_SEED_DEMO_USERS_ENABLED=true` plus the
-`CLOUDAPP_SEED_DEMO_USERS_*` credentials in your local `.env` before starting
-the stack. Otherwise, register users through the UI.
-
-See [env.example](./env.example) for the
-optional demo-user environment variables and local bootstrap examples.
+If you start the stack manually instead of using `showcase-up.sh`, demo users
+stay opt-in through the `CLOUDAPP_SEED_DEMO_USERS_*` variables in your local
+`.env`. No CloudApp demo users are created by default. Set
+`CLOUDAPP_SEED_DEMO_USERS_ENABLED=true` plus the `CLOUDAPP_SEED_DEMO_USERS_*`
+variables shown in [env.example](./env.example) when you want the seeded
+showcase users outside the supported portfolio bootstrap path.
 
 ### 4) Optional: setup Ollama
 <details>
@@ -644,27 +724,23 @@ docker compose -f docker-compose-app.yml up -d --build next-nginx-jwt next-cloud
 - CI uses the same compose-based flow.
 
 ## Run Modes
-- `Hero setup`: the supported default for the flagship `10-minute demo`.
+- `Portfolio setup`: the supported default for the flagship `10-minute demo`.
 - `Extended setup`: broader platform demo and most architect deep-dive loops.
 - `AI/operator setup`: the operator-focused path for the AI monitor and orchestration layer.
 
-Hero setup:
+Portfolio setup:
 ```bash
-docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode portfolio
 ```
 
 Extended setup:
 ```bash
-docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode extended
 ```
 
 AI/operator setup:
 ```bash
-./scripts/showcase-preflight.sh --mode ai-operator
-docker compose -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode ai-operator
 ```
 
 ## Full Run

@@ -8,9 +8,10 @@ import AccessDenied from "../components/AccessDenied";
 import '../styles/globals.css';
 import 'leaflet/dist/leaflet.css';
 import { useRouter } from 'next/router';
+import { RemoteModulesProvider } from '../context/RemoteModulesContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { notifyCloudAppAuthStateChanged, useAuth } from '../hooks/useAuth';
-import { allAuthedRoutes } from '../constants/routes';
+import { findAuthedRoute } from '../constants/routes';
 import {
   installBeforeSendHandler,
   normalizeTrackedUrl,
@@ -37,9 +38,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
   const umamiDomains = parseDomainList(process.env.NEXT_PUBLIC_UMAMI_DOMAINS);
   const shouldLoadUmami = Boolean(umamiHostUrl && umamiWebsiteId);
-  const currentRoute = allAuthedRoutes.find(r =>
-    r.path === '/' ? router.pathname === '/' : router.pathname.startsWith(r.path)
-  );
+  const currentRoute = findAuthedRoute(router.pathname);
   const isAdminRoute = Boolean(currentRoute?.adminOnly);
   const isAccessDenied = isReady && currentRoute?.adminOnly && !isAdmin;
 
@@ -217,36 +216,40 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   if (isAccessDenied) {
     return (
-      <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-        <Layout>
-          <AccessDenied />
-        </Layout>
-      </ThemeContext.Provider>
+      <RemoteModulesProvider>
+        <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+          <Layout>
+            <AccessDenied />
+          </Layout>
+        </ThemeContext.Provider>
+      </RemoteModulesProvider>
     );
   }
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      {shouldLoadUmami && isUmamiConfigReady && (
-        <Script
-          id="umami-tracker"
-          src={`${umamiHostUrl}/script.js`}
-          data-auto-track="false"
-          data-before-send={UMAMI_BEFORE_SEND_HANDLER}
-          data-do-not-track="true"
-          data-domains={umamiDomains.length > 0 ? umamiDomains.join(',') : undefined}
-          data-exclude-hash="true"
-          data-exclude-search="true"
-          data-host-url={umamiHostUrl}
-          data-website-id={umamiWebsiteId}
-          strategy="afterInteractive"
-          onReady={() => setIsUmamiReady(true)}
-        />
-      )}
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    </ThemeContext.Provider>
+    <RemoteModulesProvider>
+      <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+        {shouldLoadUmami && isUmamiConfigReady && (
+          <Script
+            id="umami-tracker"
+            src={`${umamiHostUrl}/script.js`}
+            data-auto-track="false"
+            data-before-send={UMAMI_BEFORE_SEND_HANDLER}
+            data-do-not-track="true"
+            data-domains={umamiDomains.length > 0 ? umamiDomains.join(',') : undefined}
+            data-exclude-hash="true"
+            data-exclude-search="true"
+            data-host-url={umamiHostUrl}
+            data-website-id={umamiWebsiteId}
+            strategy="afterInteractive"
+            onReady={() => setIsUmamiReady(true)}
+          />
+        )}
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </ThemeContext.Provider>
+    </RemoteModulesProvider>
   );
 }
 

@@ -8,7 +8,7 @@ surface, but to make the coverage model explicit.
 
 | Tier | Intent | Representative jobs |
 | --- | --- | --- |
-| `Core showcase` | Protect the README-first story, hero setup, and architecture spine | `backend-tests`, `nginx-gateway-tests`, `api-contract-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `docs-drift-checks`, `frontend-lockfile-checks`, `e2e-core-tests` |
+| `Core showcase` | Protect the README-first story, portfolio mode, and architecture spine | `backend-tests`, `nginx-gateway-tests`, `api-contract-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `docs-drift-checks`, `frontend-lockfile-checks`, `e2e-core-tests` |
 | `Extended showcase` | Keep the deeper integrations, remotes, and operator surfaces healthy | `ml-pipeline-tests`, `ai-orchestration-tests`, `ai-monitor-checks`, `ai-monitor-component-tests`, `ai-monitor-behavior-tests`, `e2e-remote-tests` |
 | `Optional security posture` | Surface dependency risk without blocking routine showcase curation | `dependency-scans` |
 
@@ -16,8 +16,8 @@ surface, but to make the coverage model explicit.
 
 | Tour | Recommended setup | Manual emphasis | Automated smoke and safety net |
 | --- | --- | --- | --- |
-| `10-minute demo` | `Hero setup` | Shell login, notes/files or shop, chat or maps, then one supporting moment | `backend-tests`, `nginx-gateway-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `e2e-core-tests` |
-| `Architect deep dive` | `Hero setup` plus selective `Extended setup` modules | Gateway policy, module federation, shared packages, contract generation, CI discipline | `api-contract-tests`, `frontend-static-checks`, `frontend-budget-checks`, `frontend-lockfile-checks`, `docs-drift-checks`, `e2e-core-tests`, `e2e-remote-tests` |
+| `10-minute demo` | `Portfolio mode` | Shell login, files/notes or shop, chat, maps, then one second-act moment if needed | `backend-tests`, `nginx-gateway-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `e2e-core-tests` |
+| `Architect deep dive` | `Portfolio mode` plus selective `Extended setup` modules | Gateway policy, module federation, shared packages, contract generation, CI discipline | `api-contract-tests`, `frontend-static-checks`, `frontend-budget-checks`, `frontend-lockfile-checks`, `docs-drift-checks`, `e2e-core-tests`, `e2e-remote-tests` |
 | `AI/operator tour` | `AI/operator setup` | AI orchestration, monitor dashboards, approvals, RAG, degraded mode | `ai-orchestration-tests`, `ai-monitor-checks`, `ai-monitor-component-tests`, `ai-monitor-behavior-tests`, `e2e-remote-tests` |
 
 ## Route-Level Browser Smoke Map
@@ -25,7 +25,7 @@ surface, but to make the coverage model explicit.
 | Surface | Main routed path | Static gate | Browser smoke path |
 | --- | --- | --- | --- |
 | CloudApp shell | `http://localhost:5001` | `frontend-static-checks`, `frontend-budget-checks`, and `frontend-unit-tests` | `e2e/auth.spec.ts`, `e2e/shop.spec.ts`, `e2e/chat.spec.ts` via `e2e-core-tests` |
-| OpenMaps | `/maps` in the shell | `frontend-static-checks` | `e2e/module-federation.spec.ts` via `e2e-remote-tests` |
+| OpenMaps | `/maps` in the shell | `frontend-static-checks` | `e2e/module-federation.spec.ts` via `e2e-remote-tests` and the portfolio-mode shell path |
 | Jira remote | `/jira` in the shell | `frontend-static-checks` | `e2e/module-federation.spec.ts` via `e2e-remote-tests` |
 | MLOps remote | `/mlops` in the shell | `frontend-static-checks` | `e2e/mlops.spec.ts` via `e2e-remote-tests` |
 | Petstore remote | `/petstore` in the shell | `frontend-static-checks` | `e2e/module-federation.spec.ts` via `e2e-remote-tests` |

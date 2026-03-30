@@ -1,14 +1,18 @@
 # Cloudapp Application
 
-This is the final project to demonstrate the security and DevOps skills that I learned in the last part of the program.
-The goal was to setup an cloudapp app with the following requirements:
+CloudApp is the core transactional Spring Boot service behind the portfolio
+platform. In the default portfolio mode it powers authentication, notes,
+files, shopping, orders, and chat for the shell, while extended remotes layer
+extra breadth on top.
 
-* handle different HTTP requests to manipulate the cloudapp postgres database
-* a proper authentication and authorization controls so users can only access their data, and that data can only be
-  accessed in a secure way
-* the testing should reach at least 80% Coverage
-* proper logging with Splunk boards should be implemented
-* the repo should be able to deploy and build in a Jenkins environment
+This service started as a security and DevOps training project, then evolved
+into the main backend spine of the showcase repo. The implementation notes
+below are still useful, but the current platform role is:
+
+* handle the CloudApp transactional APIs over Postgres, MongoDB, and Kafka
+* enforce proper authentication and authorization so users only access their own data
+* provide the deterministic seeded demo content used by portfolio mode
+* expose the backend surface that the shell and gateway showcase first
 
 ## Project setup
 
@@ -125,4 +129,3 @@ Successful build from the GitHub repo:
 ![screenshots/jenkins_success.jpg](screenshots/jenkins_success.jpg)
 
 ![screenshots/jenkins_success2.jpg](screenshots/jenkins_success2.jpg)
-

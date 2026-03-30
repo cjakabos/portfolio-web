@@ -1,4 +1,5 @@
 import React from "react";
+import RemoteModuleRoute from "../../components/RemoteModuleRoute";
 import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -12,9 +13,9 @@ const Index: React.FC = () => {
     }
 
     return (
-        <>
+        <RemoteModuleRoute remoteKey="jira">
             <Jira />
-        </>
+        </RemoteModuleRoute>
     );
 };
 

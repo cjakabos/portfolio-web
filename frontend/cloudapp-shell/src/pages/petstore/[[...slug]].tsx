@@ -1,4 +1,5 @@
 import React from "react";
+import RemoteModuleRoute from "../../components/RemoteModuleRoute";
 import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -12,9 +13,11 @@ const PetStorePage: React.FC = () => {
     }
 
     return (
-        <div className="h-full min-h-0 w-full">
-            <PetStore />
-        </div>
+        <RemoteModuleRoute remoteKey="petstore">
+            <div className="h-full min-h-0 w-full">
+                <PetStore />
+            </div>
+        </RemoteModuleRoute>
     );
 };
 

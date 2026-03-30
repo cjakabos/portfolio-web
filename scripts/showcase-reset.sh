@@ -4,6 +4,7 @@
 #
 # Usage:
 #   ./scripts/showcase-reset.sh
+#   ./scripts/showcase-reset.sh --mode portfolio
 #   ./scripts/showcase-reset.sh --mode extended
 #   ./scripts/showcase-reset.sh --dry-run
 # ===========================================================================
@@ -12,7 +13,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-MODE="hero"
+MODE="portfolio"
 ENV_FILE="${PROJECT_ROOT}/.env"
 DRY_RUN=0
 FORCE_DEMO_USERS=0
@@ -27,7 +28,7 @@ usage() {
 Reset the local showcase state to a deterministic demo baseline.
 
 Options:
-  --mode <hero|extended|ai-operator>  Output the next-step command for this mode
+  --mode <portfolio|hero|extended|ai-operator>  Output the next-step command for this mode
   --env-file <path>                   Path to env file (default: ./.env)
   --force-demo-users                  Override existing demo-user values in the env file
   --dry-run                           Print the actions without executing them
@@ -102,6 +103,18 @@ ensure_demo_value() {
   upsert_env_var "$key" "$default_value" "$ENV_FILE"
 }
 
+set_env_value() {
+  local key="$1"
+  local value="$2"
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    printf '[dry-run] set %s=%s in %s\n' "$key" "$value" "$ENV_FILE"
+    return 0
+  fi
+
+  upsert_env_var "$key" "$value" "$ENV_FILE"
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --mode)
@@ -141,7 +154,7 @@ while [ $# -gt 0 ]; do
 done
 
 case "$MODE" in
-  hero|extended|ai-operator)
+  portfolio|hero|extended|ai-operator)
     ;;
   *)
     echo "Unsupported mode: $MODE" >&2
@@ -149,6 +162,10 @@ case "$MODE" in
     exit 1
     ;;
 esac
+
+if [ "$MODE" = "hero" ]; then
+  MODE="portfolio"
+fi
 
 printf 'Resetting showcase state for mode: %s\n' "$MODE"
 
@@ -159,15 +176,34 @@ if [ "$DRY_RUN" -ne 1 ] && [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-ensure_demo_value "CLOUDAPP_SEED_DEMO_USERS_ENABLED" "true"
+set_env_value "CLOUDAPP_SEED_DEMO_USERS_ENABLED" "true"
+set_env_value "CLOUDAPP_SEED_DEMO_CONTENT_ENABLED" "true"
 ensure_demo_value "CLOUDAPP_SEED_DEMO_USERS_ADMIN_USERNAME" "$DEFAULT_ADMIN_USERNAME"
 ensure_demo_value "CLOUDAPP_SEED_DEMO_USERS_ADMIN_PASSWORD" "$DEFAULT_ADMIN_PASSWORD"
 ensure_demo_value "CLOUDAPP_SEED_DEMO_USERS_REGULAR_USERNAME" "$DEFAULT_REGULAR_USERNAME"
 ensure_demo_value "CLOUDAPP_SEED_DEMO_USERS_REGULAR_PASSWORD" "$DEFAULT_REGULAR_PASSWORD"
+set_env_value "VEHICLES_SEED_PORTFOLIO_DATA_ENABLED" "true"
 
-run_shell_step "cd '$PROJECT_ROOT' && docker compose -f docker-compose-app.yml down -v --remove-orphans || true"
-run_shell_step "cd '$PROJECT_ROOT' && docker compose -f docker-compose-infrastructure.yml down -v --remove-orphans || true"
-run_shell_step "cd '$PROJECT_ROOT' && docker compose -f docker-compose.test.yml down -v --remove-orphans || true"
+case "$MODE" in
+  portfolio|ai-operator)
+    set_env_value "NEXT_PUBLIC_ENABLE_OPENMAPS" "true"
+    set_env_value "NEXT_PUBLIC_ENABLE_CHATLLM" "false"
+    set_env_value "NEXT_PUBLIC_ENABLE_JIRA" "false"
+    set_env_value "NEXT_PUBLIC_ENABLE_MLOPS" "false"
+    set_env_value "NEXT_PUBLIC_ENABLE_PETSTORE" "false"
+    ;;
+  extended)
+    set_env_value "NEXT_PUBLIC_ENABLE_OPENMAPS" "true"
+    set_env_value "NEXT_PUBLIC_ENABLE_CHATLLM" "true"
+    set_env_value "NEXT_PUBLIC_ENABLE_JIRA" "true"
+    set_env_value "NEXT_PUBLIC_ENABLE_MLOPS" "true"
+    set_env_value "NEXT_PUBLIC_ENABLE_PETSTORE" "true"
+    ;;
+esac
+
+run_shell_step "cd '$PROJECT_ROOT' && docker compose --env-file '$ENV_FILE' -f docker-compose-app.yml down -v --remove-orphans || true"
+run_shell_step "cd '$PROJECT_ROOT' && docker compose --env-file '$ENV_FILE' -f docker-compose-infrastructure.yml down -v --remove-orphans || true"
+run_shell_step "cd '$PROJECT_ROOT' && docker compose --env-file '$ENV_FILE' -f docker-compose.test.yml down -v --remove-orphans || true"
 run_shell_step "cd '$PROJECT_ROOT' && rm -f e2e/.auth/user.json"
 
 printf '\nShowcase reset complete.\n'
@@ -177,22 +213,16 @@ printf '  regular: %s / %s\n' "$DEFAULT_REGULAR_USERNAME" "$DEFAULT_REGULAR_PASS
 printf '\n'
 
 case "$MODE" in
-  hero)
+  portfolio)
     printf 'Next steps:\n'
-    printf '  ./scripts/showcase-preflight.sh --mode hero\n'
-    printf '  docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker\n'
-    printf '  docker compose -f docker-compose-app.yml up -d\n'
+    printf '  ./scripts/showcase-up.sh --mode portfolio\n'
     ;;
   extended)
     printf 'Next steps:\n'
-    printf '  ./scripts/showcase-preflight.sh --mode extended\n'
-    printf '  docker compose -f docker-compose-infrastructure.yml up -d\n'
-    printf '  docker compose -f docker-compose-app.yml up -d\n'
+    printf '  ./scripts/showcase-up.sh --mode extended\n'
     ;;
   ai-operator)
     printf 'Next steps:\n'
-    printf '  ./scripts/showcase-preflight.sh --mode ai-operator\n'
-    printf '  docker compose -f docker-compose-infrastructure.yml up -d\n'
-    printf '  docker compose -f docker-compose-app.yml up -d\n'
+    printf '  ./scripts/showcase-up.sh --mode ai-operator\n'
     ;;
 esac

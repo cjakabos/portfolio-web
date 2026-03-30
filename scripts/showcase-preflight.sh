@@ -4,6 +4,7 @@
 #
 # Usage:
 #   ./scripts/showcase-preflight.sh
+#   ./scripts/showcase-preflight.sh --mode portfolio
 #   ./scripts/showcase-preflight.sh --mode hero
 #   ./scripts/showcase-preflight.sh --mode extended
 #   ./scripts/showcase-preflight.sh --mode ai-operator
@@ -13,7 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-MODE="hero"
+MODE="portfolio"
 ENV_FILE="${PROJECT_ROOT}/.env"
 FAILURES=0
 WARNINGS=0
@@ -23,7 +24,7 @@ usage() {
 Validate the local machine for the flagship platform showcase.
 
 Options:
-  --mode <hero|extended|ai-operator>  Validation mode (default: hero)
+  --mode <portfolio|hero|extended|ai-operator>  Validation mode (default: portfolio)
   --env-file <path>                   Path to env file (default: ./.env)
   -h, --help                          Show this help
 EOF
@@ -188,7 +189,7 @@ while [ $# -gt 0 ]; do
 done
 
 case "$MODE" in
-  hero|extended|ai-operator)
+  portfolio|hero|extended|ai-operator)
     ;;
   *)
     echo "Unsupported mode: $MODE" >&2
@@ -196,6 +197,10 @@ case "$MODE" in
     exit 1
     ;;
 esac
+
+if [ "$MODE" = "hero" ]; then
+  MODE="portfolio"
+fi
 
 note "Running showcase preflight in '${MODE}' mode"
 
@@ -218,17 +223,21 @@ check_file_from_env "JWT_PUBLIC_KEY_FILE"
 check_port 80 "Gateway"
 check_port 443 "Gateway TLS"
 check_port 5001 "CloudApp shell"
+check_port 5002 "OpenMaps remote"
 
-if [ "$MODE" != "hero" ]; then
-  check_port 5002 "OpenMaps remote"
+if [ "$MODE" = "extended" ]; then
   check_port 5003 "Jira remote"
   check_port 5005 "MLOps remote"
   check_port 5006 "Petstore remote"
   check_port 5333 "ChatLLM remote"
+  check_port 3001 "Umami analytics"
+fi
+
+if [ "$MODE" = "ai-operator" ]; then
+  check_port 5010 "AI monitor"
 fi
 
 if [ "$MODE" = "extended" ] || [ "$MODE" = "ai-operator" ]; then
-  check_port 5010 "AI monitor"
   if command -v ollama >/dev/null 2>&1; then
     note "Ollama CLI: found"
   else
@@ -249,10 +258,13 @@ fi
 
 printf 'Preflight passed with %d warning(s).\n' "$WARNINGS"
 case "$MODE" in
-  hero)
-    printf 'Next step: docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker && docker compose -f docker-compose-app.yml up -d\n'
+  portfolio)
+    printf 'Next step: ./scripts/showcase-up.sh --mode portfolio\n'
     ;;
-  extended|ai-operator)
-    printf 'Next step: docker compose -f docker-compose-infrastructure.yml up -d && docker compose -f docker-compose-app.yml up -d\n'
+  extended)
+    printf 'Next step: ./scripts/showcase-up.sh --mode extended\n'
+    ;;
+  ai-operator)
+    printf 'Next step: ./scripts/showcase-up.sh --mode ai-operator\n'
     ;;
 esac

@@ -6,35 +6,32 @@
 - CI uses the same compose-based flow.
 
 ## Run Modes
-- `Hero setup`: the supported default for the flagship `10-minute demo`. Start
-  only the core datastores plus the app stack.
+- `Portfolio setup`: the supported default for the flagship `10-minute demo`.
+  Start the curated runtime with seeded demo data and only the default story
+  surfaces visible.
 - `Extended setup`: broader platform demo and most architect deep-dive loops.
   Start the full app stack and optional integrations as needed.
 - `AI/operator setup`: the operator-focused path for the AI monitor and
   orchestration layer.
 
-Hero setup:
+Portfolio setup:
 ```bash
-docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode portfolio
 ```
 
 Extended setup:
 ```bash
-docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode extended
 ```
 
 AI/operator setup:
 ```bash
-./scripts/showcase-preflight.sh --mode ai-operator
-docker compose -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode ai-operator
 ```
 
 Reset to the known-good demo baseline:
 ```bash
-./scripts/showcase-reset.sh --mode hero
+./scripts/showcase-reset.sh --mode portfolio
 ```
 
 ## Full Run
@@ -89,8 +86,7 @@ Prerequisite: app endpoints must already be running on `localhost:5001` and `loc
 
 ```bash
 # Option A: start normal app stack (recommended for local Playwright)
-docker compose -f docker-compose-infrastructure.yml up -d
-docker compose -f docker-compose-app.yml up -d
+./scripts/showcase-up.sh --mode portfolio --no-reset
 ```
 
 ```bash
