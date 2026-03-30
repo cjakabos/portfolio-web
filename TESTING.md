@@ -6,33 +6,64 @@
 - CI uses the same compose-based flow.
 
 ## Run Modes
-- `Lean mode`: core product work and most test/debug loops. Start only the core datastores plus the app stack.
-- `Showcase mode`: full demos and AI/observability work. Start the full infrastructure stack and optionally the Ollama profile.
+- `Hero setup`: the supported default for the flagship `10-minute demo`. Start
+  only the core datastores plus the app stack.
+- `Extended setup`: broader platform demo and most architect deep-dive loops.
+  Start the full app stack and optional integrations as needed.
+- `AI/operator setup`: the operator-focused path for the AI monitor and
+  orchestration layer.
 
-Lean mode:
+Hero setup:
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
 ```
 
-Showcase mode:
+Extended setup:
 ```bash
 docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 
+AI/operator setup:
+```bash
+./scripts/showcase-preflight.sh --mode ai-operator
+docker compose -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
+Reset to the known-good demo baseline:
+```bash
+./scripts/showcase-reset.sh --mode hero
+```
+
 ## Full Run
 ```bash
 cd /portfolio-web
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+docker compose -p portfolio_test_all -f docker-compose.test.yml up --build --abort-on-container-exit test-all
 ```
 
 ## Targeted Runs
 ```bash
+PROJECT=portfolio_focus
 SERVICE=test-e2e-core
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
+docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
+
+## Frontend Static Checks
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-static
+```
+- Runs workspace version validation plus typecheck/lint for the shell, all Next remotes, and the AI monitor.
+
+## Frontend Budget Checks
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-budgets
+```
+- Builds the CloudApp shell and enforces the hero entry bundle gzip budget.
+- The AI monitor budget is enforced inside `test-ai-monitor-lint`.
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`
@@ -45,7 +76,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "
 ## Cleanup
 ```bash
 docker compose -p portfolio_test_all -f docker-compose.test.yml down -v --remove-orphans
-docker compose -f docker-compose.test.yml down -v --remove-orphans
+docker compose -p portfolio_focus -f docker-compose.test.yml down -v --remove-orphans
 ```
 
 ## Optional (local UI debugging)

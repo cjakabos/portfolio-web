@@ -4,7 +4,7 @@
 // Fully integrated with backend - no mock data
 // =============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   AlertTriangle, RefreshCw, Shield, CheckCircle, XCircle, AlertCircle,
   Clock, Activity, Database, Zap, Server, Loader2, WifiOff
@@ -15,15 +15,11 @@ import {
   useFeatureStatus,
   useErrorSummary
 } from '../hooks/useOrchestrationHooks';
-import type { CircuitBreaker, ConnectionStats, FeatureStatus, ErrorSummary } from '../types';
-
 interface ErrorDashboardProps {
   embedded?: boolean;
 }
 
 export default function ErrorDashboard({ embedded = false }: ErrorDashboardProps) {
-  const [selectedError, setSelectedError] = useState<any>(null);
-
   // Hooks for backend integration
   const {
     circuitBreakers,
@@ -37,7 +33,6 @@ export default function ErrorDashboard({ embedded = false }: ErrorDashboardProps
 
   const {
     connectionStats,
-    totalServices,
     isLoading: connLoading,
     error: connError,
     refresh: refreshConnectionStats

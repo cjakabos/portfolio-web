@@ -1,11 +1,8 @@
 import React from "react";
-import dynamic from "next/dynamic";
+import { loadRemoteComponent } from "../../lib/loadRemoteComponent";
 import { useAuth } from "../../hooks/useAuth";
 
-// @ts-ignore
-const PetStore = dynamic(() => import("remote5/petstore"), {
-    ssr: false,
-});
+const PetStore = loadRemoteComponent(() => import("remote5/petstore"));
 
 const PetStorePage: React.FC = () => {
     const { isAdmin, isReady, isInitialized } = useAuth();

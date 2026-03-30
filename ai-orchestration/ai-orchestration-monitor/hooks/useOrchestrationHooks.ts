@@ -3,13 +3,12 @@
 // =============================================================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { orchestrationClient, ApiError, NetworkError, TimeoutError } from '../services/orchestrationClient';
+import { orchestrationClient, ApiError, NetworkError } from '../services/orchestrationClient';
 import type {
   Metrics,
   DetailedMetrics,
   ChatMessage,
   CircuitBreakerListResponse,
-  CircuitBreaker,
   ConnectionStatsResponse,
   FeatureStatus,
   ErrorSummary,
@@ -871,7 +870,7 @@ export function useStreaming({
         hasConnectedRef.current = false;
       }
     };
-  }, [autoConnect]); // eslint-disable-line -- Intentionally omit connect/disconnect to prevent loops
+  }, [autoConnect]);
 
   // Bounded auto-reconnect when the initial connect races backend startup.
   useEffect(() => {

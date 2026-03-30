@@ -7,6 +7,9 @@ Use this checklist for any change that is more than a local-only experiment.
 - identify whether the change touches gateway/auth, governed contracts, AI
   behavior, environment shape, or operator-only UX
 - identify whether the change affects a `releaseCritical` contract service
+- identify the affected showcase tier: `Hero`, `Supporting`, `Optional`, or
+  `Operator tooling`
+- note whether an official tour, demo setup path, or evidence asset changes
 
 ## 2. Contract Discipline
 
@@ -28,21 +31,36 @@ Use this checklist for any change that is more than a local-only experiment.
 - update `ai-degraded-mode.md`, runbooks, or `ai-product-boundary.md` if the
   operator contract changed
 
-## 5. Environment And Secrets
+## 5. Showcase Stewardship
+
+- if a new module or tier promotion is proposed, answer: `what new capability
+  does this demonstrate?`
+- confirm the affected module still has an owner in
+  `deployable-inventory.md`
+- confirm the matching smoke path still exists in
+  `showcase-smoke-paths.md`
+- update `showcase-taxonomy.md`, `showcase-tours.md`, or
+  `showcase-evidence-pack.md` when the reader-facing story changes
+
+## 6. Environment And Secrets
 
 - update `.env` guidance or setup docs when variable shape changes
 - review whether the change introduces a new secret class or handling rule
 - perform at least one startup check with the new environment shape
 
-## 6. Docs And Release Notes
+## 7. Docs, Tours, And Release Notes
 
 - update platform docs for any policy or ownership change
+- update README or showcase docs when the 10-minute demo, architect tour,
+  AI/operator tour, or supported setup changes
 - ensure release notes call out user-visible or operator-visible fallout
 - include rollback notes when the change affects a release-critical surface
 
-## 7. Final Go/No-Go
+## 8. Final Go/No-Go
 
 - no unresolved contract drift
 - no missing manifest bump for changed governed snapshots
 - no missing operator or gateway verification for affected paths
 - no stale docs for newly introduced environment or release behavior
+- no hero-module change without owner clarity and matching smoke coverage
+- no showcase-tier or tour change without the docs updates that make it legible

@@ -5,7 +5,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ApiError, orchestrationClient } from '../services/orchestrationClient';
 import type {
-  RAGDocument,
   RAGDocumentListResponse,
   RAGQueryResponse,
   RAGStatsResponse,

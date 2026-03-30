@@ -16,6 +16,7 @@ work is added.
 - [docs/platform/README.md](./README.md)
 - [secret-classification.md](./secret-classification.md)
 - [runtime-and-data-policy.md](./runtime-and-data-policy.md)
+- [showcase-stewardship.md](./showcase-stewardship.md)
 - [adr/adr-001-gateway-policy-boundary.md](./adr/adr-001-gateway-policy-boundary.md)
 - [adr/adr-002-frontend-workspace-strategy.md](./adr/adr-002-frontend-workspace-strategy.md)
 - [adr/adr-003-ai-operator-boundary.md](./adr/adr-003-ai-operator-boundary.md)
@@ -38,26 +39,26 @@ useful as the team evolves.
 
 ## Browser-Facing Deployables
 
-| Deployable | Runtime | Local URL | Public ingress path | Owner role | Main user journeys |
-| --- | --- | --- | --- | --- | --- |
-| `next-cloudapp-shell` | Next.js | `http://localhost:5001` | User entrypoint UI; backend traffic routed via gateway | Frontend platform engineer | Login, shop, notes, files, chat, remote module navigation |
-| `next-openmaps` | Next.js remote | `http://localhost:5002` | Loaded by shell via module federation | Frontend platform engineer | Vehicle location management |
-| `next-jira` | Next.js remote | `http://localhost:5003` | Loaded by shell via module federation | Frontend platform engineer | Jira CRUD and AI refinement |
-| `next-mlops` | Next.js remote | `http://localhost:5005` | Loaded by shell via module federation | Frontend platform engineer | Customer segmentation workflows |
-| `next-petstore` | Next.js remote | `http://localhost:5006` | Loaded by shell via module federation | Frontend platform engineer | Pet, employee, and schedule workflows |
-| `next-chatllm` | Next.js remote | `http://localhost:5333` | Loaded by shell via module federation | Frontend platform engineer | Local LLM chat UX |
-| `ai-orchestration-monitor` | Vite/React static app | `http://localhost:5010` | Operator app for `/ai` workflows through gateway | Operator app engineer | Operator dashboards, approvals, orchestration, RAG |
+| Deployable | Runtime | Local URL | Public ingress path | Owner role | Showcase tier | Main user journeys |
+| --- | --- | --- | --- | --- | --- | --- |
+| `next-cloudapp-shell` | Next.js | `http://localhost:5001` | User entrypoint UI; backend traffic routed via gateway | Frontend platform engineer | `Hero` | Login, shop, notes, files, chat, remote module navigation |
+| `next-openmaps` | Next.js remote | `http://localhost:5002` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Vehicle location management |
+| `next-jira` | Next.js remote | `http://localhost:5003` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Jira CRUD and AI refinement |
+| `next-mlops` | Next.js remote | `http://localhost:5005` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Customer segmentation workflows |
+| `next-petstore` | Next.js remote | `http://localhost:5006` | Loaded by shell via module federation | Frontend platform engineer | `Optional` | Pet, employee, and schedule workflows |
+| `next-chatllm` | Next.js remote | `http://localhost:5333` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Local LLM chat UX |
+| `ai-orchestration-monitor` | Vite/React static app | `http://localhost:5010` | Operator app for `/ai` workflows through gateway | Operator app engineer | `Operator tooling` | Operator dashboards, approvals, orchestration, RAG |
 
 ## Product And Operator Backend Services
 
-| Service | Runtime | Internal port | Gateway path | Owner role | Primary stores/dependencies | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| `cloudapp` | Spring Boot | `8099` | `/cloudapp`, `/cloudapp-admin` | Backend engineer | Postgres, MongoDB, Kafka | Identity, catalog, cart, orders, notes, files, chat rooms |
-| `petstore` | Spring Boot | `8083` | `/petstore` | Backend engineer | MySQL | Customer, pet, employee, and scheduling flows |
-| `vehicles-api` | Spring Boot | `8880` | `/vehicles` | Backend engineer | H2/runtime-local state, downstream clients | Vehicle CRUD and enrichment |
-| `jiraproxy` | Spring Boot | `8501` | `/jiraproxy` | Backend engineer | Jira external API | Server-side proxy for Jira credentials and request validation |
-| `mlops-segmentation` | Flask | `8600` | `/mlops-segmentation` | AI/platform engineer | Postgres (ML) | Customer segmentation and chart generation |
-| `ai-orchestration-layer` | FastAPI | `8700` | `/ai`, `/ai/ws` via gateway | AI/platform engineer | Redis, MongoDB, ChromaDB, Ollama, gateway-backed services | Orchestration, approvals, RAG, experiments, system endpoints |
+| Service | Runtime | Internal port | Gateway path | Owner role | Showcase tier | Primary stores/dependencies | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `cloudapp` | Spring Boot | `8099` | `/cloudapp`, `/cloudapp-admin` | Backend engineer | `Hero` | Postgres, MongoDB, Kafka | Identity, catalog, cart, orders, notes, files, chat rooms |
+| `petstore` | Spring Boot | `8083` | `/petstore` | Backend engineer | `Optional` | MySQL | Customer, pet, employee, and scheduling flows |
+| `vehicles-api` | Spring Boot | `8880` | `/vehicles` | Backend engineer | `Optional` | H2/runtime-local state, downstream clients | Vehicle CRUD and enrichment |
+| `jiraproxy` | Spring Boot | `8501` | `/jiraproxy` | Backend engineer | `Supporting` | Jira external API | Server-side proxy for Jira credentials and request validation |
+| `mlops-segmentation` | Flask | `8600` | `/mlops-segmentation` | AI/platform engineer | `Supporting` | Postgres (ML) | Customer segmentation and chart generation |
+| `ai-orchestration-layer` | FastAPI | `8700` | `/ai`, `/ai/ws` via gateway | AI/platform engineer | `Hero` | Redis, MongoDB, ChromaDB, Ollama, gateway-backed services | Orchestration, approvals, RAG, experiments, system endpoints |
 
 ## Shared Infrastructure Deployables
 
@@ -88,6 +89,15 @@ useful as the team evolves.
 
 The gateway is the platform policy boundary. Browser clients should not talk
 directly to internal services when a routed gateway path exists.
+
+## Showcase Stewardship Hooks
+
+- `Hero` modules in this inventory should always have a matching `Core
+  showcase` smoke path in `showcase-smoke-paths.md`.
+- Supporting and optional modules should be reviewed quarterly using the
+  keep/refresh/archive posture in `showcase-stewardship.md`.
+- New deployables should answer “what new capability does this demonstrate?”
+  before they are added to the flagship story.
 
 ## Critical User Journeys
 

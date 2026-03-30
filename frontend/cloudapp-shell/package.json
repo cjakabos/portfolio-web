@@ -10,6 +10,7 @@
     "test:mobile:smoke": "NODE_PATH=./node_modules jest --config jest.config.cjs --runInBand --testPathPatterns=src/mobile/capacitorConfig.smoke.test.ts",
     "test:ios:smoke": "NODE_PATH=./node_modules jest --config jest.config.cjs --runInBand --testPathPatterns=src/mobile/iosPackaging.smoke.test.ts",
     "format": "prettier --write .",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
     "lint": "next lint",
     "check:bundle-budget": "node ./scripts/check-bundle-budget.mjs",
     "build:budget": "npm run build && npm run check:bundle-budget",

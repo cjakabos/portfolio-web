@@ -15,6 +15,40 @@ Welcome to my dynamic portfolio, showcasing cutting-edge projects from my [Web D
 Example view of emulated Android app, browser view on PC and emulated iOS app:
 ![Platform preview](./examples/12.png)
 
+## Official Tours
+
+This repository is curated as a flagship platform showcase. If you are opening
+it for the first time, pick one of these tours:
+
+| Tour | Audience | Primary goal | Recommended mode |
+| --- | --- | --- | --- |
+| `10-minute demo` | Recruiters, hiring managers, first-time visitors | Reach a strong first impression quickly with the shell and one standout integration | Hero setup |
+| `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Hero setup, then selective extended modules |
+| `AI/operator tour` | AI engineers, platform engineers, operators | Focus on orchestration, approvals, RAG, observability, and degraded-mode behavior | AI/operator setup |
+
+## Showcase Tiers
+
+- `Hero`: the main platform story and the first surfaces a reader should see.
+- `Supporting`: integrated modules that add breadth and credibility.
+- `Optional`: extra depth that is valuable, but not required for the first
+  impression.
+- `Operator tooling`: operator-only surfaces that support or govern the
+  platform.
+
+Current highlight mapping:
+
+- `Hero`: CloudApp shell, NGINX gateway, CloudApp backend, AI orchestration
+  layer
+- `Supporting`: OpenMaps, ChatLLM, Jira, MLOps, observability stack
+- `Optional`: Petstore, Vehicles API, Umami analytics, mobile packaging
+- `Operator tooling`: AI orchestration monitor
+
+See [docs/platform/showcase-taxonomy.md](./docs/platform/showcase-taxonomy.md)
+and [docs/platform/showcase-tours.md](./docs/platform/showcase-tours.md) for
+the maintained version of these labels. Automated tour coverage and CI tiering
+live in
+[docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md).
+
 ## What You Can Try In 10 Minutes
 
 ## 1) Homepage
@@ -129,7 +163,8 @@ Provides:
 
 ## Why This Repo Exists
 
-This repository is built as a practical, end-to-end reference for people who want to study or reuse:
+This repository is built as a practical, end-to-end reference for people who
+want to study or reuse:
 - Secure gateway-driven microservice architecture with Java and Python
 - Scalable frontend composition with module federation  (Next.js 15 + React 19)
 - AI-native product patterns (local LLM, agentic tools, RAG, approvals, streaming) for the microservices
@@ -137,15 +172,40 @@ This repository is built as a practical, end-to-end reference for people who wan
 - Android and iOS deployment with Capacitor
 - Full observability, testable, containerized, CI-ready workflows
 
-Platform governance docs live in [docs/platform/](./docs/platform/README.md), including the deployable inventory, ADRs, secret-classification rules, AI runbooks, SLOs, release-discipline docs, and the remaining backlog PR plan.
+Platform governance docs live in [docs/platform/](./docs/platform/README.md),
+including the deployable inventory, ADRs, secret-classification rules, AI
+runbooks, showcase taxonomy and tours, release-discipline docs, and the
+flagship-showcase PR plan.
 
-## Quick Start (Lean Mode)
+## Architecture At A Glance
+
+- System, request, and AI/operator diagrams:
+  [docs/platform/showcase-architecture.md](./docs/platform/showcase-architecture.md)
+- Curated screenshots for the hero and supporting modules:
+  [docs/platform/showcase-evidence-pack.md](./docs/platform/showcase-evidence-pack.md)
+- Tour-to-test mapping and CI tiers:
+  [docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md)
+
+## Quick Start (Hero Setup)
 
 ### Prerequisites
 
 - Docker Desktop (or Docker Engine + Compose)
 - OpenSSL (`openssl`)
 - At least 16 GB RAM and 45 GB (+5-30GB depending on Ollama setup, and another + 20GB if Xcode and iOS emulator installed on Mac) free disk recommended for full showcase mode
+
+### 0) Run the showcase preflight
+
+```bash
+./scripts/showcase-preflight.sh --mode hero
+```
+
+This validates the supported hero path. For the broader platform story, use:
+
+```bash
+./scripts/showcase-preflight.sh --mode extended
+./scripts/showcase-preflight.sh --mode ai-operator
+```
 
 
 ### 1) Create local env file abd enerate local JWT keys
@@ -154,9 +214,17 @@ Platform governance docs live in [docs/platform/](./docs/platform/README.md), in
 ./scripts/setup-env-jwt-keys.sh
 ```
 
+If you want to return to the supported demo baseline with seeded showcase
+users, run:
+
+```bash
+./scripts/showcase-reset.sh --mode hero
+```
+
 ### 2) Start infrastructure + app
 
-This will start the app without Jira, Local LLM and AI orchestration Admin view
+This is the supported `hero setup`. It starts the main app without Jira, local
+LLM, or the AI orchestration operator view.
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
@@ -213,6 +281,7 @@ docker compose -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 
+- This is the `extended setup` used for the architect tour.
 - Admin AI orchestration: http://localhost:5010
 
 ### Optional: self-hosted product analytics with Umami
@@ -575,33 +644,56 @@ docker compose -f docker-compose-app.yml up -d --build next-nginx-jwt next-cloud
 - CI uses the same compose-based flow.
 
 ## Run Modes
-- `Lean mode`: core product work and most test/debug loops. Start only the core datastores plus the app stack.
-- `Showcase mode`: full demos and AI/observability work. Start the full infrastructure stack and optionally the Ollama profile.
+- `Hero setup`: the supported default for the flagship `10-minute demo`.
+- `Extended setup`: broader platform demo and most architect deep-dive loops.
+- `AI/operator setup`: the operator-focused path for the AI monitor and orchestration layer.
 
-Lean mode:
+Hero setup:
 ```bash
 docker compose -f docker-compose-infrastructure.yml up -d postgres postgres-ml mysql mongo zookeeper broker
 docker compose -f docker-compose-app.yml up -d
 ```
 
-Showcase mode:
+Extended setup:
 ```bash
 docker compose --profile ollama -f docker-compose-infrastructure.yml up -d
+docker compose -f docker-compose-app.yml up -d
+```
+
+AI/operator setup:
+```bash
+./scripts/showcase-preflight.sh --mode ai-operator
+docker compose -f docker-compose-infrastructure.yml up -d
 docker compose -f docker-compose-app.yml up -d
 ```
 
 ## Full Run
 ```bash
 cd /portfolio-web
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-all
+docker compose -p portfolio_test_all -f docker-compose.test.yml up --build --abort-on-container-exit test-all
 ```
 
 ## Targeted Runs
 ```bash
+PROJECT=portfolio_focus
 SERVICE=test-e2e-core
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
+docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See [docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md).
+
+## Frontend Static Checks
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-static
+```
+- Runs workspace version validation plus typecheck/lint for the shell, all Next remotes, and the AI monitor.
+
+## Frontend Budget Checks
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-budgets
+```
+- Builds the CloudApp shell and enforces the hero entry bundle gzip budget.
+- The AI monitor budget is enforced inside `test-ai-monitor-lint`.
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`
@@ -614,7 +706,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit "
 ## Cleanup
 ```bash
 docker compose -p portfolio_test_all -f docker-compose.test.yml down -v --remove-orphans
-docker compose -f docker-compose.test.yml down -v --remove-orphans
+docker compose -p portfolio_focus -f docker-compose.test.yml down -v --remove-orphans
 ```
 
 ## Optional (local UI debugging)

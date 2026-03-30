@@ -11,6 +11,7 @@
     "frontend:check-versions": "node ./scripts/frontend/check-workspace-versions.mjs",
     "frontend:typecheck": "npm run typecheck --workspaces --if-present",
     "frontend:lint": "npm run lint --workspaces --if-present",
+    "frontend:static": "npm run frontend:typecheck && npm run frontend:lint",
     "frontend:build": "npm run build --workspaces --if-present",
     "frontend:test": "npm run test --workspaces --if-present"
   }
