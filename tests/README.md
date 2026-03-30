@@ -16,7 +16,8 @@ services, and contract governance.
 | ML pipeline tests | `test-ml-pipeline` | Flask endpoints, validation, and segmentation behavior |
 | AI orchestration tests | `test-ai-orchestration-layer` | FastAPI orchestration helpers, auth/config behavior, and HTTP client logic |
 | Frontend static checks | `test-frontend-static` | Workspace version validation plus shell, remote, and AI monitor typecheck/lint coverage |
-| AI monitor static checks | `test-ai-monitor-lint` | Operator app install, typecheck, linting, and production build validation |
+| Frontend budget checks | `test-frontend-budgets` | Build-time gzip budget checks for the CloudApp shell hero entry bundle |
+| AI monitor static checks | `test-ai-monitor-lint` | Operator app install, typecheck, linting, production build validation, and AI monitor bundle-budget enforcement |
 | AI monitor component tests | `test-ai-monitor-component` | Operator auth/session behavior, service-health rendering, and approval workflow coverage |
 | AI monitor behavior | `test-ai-monitor-behavior` | Playwright coverage for routed monitor/operator flows |
 | Frontend unit tests | `test-frontend-unit` | React and hook-level tests in the shell app |
@@ -45,6 +46,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ml-pipeline
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-static
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-budgets
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-lint
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-component
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-monitor-behavior
@@ -66,7 +68,7 @@ docker compose -f docker-compose.test.yml down -v --remove-orphans
 
 The CI workflow is intentionally split into showcase tiers:
 
-- `Core showcase`: backend integration, gateway integration, OpenAPI contract governance, frontend unit tests, frontend static checks, docs drift checks, frontend native lockfile validation, and Playwright E2E for the hero tour.
+- `Core showcase`: backend integration, gateway integration, OpenAPI contract governance, frontend unit tests, frontend static checks, frontend budget checks, docs drift checks, frontend native lockfile validation, and Playwright E2E for the hero tour.
 - `Extended showcase`: ML pipeline tests, AI orchestration tests, AI monitor static/component/browser checks, and Playwright E2E for remotes and operator flows.
 - `Optional security posture`: dependency audit jobs for npm, Python, and Maven.
 
@@ -135,13 +137,13 @@ gate or smoke path.
 
 | Browser surface | Static gate | Behavioral gate or smoke path |
 | --- | --- | --- |
-| CloudApp shell | `test-frontend-static` plus `test-frontend-unit` and `test-shell` build/healthcheck in the E2E stack | `auth.spec.ts`, `shop.spec.ts`, `chat.spec.ts` |
+| CloudApp shell | `test-frontend-static`, `test-frontend-budgets`, `test-frontend-unit`, and `test-shell` build/healthcheck in the E2E stack | `auth.spec.ts`, `shop.spec.ts`, `chat.spec.ts` |
 | OpenMaps remote | `test-frontend-static` plus `test-openmaps-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
 | Jira remote | `test-frontend-static` plus `test-jira-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
 | MLOps remote | `test-frontend-static` plus `test-mlops-frontend` build/healthcheck in the E2E stack | `mlops.spec.ts` |
 | Petstore remote | `test-frontend-static` plus `test-petstore-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
 | ChatLLM remote | `test-frontend-static` plus `test-chatllm-frontend` build/healthcheck in the E2E stack | `module-federation.spec.ts` |
-| AI monitor | `test-frontend-static` plus `test-ai-monitor-lint` | `test-ai-monitor-component` for component workflows plus `test-ai-monitor-behavior` via `monitor.spec.ts` |
+| AI monitor | `test-frontend-static` and `test-ai-monitor-lint` | `test-ai-monitor-component` for component workflows plus `test-ai-monitor-behavior` via `monitor.spec.ts` |
 
 ## Local Test Expectations
 

@@ -53,6 +53,7 @@ def main() -> int:
         "Playwright",
         "AI monitor behavior",
         "`test-ai-monitor-behavior`",
+        "`test-frontend-budgets`",
         "`monitor.spec.ts`",
         "Browser Surface Quality Gates",
         "CloudApp shell",
@@ -79,6 +80,7 @@ def main() -> int:
     for required in [
         "docs-drift-checks:",
         "frontend-static-checks:",
+        "frontend-budget-checks:",
         "ai-monitor-behavior-tests:",
         "python3 scripts/check_docs_drift.py",
         "test-ai-monitor-behavior",
@@ -86,6 +88,7 @@ def main() -> int:
         "Extended Showcase",
         "Optional Security",
         "Frontend Static",
+        "Frontend Budget",
         "AI Monitor (Behavior)",
     ]:
         require_contains(workflow, required, ".github/workflows/ci-tests.yml", failures)
@@ -95,6 +98,7 @@ def main() -> int:
         "Architect deep dive",
         "AI/operator tour",
         "`frontend-static-checks`",
+        "`frontend-budget-checks`",
         "`e2e-core-tests`",
         "`e2e-remote-tests`",
         "`ai-monitor-behavior-tests`",

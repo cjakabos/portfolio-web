@@ -8,15 +8,16 @@
 #   4. Core showcase API contract governance (OpenAPI drift + TS clients)
 #   5. Core showcase frontend unit tests (React Testing Library)
 #   6. Core showcase frontend static gates (typecheck/lint/version checks)
-#   7. Core showcase docs drift checks for repo-facing test/runtime docs
-#   8. Core showcase frontend lockfile native package checks
-#   9. Optional dependency vulnerability scans (npm audit + pip-audit)
-#   10. Extended showcase AI Orchestration tests
-#   11. Extended showcase AI Monitor static checks
-#   12. Extended showcase AI Monitor component behavior tests
-#   13. Extended showcase Playwright AI monitor behavior tests
-#   14. Core showcase Playwright E2E tests (hero tour)
-#   15. Extended showcase Playwright E2E tests (remote/admin/operator stack)
+#   7. Core showcase frontend bundle budget checks (hero/operator surfaces)
+#   8. Core showcase docs drift checks for repo-facing test/runtime docs
+#   9. Core showcase frontend lockfile native package checks
+#   10. Optional dependency vulnerability scans (npm audit + pip-audit)
+#   11. Extended showcase AI Orchestration tests
+#   12. Extended showcase AI Monitor static checks
+#   13. Extended showcase AI Monitor component behavior tests
+#   14. Extended showcase Playwright AI monitor behavior tests
+#   15. Core showcase Playwright E2E tests (hero tour)
+#   16. Extended showcase Playwright E2E tests (remote/admin/operator stack)
 #
 # Usage:
 #   Triggered automatically on push/PR to main/develop.
@@ -265,7 +266,28 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 7: Docs Drift Checks
+  # JOB 7: Frontend Bundle Budget Checks
+  # =========================================================================
+  frontend-budget-checks:
+    name: "Core Showcase — Frontend Budget"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run frontend budget checks
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
+            test-frontend-budgets
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  # =========================================================================
+  # JOB 8: Docs Drift Checks
   # =========================================================================
   docs-drift-checks:
     name: "Core Showcase — Docs Drift"
@@ -280,7 +302,7 @@ jobs:
         run: python3 scripts/check_docs_drift.py
 
   # =========================================================================
-  # JOB 8: Frontend Lockfile Native Package Checks
+  # JOB 9: Frontend Lockfile Native Package Checks
   # =========================================================================
   frontend-lockfile-checks:
     name: "Core Showcase — Frontend Lockfiles"
@@ -295,7 +317,7 @@ jobs:
         run: python3 scripts/check_frontend_native_lockfiles.py
 
   # =========================================================================
-  # JOB 9A: Optional Dependency Scans (npm)
+  # JOB 10A: Optional Dependency Scans (npm)
   # =========================================================================
   dependency-scan-npm:
     name: "Optional Security — npm Audit"
@@ -343,7 +365,7 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 9B: Optional Dependency Scans (Python)
+  # JOB 10B: Optional Dependency Scans (Python)
   # =========================================================================
   dependency-scan-python:
     name: "Optional Security — Python Audit"
@@ -397,7 +419,7 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 9C: Optional Dependency Scans (Maven / OWASP Warmup)
+  # JOB 10C: Optional Dependency Scans (Maven / OWASP Warmup)
   # =========================================================================
   dependency-scan-maven-update:
     name: "Optional Security — Maven OWASP Warmup"
@@ -478,7 +500,7 @@ jobs:
           key: ${{ steps.restore-odc-cache.outputs.cache-primary-key }}
 
   # =========================================================================
-  # JOB 9D: Optional Dependency Scans (Maven / OWASP per service)
+  # JOB 10D: Optional Dependency Scans (Maven / OWASP per service)
   # =========================================================================
   dependency-scan-maven-cloudapp:
     name: "Optional Security — Maven Audit (CloudApp)"
@@ -829,7 +851,7 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # JOB 9E: Optional Dependency Scans (Maven / OWASP summary)
+  # JOB 10E: Optional Dependency Scans (Maven / OWASP summary)
   # =========================================================================
   dependency-scan-maven:
     name: "Optional Security — Maven Audit"
@@ -917,7 +939,7 @@ jobs:
           echo "Merged reports are uploaded as the \`dependency-audit-maven-reports\` artifact." >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
-  # JOB 9F: Optional Dependency Scan Summary
+  # JOB 10F: Optional Dependency Scan Summary
   # =========================================================================
   dependency-scans:
     name: "Optional Security — Audit Summary"
@@ -973,7 +995,7 @@ jobs:
           echo "Reports are uploaded as the \`dependency-audit-npm-reports\`, \`dependency-audit-python-reports\`, and \`dependency-audit-maven-reports\` artifacts." >> "$GITHUB_STEP_SUMMARY"
 
   # =========================================================================
-  # JOB 10: AI Orchestration Layer Tests (pytest)
+  # JOB 11: AI Orchestration Layer Tests (pytest)
   # =========================================================================
   ai-orchestration-tests:
     name: "Extended Showcase — AI Orchestration"
@@ -994,7 +1016,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 11: AI Monitor Static Checks (ESLint + Vite Build)
+  # JOB 12: AI Monitor Static Checks (ESLint + Vite Build)
   # =========================================================================
   ai-monitor-checks:
     name: "Extended Showcase — AI Monitor Static"
@@ -1015,7 +1037,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 12: AI Monitor Component Behavior Tests
+  # JOB 13: AI Monitor Component Behavior Tests
   # =========================================================================
   ai-monitor-component-tests:
     name: "Extended Showcase — AI Monitor Component"
@@ -1036,7 +1058,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 13: AI Monitor Behavior Tests
+  # JOB 14: AI Monitor Behavior Tests
   # =========================================================================
   ai-monitor-behavior-tests:
     name: "Extended Showcase — AI Monitor Browser"
@@ -1088,7 +1110,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 14: Playwright E2E Tests (Core Stack)
+  # JOB 15: Playwright E2E Tests (Core Stack)
   # =========================================================================
   e2e-core-tests:
     name: "Core Showcase — Playwright Hero Tour"
@@ -1146,7 +1168,7 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
 
   # =========================================================================
-  # JOB 15: Playwright E2E Tests (Remote Stack)
+  # JOB 16: Playwright E2E Tests (Remote Stack)
   # =========================================================================
   e2e-remote-tests:
     name: "Extended Showcase — Playwright Remotes"
@@ -1210,7 +1232,7 @@ jobs:
   test-summary:
     name: "Test Summary"
     runs-on: ubuntu-latest
-    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
+    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, frontend-budget-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
     if: always()
 
     steps:
@@ -1227,6 +1249,7 @@ jobs:
           echo "| API Contracts | ${{ needs.api-contract-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Unit | ${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Static | ${{ needs.frontend-static-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Budget | ${{ needs.frontend-budget-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Docs Drift | ${{ needs.docs-drift-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lockfiles | ${{ needs.frontend-lockfile-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Playwright E2E (Hero Tour) | ${{ needs.e2e-core-tests.result }} |" >> $GITHUB_STEP_SUMMARY

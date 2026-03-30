@@ -119,6 +119,8 @@ What this shows:
 - browser clients should prefer routed gateway paths over direct service access
 - admin and operator boundaries are enforced before UI state is rendered
 - the same gateway posture covers ordinary CRUD, browser remotes, and AI flows
+- optional downstream dependencies such as Ollama sit behind some AI-enabled
+  flows, but they are not part of every gateway-routed request
 
 ## 3. AI / Operator Flow
 

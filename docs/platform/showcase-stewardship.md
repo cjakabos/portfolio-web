@@ -25,7 +25,7 @@ cut, narrowed, or kept as internal scaffolding.
 
 | Tier | When to use it | Minimum proof | Review cadence |
 | --- | --- | --- | --- |
-| `Hero` | Platform spine or first-impression differentiator | explicit owner, official tour placement, `Core showcase` smoke coverage, evidence in the screenshot pack | every release pass plus quarterly curation |
+| `Hero` | Platform spine or first-impression differentiator | explicit owner, official tour placement, `Core showcase` smoke coverage, budget checks for browser entry surfaces, evidence in the screenshot pack | every release pass plus quarterly curation |
 | `Supporting` | Adds breadth that strengthens the flagship story | linked tour value, `Extended showcase` or targeted smoke path, no dependency from the default hero path | quarterly keep/refresh/archive review |
 | `Optional` | Interesting extra depth that should never block the main story | isolated setup, targeted verification, clear scope, easy to skip in demos | quarterly keep or archive decision |
 | `Operator tooling` | Operates or governs the platform instead of serving end users directly | runbook alignment, operator tour placement, operator smoke path, explicit owner | quarterly review and after operator workflow changes |
@@ -39,6 +39,7 @@ cut, narrowed, or kept as internal scaffolding.
 - it fits naturally into the `10-minute demo` or `Architect deep dive`
 - it works from the supported setup contract without bespoke rescue steps
 - it has a documented owner and a matching `Core showcase` smoke path
+- it keeps the bundle budget healthy when it is a browser entry surface
 - it is represented in the README, tours, and evidence pack
 
 ### Keep A Module `Supporting` When

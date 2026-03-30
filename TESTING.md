@@ -49,7 +49,7 @@ PROJECT=portfolio_focus
 SERVICE=test-e2e-core
 docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 - CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
 
 ## Frontend Static Checks
@@ -57,6 +57,13 @@ docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-co
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-static
 ```
 - Runs workspace version validation plus typecheck/lint for the shell, all Next remotes, and the AI monitor.
+
+## Frontend Budget Checks
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-budgets
+```
+- Builds the CloudApp shell and enforces the hero entry bundle gzip budget.
+- The AI monitor budget is enforced inside `test-ai-monitor-lint`.
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`

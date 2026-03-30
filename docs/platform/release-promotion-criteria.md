@@ -7,7 +7,7 @@ branch validation.
 
 | Change class | Minimum promotion gates | Required docs updates |
 | --- | --- | --- |
-| Hero module UI, route, setup, or demo-flow change | matching `Core showcase` static or behavioral gates plus the affected official tour path | update README, tours, smoke-path mapping, and evidence pack if the first-run story changed |
+| Hero module UI, route, setup, or demo-flow change | matching `Core showcase` static, budget, or behavioral gates plus the affected official tour path | update README, tours, smoke-path mapping, and evidence pack if the first-run story changed |
 | Gateway routing, auth, or admin access | gateway integration tests, affected browser smoke or E2E path, admin auth-check verification | update runbooks or operator boundary docs if behavior changes |
 | Governed contract change (`cloudapp`, `petstore`, `vehicles`) | snapshot updated, `snapshotRevision` bumped, generated clients refreshed, consumer verification completed | update contract discipline docs only if the policy changes |
 | AI orchestration runtime behavior | relevant AI synthetic check, degraded-mode review, monitor or operator-path verification | update AI SLOs, runbooks, or product-boundary docs if semantics change |
@@ -29,9 +29,10 @@ Do not promote when any of the following are true:
 5. required environment variables changed without doc updates and a startup
    check
 6. a hero-module change landed without matching `Core showcase` smoke coverage
-7. a new module or tier promotion landed without answering `what new
+7. a hero browser-entry change landed without passing the matching UI budget check
+8. a new module or tier promotion landed without answering `what new
    capability does this demonstrate?`
-8. the official tours or demo setup changed without updating the reader-facing
+9. the official tours or demo setup changed without updating the reader-facing
    docs
 
 ## Release Notes Expectations
