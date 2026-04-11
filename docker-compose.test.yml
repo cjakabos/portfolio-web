@@ -797,6 +797,7 @@ services:
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
         NEXT_PUBLIC_GATEWAY_BASE_URL: http://test-nginx:80
+        NEXT_PUBLIC_REMOTE_JIRA_URL: http://test-jira-frontend:5003
     networks:
       - test-frontend
     healthcheck:
@@ -856,6 +857,7 @@ services:
         SERVICE_PATH: frontend/remote/chatllm
         SERVICE_PORT: 5333
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_CHATLLM_URL: http://test-chatllm-frontend:5333
     networks:
       - test-frontend
     healthcheck:

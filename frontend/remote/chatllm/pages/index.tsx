@@ -7,7 +7,10 @@ import { trackEvent } from '../lib/analytics';
 // =============================================================================
 // URL CONFIGURATION
 // =============================================================================
-const ollamaBaseUrl = "http://localhost:11434";
+const normalizeBaseUrl = (value?: string) => (value ? value.replace(/\/+$/, '') : '');
+const remoteApiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL);
+const chatApiUrl = `${remoteApiBaseUrl}/api/chat`;
+const modelsApiUrl = `${remoteApiBaseUrl}/api/models`;
 
 // Type for Ollama model
 interface OllamaModel {
@@ -68,7 +71,7 @@ const ChatLLM: React.FC = () => {
     status
   } = useChat({
     transport: new DefaultChatTransport({
-      api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"
+      api: chatApiUrl
     }),
   });
 
@@ -90,16 +93,17 @@ const ChatLLM: React.FC = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
+      const response = await fetch(modelsApiUrl, {
         method: 'GET',
         signal: controller.signal,
       }).finally(() => clearTimeout(timeoutId));
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(typeof data?.error === 'string' ? data.error : `HTTP ${response.status}`);
       }
 
-      const data = await response.json();
       const allModels = data.models || [];
 
       // Filter out embedding models - they can't be used for chat
@@ -172,7 +176,7 @@ const ChatLLM: React.FC = () => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
+      const response = await fetch(modelsApiUrl, {
         method: 'GET',
         signal: controller.signal,
       }).finally(() => clearTimeout(timeoutId));
@@ -230,7 +234,8 @@ const ChatLLM: React.FC = () => {
         {modelsError === "connection_failed" && (
           <div className="space-y-3">
             <Alert severity="error" title="Cannot connect to Ollama">
-              <p className="mb-3">Unable to reach the Ollama server at <code className="bg-red-100 dark:bg-red-800 px-1 rounded">{ollamaBaseUrl}</code></p>
+              <p className="mb-2">The ChatLLM remote could not load models from its configured AI backend.</p>
+              <p className="mb-3 text-xs">Remote endpoint: <code className="bg-red-100 dark:bg-red-800 px-1 rounded">{modelsApiUrl}</code></p>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-red-200 dark:border-red-700 mt-3">
                 <h5 className="font-bold text-gray-900 dark:text-white mb-3">🚀 Quick Setup Guide</h5>

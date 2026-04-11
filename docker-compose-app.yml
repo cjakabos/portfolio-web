@@ -291,6 +291,7 @@ services:
         SERVICE_PORT: 5003
         NEXT_PRIVATE_LOCAL_WEBPACK: true
         NEXT_PUBLIC_GATEWAY_BASE_URL: ${NEXT_PUBLIC_GATEWAY_BASE_URL:-http://localhost:8080}
+        NEXT_PUBLIC_REMOTE_JIRA_URL: ${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
         NEXT_PUBLIC_LLM_MODEL: ${LLM_MODEL}
         NEXT_PUBLIC_JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY}
     container_name: next-jira
@@ -299,6 +300,7 @@ services:
     environment:
       - DOCKER_HOST_IP=host.docker.internal
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - NEXT_PUBLIC_REMOTE_JIRA_URL=${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
     networks:
       - frontend
     restart: unless-stopped
@@ -350,6 +352,7 @@ services:
         SERVICE_PATH: frontend/remote/chatllm
         SERVICE_PORT: 5333
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_REMOTE_CHATLLM_URL: ${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
         NEXT_PUBLIC_LLM_MODEL: ${LLM_MODEL}
     container_name: next-chatllm
     ports:
@@ -358,6 +361,7 @@ services:
       - DOCKER_HOST_IP=host.docker.internal
       # Native Ollama: host.docker.internal; Docker Ollama: override OLLAMA_URL=http://ollama:11434 in .env
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - NEXT_PUBLIC_REMOTE_CHATLLM_URL=${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
     networks:
       - frontend
       - backend
