@@ -1,9 +1,7 @@
 package com.example.demo.controllers;
 
+import com.example.demo.content.NoteContentService;
 import com.example.demo.model.persistence.Note;
-import com.example.demo.model.persistence.User;
-import com.example.demo.model.persistence.repositories.NoteRepository;
-import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateNoteRequest;
 import com.example.demo.model.requests.UpdateNoteRequest;
 import com.example.demo.security.CloudappAccessPolicy;
@@ -20,10 +18,7 @@ import java.util.List;
 @RequestMapping("/note")
 public class NoteController {
     @Autowired
-    public NoteRepository noteRepository;
-
-    @Autowired
-    public UserRepository userRepository;
+    private NoteContentService noteContentService;
 
     @Autowired
     private CloudappAccessPolicy cloudappAccessPolicy;
@@ -37,11 +32,9 @@ public class NoteController {
         if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(noteRepository.findByUserid(user.getId().longValue()));
+        return noteContentService.findNotesForUsername(username)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
     @PostMapping("/addNote")
     public ResponseEntity<Note> insertOrUpdateNote(
@@ -56,13 +49,9 @@ public class NoteController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (note.getDescription().length() < 1000) {
-            User user = userRepository.findByUsername(note.getUser());
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
-            Note newNote = new Note(note.getTitle(), note.getDescription(), user.getId());
-            Note noteResponse = noteRepository.save(newNote);
-            return ResponseEntity.of(noteRepository.findById(noteResponse.getId()));
+            return noteContentService.createNote(note.getUser(), note.getTitle(), note.getDescription())
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
         } else {
             return ResponseEntity.badRequest().build();
         }
@@ -78,7 +67,7 @@ public class NoteController {
             return ResponseEntity.badRequest().build();
         }
 
-        Note existingNote = noteRepository.findById(noteRequest.getId()).orElse(null);
+        Note existingNote = noteContentService.findNoteById(noteRequest.getId()).orElse(null);
         if (existingNote == null) {
             return ResponseEntity.notFound().build();
         }
@@ -88,10 +77,9 @@ public class NoteController {
         }
 
         if (noteRequest.getDescription().length() < 1000) {
-            existingNote.setTitle(noteRequest.getTitle());
-            existingNote.setDescription(noteRequest.getDescription());
-            Note saved = noteRepository.save(existingNote);
-            return ResponseEntity.ok(saved);
+            return ResponseEntity.ok(
+                    noteContentService.updateNote(existingNote, noteRequest.getTitle(), noteRequest.getDescription())
+            );
         } else {
             return ResponseEntity.badRequest().build();
         }
@@ -99,7 +87,7 @@ public class NoteController {
 
     @DeleteMapping(value = "/delete/{id}")
     public ResponseEntity<?> deleteNote(@PathVariable Long id, Authentication auth, HttpServletRequest request) {
-        Note existingNote = noteRepository.findById(id).orElse(null);
+        Note existingNote = noteContentService.findNoteById(id).orElse(null);
         if (existingNote == null) {
             return ResponseEntity.notFound().build();
         }
@@ -108,7 +96,7 @@ public class NoteController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        noteRepository.deleteById(id);
+        noteContentService.deleteNote(existingNote);
         return  ResponseEntity.ok().build();
     }
 }
