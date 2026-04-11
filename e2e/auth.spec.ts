@@ -13,6 +13,7 @@ import {
 } from "./fixtures/helpers";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
+const adminShowcaseRoutesEnabled = process.env.SHOWCASE_E2E_PROFILE !== "core";
 
 async function clearAuthState(page: import("@playwright/test").Page) {
   clearTrackedAuthToken(page.context());
@@ -257,6 +258,11 @@ test.describe("Authentication Flow", () => {
   // =========================================================================
 
   test.describe("RBAC — Admin-Only Routes", () => {
+    test.skip(
+      !adminShowcaseRoutesEnabled,
+      "Admin remotes are intentionally excluded from the portfolio-mode core showcase."
+    );
+
     const adminPaths = ["/petstore", "/jira", "/mlops"];
 
     test("should show Access Denied for non-admin users on admin routes", async ({ page, request }) => {

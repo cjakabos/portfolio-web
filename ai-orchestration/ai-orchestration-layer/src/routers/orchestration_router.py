@@ -1,18 +1,28 @@
 import uuid
 import time
 import logging
-from typing import Optional, Dict, Any
+from typing import Dict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Request, Query
 from starlette.websockets import WebSocketState
 import json
 import uuid
-from pydantic import BaseModel
 
 # Import core types needed for logic
 # (Assuming these exist in your project structure based on the old file)
 from core.orchestrator import AIOrchestrationLayer, UnifiedState, OrchestrationType
+from core.app_state import (
+    AIControlPlaneState,
+    get_ai_control_plane_state,
+    get_ai_control_plane_state_from_websocket,
+)
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
+from services.downstream_headers import extract_downstream_headers
+from services.orchestration_support import (
+    OrchestrationRequest,
+    derive_capabilities_from_path,
+    resolve_effective_user_id,
+)
 from tools.http_client import HTTPClient
 from auth import require_authenticated_user, require_websocket_user
 
@@ -23,87 +33,17 @@ from routers.metrics_router import collector
 router = APIRouter(tags=["Orchestration"])
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# Global Dependencies (Injected from main.py)
-# =============================================================================
-_orchestrator: Optional[AIOrchestrationLayer] = None
-_memory_manager: Optional[MemoryManager] = None
-_context_store: Optional[ContextStore] = None
-_audit_service = None
-
-def set_orchestration_deps(
-    orchestrator: AIOrchestrationLayer,
-    memory_manager: MemoryManager,
-    context_store: ContextStore
-):
-    """Dependency Injection helper called from main.py lifespan."""
-    global _orchestrator, _memory_manager, _context_store
-    _orchestrator = orchestrator
-    _memory_manager = memory_manager
-    _context_store = context_store
-
-def set_audit_service(audit_service):
-    """Inject audit service from main.py."""
-    global _audit_service
-    _audit_service = audit_service
-
-def get_context_store_dependency() -> ContextStore:
-    if not _context_store:
-        raise HTTPException(status_code=503, detail="Context Store not initialized")
-    return _context_store
-
-# =============================================================================
-# Data Models
-# =============================================================================
-class OrchestrationRequest(BaseModel):
-    message: str
-    user_id: str
-    session_id: str
-    context: Optional[Dict[str, Any]] = None
-    orchestration_type: Optional[str] = "conversational"
+def _require_orchestration_state(state: AIControlPlaneState) -> AIControlPlaneState:
+    if not state.orchestrator or not state.context_store or not state.memory_manager:
+        raise HTTPException(status_code=503, detail="Orchestration layer not initialized")
+    return state
 
 
-def _extract_downstream_headers(request: Request) -> Dict[str, str]:
-    """
-    Forward auth-related headers from incoming orchestration requests to
-    downstream tool HTTP calls.
-    """
-    headers: Dict[str, str] = {}
-    auth = request.headers.get("authorization")
-    if auth:
-        headers["Authorization"] = auth
-
-    internal_auth = request.headers.get("x-internal-auth")
-    if internal_auth:
-        headers["X-Internal-Auth"] = internal_auth
-
-    return headers
-
-
-def _resolve_effective_user_id(
-    requested_user_id: Optional[Any],
-    authenticated_user: str,
-) -> str:
-    """
-    Bind end-user requests to the authenticated identity.
-
-    Internal service calls may act on behalf of another user, but public
-    callers cannot override their identity via request payloads.
-    """
-    requested = str(requested_user_id).strip() if requested_user_id is not None else ""
-    if authenticated_user == "internal-service":
-        if not requested:
-            raise HTTPException(status_code=400, detail="user_id is required for internal requests")
-        return requested
-
-    if requested and requested != authenticated_user:
-        logger.warning(
-            "Ignoring client-supplied user_id %s for authenticated user %s",
-            requested,
-            authenticated_user,
-        )
-
-    return authenticated_user
+def get_context_store_dependency(
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
+) -> ContextStore:
+    runtime_state = _require_orchestration_state(state)
+    return runtime_state.context_store
 
 # =============================================================================
 # Endpoints
@@ -114,6 +54,7 @@ async def orchestrate(
     http_request: Request,
     request: OrchestrationRequest,
     auth_user: str = Depends(require_authenticated_user),
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
 ):
     """
     Main orchestration endpoint.
@@ -123,10 +64,9 @@ async def orchestrate(
     User identity is derived server-side from the gateway-validated auth
     headers rather than trusting the client-supplied ``user_id``.
     """
-    if not _orchestrator or not _context_store or not _memory_manager:
-        raise HTTPException(status_code=503, detail="Orchestration layer not initialized")
+    runtime_state = _require_orchestration_state(state)
 
-    request.user_id = _resolve_effective_user_id(request.user_id, auth_user)
+    request.user_id = resolve_effective_user_id(request.user_id, auth_user)
 
     request_id = str(uuid.uuid4())
     start_time = time.time()
@@ -139,14 +79,14 @@ async def orchestrate(
 
     # Mark orchestration as active
     collector.start_orchestration(request_id)
-    header_ctx_token = HTTPClient.set_request_context_headers(_extract_downstream_headers(http_request))
+    header_ctx_token = HTTPClient.set_request_context_headers(extract_downstream_headers(http_request))
 
     try:
         # 1. Load User Context
-        user_profile = _context_store.load_user_profile(request.user_id)
+        user_profile = runtime_state.context_store.load_user_profile(request.user_id)
 
         # 2. Load Conversation History
-        history = _memory_manager.get_history(request.session_id)
+        history = runtime_state.memory_manager.get_history(request.session_id)
 
         # 3. Merge Contexts
         merged_context = {**user_profile, **(request.context or {})}
@@ -177,7 +117,7 @@ async def orchestrate(
         )
 
         # 5. Execute Workflow
-        result_state = await _orchestrator.invoke(initial_state)
+        result_state = await runtime_state.orchestrator.invoke(initial_state)
 
         # 6. Calculate Duration
         duration_ms = int((time.time() - start_time) * 1000)
@@ -188,7 +128,7 @@ async def orchestrate(
         # If no capabilities tracked, derive from execution path
         if not capabilities_used:
             execution_path = result_state.get("execution_path", [])
-            capabilities_used = _derive_capabilities_from_path(execution_path)
+            capabilities_used = derive_capabilities_from_path(execution_path)
 
         # 8. Record real metrics
         success = result_state.get("final_output") is not None and not result_state.get("errors")
@@ -204,7 +144,7 @@ async def orchestrate(
 
         # 9. Save Interaction
         if result_state.get("final_output"):
-            _memory_manager.save_interaction(
+            runtime_state.memory_manager.save_interaction(
                 session_id=request.session_id,
                 user_message=request.message,
                 assistant_response=result_state["final_output"],
@@ -212,9 +152,9 @@ async def orchestrate(
             )
 
         # 10. Audit Trail
-        if _audit_service:
+        if runtime_state.audit_service:
             prompt_summary = (request.message[:200] if request.message else "")
-            await _audit_service.record(
+            await runtime_state.audit_service.record(
                 request_id=request_id,
                 user_id=request.user_id,
                 orchestration_type=request.orchestration_type,
@@ -248,9 +188,9 @@ async def orchestrate(
         )
         
         # Audit failed request
-        if _audit_service:
+        if runtime_state.audit_service:
             prompt_summary = (request.message[:200] if request.message else "")
-            await _audit_service.record(
+            await runtime_state.audit_service.record(
                 request_id=request_id,
                 user_id=request.user_id,
                 orchestration_type=request.orchestration_type,
@@ -269,28 +209,6 @@ async def orchestrate(
         HTTPClient.reset_request_context_headers(header_ctx_token)
 
 
-def _derive_capabilities_from_path(execution_path: list) -> list:
-    """Derive capabilities from execution path if not explicitly tracked."""
-    capability_map = {
-        "rag": ["RAG", "Vector DB", "LLM Gen"],
-        "ml": ["ML Pipeline"],
-        "agent": ["Agent Execution", "Tool Invocation"],
-        "workflow": ["Workflow Execution"],
-        "chat": ["Chat Manager", "LLM Gen"],
-        "llm": ["LLM Gen"],
-        "tool": ["Tool Invocation"],
-    }
-    
-    capabilities = set()
-    for node in execution_path:
-        node_lower = node.lower()
-        for key, caps in capability_map.items():
-            if key in node_lower:
-                capabilities.update(caps)
-    
-    return list(capabilities) if capabilities else ["LLM Gen"]
-
-
 @router.delete("/user/preferences/{user_id}/{key}")
 async def delete_user_preference(
     user_id: str,
@@ -299,7 +217,7 @@ async def delete_user_preference(
     ctx_store: ContextStore = Depends(get_context_store_dependency),
 ):
     """Delete a specific user preference."""
-    effective_user_id = _resolve_effective_user_id(user_id, auth_user)
+    effective_user_id = resolve_effective_user_id(user_id, auth_user)
     if effective_user_id != user_id:
         raise HTTPException(
             status_code=403,
@@ -351,7 +269,8 @@ async def websocket_stream(websocket: WebSocket):
         logger.warning(f"WebSocket {client_id} failed to accept: {e}")
         return
 
-    if not _orchestrator:
+    runtime_state = get_ai_control_plane_state_from_websocket(websocket)
+    if not runtime_state.orchestrator:
         logger.warning(f"WebSocket {client_id}: Orchestrator not initialized, closing")
         if websocket.client_state == WebSocketState.CONNECTED:
             await websocket.close(code=1011, reason="Orchestrator not ready")
@@ -376,7 +295,7 @@ async def websocket_stream(websocket: WebSocket):
                 continue
 
             message = data.get("message", "")
-            user_id = _resolve_effective_user_id(data.get("user_id"), auth_user)
+            user_id = resolve_effective_user_id(data.get("user_id"), auth_user)
             session_id = data.get("session_id", str(uuid.uuid4()))
             context = data.get("context", {})
 
@@ -398,10 +317,10 @@ async def websocket_stream(websocket: WebSocket):
             try:
                 user_profile = {}
                 history = []
-                if _context_store:
-                    user_profile = _context_store.load_user_profile(str(user_id))
-                if _memory_manager:
-                    history = _memory_manager.get_history(session_id)
+                if runtime_state.context_store:
+                    user_profile = runtime_state.context_store.load_user_profile(str(user_id))
+                if runtime_state.memory_manager:
+                    history = runtime_state.memory_manager.get_history(session_id)
 
                 initial_state = UnifiedState(
                     request_id=request_id,
@@ -430,9 +349,9 @@ async def websocket_stream(websocket: WebSocket):
                 capabilities_used = []
                 final_output = ""
 
-                if hasattr(_orchestrator, 'astream'):
+                if hasattr(runtime_state.orchestrator, 'astream'):
                     last_state = {}
-                    async for chunk in _orchestrator.astream(initial_state):
+                    async for chunk in runtime_state.orchestrator.astream(initial_state):
                         if websocket.client_state != WebSocketState.CONNECTED:
                             break
 
@@ -473,7 +392,7 @@ async def websocket_stream(websocket: WebSocket):
                     # Get final output from the last state
                     final_output = last_state.get("final_output", "")
                 else:
-                    result = await _orchestrator.invoke(initial_state)
+                    result = await runtime_state.orchestrator.invoke(initial_state)
                     final_output = result.get("final_output", "")
                     capabilities_used = result.get("capabilities_used", [])
 

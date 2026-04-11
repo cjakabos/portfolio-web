@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { getCloudAppBrowserClient } from "./cloudappClient";
 
 // Define the shape of the data
 export interface RegisterValues {
@@ -33,14 +33,11 @@ export const useRegister = () => {
             confirmPassword: values.confirmPassword,
         };
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-
-            await axios.post(
-                `${API_URL}/user/user-register`, 
-                postData, 
+            await getCloudAppBrowserClient().requestJson(
+                "/user/user-register",
                 {
-                    headers: { 'Content-Type': 'application/json;charset=UTF-8' },
-                    withCredentials: true,
+                    method: "POST",
+                    body: postData,
                 }
             );
             return true;

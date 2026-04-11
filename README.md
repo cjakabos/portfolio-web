@@ -519,7 +519,7 @@ The platform is composed of:
 - Browser auth with HttpOnly `CLOUDAPP_AUTH` cookie
 - CSRF protections for browser-driven state changes
 - Role-based access (ADMIN/USER)
-- Service-to-service auth token (`X-Internal-Auth`)
+- Service-to-service identities (`X-Internal-Service-Name` + `X-Internal-Service-Token`)
 - Gateway enforces route-level authorization and rate limits
 - Non-root runtime for frontend and AI services
 

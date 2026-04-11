@@ -1,4 +1,4 @@
-package com.example.demo.model.service.inf;
+package com.example.demo.commerce;
 
 import com.example.demo.model.persistence.Item;
 import com.example.demo.model.requests.CreateItemRequest;

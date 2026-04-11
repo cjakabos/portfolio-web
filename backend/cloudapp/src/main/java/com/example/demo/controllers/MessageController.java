@@ -1,8 +1,7 @@
 package com.example.demo.controllers;
 
+import com.example.demo.collaboration.IMessageService;
 import com.example.demo.model.persistence.model.Message;
-import com.example.demo.model.service.inf.IMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -15,7 +14,6 @@ public class MessageController {
 
     private final IMessageService service;
 
-    @Autowired
     public MessageController(IMessageService service) {
         this.service = service;
     }

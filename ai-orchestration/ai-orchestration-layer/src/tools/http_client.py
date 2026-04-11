@@ -246,8 +246,9 @@ class ServiceHTTPClients:
         if "cloudapp" not in cls._clients:
             config = get_config()
             default_headers: Dict[str, str] = {}
-            if config.services.internal_service_token:
-                default_headers["X-Internal-Auth"] = config.services.internal_service_token
+            if config.services.internal_ai_orchestration_token:
+                default_headers["X-Internal-Service-Name"] = "ai-orchestration"
+                default_headers["X-Internal-Service-Token"] = config.services.internal_ai_orchestration_token
             cls._clients["cloudapp"] = HTTPClient(
                 base_url=config.services.cloudapp_url,
                 timeout=config.services.http_timeout,
@@ -260,8 +261,9 @@ class ServiceHTTPClients:
         if "petstore" not in cls._clients:
             config = get_config()
             default_headers: Dict[str, str] = {}
-            if config.services.internal_service_token:
-                default_headers["X-Internal-Auth"] = config.services.internal_service_token
+            if config.services.internal_ai_orchestration_token:
+                default_headers["X-Internal-Service-Name"] = "ai-orchestration"
+                default_headers["X-Internal-Service-Token"] = config.services.internal_ai_orchestration_token
             cls._clients["petstore"] = HTTPClient(
                 base_url=config.services.petstore_url,
                 timeout=config.services.http_timeout,
@@ -274,8 +276,9 @@ class ServiceHTTPClients:
         if "vehicles" not in cls._clients:
             config = get_config()
             default_headers: Dict[str, str] = {}
-            if config.services.internal_service_token:
-                default_headers["X-Internal-Auth"] = config.services.internal_service_token
+            if config.services.internal_ai_orchestration_token:
+                default_headers["X-Internal-Service-Name"] = "ai-orchestration"
+                default_headers["X-Internal-Service-Token"] = config.services.internal_ai_orchestration_token
             cls._clients["vehicles"] = HTTPClient(
                 base_url=config.services.vehicles_url,
                 timeout=config.services.http_timeout,
@@ -288,8 +291,9 @@ class ServiceHTTPClients:
         if "ml" not in cls._clients:
             config = get_config()
             default_headers: Dict[str, str] = {}
-            if config.services.internal_service_token:
-                default_headers["X-Internal-Auth"] = config.services.internal_service_token
+            if config.services.internal_ai_orchestration_token:
+                default_headers["X-Internal-Service-Name"] = "ai-orchestration"
+                default_headers["X-Internal-Service-Token"] = config.services.internal_ai_orchestration_token
             cls._clients["ml"] = HTTPClient(
                 base_url=config.services.ml_url,
                 timeout=config.services.http_timeout,

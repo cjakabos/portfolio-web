@@ -1,9 +1,9 @@
 package com.example.demo.controllers;
 
+import com.example.demo.commerce.IOrderService;
 import com.example.demo.model.persistence.UserOrder;
 import com.example.demo.model.persistence.*;
-import com.example.demo.model.service.inf.IOrderService;
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -20,13 +20,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class OrderControllerTest {
 
     private OrderController orderController;
 
     private IOrderService orderService = mock(IOrderService.class);
-    private InternalRequestAuthorizer internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
+    private CloudappAccessPolicy cloudappAccessPolicy = mock(CloudappAccessPolicy.class);
 
     private Authentication authFor(String username) {
         return new UsernamePasswordAuthenticationToken(
@@ -38,9 +39,10 @@ public class OrderControllerTest {
 
     @BeforeEach
     public void setup() {
-        orderController = new OrderController(orderService, internalRequestAuthorizer);
-        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
+        orderController = new OrderController(orderService, cloudappAccessPolicy);
         when(orderService.userExists(any())).thenReturn(true);
+        when(cloudappAccessPolicy.canAccessUsername(any(), any(), any())).thenReturn(true);
+        when(cloudappAccessPolicy.resolveAuthenticatedUsername(any(Authentication.class), any())).thenReturn(Optional.empty());
     }
 
     @Test
@@ -103,6 +105,9 @@ public class OrderControllerTest {
 
     @Test
     public void submit_returns_forbidden_for_other_authenticated_user_when_target_exists() {
+        when(cloudappAccessPolicy.canAccessUsername(any(), any(), eq("testuser"))).thenReturn(false);
+        when(cloudappAccessPolicy.resolveAuthenticatedUsername(any(Authentication.class), any())).thenReturn(java.util.Optional.of("otheruser"));
+
         ResponseEntity<UserOrder> response = orderController.submit(
                 "testuser",
                 authFor("otheruser"),

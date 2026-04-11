@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createCloudAppApiClient, resolveCloudAppApiUrl } from '@portfolio/api-clients';
+import {
+  createCloudAppApiClient,
+  createCloudAppBrowserClient,
+  isExpectedBrowserApiError,
+  resolveCloudAppApiUrl,
+} from '@portfolio/api-clients';
 import { ContractApiError } from '@portfolio/contracts';
 
 export { ContractApiError } from '@portfolio/contracts';
@@ -77,6 +82,19 @@ const getClient = (options: UseCloudAppSessionOptions = {}) =>
   createCloudAppApiClient({
     baseUrl: resolveCloudAppApiUrl(options.apiUrl),
     fetchImpl: options.fetchImpl,
+  });
+
+export const createCloudAppSessionClient = (options: UseCloudAppSessionOptions = {}) =>
+  createCloudAppBrowserClient({
+    baseUrl: resolveCloudAppApiUrl(options.apiUrl),
+    fetchImpl: options.fetchImpl,
+    headerProvider: async ({ method }) => {
+      const normalizedMethod = method.trim().toUpperCase();
+      if (normalizedMethod === 'GET' || normalizedMethod === 'HEAD' || normalizedMethod === 'OPTIONS') {
+        return {};
+      }
+      return getCloudAppCsrfHeaders(options);
+    },
   });
 
 const toSnapshot = (response: CloudAppAuthResponse | undefined): CloudAppAuthSnapshot => ({
@@ -163,8 +181,7 @@ export const useCloudAppSession = (options: UseCloudAppSessionOptions = {}) => {
       setRoles(snapshot.roles);
       setIsReady(Boolean(snapshot.username));
     } catch (error) {
-      const status = error instanceof ContractApiError ? error.statusCode : undefined;
-      if (status != 401 && status != 403) {
+      if (!isExpectedBrowserApiError(error)) {
         console.error('CloudApp auth check failed', error);
       }
       setUsername('');

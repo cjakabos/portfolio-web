@@ -1,6 +1,4 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import axios from "axios";
-import MockAdapter from "axios-mock-adapter";
 import { useAuth, CLOUDAPP_AUTH_STATE_CHANGED_EVENT } from "../hooks/useAuth";
 import { useCart } from "../hooks/useCart";
 import { useItems } from "../hooks/useItems";
@@ -34,14 +32,41 @@ const createFetchResponse = (body: string, status: number, contentType = "applic
     text: async () => body,
   } as Response);
 
+const normalizeUrl = (url: string) => new URL(url).toString();
+
 describe("cloudapp hooks", () => {
-  let mock: MockAdapter;
+  type FetchRoute = {
+    method: string;
+    url: string;
+    status?: number;
+    body?: unknown;
+    contentType?: string;
+  };
+
+  let fetchRoutes: FetchRoute[];
   let fetchMock: jest.Mock;
 
   beforeEach(() => {
-    mock = new MockAdapter(axios);
+    fetchRoutes = [];
     fetchMock = jest.fn(async () => {
       throw new Error("Unexpected fetch call");
+    });
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = normalizeUrl(typeof input === "string" ? input : input.toString());
+      const method = (init?.method ?? "GET").toUpperCase();
+      const routeIndex = fetchRoutes.findIndex(
+        (route) => normalizeUrl(route.url) === url && route.method === method,
+      );
+      if (routeIndex < 0) {
+        throw new Error(`Unexpected fetch call: ${method} ${url}`);
+      }
+
+      const route = fetchRoutes.splice(routeIndex, 1)[0];
+      const status = route.status ?? 200;
+      const contentType = route.contentType ?? "application/json";
+      const body = typeof route.body === "string" ? route.body : JSON.stringify(route.body ?? {});
+
+      return createFetchResponse(body, status, contentType);
     });
     global.fetch = fetchMock as typeof fetch;
     window.localStorage.clear();
@@ -52,10 +77,26 @@ describe("cloudapp hooks", () => {
 
   afterEach(() => {
     document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-    mock.restore();
     global.fetch = originalFetch;
     jest.restoreAllMocks();
   });
+
+  const mockFetchJson = (
+    method: string,
+    url: string,
+    body: unknown,
+    status = 200,
+  ) => {
+    fetchRoutes.push({ method: method.toUpperCase(), url, body, status });
+  };
+
+  const getRequestHeaders = (requestInit?: RequestInit) => {
+    if (!requestInit?.headers) {
+      return {};
+    }
+
+    return Object.fromEntries(new Headers(requestInit.headers).entries());
+  };
 
   test("useAuth derives username and roles from auth-check", async () => {
     fetchMock.mockResolvedValueOnce(
@@ -124,21 +165,24 @@ describe("cloudapp hooks", () => {
     const first = [{ id: 1, name: "Item A", price: 5, description: "A" }];
     const second = [...first, { id: 2, name: "Item B", price: 7, description: "B" }];
 
-    mock.onGet(`${API_URL}/item`).replyOnce(200, first);
+    mockFetchJson("GET", `${API_URL}/item`, first);
     await act(async () => {
       await result.current.fetchItems();
     });
     expect(result.current.items).toEqual(first);
 
-    mock.onPost(`${API_URL}/item`).reply(200, {});
-    mock.onGet(`${API_URL}/item`).replyOnce(200, second);
+    mockFetchJson("POST", `${API_URL}/item`, {});
+    mockFetchJson("GET", `${API_URL}/item`, second);
     await act(async () => {
       await result.current.createItem("Item B", "7", "B");
     });
     expect(result.current.items).toEqual(second);
-    const createRequest = mock.history.post.find((request) => request.url === `${API_URL}/item`);
-    expect(createRequest?.headers?.Authorization).toBeUndefined();
-    expect(createRequest?.headers?.["X-XSRF-TOKEN"]).toBe("test-xsrf");
+    const createRequest = fetchMock.mock.calls.find(
+      ([url, init]) => normalizeUrl(url as string) === normalizeUrl(`${API_URL}/item`) && init?.method === "POST",
+    );
+    const createHeaders = getRequestHeaders(createRequest?.[1]);
+    expect(createHeaders.authorization).toBeUndefined();
+    expect(createHeaders["x-xsrf-token"]).toBe("test-xsrf");
   });
 
   test("useCart fetches and updates cart", async () => {
@@ -146,21 +190,21 @@ describe("cloudapp hooks", () => {
     const cartAfterAdd = { id: 1, items: [{ id: 11, name: "Widget", price: 9.99 }], total: 9.99 };
     const cleared = { id: 1, items: [], total: 0 };
 
-    mock.onPost(`${API_URL}/cart/getCart`).reply(200, cartAfterAdd);
+    mockFetchJson("POST", `${API_URL}/cart/getCart`, cartAfterAdd);
     await act(async () => {
       await result.current.fetchCart();
     });
     expect(result.current.cart.items).toHaveLength(1);
     expect(result.current.total).toBe(9.99);
 
-    mock.onPost(`${API_URL}/cart/addToCart`).reply(200, {});
-    mock.onPost(`${API_URL}/cart/getCart`).reply(200, cartAfterAdd);
+    mockFetchJson("POST", `${API_URL}/cart/addToCart`, {});
+    mockFetchJson("POST", `${API_URL}/cart/getCart`, cartAfterAdd);
     await act(async () => {
       await result.current.addToCart({ id: 11 });
     });
     expect(result.current.cart.items).toHaveLength(1);
 
-    mock.onPost(`${API_URL}/cart/clearCart`).reply(200, cleared);
+    mockFetchJson("POST", `${API_URL}/cart/clearCart`, cleared);
     await act(async () => {
       await result.current.clearCart();
     });
@@ -174,28 +218,28 @@ describe("cloudapp hooks", () => {
     const updated = [{ id: 1, title: "n1-u", description: "d1-u" }];
     const empty: any[] = [];
 
-    mock.onGet(`${API_URL}/note/user/alice`).replyOnce(200, initial);
+    mockFetchJson("GET", `${API_URL}/note/user/alice`, initial);
     await act(async () => {
       await result.current.fetchNotes();
     });
     expect(result.current.notes).toEqual(initial);
 
-    mock.onPost(`${API_URL}/note/addNote`).reply(200, {});
-    mock.onGet(`${API_URL}/note/user/alice`).replyOnce(200, initial);
+    mockFetchJson("POST", `${API_URL}/note/addNote`, {});
+    mockFetchJson("GET", `${API_URL}/note/user/alice`, initial);
     await act(async () => {
       await result.current.addNote("n1", "d1");
     });
     expect(result.current.notes).toEqual(initial);
 
-    mock.onPost(`${API_URL}/note/updateNote`).reply(200, {});
-    mock.onGet(`${API_URL}/note/user/alice`).replyOnce(200, updated);
+    mockFetchJson("POST", `${API_URL}/note/updateNote`, {});
+    mockFetchJson("GET", `${API_URL}/note/user/alice`, updated);
     await act(async () => {
       await result.current.updateNote(1, "n1-u", "d1-u");
     });
     expect(result.current.notes).toEqual(updated);
 
-    mock.onDelete(`${API_URL}/note/delete/1`).reply(200, {});
-    mock.onGet(`${API_URL}/note/user/alice`).replyOnce(200, empty);
+    mockFetchJson("DELETE", `${API_URL}/note/delete/1`, {});
+    mockFetchJson("GET", `${API_URL}/note/user/alice`, empty);
     await act(async () => {
       await result.current.deleteNote(1);
     });
@@ -204,7 +248,11 @@ describe("cloudapp hooks", () => {
 
   test("useLogin posts credentials, keeps auth in cookies, and emits auth change", async () => {
     const dispatchSpy = jest.spyOn(window, "dispatchEvent");
-    mock.onPost(`${API_URL}/user/user-login`).reply(200, { message: "Login successful" });
+    mockFetchJson("POST", `${API_URL}/user/user-login`, { message: "Login successful" });
+    mockFetchJson("GET", `${API_URL}/user/auth-check`, {
+      username: "alice",
+      roles: ["ROLE_USER"],
+    });
     const { result } = renderHook(() => useLogin());
 
     await act(async () => {
@@ -213,7 +261,10 @@ describe("cloudapp hooks", () => {
 
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_USERNAME")).toBeNull();
     expect(window.localStorage.getItem("NEXT_PUBLIC_MY_TOKEN")).toBeNull();
-    expect(mock.history.post[0]?.withCredentials).toBe(true);
+    const loginRequest = fetchMock.mock.calls.find(
+      ([url, init]) => normalizeUrl(url as string) === normalizeUrl(`${API_URL}/user/user-login`) && init?.method === "POST",
+    );
+    expect(loginRequest?.[1]?.credentials).toBe("include");
     expect(dispatchSpy).toHaveBeenCalledWith(expect.any(Event));
     expect((dispatchSpy.mock.calls.at(-1)?.[0] as Event | undefined)?.type)
       .toBe(CLOUDAPP_AUTH_STATE_CHANGED_EVENT);
@@ -222,7 +273,7 @@ describe("cloudapp hooks", () => {
 
   test("useLogout calls logout endpoint with credentials and emits auth change", async () => {
     const dispatchSpy = jest.spyOn(window, "dispatchEvent");
-    mock.onPost(`${API_URL}/user/user-logout`).reply(200, {});
+    mockFetchJson("POST", `${API_URL}/user/user-logout`, {});
 
     const { result } = renderHook(() => useLogout());
 
@@ -230,10 +281,13 @@ describe("cloudapp hooks", () => {
       await result.current.logout();
     });
 
-    const lastPost = mock.history.post[mock.history.post.length - 1];
-    expect(lastPost?.withCredentials).toBe(true);
-    expect(lastPost?.headers?.Authorization).toBeUndefined();
-    expect(lastPost?.headers?.["X-XSRF-TOKEN"]).toBe("test-xsrf");
+    const lastPost = fetchMock.mock.calls.find(
+      ([url, init]) => normalizeUrl(url as string) === normalizeUrl(`${API_URL}/user/user-logout`) && init?.method === "POST",
+    );
+    const logoutHeaders = getRequestHeaders(lastPost?.[1]);
+    expect(lastPost?.[1]?.credentials).toBe("include");
+    expect(logoutHeaders.authorization).toBeUndefined();
+    expect(logoutHeaders["x-xsrf-token"]).toBe("test-xsrf");
     expect(dispatchSpy).toHaveBeenCalledWith(expect.any(Event));
     expect((dispatchSpy.mock.calls.at(-1)?.[0] as Event | undefined)?.type)
       .toBe(CLOUDAPP_AUTH_STATE_CHANGED_EVENT);
@@ -254,7 +308,7 @@ describe("cloudapp hooks", () => {
     });
     expect(result.current.errorType).toBe("PASSWORD_MISMATCH");
 
-    mock.onPost(`${API_URL}/user/user-register`).reply(500, {});
+    mockFetchJson("POST", `${API_URL}/user/user-register`, {}, 500);
     await act(async () => {
       await result.current.register({
         firstname: "A",

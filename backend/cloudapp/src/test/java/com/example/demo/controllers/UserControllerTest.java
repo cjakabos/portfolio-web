@@ -4,7 +4,7 @@ import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.*;
 import com.example.demo.model.requests.CreateUserRequest;
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,7 +33,7 @@ public class UserControllerTest {
     private CartRepository cartRepository = mock(CartRepository.class);
 
     private PasswordEncoder encoder = mock(PasswordEncoder.class);
-    private InternalRequestAuthorizer internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
+    private CloudappAccessPolicy cloudappAccessPolicy = mock(CloudappAccessPolicy.class);
 
     private CreateUserRequest r = new CreateUserRequest();
 
@@ -52,8 +52,9 @@ public class UserControllerTest {
         TestUtils.injectObjects(userController, "userRepository", userRepository);
         TestUtils.injectObjects(userController, "cartRepository", cartRepository);
         TestUtils.injectObjects(userController, "passwordEncoder", encoder);
-        TestUtils.injectObjects(userController, "internalRequestAuthorizer", internalRequestAuthorizer);
-        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
+        TestUtils.injectObjects(userController, "cloudappAccessPolicy", cloudappAccessPolicy);
+        when(cloudappAccessPolicy.canAccessUserId(any(), any(), anyLong())).thenReturn(true);
+        when(cloudappAccessPolicy.canAccessUsername(any(), any(), anyString())).thenReturn(true);
 
 
         when(encoder.encode("testpassword")).thenReturn("thisIsHashed");

@@ -54,7 +54,7 @@ class DummyAsyncClient:
 async def test_request_merges_headers_with_expected_precedence(monkeypatch):
     client = HTTPClient(
         base_url="http://example",
-        default_headers={"X-Internal-Auth": "default-token", "X-Default": "default"},
+        default_headers={"X-Internal-Service-Token": "default-token", "X-Default": "default"},
     )
     httpx_client = DummyAsyncClient([DummyResponse(json_payload={"ok": True})])
     monkeypatch.setattr(client, "_get_client", AsyncMock(return_value=httpx_client))
@@ -62,7 +62,7 @@ async def test_request_merges_headers_with_expected_precedence(monkeypatch):
     token = HTTPClient.set_request_context_headers(
         {
             "Authorization": "Bearer from-context",
-            "X-Internal-Auth": "context-token",
+            "X-Internal-Service-Token": "context-token",
         }
     )
     try:
@@ -77,17 +77,17 @@ async def test_request_merges_headers_with_expected_precedence(monkeypatch):
     assert result == {"ok": True}
     sent_headers = httpx_client.calls[0]["headers"]
     assert sent_headers["X-Default"] == "default"
-    assert sent_headers["X-Internal-Auth"] == "context-token"
+    assert sent_headers["X-Internal-Service-Token"] == "context-token"
     assert sent_headers["Authorization"] == "Bearer explicit"
 
 
 def test_request_context_headers_can_be_set_and_reset():
     token = HTTPClient.set_request_context_headers(
-        {"Authorization": "Bearer abc", "X-Internal-Auth": "internal-token"}
+        {"Authorization": "Bearer abc", "X-Internal-Service-Token": "internal-token"}
     )
     assert HTTPClient.get_request_context_headers() == {
         "Authorization": "Bearer abc",
-        "X-Internal-Auth": "internal-token",
+        "X-Internal-Service-Token": "internal-token",
     }
 
     HTTPClient.reset_request_context_headers(token)
@@ -111,14 +111,15 @@ async def test_request_retries_on_failure_and_raises(monkeypatch):
     assert sleep_mock.await_count == 2
 
 
-def test_cloudapp_client_includes_internal_auth_default_header(monkeypatch):
+def test_cloudapp_client_includes_scoped_internal_service_headers(monkeypatch):
     class StubServices:
         cloudapp_url = "http://cloudapp"
         petstore_url = "http://petstore"
         vehicles_url = "http://vehicles"
         ml_url = "http://ml"
         http_timeout = 10
-        internal_service_token = "shared-internal-token"
+        internal_gateway_admin_token = "gateway-token"
+        internal_ai_orchestration_token = "ai-orchestration-token"
 
     class StubConfig:
         services = StubServices()
@@ -127,9 +128,12 @@ def test_cloudapp_client_includes_internal_auth_default_header(monkeypatch):
     monkeypatch.setattr("http_client.get_config", lambda: StubConfig())
 
     cloudapp_client = ServiceHTTPClients.get_cloudapp_client()
-    assert cloudapp_client.default_headers == {"X-Internal-Auth": "shared-internal-token"}
+    assert cloudapp_client.default_headers == {
+        "X-Internal-Service-Name": "ai-orchestration",
+        "X-Internal-Service-Token": "ai-orchestration-token",
+    }
 
-    StubServices.internal_service_token = ""
+    StubServices.internal_ai_orchestration_token = ""
     ServiceHTTPClients._clients.clear()
     cloudapp_client_no_token = ServiceHTTPClients.get_cloudapp_client()
     assert cloudapp_client_no_token.default_headers == {}

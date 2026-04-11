@@ -17,7 +17,7 @@ The scripts are written for `k6` and target the current AI service topology.
 
 - `k6` installed locally or available via Docker
 - the AI orchestration layer reachable directly or through the gateway
-- a valid internal service token when the target requires authenticated access
+- a valid internal service identity header pair when the target requires authenticated access
 
 The orchestration and approvals scripts default to the repo test token
 `test-internal-token`. Override it for real environments.

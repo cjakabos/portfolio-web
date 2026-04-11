@@ -5,14 +5,15 @@ export function aiBaseUrl() {
 }
 
 export function internalToken() {
-  return __ENV.INTERNAL_TOKEN || 'test-internal-token';
+  return __ENV.INTERNAL_TOKEN || 'test-ai-orchestration-token';
 }
 
 export function jsonParams(extraHeaders = {}) {
   return {
     headers: {
       'Content-Type': 'application/json',
-      'X-Internal-Auth': internalToken(),
+      'X-Internal-Service-Name': 'ai-orchestration',
+      'X-Internal-Service-Token': internalToken(),
       ...extraHeaders,
     },
   };
@@ -21,7 +22,8 @@ export function jsonParams(extraHeaders = {}) {
 export function formParams(extraHeaders = {}) {
   return {
     headers: {
-      'X-Internal-Auth': internalToken(),
+      'X-Internal-Service-Name': 'ai-orchestration',
+      'X-Internal-Service-Token': internalToken(),
       ...extraHeaders,
     },
   };

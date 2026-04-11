@@ -52,7 +52,9 @@ Recommended panels:
 
 ```bash
 curl -s http://localhost:8700/approvals/health | jq '{storage, pending_count, orchestrator_available, hitl_manager_available}'
-curl -s http://localhost:8700/approvals/stats -H 'X-Internal-Auth: test-internal-token' | jq
+curl -s http://localhost:8700/approvals/stats \
+  -H 'X-Internal-Service-Name: ai-orchestration' \
+  -H 'X-Internal-Service-Token: test-ai-orchestration-token' | jq
 ```
 
 Recommended panels:

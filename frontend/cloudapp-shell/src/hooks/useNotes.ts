@@ -1,25 +1,6 @@
 import { useState, useCallback } from "react";
-import axios from "axios";
-import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 import { trackEvent } from "../lib/analytics/umami";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-const JSON_HEADERS = {
-    'Content-Type': 'application/json;charset=UTF-8',
-};
-
-const getRequestConfig = () => ({
-    headers: JSON_HEADERS,
-    withCredentials: true,
-});
-
-const getUnsafeRequestConfig = async () => ({
-    headers: {
-        ...(await getCloudAppCsrfHeaders(API_URL)),
-        ...JSON_HEADERS,
-    },
-    withCredentials: true,
-});
+import { getCloudAppSessionClient } from "./cloudappClient";
 
 export const useNotes = (username: string) => {
     const [notes, setNotes] = useState<any[]>([]);
@@ -29,8 +10,8 @@ export const useNotes = (username: string) => {
         if (!username) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/note/user/${username}`, getRequestConfig());
-            setNotes(res.data);
+            const res = await getCloudAppSessionClient().requestJson<any[]>(`/note/user/${username}`);
+            setNotes(res ?? []);
         } catch (error) {
             console.error("Fetch Notes Error", error);
         } finally {
@@ -40,10 +21,10 @@ export const useNotes = (username: string) => {
 
     const addNote = async (title: string, description: string) => {
         try {
-            await axios.post(`${API_URL}/note/addNote`,
-                { user: username, title, description },
-                await getUnsafeRequestConfig()
-            );
+            await getCloudAppSessionClient().requestVoid("/note/addNote", {
+                method: "POST",
+                body: { user: username, title, description },
+            });
             trackEvent("notes_create", {
                 title_length: title.length,
                 description_length: description.length,
@@ -56,10 +37,10 @@ export const useNotes = (username: string) => {
 
     const updateNote = async (id: number, title: string, description: string) => {
         try {
-            await axios.post(`${API_URL}/note/updateNote`,
-                { id, title, description },
-                await getUnsafeRequestConfig()
-            );
+            await getCloudAppSessionClient().requestVoid("/note/updateNote", {
+                method: "POST",
+                body: { id, title, description },
+            });
             trackEvent("notes_update", {
                 note_id: id,
                 title_length: title.length,
@@ -73,7 +54,9 @@ export const useNotes = (username: string) => {
 
     const deleteNote = async (id: number) => {
         try {
-            await axios.delete(`${API_URL}/note/delete/${id}`, await getUnsafeRequestConfig());
+            await getCloudAppSessionClient().requestVoid(`/note/delete/${id}`, {
+                method: "DELETE",
+            });
             trackEvent("notes_delete", { note_id: id });
             await fetchNotes();
         } catch (error) {

@@ -17,13 +17,30 @@ class AuthenticatedPrincipal:
     is_internal: bool = False
 
 
-def _is_internal_service_call(headers: Mapping[str, str]) -> bool:
-    """Return True if the request carries a valid internal service token."""
+def _resolve_internal_service_call(headers: Mapping[str, str]) -> Optional[str]:
+    """Return the internal service name when the request carries valid service credentials."""
     config = get_config()
-    token = config.services.internal_service_token
-    if not token:
-        return False
-    return headers.get("x-internal-auth") == token
+    service_name = headers.get("x-internal-service-name", "").strip()
+    service_token = headers.get("x-internal-service-token", "").strip()
+
+    if not service_name or not service_token:
+        return None
+
+    if (
+        service_name == "gateway-admin-proxy"
+        and config.services.internal_gateway_admin_token
+        and service_token == config.services.internal_gateway_admin_token
+    ):
+        return service_name
+
+    if (
+        service_name == "ai-orchestration"
+        and config.services.internal_ai_orchestration_token
+        and service_token == config.services.internal_ai_orchestration_token
+    ):
+        return service_name
+
+    return None
 
 
 def _build_cookie_header(cookies: Optional[Mapping[str, str]]) -> Optional[str]:
@@ -140,12 +157,13 @@ async def authenticate_principal(
 
     Public callers must present a valid CloudApp session (cookie or bearer
     token), which is verified by CloudApp directly. Internal service traffic
-    may use the shared internal token instead.
+    may use explicit service identity headers instead.
     """
-    if _is_internal_service_call(headers):
+    internal_service_name = _resolve_internal_service_call(headers)
+    if internal_service_name:
         roles = ("ROLE_ADMIN",) if require_admin else ()
         return AuthenticatedPrincipal(
-            username="internal-service",
+            username=f"internal:{internal_service_name}",
             roles=roles,
             is_internal=True,
         )

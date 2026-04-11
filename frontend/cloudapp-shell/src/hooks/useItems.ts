@@ -1,9 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
-import axios from "axios";
-import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
+import { useState, useCallback } from "react";
 import { trackEvent } from "../lib/analytics/umami";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
+import { getCloudAppSessionClient } from "./cloudappClient";
 
 export const useItems = () => {
     const [items, setItems] = useState<any[]>([]);
@@ -12,10 +9,8 @@ export const useItems = () => {
     const fetchItems = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/item`, {
-                withCredentials: true,
-            });
-            setItems(res.data);
+            const res = await getCloudAppSessionClient().requestJson<any[]>("/item");
+            setItems(res ?? []);
         } catch (error) {
             console.error("Fetch Items Error", error);
         } finally {
@@ -25,14 +20,10 @@ export const useItems = () => {
 
     const createItem = async (name: string, price: string, description: string) => {
         try {
-            const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
-            await axios.post(`${API_URL}/item`,
-                { name, price, description },
-                {
-                    headers: { ...csrfHeaders, 'Content-Type': 'application/json;charset=UTF-8' },
-                    withCredentials: true,
-                }
-            );
+            await getCloudAppSessionClient().requestVoid("/item", {
+                method: "POST",
+                body: { name, price, description },
+            });
             trackEvent("shop_item_create", {
                 name_length: name.length,
                 price: Number(price),

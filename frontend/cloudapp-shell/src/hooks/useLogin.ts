@@ -1,7 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import { ensureCloudAppCsrfToken } from "./cloudappCsrf";
 import { notifyCloudAppAuthStateChanged } from "./useAuth";
+import { getCloudAppApiUrl, loginCloudAppUser } from "./cloudappClient";
 
 interface LoginValues {
   username?: string;
@@ -19,24 +19,20 @@ export const useLogin = () => {
     try {
       const username = values.username?.trim().toLowerCase() ?? "";
       const password = values.password ?? "";
-      // Ideally, use an environment variable for the base URL
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-      const response = await axios.post(
-        `${API_URL}/user/user-login`,
-        { username, password },
-        {
-          headers: { "Content-Type": "application/json;charset=UTF-8" },
-          withCredentials: true,
-        }
-      );
+      const apiUrl = getCloudAppApiUrl();
+      const response = await loginCloudAppUser({
+        username,
+        password,
+        apiUrl,
+      });
       try {
-        await ensureCloudAppCsrfToken(API_URL);
+        await ensureCloudAppCsrfToken(apiUrl);
       } catch (csrfError) {
         // Keep login successful even if CSRF bootstrap fails; write requests will retry.
         console.warn("CSRF bootstrap after login failed", csrfError);
       }
       notifyCloudAppAuthStateChanged();
-      return response.data;
+      return response;
     } catch (err: any) {
       console.error("Login Error:", err);
       setError("Something went wrong. Please check your credentials.");

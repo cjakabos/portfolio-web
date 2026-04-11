@@ -1,7 +1,7 @@
 package com.example.demo.controllers;
 
+import com.example.demo.commerce.IItemService;
 import com.example.demo.model.requests.CreateItemRequest;
-import com.example.demo.model.service.inf.IItemService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

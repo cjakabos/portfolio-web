@@ -113,6 +113,6 @@ RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/ssl /tmp \
     && chown nginx:nginx /etc/nginx/localhost+3-key.pub \
     && chmod 600 /etc/nginx/ssl/localhost+3-key.pem
 
-CMD ["/bin/sh", "-c", "envsubst '${INTERNAL_SERVICE_TOKEN}' < /etc/nginx/locations.conf.template > /etc/nginx/locations.conf && exec nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "envsubst '${INTERNAL_AI_ORCHESTRATION_TOKEN} ${INTERNAL_GATEWAY_ADMIN_TOKEN}' < /etc/nginx/locations.conf.template > /etc/nginx/locations.conf && exec nginx -g 'daemon off;'"]
 
 EXPOSE 80 443
