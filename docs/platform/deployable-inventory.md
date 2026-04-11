@@ -49,6 +49,10 @@ useful as the team evolves.
 | `next-chatllm` | Next.js remote | `http://localhost:5333` | Loaded by shell via module federation | Frontend platform engineer | `Supporting` | Local LLM chat UX |
 | `ai-orchestration-monitor` | Vite/React static app | `http://localhost:5010` | Operator app for `/ai` workflows through gateway | Operator app engineer | `Operator tooling` | Operator dashboards, approvals, orchestration, RAG |
 
+ChatLLM and Jira AI model traffic now flows through each remote's own `/api/chat`
+and `/api/models` boundary. Browser clients should use the remotes' public URLs
+plus `AI_REMOTE_CORS_ALLOWED_ORIGINS` rather than calling Ollama directly.
+
 ## Product And Operator Backend Services
 
 | Service | Runtime | Internal port | Gateway path | Owner role | Showcase tier | Primary stores/dependencies | Notes |

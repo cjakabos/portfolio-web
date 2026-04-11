@@ -23,6 +23,7 @@ from db_config import get_db_connection, get_sqlalchemy_connection
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
+TRUE_VALUES = {"1", "true", "yes", "on"}
 
 # Set up variables for use in our script
 app = Flask(__name__)
@@ -267,5 +268,36 @@ def addCustomer(pg=pg):
 
 app.wsgi_app = DispatcherMiddleware(index, {default_prefix: app.wsgi_app})
 
+
+def is_debug_enabled() -> bool:
+    """Enable Flask debug mode only when it is explicitly requested."""
+    return os.getenv("FLASK_DEBUG", "").strip().lower() in TRUE_VALUES
+
+
+def get_runtime_host() -> str:
+    """Resolve the host for local development startup."""
+    return os.getenv("HOST", "0.0.0.0")
+
+
+def get_runtime_port() -> int:
+    """Resolve the local development port, tolerating bad env values."""
+    raw_port = os.getenv("PORT", os.getenv("LISTEN_PORT", "8600"))
+    try:
+        return int(raw_port)
+    except (TypeError, ValueError):
+        logger.warning("Invalid PORT/LISTEN_PORT value '%s'; defaulting to 8600", raw_port)
+        return 8600
+
+
+def run_dev_server() -> None:
+    """Run the built-in Flask server for local development only."""
+    app.run(
+        host=get_runtime_host(),
+        port=get_runtime_port(),
+        debug=is_debug_enabled(),
+        threaded=True,
+    )
+
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8600, debug=True, threaded=True)
+    run_dev_server()

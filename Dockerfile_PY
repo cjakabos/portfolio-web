@@ -3,7 +3,7 @@
 #
 # Replaced two CMD instructions (only last CMD ran) with a
 #   single entrypoint script that runs init_segmentationdb.py first,
-#   then exec's app.py.
+#   then exec's Gunicorn.
 # Added HEALTHCHECK using the Flask /health endpoint.
 # Use --no-cache-dir for reproducible installs.
 # ===========================================================================
@@ -26,15 +26,17 @@ WORKDIR /src
 
 # Create an entrypoint script that:
 #   1. Runs the DB initialization script
-#   2. exec's the Flask app so it becomes PID 1
-RUN printf '#!/bin/sh\nset -e\necho "Running database initialization..."\npython3 init_segmentationdb.py\necho "Starting Flask application..."\nexec python3 app.py\n' > /entrypoint.sh \
+#   2. exec's Gunicorn so it becomes PID 1
+RUN printf '#!/bin/sh\nset -e\necho "Running database initialization..."\npython3 init_segmentationdb.py\necho "Starting ML pipeline with Gunicorn..."\nexec gunicorn --bind 0.0.0.0:${PORT:-8600} --workers ${GUNICORN_WORKERS:-2} --timeout ${GUNICORN_TIMEOUT:-300} --access-logfile - --error-logfile - wsgi:application\n' > /entrypoint.sh \
     && chmod +x /entrypoint.sh
 
 # Health check against the Flask /health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -sf http://localhost:${SERVICE_PORT:-8600}/mlops-segmentation/health || exit 1
+    CMD curl -sf http://localhost:${PORT:-8600}/mlops-segmentation/health || exit 1
 
-ENV LISTEN_PORT=$SERVICE_PORT
+ENV LISTEN_PORT=$SERVICE_PORT \
+    PORT=$SERVICE_PORT \
+    FLASK_DEBUG=0
 
 EXPOSE $SERVICE_PORT
 

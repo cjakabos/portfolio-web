@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from 'ai';
+import { assertAiModelServiceHealthy, buildRemoteApiUrl, fetchAiModels, formatOllamaModelSize, getAiRemoteErrorCode, type OllamaModel } from '@portfolio/api-clients';
 import { trackJiraEvent } from '../lib/analytics';
 
 // =============================================================================
@@ -54,27 +55,10 @@ const gatewayBaseUrl =
   process.env.NEXT_PUBLIC_GATEWAY_BASE_URL
     || (isNativeAndroidRuntime() ? androidNativeGatewayBaseUrl : defaultGatewayBaseUrl);
 const jiraProxy = `${gatewayBaseUrl}/jiraproxy/webDomain`;
-const ollamaBaseUrl = "http://localhost:11434";
-const chatApiUrl = "http://localhost:5333/api/chat";
+const modelsApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_JIRA_URL, '/api/models');
+const chatApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_JIRA_URL, '/api/chat');
 const MIN_BATCH_COUNT = 1;
 const MAX_BATCH_COUNT = 20;
-
-// Type for Ollama model
-interface OllamaModel {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-  details: {
-    parent_model: string;
-    format: string;
-    family: string;
-    families: string[];
-    parameter_size: string;
-    quantization_level: string;
-  };
-}
 
 // --- Sub-Components ---
 
@@ -326,7 +310,7 @@ const CloudJira: React.FC = () => {
     status
   } = useChat({
     transport: new DefaultChatTransport({
-      api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"
+      api: chatApiUrl
     }) as any,
   });
 
@@ -395,11 +379,6 @@ const CloudJira: React.FC = () => {
   }, [resize, stopResizing]);
 
   // --- Helper Functions ---
-
-  function formatModelSize(bytes: number): string {
-    const gb = bytes / (1024 * 1024 * 1024);
-    return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
-  }
 
   function validateJiraConfig(): string[] {
     const missingVars: string[] = [];
@@ -506,25 +485,7 @@ const CloudJira: React.FC = () => {
     setModelsError(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const allModels = data.models || [];
-
-      // Filter out embedding models - they can't be used for chat
-      const models = allModels.filter((m: OllamaModel) =>
-        !m.name.toLowerCase().includes('embed')
-      );
+      const models = await fetchAiModels(modelsApiUrl, { timeoutMs: 5000 });
 
       if (models.length === 0) {
         trackJiraEvent('jira_ai_models_refresh', {
@@ -549,8 +510,7 @@ const CloudJira: React.FC = () => {
     } catch (error: any) {
       // Silently handle the error - don't let it bubble up to Next.js error overlay
       console.warn("Ollama connection check:", error?.message || "Connection failed");
-
-      const isTimeout = error?.name === 'AbortError' || error?.message?.includes('timeout');
+      const isTimeout = getAiRemoteErrorCode(error) === 'timeout';
 
       if (isTimeout) {
         setModelsError("timeout");
@@ -709,14 +669,7 @@ const CloudJira: React.FC = () => {
   async function handleChatWithTicket(ticket: any, includeChildren: boolean) {
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 2000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -743,14 +696,7 @@ const CloudJira: React.FC = () => {
   async function requestBatchFromAI(count: number, parent?: any) {
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 2000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -794,14 +740,7 @@ const CloudJira: React.FC = () => {
 
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 2000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -1127,7 +1066,8 @@ const CloudJira: React.FC = () => {
         {modelsError === "connection_failed" && (
           <div className="space-y-3">
             <Alert severity="error" title="Cannot connect to Ollama">
-              <p className="mb-3">Unable to reach the Ollama server at <code className="bg-red-100 dark:bg-red-800 px-1 rounded">{ollamaBaseUrl}</code></p>
+              <p className="mb-2">The Jira AI remote could not load models from its configured AI backend.</p>
+              <p className="mb-3 text-xs">Remote endpoint: <code className="bg-red-100 dark:bg-red-800 px-1 rounded">{modelsApiUrl}</code></p>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-red-200 dark:border-red-700 mt-3">
                 <h5 className="font-bold text-gray-900 dark:text-white mb-3">🚀 Quick Setup Guide</h5>
@@ -1296,13 +1236,13 @@ const CloudJira: React.FC = () => {
             >
               {modelsLoading ? (
                 <option value="" disabled>Loading models...</option>
-              ) : (
-                availableModels.map((model) => (
-                  <option key={model.name} value={model.name}>
-                    {model.name} ({model.details.parameter_size} • {formatModelSize(model.size)})
-                  </option>
-                ))
-              )}
+                ) : (
+                  availableModels.map((model) => (
+                    <option key={model.name} value={model.name}>
+                      {model.name} ({model.details.parameter_size} • {formatOllamaModelSize(model.size)})
+                    </option>
+                  ))
+                )}
             </select>
           </div>
         )}

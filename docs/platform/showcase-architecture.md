@@ -84,7 +84,8 @@ What this shows:
   module federation when extended profiles are enabled
 - the gateway remains the policy boundary for both product and operator traffic
 - the Jira integration is split: Jira CRUD goes through the gateway and
-  `jiraproxy`, while the Jira remote owns its local Ollama-assisted AI features
+  `jiraproxy`, while the Jira and ChatLLM remotes own their own `/api/*`
+  boundary for browser-safe Ollama access
 - the AI layer is a deliberate second act for the operator story, not a
   requirement for the default portfolio walkthrough
 

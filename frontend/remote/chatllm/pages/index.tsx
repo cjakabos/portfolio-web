@@ -1,30 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
+import { assertAiModelServiceHealthy, buildRemoteApiUrl, fetchAiModels, formatOllamaModelSize, getAiRemoteErrorCode, type OllamaModel } from '@portfolio/api-clients';
 import { Bot, User, Send, Sparkles, RefreshCw, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 
 // =============================================================================
 // URL CONFIGURATION
 // =============================================================================
-const ollamaBaseUrl = "http://localhost:11434";
-
-// Type for Ollama model
-interface OllamaModel {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-  details: {
-    parent_model: string;
-    format: string;
-    family: string;
-    families: string[];
-    parameter_size: string;
-    quantization_level: string;
-  };
-}
+const chatApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL, '/api/chat');
+const modelsApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL, '/api/models');
 
 // Alert Component
 const Alert = ({ severity, title, children }: { severity: 'error' | 'warning' | 'info', title: string, children: React.ReactNode }) => {
@@ -68,18 +53,12 @@ const ChatLLM: React.FC = () => {
     status
   } = useChat({
     transport: new DefaultChatTransport({
-      api: "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":5333/api/chat"
+      api: chatApiUrl
     }),
   });
 
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
-
-  // Helper function to format model size
-  function formatModelSize(bytes: number): string {
-    const gb = bytes / (1024 * 1024 * 1024);
-    return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
-  }
 
   // Fetch available models from Ollama
   async function fetchOllamaModels(source: 'initial' | 'manual' | 'retry' = 'manual') {
@@ -87,25 +66,7 @@ const ChatLLM: React.FC = () => {
     setModelsError(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const allModels = data.models || [];
-
-      // Filter out embedding models - they can't be used for chat
-      const models = allModels.filter((m: OllamaModel) =>
-        !m.name.toLowerCase().includes('embed')
-      );
+      const models = await fetchAiModels(modelsApiUrl, { timeoutMs: 15000 });
 
       if (models.length === 0) {
         setModelsError("no_models");
@@ -126,8 +87,7 @@ const ChatLLM: React.FC = () => {
       }
     } catch (error: any) {
       console.warn("Ollama connection check:", error?.message || "Connection failed");
-
-      const isTimeout = error?.name === 'AbortError' || error?.message?.includes('timeout');
+      const isTimeout = getAiRemoteErrorCode(error) === 'timeout';
 
       if (isTimeout) {
         setModelsError("timeout");
@@ -170,14 +130,7 @@ const ChatLLM: React.FC = () => {
 
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const response = await fetch(`${ollamaBaseUrl}/api/tags`, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 5000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -230,7 +183,8 @@ const ChatLLM: React.FC = () => {
         {modelsError === "connection_failed" && (
           <div className="space-y-3">
             <Alert severity="error" title="Cannot connect to Ollama">
-              <p className="mb-3">Unable to reach the Ollama server at <code className="bg-red-100 dark:bg-red-800 px-1 rounded">{ollamaBaseUrl}</code></p>
+              <p className="mb-2">The ChatLLM remote could not load models from its configured AI backend.</p>
+              <p className="mb-3 text-xs">Remote endpoint: <code className="bg-red-100 dark:bg-red-800 px-1 rounded">{modelsApiUrl}</code></p>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-red-200 dark:border-red-700 mt-3">
                 <h5 className="font-bold text-gray-900 dark:text-white mb-3">🚀 Quick Setup Guide</h5>
@@ -410,7 +364,7 @@ const ChatLLM: React.FC = () => {
                 ) : (
                   availableModels.map((model) => (
                     <option key={model.name} value={model.name}>
-                      {model.name} ({model.details.parameter_size} • {formatModelSize(model.size)})
+                      {model.name} ({model.details.parameter_size} • {formatOllamaModelSize(model.size)})
                     </option>
                   ))
                 )}
