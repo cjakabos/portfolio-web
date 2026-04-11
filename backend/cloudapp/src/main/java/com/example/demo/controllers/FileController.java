@@ -4,7 +4,7 @@ import com.example.demo.model.persistence.File;
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.FileRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,15 +32,7 @@ public class FileController {
     @Autowired
     public UserRepository userRepository;
     @Autowired
-    private InternalRequestAuthorizer internalRequestAuthorizer;
-
-    private boolean isAuthorized(Authentication auth, String username, HttpServletRequest request) {
-        if (internalRequestAuthorizer.isInternalRequest(request)) {
-            return true;
-        }
-        String authenticated = getAuthenticatedUsername(auth);
-        return authenticated != null && authenticated.equals(username);
-    }
+    private CloudappAccessPolicy cloudappAccessPolicy;
 
     @GetMapping("/user/{username}")
     public ResponseEntity<List<File>> getNotes(
@@ -48,7 +40,7 @@ public class FileController {
             Authentication auth,
             HttpServletRequest request
     ) {
-        if (!isAuthorized(auth, username, request)) {
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -68,16 +60,8 @@ public class FileController {
             return ResponseEntity.notFound().build();
         }
 
-        if (!internalRequestAuthorizer.isInternalRequest(request)) {
-            String authenticated = getAuthenticatedUsername(auth);
-            if (authenticated == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-
-            User authenticatedUser = userRepository.findByUsername(authenticated);
-            if (authenticatedUser == null || !authenticatedUser.getId().equals(file.get().getUserid())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+        if (!cloudappAccessPolicy.canAccessUserId(auth, request, file.get().getUserid())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         return ResponseEntity.ok()
@@ -93,7 +77,7 @@ public class FileController {
             @RequestParam("username") String username,
             Authentication auth,
             HttpServletRequest request) {
-        if (!isAuthorized(auth, username, request)) {
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -150,34 +134,11 @@ public class FileController {
             return ResponseEntity.notFound().build();
         }
 
-        if (!internalRequestAuthorizer.isInternalRequest(request)) {
-            String authenticated = getAuthenticatedUsername(auth);
-            if (authenticated == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-
-            User authenticatedUser = userRepository.findByUsername(authenticated);
-            if (authenticatedUser == null || !authenticatedUser.getId().equals(file.get().getUserid())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+        if (!cloudappAccessPolicy.canAccessUserId(auth, request, file.get().getUserid())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         fileRepository.deleteById(fileId);
         return ResponseEntity.ok().build();
     }
-
-    private String getAuthenticatedUsername(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof User user) {
-            return user.getUsername();
-        }
-        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            return springUser.getUsername();
-        }
-        return null;
-    }
-
 }

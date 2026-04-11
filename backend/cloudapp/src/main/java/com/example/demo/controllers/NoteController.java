@@ -6,7 +6,7 @@ import com.example.demo.model.persistence.repositories.NoteRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateNoteRequest;
 import com.example.demo.model.requests.UpdateNoteRequest;
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,29 +26,7 @@ public class NoteController {
     public UserRepository userRepository;
 
     @Autowired
-    private InternalRequestAuthorizer internalRequestAuthorizer;
-
-    private String getAuthenticatedUsername(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof User user) {
-            return user.getUsername();
-        }
-        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            return springUser.getUsername();
-        }
-        return null;
-    }
-
-    private boolean isAuthorized(Authentication auth, String username, HttpServletRequest request) {
-        if (internalRequestAuthorizer.isInternalRequest(request)) {
-            return true;
-        }
-        String authenticated = getAuthenticatedUsername(auth);
-        return authenticated != null && authenticated.equals(username);
-    }
+    private CloudappAccessPolicy cloudappAccessPolicy;
 
     @GetMapping("/user/{username}")
     public ResponseEntity<List<Note>> getNotes(
@@ -56,7 +34,7 @@ public class NoteController {
             Authentication auth,
             HttpServletRequest request
     ) {
-        if (!isAuthorized(auth, username, request)) {
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         User user = userRepository.findByUsername(username);
@@ -74,7 +52,7 @@ public class NoteController {
         if (note.getUser() == null || note.getTitle() == null || note.getDescription() == null) {
             return ResponseEntity.badRequest().build();
         }
-        if (!isAuthorized(auth, note.getUser(), request)) {
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, note.getUser())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (note.getDescription().length() < 1000) {
@@ -105,15 +83,8 @@ public class NoteController {
             return ResponseEntity.notFound().build();
         }
 
-        if (!internalRequestAuthorizer.isInternalRequest(request)) {
-            String authenticated = getAuthenticatedUsername(auth);
-            if (authenticated == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            User authenticatedUser = userRepository.findByUsername(authenticated);
-            if (authenticatedUser == null || !authenticatedUser.getId().equals(existingNote.getUserid())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+        if (!cloudappAccessPolicy.canAccessUserId(auth, request, existingNote.getUserid())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         if (noteRequest.getDescription().length() < 1000) {
@@ -133,15 +104,8 @@ public class NoteController {
             return ResponseEntity.notFound().build();
         }
 
-        if (!internalRequestAuthorizer.isInternalRequest(request)) {
-            String authenticated = getAuthenticatedUsername(auth);
-            if (authenticated == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            User authenticatedUser = userRepository.findByUsername(authenticated);
-            if (authenticatedUser == null || !authenticatedUser.getId().equals(existingNote.getUserid())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+        if (!cloudappAccessPolicy.canAccessUserId(auth, request, existingNote.getUserid())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         noteRepository.deleteById(id);

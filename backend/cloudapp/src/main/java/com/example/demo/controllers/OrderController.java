@@ -1,6 +1,6 @@
 package com.example.demo.controllers;
 
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import com.example.demo.model.persistence.*;
@@ -20,41 +20,19 @@ public class OrderController {
 
     private final IOrderService orderService;
 
-    private final InternalRequestAuthorizer internalRequestAuthorizer;
+    private final CloudappAccessPolicy cloudappAccessPolicy;
 
-    public OrderController(IOrderService orderService, InternalRequestAuthorizer internalRequestAuthorizer) {
+    public OrderController(IOrderService orderService, CloudappAccessPolicy cloudappAccessPolicy) {
         this.orderService = orderService;
-        this.internalRequestAuthorizer = internalRequestAuthorizer;
+        this.cloudappAccessPolicy = cloudappAccessPolicy;
     }
 
-    private String getAuthenticatedUsername(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof User user) {
-            return user.getUsername();
-        }
-        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            return springUser.getUsername();
-        }
-        return null;
-    }
-
-    private boolean isAuthorized(Authentication auth, String username, HttpServletRequest request) {
-        if (internalRequestAuthorizer.isInternalRequest(request)) {
-            return true;
-        }
-        String authenticated = getAuthenticatedUsername(auth);
-        return authenticated != null && authenticated.equals(username);
-    }
-
-    private void logForbidden(String action, String username, Authentication auth) {
+    private void logForbidden(String action, String username, Authentication auth, HttpServletRequest request) {
         log.warn(
                 "Rejected {} request for username={} from authenticatedUser={}",
                 action,
                 username,
-                getAuthenticatedUsername(auth));
+                cloudappAccessPolicy.resolveAuthenticatedUsername(auth, request).orElse("anonymous"));
     }
 
     private <T> ResponseEntity<T> notFound(String action, String username) {
@@ -71,8 +49,8 @@ public class OrderController {
         if (!orderService.userExists(username)) {
             return notFound("order-submit", username);
         }
-        if (!isAuthorized(auth, username, request)) {
-            logForbidden("order-submit", username, auth);
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
+            logForbidden("order-submit", username, auth, request);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -88,8 +66,8 @@ public class OrderController {
         if (!orderService.userExists(username)) {
             return notFound("order-history", username);
         }
-        if (!isAuthorized(auth, username, request)) {
-            logForbidden("order-history", username, auth);
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
+            logForbidden("order-history", username, auth, request);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

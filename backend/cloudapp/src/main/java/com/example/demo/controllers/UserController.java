@@ -1,6 +1,6 @@
 package com.example.demo.controllers;
 
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 import com.example.demo.security.UserRoleAuthorityService;
 import com.example.demo.utilities.JwtUtilities;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,7 +52,7 @@ public class UserController {
     private JwtUtilities jwtUtilities;
 
     @Autowired
-    private InternalRequestAuthorizer internalRequestAuthorizer;
+    private CloudappAccessPolicy cloudappAccessPolicy;
 
     @Autowired(required = false)
     private UserRoleAuthorityService userRoleAuthorityService;
@@ -60,33 +60,11 @@ public class UserController {
     private static final String AUTH_COOKIE_NAME = "CLOUDAPP_AUTH";
     private static final String FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
 
-    private String getAuthenticatedUsername(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof User user) {
-            return user.getUsername();
-        }
-        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            return springUser.getUsername();
-        }
-        return null;
-    }
-
-    private boolean isAuthorizedUserAccess(Authentication auth, String username, HttpServletRequest request) {
-        if (internalRequestAuthorizer.isInternalRequest(request)) {
-            return true;
-        }
-        String authenticated = getAuthenticatedUsername(auth);
-        return authenticated != null && authenticated.equals(username);
-    }
-
     @GetMapping("/id/{id}")
     public ResponseEntity<User> findById(@PathVariable Long id, Authentication auth, HttpServletRequest request) {
         return userRepository.findById(id)
                 .map(found -> {
-                    if (!isAuthorizedUserAccess(auth, found.getUsername(), request)) {
+                    if (!cloudappAccessPolicy.canAccessUserId(auth, request, found.getId())) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).<User>build();
                     }
                     return ResponseEntity.ok(found);
@@ -104,7 +82,7 @@ public class UserController {
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!isAuthorizedUserAccess(auth, username, request)) {
+        if (!cloudappAccessPolicy.canAccessUsername(auth, request, username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(user);
@@ -251,7 +229,7 @@ public class UserController {
 
     @GetMapping("/auth-check")
     public ResponseEntity<?> authCheck(Authentication auth) {
-        String authenticatedUsername = getAuthenticatedUsername(auth);
+        String authenticatedUsername = cloudappAccessPolicy.resolveAuthenticatedUsername(auth).orElse(null);
         if (authenticatedUsername == null || authenticatedUsername.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
@@ -283,7 +261,7 @@ public class UserController {
      */
     @GetMapping("/admin/auth-check")
     public ResponseEntity<?> adminAuthCheck(Authentication auth) {
-        String authenticatedUsername = getAuthenticatedUsername(auth);
+        String authenticatedUsername = cloudappAccessPolicy.resolveAuthenticatedUsername(auth).orElse("");
 
         List<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -307,7 +285,7 @@ public class UserController {
             @RequestBody ChangePasswordRequest changePasswordRequest,
             Authentication auth
     ) {
-        String authenticatedUsername = getAuthenticatedUsername(auth);
+        String authenticatedUsername = cloudappAccessPolicy.resolveAuthenticatedUsername(auth).orElse(null);
         if (authenticatedUsername == null || authenticatedUsername.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
