@@ -1,11 +1,10 @@
-package com.example.demo.model.service;
+package com.example.demo.commerce;
 
 import com.example.demo.exceptions.RequestValidationException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.model.persistence.Item;
 import com.example.demo.model.persistence.repositories.ItemRepository;
 import com.example.demo.model.requests.CreateItemRequest;
-import com.example.demo.model.service.inf.IItemService;
 import java.math.BigDecimal;
 import java.util.List;
 import org.slf4j.Logger;

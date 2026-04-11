@@ -1,4 +1,4 @@
-package com.example.demo.model.service;
+package com.example.demo.commerce;
 
 import com.example.demo.exceptions.RequestValidationException;
 import com.example.demo.exceptions.ResourceNotFoundException;
@@ -6,7 +6,6 @@ import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.UserOrder;
 import com.example.demo.model.persistence.repositories.OrderRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
-import com.example.demo.model.service.inf.IOrderService;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
