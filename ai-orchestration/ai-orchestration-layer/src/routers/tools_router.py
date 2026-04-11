@@ -9,257 +9,30 @@
 import logging
 import time
 import json
-import inspect
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Body, Request, Depends
-from pydantic import BaseModel, Field
 from core.app_state import AIControlPlaneState, get_ai_control_plane_state
+from services.downstream_headers import extract_downstream_headers
+from services.tool_catalog import (
+    OllamaStatusResponse,
+    ToolDiscoveryResponse,
+    ToolInfo,
+    ToolInvocationRequest,
+    ToolInvocationResponse,
+    get_tool_category,
+    tool_to_info,
+)
 from tools.http_client import HTTPClient
 
 # Configure Router
 router = APIRouter(prefix="/tools", tags=["Tools"])
 logger = logging.getLogger(__name__)
 
-# ============================================================================
-# PYDANTIC MODELS
-# ============================================================================
-
-class ToolParameter(BaseModel):
-    """Schema for a tool parameter"""
-    name: str
-    type: str
-    description: str
-    required: bool
-    default: Optional[Any] = None
-
-
-class ToolInfo(BaseModel):
-    """Schema for tool information"""
-    name: str
-    description: str
-    category: str
-    parameters: List[ToolParameter]
-    examples: Optional[List[str]] = []
-
-
-class ToolDiscoveryResponse(BaseModel):
-    """Response for tool discovery endpoints"""
-    tools: List[ToolInfo]
-    total: int
-    categories: List[str]
-
-
-class ToolInvocationRequest(BaseModel):
-    """Request body for tool invocation"""
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-
-
-class ToolInvocationResponse(BaseModel):
-    """Response for tool invocation"""
-    tool: str
-    success: bool
-    result: Any
-    latency_ms: int
-    error: Optional[str] = None
-
-
-class OllamaStatusResponse(BaseModel):
-    """Response for Ollama connectivity check"""
-    connected: bool
-    error: Optional[str] = None
-    models: List[str] = []
-
-
 def _require_tool_manager(state: AIControlPlaneState):
     if state.tool_manager is None:
         raise HTTPException(status_code=503, detail="Tool manager not initialized")
     return state.tool_manager
-
-
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-def _get_tool_category(tool) -> str:
-    """
-    Determine the category of a tool based on its name or attributes.
-    Maps tools to their service categories.
-    """
-    tool_name = tool.name.lower()
-    
-    # Check for explicit category attribute
-    if hasattr(tool, 'category'):
-        return tool.category
-    
-    # Categorize by naming patterns
-    if any(kw in tool_name for kw in ['user', 'item', 'cart', 'order', 'note', 'room']):
-        return 'cloudapp'
-    elif any(kw in tool_name for kw in ['pet', 'employee', 'schedule', 'customer']):
-        return 'petstore'
-    elif any(kw in tool_name for kw in ['vehicle', 'car', 'make', 'model']):
-        return 'vehicles'
-    elif any(kw in tool_name for kw in ['segment', 'predict', 'ml', 'diagnostic']):
-        return 'ml'
-    elif any(kw in tool_name for kw in ['proxy', 'http', 'request']):
-        return 'proxy'
-    else:
-        return 'utility'
-
-
-def _extract_parameters_from_tool(tool) -> List[ToolParameter]:
-    """
-    Extract parameter schema from a LangChain tool.
-    Handles both Pydantic schema and function signature inspection.
-    """
-    parameters = []
-    
-    try:
-        # Method 1: Try to get from args_schema (Pydantic model)
-        if hasattr(tool, 'args_schema') and tool.args_schema is not None:
-            schema = tool.args_schema
-            if hasattr(schema, 'model_fields'):
-                # Pydantic v2
-                for field_name, field_info in schema.model_fields.items():
-                    param_type = 'string'  # Default
-                    if hasattr(field_info, 'annotation'):
-                        annotation = field_info.annotation
-                        if annotation == int:
-                            param_type = 'integer'
-                        elif annotation == float:
-                            param_type = 'number'
-                        elif annotation == bool:
-                            param_type = 'boolean'
-                        elif annotation == list or (hasattr(annotation, '__origin__') and annotation.__origin__ == list):
-                            param_type = 'array'
-                        elif annotation == dict or (hasattr(annotation, '__origin__') and annotation.__origin__ == dict):
-                            param_type = 'object'
-                    
-                    parameters.append(ToolParameter(
-                        name=field_name,
-                        type=param_type,
-                        description=field_info.description or f"Parameter: {field_name}",
-                        required=field_info.is_required() if hasattr(field_info, 'is_required') else True,
-                        default=field_info.default if field_info.default is not None else None
-                    ))
-                return parameters
-            elif hasattr(schema, '__fields__'):
-                # Pydantic v1
-                for field_name, field in schema.__fields__.items():
-                    param_type = 'string'
-                    if field.outer_type_ == int:
-                        param_type = 'integer'
-                    elif field.outer_type_ == float:
-                        param_type = 'number'
-                    elif field.outer_type_ == bool:
-                        param_type = 'boolean'
-                    
-                    parameters.append(ToolParameter(
-                        name=field_name,
-                        type=param_type,
-                        description=field.field_info.description or f"Parameter: {field_name}",
-                        required=field.required,
-                        default=field.default if field.default is not None else None
-                    ))
-                return parameters
-        
-        # Method 2: Inspect function signature
-        func = tool.func if hasattr(tool, 'func') else (tool._run if hasattr(tool, '_run') else None)
-        if func is not None:
-            sig = inspect.signature(func)
-            for param_name, param in sig.parameters.items():
-                if param_name in ['self', 'cls', 'run_manager', 'kwargs', 'args']:
-                    continue
-                
-                param_type = 'string'
-                if param.annotation != inspect.Parameter.empty:
-                    if param.annotation == int:
-                        param_type = 'integer'
-                    elif param.annotation == float:
-                        param_type = 'number'
-                    elif param.annotation == bool:
-                        param_type = 'boolean'
-                    elif param.annotation == list:
-                        param_type = 'array'
-                    elif param.annotation == dict:
-                        param_type = 'object'
-                
-                default_value = None if param.default == inspect.Parameter.empty else param.default
-                required = param.default == inspect.Parameter.empty
-                
-                parameters.append(ToolParameter(
-                    name=param_name,
-                    type=param_type,
-                    description=f"Parameter: {param_name}",
-                    required=required,
-                    default=default_value
-                ))
-            return parameters
-        
-        # Method 3: Parse from description string (fallback)
-        description = tool.description or ""
-        # Simple heuristic: look for parameter patterns in description
-        # This is a fallback and may not always work
-        
-    except Exception as e:
-        logger.warning(f"Failed to extract parameters for tool {tool.name}: {e}")
-    
-    return parameters
-
-
-def _generate_examples(tool) -> List[str]:
-    """Generate usage examples for a tool based on its parameters"""
-    examples = []
-    tool_name = tool.name
-    
-    # Generate a basic example
-    example = f"{tool_name}("
-    params = _extract_parameters_from_tool(tool)
-    param_strs = []
-    for param in params[:3]:  # Limit to first 3 params for brevity
-        if param.type == 'string':
-            param_strs.append(f'{param.name}="example"')
-        elif param.type == 'integer':
-            param_strs.append(f'{param.name}=1')
-        elif param.type == 'number':
-            param_strs.append(f'{param.name}=1.0')
-        elif param.type == 'boolean':
-            param_strs.append(f'{param.name}=True')
-    example += ", ".join(param_strs) + ")"
-    examples.append(example)
-    
-    return examples
-
-
-def _tool_to_info(tool) -> ToolInfo:
-    """Convert a LangChain tool to ToolInfo schema"""
-    return ToolInfo(
-        name=tool.name,
-        description=tool.description or f"Tool: {tool.name}",
-        category=_get_tool_category(tool),
-        parameters=_extract_parameters_from_tool(tool),
-        examples=_generate_examples(tool)
-    )
-
-
-def _extract_downstream_headers(request: Request) -> Dict[str, str]:
-    """
-    Forward auth-related headers to downstream service calls made by tools.
-    """
-    headers: Dict[str, str] = {}
-    auth = request.headers.get("authorization")
-    if auth:
-        headers["Authorization"] = auth
-
-    internal_service_name = request.headers.get("x-internal-service-name")
-    if internal_service_name:
-        headers["X-Internal-Service-Name"] = internal_service_name
-
-    internal_service_token = request.headers.get("x-internal-service-token")
-    if internal_service_token:
-        headers["X-Internal-Service-Token"] = internal_service_token
-
-    return headers
 
 
 # ============================================================================
@@ -278,7 +51,7 @@ async def discover_tools(state: AIControlPlaneState = Depends(get_ai_control_pla
     
     try:
         all_tools = tool_manager.get_all_tools()
-        tools_info = [_tool_to_info(tool) for tool in all_tools]
+        tools_info = [tool_to_info(tool) for tool in all_tools]
         
         # Extract unique categories
         categories = list(set(tool.category for tool in tools_info))
@@ -358,7 +131,7 @@ async def get_tools_by_category(
     
     try:
         all_tools = tool_manager.get_all_tools()
-        tools_info = [_tool_to_info(tool) for tool in all_tools]
+        tools_info = [tool_to_info(tool) for tool in all_tools]
         
         # Filter by category (case-insensitive)
         category_lower = category.lower()
@@ -417,7 +190,7 @@ async def get_tool_info(
             detail=f"Tool '{tool_name}' not found. Available tools: {available_tools[:10]}..."
         )
     
-    return _tool_to_info(tool)
+    return tool_to_info(tool)
 
 
 @router.post("/{tool_name}/invoke", response_model=ToolInvocationResponse)
@@ -456,7 +229,7 @@ async def invoke_tool(
             detail=f"Tool '{tool_name}' not found"
         )
     
-    header_ctx_token = HTTPClient.set_request_context_headers(_extract_downstream_headers(request))
+    header_ctx_token = HTTPClient.set_request_context_headers(extract_downstream_headers(request))
 
     try:
         logger.info(f"Invoking tool '{tool_name}' with params: {body.parameters}")
@@ -533,7 +306,7 @@ async def get_tools_stats(state: AIControlPlaneState = Depends(get_ai_control_pl
         # Build category stats
         category_stats = {}
         for tool in all_tools:
-            cat = _get_tool_category(tool)
+            cat = get_tool_category(tool)
             if cat not in category_stats:
                 category_stats[cat] = {"count": 0, "tools": []}
             category_stats[cat]["count"] += 1

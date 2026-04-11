@@ -1,12 +1,11 @@
 import uuid
 import time
 import logging
-from typing import Optional, Dict, Any
+from typing import Dict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Request, Query
 from starlette.websockets import WebSocketState
 import json
 import uuid
-from pydantic import BaseModel
 
 # Import core types needed for logic
 # (Assuming these exist in your project structure based on the old file)
@@ -18,6 +17,12 @@ from core.app_state import (
 )
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
+from services.downstream_headers import extract_downstream_headers
+from services.orchestration_support import (
+    OrchestrationRequest,
+    derive_capabilities_from_path,
+    resolve_effective_user_id,
+)
 from tools.http_client import HTTPClient
 from auth import require_authenticated_user, require_websocket_user
 
@@ -41,63 +46,6 @@ def get_context_store_dependency(
     return runtime_state.context_store
 
 # =============================================================================
-# Data Models
-# =============================================================================
-class OrchestrationRequest(BaseModel):
-    message: str
-    user_id: str
-    session_id: str
-    context: Optional[Dict[str, Any]] = None
-    orchestration_type: Optional[str] = "conversational"
-
-
-def _extract_downstream_headers(request: Request) -> Dict[str, str]:
-    """
-    Forward auth-related headers from incoming orchestration requests to
-    downstream tool HTTP calls.
-    """
-    headers: Dict[str, str] = {}
-    auth = request.headers.get("authorization")
-    if auth:
-        headers["Authorization"] = auth
-
-    internal_service_name = request.headers.get("x-internal-service-name")
-    if internal_service_name:
-        headers["X-Internal-Service-Name"] = internal_service_name
-
-    internal_service_token = request.headers.get("x-internal-service-token")
-    if internal_service_token:
-        headers["X-Internal-Service-Token"] = internal_service_token
-
-    return headers
-
-
-def _resolve_effective_user_id(
-    requested_user_id: Optional[Any],
-    authenticated_user: str,
-) -> str:
-    """
-    Bind end-user requests to the authenticated identity.
-
-    Internal service calls may act on behalf of another user, but public
-    callers cannot override their identity via request payloads.
-    """
-    requested = str(requested_user_id).strip() if requested_user_id is not None else ""
-    if authenticated_user.startswith("internal:"):
-        if not requested:
-            raise HTTPException(status_code=400, detail="user_id is required for internal requests")
-        return requested
-
-    if requested and requested != authenticated_user:
-        logger.warning(
-            "Ignoring client-supplied user_id %s for authenticated user %s",
-            requested,
-            authenticated_user,
-        )
-
-    return authenticated_user
-
-# =============================================================================
 # Endpoints
 # =============================================================================
 
@@ -118,7 +66,7 @@ async def orchestrate(
     """
     runtime_state = _require_orchestration_state(state)
 
-    request.user_id = _resolve_effective_user_id(request.user_id, auth_user)
+    request.user_id = resolve_effective_user_id(request.user_id, auth_user)
 
     request_id = str(uuid.uuid4())
     start_time = time.time()
@@ -131,7 +79,7 @@ async def orchestrate(
 
     # Mark orchestration as active
     collector.start_orchestration(request_id)
-    header_ctx_token = HTTPClient.set_request_context_headers(_extract_downstream_headers(http_request))
+    header_ctx_token = HTTPClient.set_request_context_headers(extract_downstream_headers(http_request))
 
     try:
         # 1. Load User Context
@@ -180,7 +128,7 @@ async def orchestrate(
         # If no capabilities tracked, derive from execution path
         if not capabilities_used:
             execution_path = result_state.get("execution_path", [])
-            capabilities_used = _derive_capabilities_from_path(execution_path)
+            capabilities_used = derive_capabilities_from_path(execution_path)
 
         # 8. Record real metrics
         success = result_state.get("final_output") is not None and not result_state.get("errors")
@@ -261,28 +209,6 @@ async def orchestrate(
         HTTPClient.reset_request_context_headers(header_ctx_token)
 
 
-def _derive_capabilities_from_path(execution_path: list) -> list:
-    """Derive capabilities from execution path if not explicitly tracked."""
-    capability_map = {
-        "rag": ["RAG", "Vector DB", "LLM Gen"],
-        "ml": ["ML Pipeline"],
-        "agent": ["Agent Execution", "Tool Invocation"],
-        "workflow": ["Workflow Execution"],
-        "chat": ["Chat Manager", "LLM Gen"],
-        "llm": ["LLM Gen"],
-        "tool": ["Tool Invocation"],
-    }
-    
-    capabilities = set()
-    for node in execution_path:
-        node_lower = node.lower()
-        for key, caps in capability_map.items():
-            if key in node_lower:
-                capabilities.update(caps)
-    
-    return list(capabilities) if capabilities else ["LLM Gen"]
-
-
 @router.delete("/user/preferences/{user_id}/{key}")
 async def delete_user_preference(
     user_id: str,
@@ -291,7 +217,7 @@ async def delete_user_preference(
     ctx_store: ContextStore = Depends(get_context_store_dependency),
 ):
     """Delete a specific user preference."""
-    effective_user_id = _resolve_effective_user_id(user_id, auth_user)
+    effective_user_id = resolve_effective_user_id(user_id, auth_user)
     if effective_user_id != user_id:
         raise HTTPException(
             status_code=403,
@@ -369,7 +295,7 @@ async def websocket_stream(websocket: WebSocket):
                 continue
 
             message = data.get("message", "")
-            user_id = _resolve_effective_user_id(data.get("user_id"), auth_user)
+            user_id = resolve_effective_user_id(data.get("user_id"), auth_user)
             session_id = data.get("session_id", str(uuid.uuid4()))
             context = data.get("context", {})
 
