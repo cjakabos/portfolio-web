@@ -5,6 +5,7 @@ import {
   getCloudAppCsrfHeaders as getSharedCloudAppCsrfHeaders,
   getCloudAppCsrfTokenFromCookie,
 } from '@portfolio/auth';
+import { resolveCloudAppApiUrl } from '@portfolio/api-clients';
 
 export {
   CLOUDAPP_CSRF_COOKIE_NAME,
@@ -13,7 +14,7 @@ export {
 };
 
 export const getCloudAppApiUrl = () =>
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp';
+  resolveCloudAppApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 export const ensureCloudAppCsrfToken = (apiUrl = getCloudAppApiUrl()) =>
   ensureSharedCloudAppCsrfToken({ apiUrl });

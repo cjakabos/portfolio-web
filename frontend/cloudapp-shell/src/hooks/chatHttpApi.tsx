@@ -1,31 +1,35 @@
-import axios from 'axios';
-import { getCloudAppCsrfHeaders } from './cloudappCsrf';
+import { getCloudAppBrowserClient, getCloudAppSessionClient } from './cloudappClient';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
-
-const authHeader = () => ({
-    'Content-Type': 'application/json;charset=UTF-8'
-});
+type ChatApiEnvelope<T> = {
+  err_code: number;
+  err_msg: string;
+  data: T;
+};
 
 export const chatHttpApi = {
-  login: (username: string, password: string) =>
-    axios.post(`${API_URL}/login`, { username, password }, { withCredentials: true }),
-
-  createRoom: async (username: string, name: string) => {
-    const csrfHeaders = await getCloudAppCsrfHeaders();
-    return axios.post(
-      `${API_URL}/room`,
-      { name, username },
-      { headers: { ...authHeader(), ...csrfHeaders }, withCredentials: true }
-    );
+  login: async (username: string, password: string) => {
+    const data = await getCloudAppBrowserClient().requestJson<ChatApiEnvelope<unknown>>('/login', {
+      method: 'POST',
+      body: { username, password },
+    });
+    return { data };
   },
 
-  findRoom: (code: string) =>
-    axios.get(
-      `${API_URL}/room/${code}`,
-      { headers: authHeader(), withCredentials: true }
-    ),
+  createRoom: async (username: string, name: string) => {
+    const data = await getCloudAppSessionClient().requestJson<ChatApiEnvelope<{ code: string; name?: string }>>('/room', {
+      method: 'POST',
+      body: { name, username },
+    });
+    return { data };
+  },
 
-  getRooms: () =>
-    axios.get(`${API_URL}/room`, { headers: authHeader(), withCredentials: true }),
+  findRoom: async (code: string) => {
+    const data = await getCloudAppSessionClient().requestJson<ChatApiEnvelope<{ code: string; name: string }>>(`/room/${code}`);
+    return { data };
+  },
+
+  getRooms: async () => {
+    const data = await getCloudAppSessionClient().requestJson<ChatApiEnvelope<Array<{ code: string; name: string }>>>('/room');
+    return { data };
+  },
 };

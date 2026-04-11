@@ -1,9 +1,6 @@
 import { useState, useCallback } from "react";
-import axios from "axios";
-import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 import { trackEvent } from "../lib/analytics/umami";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
+import { getCloudAppSessionClient } from "./cloudappClient";
 
 export const useFiles = (username: string) => {
     const [files, setFiles] = useState<any[]>([]);
@@ -13,10 +10,8 @@ export const useFiles = (username: string) => {
         if (!username) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/file/user/${username}`, {
-                withCredentials: true,
-            });
-            setFiles(res.data);
+            const res = await getCloudAppSessionClient().requestJson<any[]>(`/file/user/${username}`);
+            setFiles(res ?? []);
         } catch (error) {
             console.error("Fetch Files Error", error);
         } finally {
@@ -30,13 +25,9 @@ export const useFiles = (username: string) => {
         formData.append('username', username);
 
         try {
-            const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
-            await axios.post(`${API_URL}/file/upload`, formData, {
-                headers: {
-                    ...csrfHeaders,
-                    "Content-type": "multipart/form-data"
-                },
-                withCredentials: true,
+            await getCloudAppSessionClient().requestVoid("/file/upload", {
+                method: "POST",
+                body: formData,
             });
             trackEvent("files_upload", {
                 content_type: file.type || "unknown",
@@ -51,10 +42,8 @@ export const useFiles = (username: string) => {
 
     const deleteFile = async (id: number) => {
         try {
-            const csrfHeaders = await getCloudAppCsrfHeaders(API_URL);
-            await axios.delete(`${API_URL}/file/delete-file/${id}`, {
-                headers: csrfHeaders,
-                withCredentials: true,
+            await getCloudAppSessionClient().requestVoid(`/file/delete-file/${id}`, {
+                method: "DELETE",
             });
             trackEvent("files_delete", { file_id: id });
             await fetchFiles();
@@ -65,12 +54,7 @@ export const useFiles = (username: string) => {
 
     const downloadFile = async (id: number, fileName: string) => {
         try {
-            const response = await fetch(`${API_URL}/file/get-file/${id}`, {
-                method: 'GET',
-                credentials: 'include',
-            });
-
-            const blob = await response.blob();
+            const blob = await getCloudAppSessionClient().requestBlob(`/file/get-file/${id}`);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;

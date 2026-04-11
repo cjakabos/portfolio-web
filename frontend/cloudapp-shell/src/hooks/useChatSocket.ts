@@ -1,18 +1,17 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
+import { getCloudAppAuthSnapshot } from '@portfolio/auth';
 import { chatHttpApi } from './chatHttpApi';
+import { getCloudAppApiUrl } from './cloudappClient';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/cloudapp').replace(/\/+$/, '');
 const CHAT_WS_API_URL = (
     process.env.NEXT_PUBLIC_CHAT_WS_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     'http://localhost:80/cloudapp'
 ).replace(/\/+$/, '');
 const SOCKET_URL = `${CHAT_WS_API_URL}/ws/`;
-const AUTH_CHECK_URL = `${API_URL}/user/auth-check`;
 
 export default function useChat() {
     // User & Room State
@@ -174,9 +173,9 @@ export default function useChat() {
             initializedRef.current = true;
             void (async () => {
                 try {
-                    const response = await axios.get(AUTH_CHECK_URL, { withCredentials: true });
+                    const response = await getCloudAppAuthSnapshot({ apiUrl: getCloudAppApiUrl() });
                     const authenticatedUser =
-                        typeof response.data?.username === 'string' ? response.data.username : '';
+                        typeof response.username === 'string' ? response.username : '';
                     setUsername(authenticatedUser);
                     if (authenticatedUser) {
                         handleGetUserRooms();

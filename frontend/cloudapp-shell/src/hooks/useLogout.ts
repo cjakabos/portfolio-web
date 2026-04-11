@@ -1,9 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
-import { getCloudAppCsrfHeaders } from "./cloudappCsrf";
 import { notifyCloudAppAuthStateChanged } from "./useAuth";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/cloudapp";
+import { getCloudAppApiUrl, logoutCloudAppUser } from "./cloudappClient";
 
 export const useLogout = () => {
     const [loading, setLoading] = useState(false);
@@ -14,15 +11,7 @@ export const useLogout = () => {
         setError(null);
 
         try {
-            const headers = await getCloudAppCsrfHeaders(API_URL);
-            await axios.post(
-                `${API_URL}/user/user-logout`,
-                {},
-                {
-                    headers,
-                    withCredentials: true,
-                }
-            );
+            await logoutCloudAppUser({ apiUrl: getCloudAppApiUrl() });
             notifyCloudAppAuthStateChanged();
         } catch (err) {
             console.error("Logout Error:", err);

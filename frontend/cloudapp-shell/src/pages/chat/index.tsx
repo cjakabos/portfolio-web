@@ -20,7 +20,7 @@ let client;
 interface Room {
   code: string;
   name: string;
-  createdBy: string;
+  createdBy?: string;
 }
 
 const Chat: React.FC = () => {
