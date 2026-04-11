@@ -301,6 +301,7 @@ services:
       - DOCKER_HOST_IP=host.docker.internal
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - NEXT_PUBLIC_REMOTE_JIRA_URL=${NEXT_PUBLIC_REMOTE_JIRA_URL:-http://localhost:5003}
+      - CORS_ALLOWED_ORIGINS=${AI_REMOTE_CORS_ALLOWED_ORIGINS:-http://localhost:5001,http://localhost:80,http://localhost:8080,https://localhost,https://localhost:443}
     networks:
       - frontend
     restart: unless-stopped
@@ -362,6 +363,7 @@ services:
       # Native Ollama: host.docker.internal; Docker Ollama: override OLLAMA_URL=http://ollama:11434 in .env
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - NEXT_PUBLIC_REMOTE_CHATLLM_URL=${NEXT_PUBLIC_REMOTE_CHATLLM_URL:-http://localhost:5333}
+      - CORS_ALLOWED_ORIGINS=${AI_REMOTE_CORS_ALLOWED_ORIGINS:-http://localhost:5001,http://localhost:80,http://localhost:8080,https://localhost,https://localhost:443}
     networks:
       - frontend
       - backend

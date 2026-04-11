@@ -1,10 +1,9 @@
 // app/api/chat/route.ts
 import { createOllama } from "ollama-ai-provider-v2";
 import { streamText, convertToModelMessages, createUIMessageStream, JsonToSseTransformStream } from "ai";
+import { buildCorsHeaders, getMessageMetrics, getOllamaBaseUrl, isAllowedOrigin, jsonResponse, preflightResponse } from "../../lib/aiApi";
 
-const OLLAMA_ROOT =
-  process.env.OLLAMA_URL || "http://" + (process.env.DOCKER_HOST_IP || "localhost") + ":11434";
-const OLLAMA_BASE = `${OLLAMA_ROOT.replace(/\/+$/, "")}/api`;
+const OLLAMA_BASE = getOllamaBaseUrl();
 
 const ollama = createOllama({ baseURL: OLLAMA_BASE });
 
@@ -37,21 +36,35 @@ async function supportsThinking(model: string): Promise<boolean> {
 }
 
 export default async function POST(req: Request) {
-    //  CORS for shell use
     if (req.method === 'OPTIONS') {
-        const headers = new Headers({
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        });
-        return new Response(null, { headers });
+        return preflightResponse(req, 'POST, OPTIONS');
     }
+
+    const origin = req.headers.get('origin');
+    if (origin && !isAllowedOrigin(req, origin)) {
+        return jsonResponse(req, 'POST, OPTIONS', { error: 'origin_not_allowed' }, { status: 403 });
+    }
+
+    const requestId = req.headers.get('x-request-id') || crypto.randomUUID();
+    const startedAt = Date.now();
     const body = await req.json();
     const { messages, model } = body;
+
+    if (!model || !Array.isArray(messages)) {
+        return jsonResponse(
+            req,
+            'POST, OPTIONS',
+            { error: 'invalid_request' },
+            { status: 400, headers: { 'X-Request-ID': requestId } },
+        );
+    }
+
+    const { messageCount, promptCharacters } = getMessageMetrics(messages);
     const canThink = await supportsThinking(model);
 
-    console.log('Received model:', model);
-    console.log('Received messages:', JSON.stringify(messages, null, 2));
+    console.info(
+        `[chatllm/api/chat] request_id=${requestId} model=${model} message_count=${messageCount} prompt_characters=${promptCharacters} thinking_supported=${canThink}`,
+    );
 
     // Convert UI messages (parts format) to model messages (content format)
     // Need to await if it's async, or manually convert
@@ -79,8 +92,6 @@ export default async function POST(req: Request) {
         });
     }
 
-    console.log('Converted messages:', JSON.stringify(modelMessages, null, 2));
-
     const stream = createUIMessageStream({
         execute: async ({ writer: dataStream }) => {
             const result = streamText({
@@ -100,10 +111,22 @@ export default async function POST(req: Request) {
             );
         },
         onError: (error) => {
-            console.error('Stream error:', error);
+            console.error(
+                `[chatllm/api/chat] request_id=${requestId} model=${model} stream_error=${error instanceof Error ? error.message : String(error)}`,
+            );
             return 'Oops, an error occurred!';
         },
     });
 
-    return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
+    console.info(
+        `[chatllm/api/chat] request_id=${requestId} model=${model} duration_ms=${Date.now() - startedAt}`,
+    );
+
+    return new Response(stream.pipeThrough(new JsonToSseTransformStream()), {
+        headers: buildCorsHeaders(req, 'POST, OPTIONS', {
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache, no-transform',
+            'X-Request-ID': requestId,
+        }),
+    });
 }
