@@ -11,6 +11,11 @@ from pydantic import BaseModel
 # Import core types needed for logic
 # (Assuming these exist in your project structure based on the old file)
 from core.orchestrator import AIOrchestrationLayer, UnifiedState, OrchestrationType
+from core.app_state import (
+    AIControlPlaneState,
+    get_ai_control_plane_state,
+    get_ai_control_plane_state_from_websocket,
+)
 from memory.memory_manager import MemoryManager
 from memory.context_store import ContextStore
 from tools.http_client import HTTPClient
@@ -23,34 +28,17 @@ from routers.metrics_router import collector
 router = APIRouter(tags=["Orchestration"])
 logger = logging.getLogger(__name__)
 
-# =============================================================================
-# Global Dependencies (Injected from main.py)
-# =============================================================================
-_orchestrator: Optional[AIOrchestrationLayer] = None
-_memory_manager: Optional[MemoryManager] = None
-_context_store: Optional[ContextStore] = None
-_audit_service = None
+def _require_orchestration_state(state: AIControlPlaneState) -> AIControlPlaneState:
+    if not state.orchestrator or not state.context_store or not state.memory_manager:
+        raise HTTPException(status_code=503, detail="Orchestration layer not initialized")
+    return state
 
-def set_orchestration_deps(
-    orchestrator: AIOrchestrationLayer,
-    memory_manager: MemoryManager,
-    context_store: ContextStore
-):
-    """Dependency Injection helper called from main.py lifespan."""
-    global _orchestrator, _memory_manager, _context_store
-    _orchestrator = orchestrator
-    _memory_manager = memory_manager
-    _context_store = context_store
 
-def set_audit_service(audit_service):
-    """Inject audit service from main.py."""
-    global _audit_service
-    _audit_service = audit_service
-
-def get_context_store_dependency() -> ContextStore:
-    if not _context_store:
-        raise HTTPException(status_code=503, detail="Context Store not initialized")
-    return _context_store
+def get_context_store_dependency(
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
+) -> ContextStore:
+    runtime_state = _require_orchestration_state(state)
+    return runtime_state.context_store
 
 # =============================================================================
 # Data Models
@@ -118,6 +106,7 @@ async def orchestrate(
     http_request: Request,
     request: OrchestrationRequest,
     auth_user: str = Depends(require_authenticated_user),
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
 ):
     """
     Main orchestration endpoint.
@@ -127,8 +116,7 @@ async def orchestrate(
     User identity is derived server-side from the gateway-validated auth
     headers rather than trusting the client-supplied ``user_id``.
     """
-    if not _orchestrator or not _context_store or not _memory_manager:
-        raise HTTPException(status_code=503, detail="Orchestration layer not initialized")
+    runtime_state = _require_orchestration_state(state)
 
     request.user_id = _resolve_effective_user_id(request.user_id, auth_user)
 
@@ -147,10 +135,10 @@ async def orchestrate(
 
     try:
         # 1. Load User Context
-        user_profile = _context_store.load_user_profile(request.user_id)
+        user_profile = runtime_state.context_store.load_user_profile(request.user_id)
 
         # 2. Load Conversation History
-        history = _memory_manager.get_history(request.session_id)
+        history = runtime_state.memory_manager.get_history(request.session_id)
 
         # 3. Merge Contexts
         merged_context = {**user_profile, **(request.context or {})}
@@ -181,7 +169,7 @@ async def orchestrate(
         )
 
         # 5. Execute Workflow
-        result_state = await _orchestrator.invoke(initial_state)
+        result_state = await runtime_state.orchestrator.invoke(initial_state)
 
         # 6. Calculate Duration
         duration_ms = int((time.time() - start_time) * 1000)
@@ -208,7 +196,7 @@ async def orchestrate(
 
         # 9. Save Interaction
         if result_state.get("final_output"):
-            _memory_manager.save_interaction(
+            runtime_state.memory_manager.save_interaction(
                 session_id=request.session_id,
                 user_message=request.message,
                 assistant_response=result_state["final_output"],
@@ -216,9 +204,9 @@ async def orchestrate(
             )
 
         # 10. Audit Trail
-        if _audit_service:
+        if runtime_state.audit_service:
             prompt_summary = (request.message[:200] if request.message else "")
-            await _audit_service.record(
+            await runtime_state.audit_service.record(
                 request_id=request_id,
                 user_id=request.user_id,
                 orchestration_type=request.orchestration_type,
@@ -252,9 +240,9 @@ async def orchestrate(
         )
         
         # Audit failed request
-        if _audit_service:
+        if runtime_state.audit_service:
             prompt_summary = (request.message[:200] if request.message else "")
-            await _audit_service.record(
+            await runtime_state.audit_service.record(
                 request_id=request_id,
                 user_id=request.user_id,
                 orchestration_type=request.orchestration_type,
@@ -355,7 +343,8 @@ async def websocket_stream(websocket: WebSocket):
         logger.warning(f"WebSocket {client_id} failed to accept: {e}")
         return
 
-    if not _orchestrator:
+    runtime_state = get_ai_control_plane_state_from_websocket(websocket)
+    if not runtime_state.orchestrator:
         logger.warning(f"WebSocket {client_id}: Orchestrator not initialized, closing")
         if websocket.client_state == WebSocketState.CONNECTED:
             await websocket.close(code=1011, reason="Orchestrator not ready")
@@ -402,10 +391,10 @@ async def websocket_stream(websocket: WebSocket):
             try:
                 user_profile = {}
                 history = []
-                if _context_store:
-                    user_profile = _context_store.load_user_profile(str(user_id))
-                if _memory_manager:
-                    history = _memory_manager.get_history(session_id)
+                if runtime_state.context_store:
+                    user_profile = runtime_state.context_store.load_user_profile(str(user_id))
+                if runtime_state.memory_manager:
+                    history = runtime_state.memory_manager.get_history(session_id)
 
                 initial_state = UnifiedState(
                     request_id=request_id,
@@ -434,9 +423,9 @@ async def websocket_stream(websocket: WebSocket):
                 capabilities_used = []
                 final_output = ""
 
-                if hasattr(_orchestrator, 'astream'):
+                if hasattr(runtime_state.orchestrator, 'astream'):
                     last_state = {}
-                    async for chunk in _orchestrator.astream(initial_state):
+                    async for chunk in runtime_state.orchestrator.astream(initial_state):
                         if websocket.client_state != WebSocketState.CONNECTED:
                             break
 
@@ -477,7 +466,7 @@ async def websocket_stream(websocket: WebSocket):
                     # Get final output from the last state
                     final_output = last_state.get("final_output", "")
                 else:
-                    result = await _orchestrator.invoke(initial_state)
+                    result = await runtime_state.orchestrator.invoke(initial_state)
                     final_output = result.get("final_output", "")
                     capabilities_used = result.get("capabilities_used", [])
 

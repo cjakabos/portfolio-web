@@ -13,6 +13,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
+from core.app_state import AIControlPlaneState, get_ai_control_plane_state
 
 from auth import require_admin_user
 
@@ -78,37 +79,10 @@ class RecentErrorsResponse(BaseModel):
 
 
 
-# ============================================================================
-# DEPENDENCY INJECTION
-# ============================================================================
-
-# These will be injected from main.py's global instances
-_orchestrator = None
-_error_handler = None
-
-
-def set_orchestrator(orchestrator):
-    """Set orchestrator instance (called from main.py lifespan)"""
-    global _orchestrator
-    _orchestrator = orchestrator
-
-
-def set_error_handler(error_handler):
-    """Set error handler instance (called from main.py lifespan)"""
-    global _error_handler
-    _error_handler = error_handler
-
-
-def get_orchestrator():
-    if _orchestrator is None:
+def get_orchestrator(state: AIControlPlaneState = Depends(get_ai_control_plane_state)):
+    if state.orchestrator is None:
         raise HTTPException(status_code=503, detail="Orchestrator not initialized")
-    return _orchestrator
-
-
-def get_error_handler():
-    if _error_handler is None:
-        raise HTTPException(status_code=503, detail="Error handler not initialized")
-    return _error_handler
+    return state.orchestrator
 
 
 # ============================================================================
@@ -116,13 +90,15 @@ def get_error_handler():
 # ============================================================================
 
 @router.get("/feature-status", response_model=FeatureStatusResponse)
-async def get_feature_status(admin: str = Depends(require_admin_user)):
+async def get_feature_status(
+    admin: str = Depends(require_admin_user),
+    orchestrator=Depends(get_orchestrator),
+):
     """
     Get status of all system features (admin-only).
 
     Returns feature availability, enabled status, and active fallbacks
     """
-    orchestrator = get_orchestrator()
     return orchestrator.get_feature_status()
 
 
@@ -131,7 +107,10 @@ async def get_feature_status(admin: str = Depends(require_admin_user)):
 # ============================================================================
 
 @router.get("/circuit-breakers", response_model=CircuitBreakerListResponse)
-async def list_circuit_breakers(admin: str = Depends(require_admin_user)):
+async def list_circuit_breakers(
+    admin: str = Depends(require_admin_user),
+    orchestrator=Depends(get_orchestrator),
+):
     """
     List all circuit breakers and their current status (admin-only).
 
@@ -141,8 +120,6 @@ async def list_circuit_breakers(admin: str = Depends(require_admin_user)):
     - Last failure time
     - Storage backend (redis/memory)
     """
-    orchestrator = get_orchestrator()
-    
     # Check if error handling is available
     if not orchestrator.enable_error_handling or not orchestrator.error_handler:
         return CircuitBreakerListResponse(
@@ -184,7 +161,11 @@ async def list_circuit_breakers(admin: str = Depends(require_admin_user)):
 
 
 @router.get("/circuit-breakers/{name}")
-async def get_circuit_breaker(name: str, admin: str = Depends(require_admin_user)):
+async def get_circuit_breaker(
+    name: str,
+    admin: str = Depends(require_admin_user),
+    orchestrator=Depends(get_orchestrator),
+):
     """
     Get status of a specific circuit breaker
     
@@ -194,8 +175,6 @@ async def get_circuit_breaker(name: str, admin: str = Depends(require_admin_user
     Returns:
         Circuit breaker status details
     """
-    orchestrator = get_orchestrator()
-    
     if not orchestrator.enable_error_handling or not orchestrator.error_handler:
         raise HTTPException(
             status_code=503, 
@@ -215,7 +194,11 @@ async def get_circuit_breaker(name: str, admin: str = Depends(require_admin_user
 
 
 @router.post("/circuit-breakers/{name}/reset")
-async def reset_circuit_breaker(name: str, admin: str = Depends(require_admin_user)):
+async def reset_circuit_breaker(
+    name: str,
+    admin: str = Depends(require_admin_user),
+    orchestrator=Depends(get_orchestrator),
+):
     """
     Reset a circuit breaker to closed state
     
@@ -228,8 +211,6 @@ async def reset_circuit_breaker(name: str, admin: str = Depends(require_admin_us
     Returns:
         Updated circuit breaker status
     """
-    orchestrator = get_orchestrator()
-    
     if not orchestrator.enable_error_handling or not orchestrator.error_handler:
         raise HTTPException(
             status_code=503,
@@ -339,7 +320,11 @@ async def get_connection_stats(admin: str = Depends(require_admin_user)):
 # ============================================================================
 
 @router.get("/errors/summary")
-async def get_error_summary(hours: int = 24, admin: str = Depends(require_admin_user)):
+async def get_error_summary(
+    hours: int = 24,
+    admin: str = Depends(require_admin_user),
+    orchestrator=Depends(get_orchestrator),
+):
     """
     Get summary of errors in the last N hours
     
@@ -349,8 +334,6 @@ async def get_error_summary(hours: int = 24, admin: str = Depends(require_admin_
     Returns:
         Error summary with counts by category and severity
     """
-    orchestrator = get_orchestrator()
-    
     if not orchestrator.enable_error_handling or not orchestrator.error_handler:
         return {
             "total_errors": 0,
@@ -372,6 +355,7 @@ async def get_recent_errors(
     category: Optional[str] = None,
     severity: Optional[str] = None,
     admin: str = Depends(require_admin_user),
+    orchestrator=Depends(get_orchestrator),
 ):
     """
     Get recent error entries with optional filtering.
@@ -384,8 +368,6 @@ async def get_recent_errors(
     Returns:
         List of recent errors with metadata
     """
-    orchestrator = get_orchestrator()
-    
     # Cap limit to prevent memory issues
     limit = min(limit, 200)
     

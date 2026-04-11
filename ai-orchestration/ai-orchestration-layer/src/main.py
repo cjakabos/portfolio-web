@@ -1,11 +1,4 @@
-"""
-AI Orchestration Layer - Main Application
-Integrates all service routers for the AI Orchestration Monitor.
-
-FIXED:
-- Added experiments_router initialization in lifespan
-- Added approvals_router.set_orchestration_deps() for HITL frontend sync
-"""
+"""AI Orchestration Layer - Main Application."""
 
 import logging
 import os
@@ -19,6 +12,7 @@ from fastapi.responses import JSONResponse
 # Core Logic Imports (Restored from old main.py)
 # =============================================================================
 from core.orchestrator import AIOrchestrationLayer
+from core.app_state import AIControlPlaneState
 from core.config import get_config as get_core_config
 from observability.metrics_collector import MetricsCollector
 from observability.tracer import RequestTracer
@@ -95,16 +89,14 @@ settings = Settings()
 # Application Lifecycle
 # =============================================================================
 
-# Global references to hold state if needed directly in main (optional)
-orchestrator = None
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown."""
-    global orchestrator
 
     logger.info("Starting AI Orchestration Layer...")
     logger.info(f"Environment: {settings.DEBUG and 'DEBUG' or 'PROD'}")
+    runtime_state = AIControlPlaneState()
+    app.state.ai_control_plane = runtime_state
 
     # -------------------------------------------------------------------------
     # 1. Initialize Core AI Components
@@ -115,6 +107,8 @@ async def lifespan(app: FastAPI):
     tracer = RequestTracer()
     memory_manager = MemoryManager()
     context_store = ContextStore()
+    runtime_state.memory_manager = memory_manager
+    runtime_state.context_store = context_store
 
     # Initialize Orchestrator (resilient to Ollama being offline)
     try:
@@ -130,11 +124,12 @@ async def lifespan(app: FastAPI):
             f"⚠️ Orchestrator initialization failed (server will start in degraded mode): {e}"
         )
         orchestrator = None
+    runtime_state.orchestrator = orchestrator
 
     # Initialize Tool Manager
     logger.info("Initializing Tool Manager...")
     tool_manager = ToolManager()
-    tools_router.set_tool_manager(tool_manager)
+    runtime_state.tool_manager = tool_manager
     logger.info(f"Tool Manager initialized with {len(tool_manager.all_tools)} tools")
 
     # -------------------------------------------------------------------------
@@ -157,6 +152,7 @@ async def lifespan(app: FastAPI):
         database=core_config.mongodb.database,
         collection=core_config.audit.collection,
     )
+    runtime_state.audit_service = audit_service
     try:
         await audit_service.initialize(mongo_config=core_config.mongodb)
         logger.info("✅ Audit trail initialized")
@@ -193,30 +189,13 @@ async def lifespan(app: FastAPI):
     # 3. Inject Dependencies into Routers
     # -------------------------------------------------------------------------
     if orchestrator:
-        # Inject into the new Orchestration Router (for WebSocket streaming)
-        orchestration_router.set_orchestration_deps(
-            orchestrator=orchestrator,
-            memory_manager=memory_manager,
-            context_store=context_store
-        )
-        orchestration_router.set_audit_service(audit_service)
-
-        # =========================================================================
-        # CRITICAL FIX: Inject into Approvals Router for HITL frontend sync
-        # This connects the orchestrator's HITL manager to the approvals storage
-        # so pending approvals appear in the frontend!
-        # =========================================================================
+        # Approvals still rely on router-local storage and HITL wiring for now.
         approvals_router.set_orchestration_deps(
             orchestrator=orchestrator,
             memory_manager=memory_manager,
             context_store=context_store
         )
         logger.info("✅ Approvals router connected to orchestrator")
-
-        # Inject into System Router (from old main.py logic)
-        system_router.set_orchestrator(orchestrator)
-        if hasattr(orchestrator, 'error_handler') and orchestrator.error_handler:
-            system_router.set_error_handler(orchestrator.error_handler)
     else:
         logger.warning("⚠️ Orchestrator unavailable — routers running in degraded mode")
 
@@ -256,8 +235,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Audit service shutdown error: {e}")
 
-    if orchestrator:
-        await orchestrator.cleanup()
+    if runtime_state.orchestrator:
+        await runtime_state.orchestrator.cleanup()
     logger.info("✅ Shutdown complete")
 
 # =============================================================================
@@ -388,7 +367,8 @@ async def health_check():
                 services[name] = "unavailable"
 
     # Check AI Core Health
-    if orchestrator:
+    runtime_state = getattr(app.state, "ai_control_plane", AIControlPlaneState())
+    if runtime_state.orchestrator:
         services["orchestrator"] = "healthy"
     else:
         services["orchestrator"] = "initializing"

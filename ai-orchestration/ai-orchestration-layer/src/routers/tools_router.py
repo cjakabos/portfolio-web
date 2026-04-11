@@ -12,8 +12,9 @@ import json
 import inspect
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Body, Request
+from fastapi import APIRouter, HTTPException, Body, Request, Depends
 from pydantic import BaseModel, Field
+from core.app_state import AIControlPlaneState, get_ai_control_plane_state
 from tools.http_client import HTTPClient
 
 # Configure Router
@@ -70,24 +71,10 @@ class OllamaStatusResponse(BaseModel):
     models: List[str] = []
 
 
-# ============================================================================
-# DEPENDENCY INJECTION
-# ============================================================================
-
-_tool_manager = None
-
-
-def set_tool_manager(tool_manager):
-    """Set tool manager instance (called from main.py lifespan)"""
-    global _tool_manager
-    _tool_manager = tool_manager
-
-
-def get_tool_manager():
-    """Get tool manager or raise 503 if not initialized"""
-    if _tool_manager is None:
+def _require_tool_manager(state: AIControlPlaneState):
+    if state.tool_manager is None:
         raise HTTPException(status_code=503, detail="Tool manager not initialized")
-    return _tool_manager
+    return state.tool_manager
 
 
 # ============================================================================
@@ -280,14 +267,14 @@ def _extract_downstream_headers(request: Request) -> Dict[str, str]:
 # ============================================================================
 
 @router.get("", response_model=ToolDiscoveryResponse)
-async def discover_tools():
+async def discover_tools(state: AIControlPlaneState = Depends(get_ai_control_plane_state)):
     """
     Discover all available tools in the orchestration layer.
     
     Returns a list of all registered tools with their metadata,
     parameters, and categorization.
     """
-    tool_manager = get_tool_manager()
+    tool_manager = _require_tool_manager(state)
     
     try:
         all_tools = tool_manager.get_all_tools()
@@ -354,7 +341,10 @@ async def get_ollama_status():
 
 
 @router.get("/category/{category}", response_model=ToolDiscoveryResponse)
-async def get_tools_by_category(category: str):
+async def get_tools_by_category(
+    category: str,
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
+):
     """
     Get tools filtered by category.
     
@@ -364,7 +354,7 @@ async def get_tools_by_category(category: str):
     Returns:
         List of tools in the specified category
     """
-    tool_manager = get_tool_manager()
+    tool_manager = _require_tool_manager(state)
     
     try:
         all_tools = tool_manager.get_all_tools()
@@ -396,7 +386,10 @@ async def get_tools_by_category(category: str):
 
 
 @router.get("/{tool_name}", response_model=ToolInfo)
-async def get_tool_info(tool_name: str):
+async def get_tool_info(
+    tool_name: str,
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
+):
     """
     Get detailed information about a specific tool.
     
@@ -406,7 +399,7 @@ async def get_tool_info(tool_name: str):
     Returns:
         Tool information including parameters and examples
     """
-    tool_manager = get_tool_manager()
+    tool_manager = _require_tool_manager(state)
     
     tool = tool_manager.get_tool_by_name(tool_name)
     if not tool:
@@ -431,7 +424,8 @@ async def get_tool_info(tool_name: str):
 async def invoke_tool(
     tool_name: str,
     request: Request,
-    body: ToolInvocationRequest = Body(...)
+    body: ToolInvocationRequest = Body(...),
+    state: AIControlPlaneState = Depends(get_ai_control_plane_state),
 ):
     """
     Invoke a tool with the provided parameters.
@@ -443,7 +437,7 @@ async def invoke_tool(
     Returns:
         Tool invocation result
     """
-    tool_manager = get_tool_manager()
+    tool_manager = _require_tool_manager(state)
     start_time = time.time()
     
     # Find the tool
@@ -523,14 +517,14 @@ async def invoke_tool(
 
 
 @router.get("/stats/summary")
-async def get_tools_stats():
+async def get_tools_stats(state: AIControlPlaneState = Depends(get_ai_control_plane_state)):
     """
     Get statistics about available tools.
     
     Returns:
         Tool count by category and overall statistics
     """
-    tool_manager = get_tool_manager()
+    tool_manager = _require_tool_manager(state)
     
     try:
         counts = tool_manager.get_tool_count()
@@ -563,12 +557,12 @@ async def get_tools_stats():
 
 
 @router.get("/health")
-async def tools_health_check():
+async def tools_health_check(state: AIControlPlaneState = Depends(get_ai_control_plane_state)):
     """
     Check health of the tools system.
     """
     try:
-        tool_manager = get_tool_manager()
+        tool_manager = _require_tool_manager(state)
         tool_count = len(tool_manager.get_all_tools())
         
         return {
