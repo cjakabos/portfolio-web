@@ -47,6 +47,8 @@ Use this checklist for any change that is more than a local-only experiment.
 - update `.env` guidance or setup docs when variable shape changes
 - review whether the change introduces a new secret class or handling rule
 - perform at least one startup check with the new environment shape
+- run `npm run architecture:check` when the change touches CloudApp controller
+  boundaries, frontend hook API access, or internal service auth wiring
 
 ## 7. Docs, Tours, And Release Notes
 
@@ -62,5 +64,7 @@ Use this checklist for any change that is more than a local-only experiment.
 - no missing manifest bump for changed governed snapshots
 - no missing operator or gateway verification for affected paths
 - no stale docs for newly introduced environment or release behavior
+- no failing architecture guardrails for auth, hook API access, or controller
+  module boundaries
 - no hero-module change without owner clarity and matching smoke coverage
 - no showcase-tier or tour change without the docs updates that make it legible

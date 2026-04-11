@@ -387,7 +387,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --ignore-scripts --workspaces --include-workspace-root=false --include=optional && npm run frontend:check-versions && npm run frontend:static",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --ignore-scripts --workspaces --include-workspace-root=false --include=optional && npm run frontend:check-versions && npm run architecture:check && npm run frontend:static",
       ]
     environment:
       - CI=true

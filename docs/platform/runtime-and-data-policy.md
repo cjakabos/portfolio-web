@@ -32,6 +32,8 @@ policy for day-to-day review work.
 3. New runtimes or stores require an ADR before they are added.
 4. Existing exceptions can stay in place when there is a clear bounded reason,
    but they should not become templates for new work.
+5. CI guardrails should reject architecture drift in the main browser hooks,
+   CloudApp module controllers, and internal service auth wiring.
 
 ## Current Exceptions And Migration Recommendations
 
