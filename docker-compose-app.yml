@@ -20,7 +20,8 @@ services:
       args:
         SERVICE_PATH: backend/web-proxy
     environment:
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=${INTERNAL_GATEWAY_ADMIN_TOKEN}
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=${INTERNAL_AI_ORCHESTRATION_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
       - JIRA_DOMAIN=${JIRA_DOMAIN}
       - JIRA_EMAIL=${JIRA_EMAIL}
@@ -47,7 +48,8 @@ services:
       args:
         SERVICE_PATH: backend/vehicles-api
     environment:
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=${INTERNAL_GATEWAY_ADMIN_TOKEN}
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=${INTERNAL_AI_ORCHESTRATION_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
       - VEHICLES_SEED_PORTFOLIO_DATA_ENABLED=${VEHICLES_SEED_PORTFOLIO_DATA_ENABLED:-false}
       - SPRING_PROFILES_ACTIVE=json-logging
@@ -74,7 +76,8 @@ services:
         SERVICE_PATH: backend/petstore
     environment:
       - DOCKER_HOST_IP=host.docker.internal
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=${INTERNAL_GATEWAY_ADMIN_TOKEN}
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=${INTERNAL_AI_ORCHESTRATION_TOKEN}
       - HEALTH_CHECK_URL=http://localhost:8083/petstore/actuator/health
       # FIX 4.1: DB credentials from .env
       # Use internal Docker DNS instead of host.docker.internal (not reliable in Linux CI).
@@ -105,7 +108,8 @@ services:
     environment:
       - DOCKER_HOST_IP=host.docker.internal
       - DOCKER_HOST_KAFKA_PORT=9092
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=${INTERNAL_GATEWAY_ADMIN_TOKEN}
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=${INTERNAL_AI_ORCHESTRATION_TOKEN}
       # FIX 4.1: JWT_SECRET with no fallback — fails fast if missing
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
@@ -184,7 +188,8 @@ services:
       context: ./frontend/nginx
       dockerfile: Dockerfile
     environment:
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN}
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=${INTERNAL_GATEWAY_ADMIN_TOKEN}
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=${INTERNAL_AI_ORCHESTRATION_TOKEN}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx_health || exit 1"]
       interval: 15s

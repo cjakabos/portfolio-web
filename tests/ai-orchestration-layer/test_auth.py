@@ -18,7 +18,8 @@ import auth
 
 class StubServices:
     cloudapp_url = "http://cloudapp/cloudapp"
-    internal_service_token = "shared-token"
+    internal_gateway_admin_token = "gateway-token"
+    internal_ai_orchestration_token = "ai-token"
     http_timeout = 5
 
 
@@ -52,13 +53,19 @@ def _request(status_code: int = 200, headers: dict[str, str] | None = None, payl
 
 
 @pytest.mark.asyncio
-async def test_require_authenticated_user_accepts_internal_service_token(monkeypatch):
+async def test_require_authenticated_user_accepts_scoped_internal_service_identity(monkeypatch):
     monkeypatch.setattr(auth, "get_config", lambda: StubConfig())
-    request = SimpleNamespace(headers={"x-internal-auth": "shared-token"}, cookies={})
+    request = SimpleNamespace(
+        headers={
+            "x-internal-service-name": "ai-orchestration",
+            "x-internal-service-token": "ai-token",
+        },
+        cookies={},
+    )
 
     user = await auth.require_authenticated_user(request)
 
-    assert user == "internal-service"
+    assert user == "internal:ai-orchestration"
 
 
 @pytest.mark.asyncio

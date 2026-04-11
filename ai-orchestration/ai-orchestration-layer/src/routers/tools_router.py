@@ -264,9 +264,13 @@ def _extract_downstream_headers(request: Request) -> Dict[str, str]:
     if auth:
         headers["Authorization"] = auth
 
-    internal_auth = request.headers.get("x-internal-auth")
-    if internal_auth:
-        headers["X-Internal-Auth"] = internal_auth
+    internal_service_name = request.headers.get("x-internal-service-name")
+    if internal_service_name:
+        headers["X-Internal-Service-Name"] = internal_service_name
+
+    internal_service_token = request.headers.get("x-internal-service-token")
+    if internal_service_token:
+        headers["X-Internal-Service-Token"] = internal_service_token
 
     return headers
 

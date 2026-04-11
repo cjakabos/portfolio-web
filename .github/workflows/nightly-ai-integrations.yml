@@ -62,7 +62,8 @@ jobs:
           JWT_PRIVATE_KEY_FILE=${GITHUB_WORKSPACE}/secrets/jwt-private-key.pem
           JWT_PUBLIC_KEY_FILE=${GITHUB_WORKSPACE}/secrets/jwt-public-key.pub
 
-          INTERNAL_SERVICE_TOKEN=nightly-internal-token
+          INTERNAL_GATEWAY_ADMIN_TOKEN=nightly-gateway-admin-token
+          INTERNAL_AI_ORCHESTRATION_TOKEN=nightly-ai-orchestration-token
           CLOUDAPP_SECURITY_ADMIN_USERNAMES=integrationadmin
 
           POSTGRES_USER=nightly_user

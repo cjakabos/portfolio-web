@@ -167,7 +167,8 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=test-kafka:29092
       - JWT_SECRET=test-secret-key-for-integration-tests-only-change-me
       - JWT_EXPIRATION_MS=3600000
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     depends_on:
       test-postgres:
         condition: service_healthy
@@ -193,7 +194,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://test-mysql:3306/petstore_test?serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=testpass
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     depends_on:
       test-mysql:
         condition: service_healthy
@@ -212,7 +214,8 @@ services:
       target: builder
     entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
     environment:
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     networks:
       - test-backend
 
@@ -228,7 +231,8 @@ services:
       target: builder
     entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
     environment:
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     networks:
       - test-backend
 
@@ -579,7 +583,8 @@ services:
       - JWT_PRIVATE_KEY_PATH=/run/secrets/jwt-private-key.pem
       - JWT_PUBLIC_KEY_PATH=/run/secrets/jwt-public-key.pub
       - CLOUDAPP_SECURITY_ADMIN_USERNAMES=integrationadmin
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
       - HEALTH_CHECK_URL=http://localhost:8099/cloudapp/actuator/health
     depends_on:
       test-postgres:
@@ -615,7 +620,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=testpass
       - SPRING_DATASOURCE_URL=jdbc:mysql://test-mysql:3306/petstore_test?serverTimezone=UTC
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
       - HEALTH_CHECK_URL=http://localhost:8083/petstore/actuator/health
     depends_on:
       test-mysql:
@@ -640,7 +646,8 @@ services:
         SERVICE_PATH: backend/vehicles-api
     environment:
       - JAVA_TOOL_OPTIONS=-Xmx384m
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
       - HEALTH_CHECK_URL=http://localhost:8880/vehicles/actuator/health
     networks:
       test-backend:
@@ -662,7 +669,8 @@ services:
         SERVICE_PATH: backend/web-proxy
     environment:
       - JAVA_TOOL_OPTIONS=-Xmx384m
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
       - HEALTH_CHECK_URL=http://localhost:8501/jiraproxy/actuator/health
     networks:
       test-backend:
@@ -710,7 +718,8 @@ services:
       context: ./frontend/nginx
       dockerfile: Dockerfile
     environment:
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     volumes:
       - ./backend/cloudapp/src/test/resources/test-public-key.pub:/etc/nginx/localhost+3-key.pub:ro
     depends_on:
@@ -732,7 +741,8 @@ services:
       context: ./frontend/nginx
       dockerfile: Dockerfile
     environment:
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     volumes:
       - ./backend/cloudapp/src/test/resources/test-public-key.pub:/etc/nginx/localhost+3-key.pub:ro
     depends_on:
@@ -956,7 +966,8 @@ services:
       context: ./frontend/nginx
       dockerfile: Dockerfile
     environment:
-      - INTERNAL_SERVICE_TOKEN=test-internal-token
+      - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
+      - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
     ports:
       - "80:80"
     depends_on:

@@ -73,9 +73,13 @@ def _extract_downstream_headers(request: Request) -> Dict[str, str]:
     if auth:
         headers["Authorization"] = auth
 
-    internal_auth = request.headers.get("x-internal-auth")
-    if internal_auth:
-        headers["X-Internal-Auth"] = internal_auth
+    internal_service_name = request.headers.get("x-internal-service-name")
+    if internal_service_name:
+        headers["X-Internal-Service-Name"] = internal_service_name
+
+    internal_service_token = request.headers.get("x-internal-service-token")
+    if internal_service_token:
+        headers["X-Internal-Service-Token"] = internal_service_token
 
     return headers
 
@@ -91,7 +95,7 @@ def _resolve_effective_user_id(
     callers cannot override their identity via request payloads.
     """
     requested = str(requested_user_id).strip() if requested_user_id is not None else ""
-    if authenticated_user == "internal-service":
+    if authenticated_user.startswith("internal:"):
         if not requested:
             raise HTTPException(status_code=400, detail="user_id is required for internal requests")
         return requested

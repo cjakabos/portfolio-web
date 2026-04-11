@@ -6,26 +6,20 @@ package com.example.demo.security;
 // request from 172.x.x.x or 10.x.x.x — which would bypass JWT in any cloud
 // VPC where all traffic originates from private IPs.
 //
-// New approach: Internal services must send a shared secret in the
-// X-Internal-Auth header. The token is read from the INTERNAL_SERVICE_TOKEN
-// environment variable at startup. If the env var is not set, internal auth
-// is disabled (all requests go through normal JWT validation).
+// New approach: Internal services must send explicit internal service identity
+// headers. Each internal caller now has its
+// own token and service name instead of sharing one repo-wide bypass secret.
 // ===========================================================================
 
-import com.example.demo.model.persistence.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,18 +37,15 @@ public class WebSecurityConfiguration {
     @Autowired
     private JWTAuthenticationVerificationFilter authenticationTokenFilter;
 
+    @Autowired
+    private InternalServiceAuthenticationFilter internalServiceAuthenticationFilter;
+
+    @Autowired
+    private InternalRequestAuthorizer internalRequestAuthorizer;
+
     // Do not remove, needed for UserDetailsServiceImpl to work
     @Autowired
     private final UserDetailsServiceImpl userDetailsService;
-
-    // Service-to-service token from environment variable.
-    // Set INTERNAL_SERVICE_TOKEN in docker-compose for all services that need
-    // to communicate internally without JWT (e.g., NGINX health checks,
-    // inter-service calls). If not set, this filter chain is effectively disabled.
-    @Value("${INTERNAL_SERVICE_TOKEN:}")
-    private String internalServiceToken;
-
-    private static final String INTERNAL_AUTH_HEADER = "X-Internal-Auth";
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "TRACE", "OPTIONS");
 
     @Bean
@@ -105,39 +96,7 @@ public class WebSecurityConfiguration {
             "/cloudapp/item/**"
     };
 
-    // Check for service-to-service token instead of IP address.
-    // This is safe in cloud VPCs because it requires a secret that only
-    // authorized services possess, rather than relying on network topology.
-    private boolean isInternalRequest(jakarta.servlet.http.HttpServletRequest request) {
-        if (internalServiceToken == null || internalServiceToken.isBlank()) {
-            // No token configured — disable internal auth bypass entirely.
-            // All requests must go through JWT validation.
-            return false;
-        }
-        String authHeader = request.getHeader(INTERNAL_AUTH_HEADER);
-        return internalServiceToken.equals(authHeader);
-    }
-
-    // This filter chain handles internal service-to-service requests - no JWT required
-    // Services must present the shared token in the X-Internal-Auth header.
     @Bean
-    @Order(1)
-    public SecurityFilterChain internalNetworkFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher(request -> isInternalRequest(request))
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                );
-        // No JWT filter added here
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository())
@@ -163,12 +122,16 @@ public class WebSecurityConfiguration {
                 .authenticated()
         );
 
+        http.addFilterBefore(internalServiceAuthenticationFilter, JWTAuthenticationVerificationFilter.class);
         http.addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     private boolean requiresCsrfProtection(HttpServletRequest request) {
         if (SAFE_METHODS.contains(request.getMethod())) {
+            return false;
+        }
+        if (internalRequestAuthorizer.isInternalRequest(request)) {
             return false;
         }
 

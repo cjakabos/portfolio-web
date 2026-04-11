@@ -216,7 +216,8 @@ else
 fi
 
 check_env_key "JWT_SECRET" "Hero setup"
-check_env_key "INTERNAL_SERVICE_TOKEN" "Hero setup"
+check_env_key "INTERNAL_GATEWAY_ADMIN_TOKEN" "Hero setup"
+check_env_key "INTERNAL_AI_ORCHESTRATION_TOKEN" "Hero setup"
 check_file_from_env "JWT_PRIVATE_KEY_FILE"
 check_file_from_env "JWT_PUBLIC_KEY_FILE"
 
