@@ -1,20 +1,18 @@
 package com.example.demo.controllers;
 
+import com.example.demo.collaboration.IRoomService;
+import com.example.demo.collaboration.RoomDirectoryService;
 import com.example.demo.model.persistence.RoomEntity;
 import com.example.demo.model.persistence.model.ApiResponse;
 import com.example.demo.model.persistence.model.ECode;
 import com.example.demo.model.persistence.model.Room;
 import com.example.demo.model.requests.CreateRoomRequest;
-import com.example.demo.model.service.inf.IMessageService;
-import com.example.demo.model.service.inf.IRoomService;
 import com.example.demo.security.CloudappAccessPolicy;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,17 +29,22 @@ public class RoomController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RoomController.class);
 
-    @Autowired
-    private IRoomService roomService;
+    private final IRoomService roomService;
+    private final RoomDirectoryService roomDirectoryService;
+    private final ApiResponse apiResp;
+    private final CloudappAccessPolicy cloudappAccessPolicy;
 
-    @Autowired
-    private IMessageService messageService;
-
-    @Autowired
-    private ApiResponse apiResp;
-
-    @Autowired
-    private CloudappAccessPolicy cloudappAccessPolicy;
+    public RoomController(
+            IRoomService roomService,
+            RoomDirectoryService roomDirectoryService,
+            ApiResponse apiResp,
+            CloudappAccessPolicy cloudappAccessPolicy
+    ) {
+        this.roomService = roomService;
+        this.roomDirectoryService = roomDirectoryService;
+        this.apiResp = apiResp;
+        this.cloudappAccessPolicy = cloudappAccessPolicy;
+    }
 
     @PostMapping
     public ApiResponse create(
@@ -90,18 +93,11 @@ public class RoomController {
         }
         ApiResponse resp = apiResp.getApiResponse(ECode.SUCCESS);
         try {
-            List<String> ret = messageService.findRoomsByUser(username);
-            if (ret ==  null) {
-                return apiResp.getApiResponse(ECode.NOT_EXISTS_ROOM);
+            Pair<ECode, List<Room>> ret = roomDirectoryService.findRoomsForUser(username);
+            if (ECode.isFailed(ret.getFirst())) {
+                return apiResp.getApiResponse(ret.getFirst());
             }
-            List<Room> data = ret.stream().map(item -> {
-                Pair<ECode, RoomEntity> roomEntity = roomService.findByCode(item);
-                Room room = new Room();
-                room.setName(roomEntity.getSecond().getName());
-                room.setCode(roomEntity.getSecond().getCode());
-                return room;
-            }).collect(Collectors.toList());
-            resp.setData(data);
+            resp.setData(ret.getSecond());
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);
             resp = apiResp.getApiResponse(ECode.EXCEPTION);

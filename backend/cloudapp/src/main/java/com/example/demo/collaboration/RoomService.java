@@ -1,12 +1,10 @@
-package com.example.demo.model.service;
+package com.example.demo.collaboration;
 
 import com.example.demo.model.persistence.RoomEntity;
 import com.example.demo.model.persistence.repositories.RoomRepository;
 import com.example.demo.model.persistence.model.ECode;
-import com.example.demo.model.service.inf.IRoomService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +18,11 @@ public class RoomService implements IRoomService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RoomService.class);
 
-    @Autowired
-    private RoomRepository repo;
+    private final RoomRepository repo;
+
+    public RoomService(RoomRepository repo) {
+        this.repo = repo;
+    }
 
     @Override
     public Pair<ECode, RoomEntity> create(String name, String username) {

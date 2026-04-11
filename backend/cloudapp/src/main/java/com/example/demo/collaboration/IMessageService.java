@@ -1,4 +1,4 @@
-package com.example.demo.model.service.inf;
+package com.example.demo.collaboration;
 
 import com.example.demo.model.persistence.model.Message;
 import java.util.List;
