@@ -7,11 +7,37 @@ import {
   type OllamaModel,
 } from '@portfolio/api-clients';
 
-const testGlobals = globalThis as typeof globalThis & {
-  Headers?: typeof Headers;
-  Request?: typeof Request;
-  Response?: typeof Response;
+type TestGlobalFetchConstructors = {
+  Headers?: new (
+    init?: Record<string, string> | Array<[string, string]>
+  ) => {
+    append(key: string, value: string): void;
+    get(key: string): string | null;
+    set(key: string, value: string): void;
+  };
+  Request?: new (
+    url: string,
+    init?: { headers?: Record<string, string> }
+  ) => {
+    headers: {
+      get(key: string): string | null;
+    };
+    url: string;
+  };
+  Response?: new (
+    body?: string | null,
+    init?: { status?: number; headers?: Record<string, string> }
+  ) => {
+    readonly ok: boolean;
+    headers: {
+      get(key: string): string | null;
+    };
+    json(): Promise<unknown>;
+    status: number;
+  };
 };
+
+const testGlobals = globalThis as unknown as TestGlobalFetchConstructors;
 
 class TestHeaders {
   private readonly values = new Map<string, string>();
@@ -74,13 +100,18 @@ class TestResponse {
   }
 }
 
-testGlobals.Headers = (testGlobals.Headers || TestHeaders) as typeof Headers;
-testGlobals.Request = (testGlobals.Request || TestRequest) as typeof Request;
-testGlobals.Response = (testGlobals.Response || TestResponse) as typeof Response;
+testGlobals.Headers = testGlobals.Headers || TestHeaders;
+testGlobals.Request = testGlobals.Request || TestRequest;
+testGlobals.Response = testGlobals.Response || TestResponse;
 
-const Headers = testGlobals.Headers!;
-const Request = testGlobals.Request!;
-const Response = testGlobals.Response!;
+const HeadersCtor = testGlobals.Headers!;
+const RequestCtor = testGlobals.Request!;
+const ResponseCtor = testGlobals.Response!;
+
+const asFetchImpl = <T extends (...args: any[]) => Promise<unknown>>(fetchImpl: T) =>
+  fetchImpl as unknown as typeof fetch;
+
+const asRequest = <T,>(request: T) => request as unknown as Request;
 
 const makeModel = (name: string): OllamaModel => ({
   name,
@@ -113,7 +144,7 @@ describe('shared AI remote helpers', () => {
 
   it('filters embedding models when reading the shared model catalog', async () => {
     const fetchImpl = jest.fn(async () =>
-      new Response(
+      new ResponseCtor(
         JSON.stringify({
           models: [makeModel('qwen3:1.7b'), makeModel('nomic-embed-text')],
         }),
@@ -124,21 +155,25 @@ describe('shared AI remote helpers', () => {
       )
     );
 
-    const models = await fetchAiModels('http://localhost:5333/api/models', { fetchImpl });
+    const models = await fetchAiModels('http://localhost:5333/api/models', {
+      fetchImpl: asFetchImpl(fetchImpl),
+    });
 
     expect(models.map((model) => model.name)).toEqual(['qwen3:1.7b']);
   });
 
   it('surfaces empty model catalogs as no_models when checking service health', async () => {
     const fetchImpl = jest.fn(async () =>
-      new Response(JSON.stringify({ models: [] }), {
+      new ResponseCtor(JSON.stringify({ models: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
     );
 
     await expect(
-      assertAiModelServiceHealthy('http://localhost:5333/api/models', { fetchImpl })
+      assertAiModelServiceHealthy('http://localhost:5333/api/models', {
+        fetchImpl: asFetchImpl(fetchImpl),
+      })
     ).rejects.toMatchObject({ code: 'no_models' });
   });
 
@@ -149,7 +184,11 @@ describe('shared AI remote helpers', () => {
       throw error;
     });
 
-    await expect(fetchAiModels('http://localhost:5333/api/models', { fetchImpl })).rejects.toMatchObject({
+    await expect(
+      fetchAiModels('http://localhost:5333/api/models', {
+        fetchImpl: asFetchImpl(fetchImpl),
+      })
+    ).rejects.toMatchObject({
       code: 'timeout',
     });
   });
@@ -157,23 +196,23 @@ describe('shared AI remote helpers', () => {
   it('allows configured shell origins and rejects unknown origins for preflight requests', async () => {
     process.env.CORS_ALLOWED_ORIGINS = 'http://localhost:5001';
 
-    const allowedRequest = new Request('http://localhost:5333/api/chat', {
+    const allowedRequest = new RequestCtor('http://localhost:5333/api/chat', {
       headers: {
         Origin: 'http://localhost:5001',
         'Access-Control-Request-Headers': 'content-type',
       },
     });
-    const allowedHeaders = buildCorsHeaders(allowedRequest, 'POST, OPTIONS');
+    const allowedHeaders = buildCorsHeaders(asRequest(allowedRequest), 'POST, OPTIONS');
 
     expect(allowedHeaders.get('Access-Control-Allow-Origin')).toBe('http://localhost:5001');
     expect(allowedHeaders.get('Access-Control-Allow-Headers')).toBe('content-type');
 
-    const blockedRequest = new Request('http://localhost:5333/api/chat', {
+    const blockedRequest = new RequestCtor('http://localhost:5333/api/chat', {
       headers: {
         Origin: 'http://evil.example',
       },
     });
-    const response = preflightResponse(blockedRequest, 'POST, OPTIONS');
+    const response = preflightResponse(asRequest(blockedRequest), 'POST, OPTIONS');
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({ error: 'origin_not_allowed' });
