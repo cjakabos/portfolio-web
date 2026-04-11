@@ -3,6 +3,13 @@ const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    experimental: {
+      externalDir: true,
+    },
+    transpilePackages: [
+      '@portfolio/api-clients',
+      '@portfolio/contracts',
+    ],
     output: 'standalone',
     webpack(config, options) {
       const { isServer } = options;

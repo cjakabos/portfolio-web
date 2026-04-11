@@ -1,33 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
+import { assertAiModelServiceHealthy, buildRemoteApiUrl, fetchAiModels, formatOllamaModelSize, getAiRemoteErrorCode, type OllamaModel } from '@portfolio/api-clients';
 import { Bot, User, Send, Sparkles, RefreshCw, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 
 // =============================================================================
 // URL CONFIGURATION
 // =============================================================================
-const normalizeBaseUrl = (value?: string) => (value ? value.replace(/\/+$/, '') : '');
-const remoteApiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL);
-const chatApiUrl = `${remoteApiBaseUrl}/api/chat`;
-const modelsApiUrl = `${remoteApiBaseUrl}/api/models`;
-
-// Type for Ollama model
-interface OllamaModel {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-  details: {
-    parent_model: string;
-    format: string;
-    family: string;
-    families: string[];
-    parameter_size: string;
-    quantization_level: string;
-  };
-}
+const chatApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL, '/api/chat');
+const modelsApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_CHATLLM_URL, '/api/models');
 
 // Alert Component
 const Alert = ({ severity, title, children }: { severity: 'error' | 'warning' | 'info', title: string, children: React.ReactNode }) => {
@@ -78,38 +60,13 @@ const ChatLLM: React.FC = () => {
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Helper function to format model size
-  function formatModelSize(bytes: number): string {
-    const gb = bytes / (1024 * 1024 * 1024);
-    return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
-  }
-
   // Fetch available models from Ollama
   async function fetchOllamaModels(source: 'initial' | 'manual' | 'retry' = 'manual') {
     setModelsLoading(true);
     setModelsError(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch(modelsApiUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(typeof data?.error === 'string' ? data.error : `HTTP ${response.status}`);
-      }
-
-      const allModels = data.models || [];
-
-      // Filter out embedding models - they can't be used for chat
-      const models = allModels.filter((m: OllamaModel) =>
-        !m.name.toLowerCase().includes('embed')
-      );
+      const models = await fetchAiModels(modelsApiUrl, { timeoutMs: 15000 });
 
       if (models.length === 0) {
         setModelsError("no_models");
@@ -130,8 +87,7 @@ const ChatLLM: React.FC = () => {
       }
     } catch (error: any) {
       console.warn("Ollama connection check:", error?.message || "Connection failed");
-
-      const isTimeout = error?.name === 'AbortError' || error?.message?.includes('timeout');
+      const isTimeout = getAiRemoteErrorCode(error) === 'timeout';
 
       if (isTimeout) {
         setModelsError("timeout");
@@ -174,14 +130,7 @@ const ChatLLM: React.FC = () => {
 
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const response = await fetch(modelsApiUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 5000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -415,7 +364,7 @@ const ChatLLM: React.FC = () => {
                 ) : (
                   availableModels.map((model) => (
                     <option key={model.name} value={model.name}>
-                      {model.name} ({model.details.parameter_size} • {formatModelSize(model.size)})
+                      {model.name} ({model.details.parameter_size} • {formatOllamaModelSize(model.size)})
                     </option>
                   ))
                 )}

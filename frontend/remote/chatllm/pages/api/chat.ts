@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
+import { buildCorsHeaders, getMessageMetrics, getOllamaBaseUrl, isAllowedOrigin, jsonResponse, preflightResponse } from "@portfolio/api-clients";
 import { createOllama } from "ollama-ai-provider-v2";
 import { streamText, convertToModelMessages, createUIMessageStream, JsonToSseTransformStream } from "ai";
-import { buildCorsHeaders, getMessageMetrics, getOllamaBaseUrl, isAllowedOrigin, jsonResponse, preflightResponse } from "../../lib/aiApi";
 
 const OLLAMA_BASE = getOllamaBaseUrl();
 

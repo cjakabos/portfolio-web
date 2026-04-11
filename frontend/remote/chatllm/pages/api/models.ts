@@ -1,4 +1,4 @@
-import { getOllamaBaseUrl, isAllowedOrigin, jsonResponse, preflightResponse } from '../../lib/aiApi';
+import { getOllamaBaseUrl, isAllowedOrigin, jsonResponse, preflightResponse } from '@portfolio/api-clients';
 
 const OLLAMA_BASE = getOllamaBaseUrl();
 

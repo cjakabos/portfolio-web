@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from 'ai';
+import { assertAiModelServiceHealthy, buildRemoteApiUrl, fetchAiModels, formatOllamaModelSize, getAiRemoteErrorCode, type OllamaModel } from '@portfolio/api-clients';
 import { trackJiraEvent } from '../lib/analytics';
 
 // =============================================================================
@@ -54,29 +55,10 @@ const gatewayBaseUrl =
   process.env.NEXT_PUBLIC_GATEWAY_BASE_URL
     || (isNativeAndroidRuntime() ? androidNativeGatewayBaseUrl : defaultGatewayBaseUrl);
 const jiraProxy = `${gatewayBaseUrl}/jiraproxy/webDomain`;
-const normalizeBaseUrl = (value?: string) => (value ? value.replace(/\/+$/, '') : '');
-const remoteApiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_REMOTE_JIRA_URL);
-const modelsApiUrl = `${remoteApiBaseUrl}/api/models`;
-const chatApiUrl = `${remoteApiBaseUrl}/api/chat`;
+const modelsApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_JIRA_URL, '/api/models');
+const chatApiUrl = buildRemoteApiUrl(process.env.NEXT_PUBLIC_REMOTE_JIRA_URL, '/api/chat');
 const MIN_BATCH_COUNT = 1;
 const MAX_BATCH_COUNT = 20;
-
-// Type for Ollama model
-interface OllamaModel {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-  details: {
-    parent_model: string;
-    format: string;
-    family: string;
-    families: string[];
-    parameter_size: string;
-    quantization_level: string;
-  };
-}
 
 // --- Sub-Components ---
 
@@ -398,11 +380,6 @@ const CloudJira: React.FC = () => {
 
   // --- Helper Functions ---
 
-  function formatModelSize(bytes: number): string {
-    const gb = bytes / (1024 * 1024 * 1024);
-    return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
-  }
-
   function validateJiraConfig(): string[] {
     const missingVars: string[] = [];
     if (!process.env.NEXT_PUBLIC_JIRA_PROJECT_KEY) missingVars.push("NEXT_PUBLIC_JIRA_PROJECT_KEY");
@@ -508,26 +485,7 @@ const CloudJira: React.FC = () => {
     setModelsError(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(modelsApiUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(typeof data?.error === 'string' ? data.error : `HTTP ${response.status}`);
-      }
-
-      const allModels = data.models || [];
-
-      // Filter out embedding models - they can't be used for chat
-      const models = allModels.filter((m: OllamaModel) =>
-        !m.name.toLowerCase().includes('embed')
-      );
+      const models = await fetchAiModels(modelsApiUrl, { timeoutMs: 5000 });
 
       if (models.length === 0) {
         trackJiraEvent('jira_ai_models_refresh', {
@@ -552,8 +510,7 @@ const CloudJira: React.FC = () => {
     } catch (error: any) {
       // Silently handle the error - don't let it bubble up to Next.js error overlay
       console.warn("Ollama connection check:", error?.message || "Connection failed");
-
-      const isTimeout = error?.name === 'AbortError' || error?.message?.includes('timeout');
+      const isTimeout = getAiRemoteErrorCode(error) === 'timeout';
 
       if (isTimeout) {
         setModelsError("timeout");
@@ -712,14 +669,7 @@ const CloudJira: React.FC = () => {
   async function handleChatWithTicket(ticket: any, includeChildren: boolean) {
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const response = await fetch(modelsApiUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 2000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -746,14 +696,7 @@ const CloudJira: React.FC = () => {
   async function requestBatchFromAI(count: number, parent?: any) {
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const response = await fetch(modelsApiUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 2000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -797,14 +740,7 @@ const CloudJira: React.FC = () => {
 
     // Quick health check before sending - verify Ollama is still running
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const response = await fetch(modelsApiUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-
-      if (!response.ok) throw new Error('Ollama not responding');
+      await assertAiModelServiceHealthy(modelsApiUrl, { timeoutMs: 2000 });
     } catch {
       console.warn("Ollama health check failed, refreshing models...");
       await fetchOllamaModels('retry');
@@ -1300,13 +1236,13 @@ const CloudJira: React.FC = () => {
             >
               {modelsLoading ? (
                 <option value="" disabled>Loading models...</option>
-              ) : (
-                availableModels.map((model) => (
-                  <option key={model.name} value={model.name}>
-                    {model.name} ({model.details.parameter_size} • {formatModelSize(model.size)})
-                  </option>
-                ))
-              )}
+                ) : (
+                  availableModels.map((model) => (
+                    <option key={model.name} value={model.name}>
+                      {model.name} ({model.details.parameter_size} • {formatOllamaModelSize(model.size)})
+                    </option>
+                  ))
+                )}
             </select>
           </div>
         )}
