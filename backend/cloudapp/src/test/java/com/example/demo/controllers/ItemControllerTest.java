@@ -2,7 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.model.persistence.Item;
 import com.example.demo.model.requests.CreateItemRequest;
-import com.example.demo.model.service.inf.IItemService;
+import com.example.demo.commerce.IItemService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

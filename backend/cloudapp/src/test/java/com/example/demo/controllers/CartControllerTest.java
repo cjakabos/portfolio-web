@@ -1,16 +1,13 @@
 package com.example.demo.controllers;
 
 import com.example.demo.TestUtils;
+import com.example.demo.commerce.CartResult;
+import com.example.demo.commerce.CartService;
 import com.example.demo.model.persistence.Cart;
 import com.example.demo.model.persistence.Item;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.example.demo.model.persistence.User;
 import com.example.demo.model.requests.ModifyCartRequest;
-import com.example.demo.security.InternalRequestAuthorizer;
-
-import static org.mockito.Mockito.*;
+import com.example.demo.security.CloudappAccessPolicy;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,22 +16,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import com.example.demo.model.persistence.repositories.*;
 
 import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class CartControllerTest {
 
     private CartController cartController;
 
-    private UserRepository userRepository = mock(UserRepository.class);
-
-    private CartRepository cartRepository = mock(CartRepository.class);
-
-    private ItemRepository itemRepository = mock(ItemRepository.class);
-    private InternalRequestAuthorizer internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
+    private CloudappAccessPolicy cloudappAccessPolicy = mock(CloudappAccessPolicy.class);
+    private CartService cartService = mock(CartService.class);
 
     private Authentication authFor(String username) {
         return new UsernamePasswordAuthenticationToken(
@@ -47,11 +48,9 @@ public class CartControllerTest {
     @BeforeEach
     public void setUp() {
         cartController = new CartController();
-        TestUtils.injectObjects(cartController, "cartRepository", cartRepository);
-        TestUtils.injectObjects(cartController, "itemRepository", itemRepository);
-        TestUtils.injectObjects(cartController, "userRepository", userRepository);
-        TestUtils.injectObjects(cartController, "internalRequestAuthorizer", internalRequestAuthorizer);
-        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
+        TestUtils.injectObjects(cartController, "cloudappAccessPolicy", cloudappAccessPolicy);
+        TestUtils.injectObjects(cartController, "cartService", cartService);
+        when(cloudappAccessPolicy.canAccessUsername(any(), any(), anyString())).thenReturn(true);
     }
 
     @Test
@@ -64,8 +63,7 @@ public class CartControllerTest {
         Cart cart = new Cart(1L, items, user, BigDecimal.valueOf(50000));
         user.setCart(cart);
 
-        when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
-        when(itemRepository.findById((long) 1)).thenReturn(Optional.of(item));
+        when(cartService.addToCart(user.getUsername(), 1L, 1)).thenReturn(CartResult.success(cart));
 
         ModifyCartRequest modifyCartRequest = new ModifyCartRequest(user.getUsername(), 1L, 1);
         ResponseEntity<Cart> cartResponse = cartController.addToCart(
@@ -75,7 +73,8 @@ public class CartControllerTest {
         );
         assertNotNull(cartResponse);
         assertEquals(HttpStatus.OK.value(), cartResponse.getStatusCodeValue());
-        assertEquals(3, cartResponse.getBody().getItems().size());
+        assertEquals(2, cartResponse.getBody().getItems().size());
+        verify(cartService).addToCart(user.getUsername(), 1L, 1);
     }
 
     @Test
@@ -84,19 +83,12 @@ public class CartControllerTest {
         Item item = new Item(1L, "tool", BigDecimal.valueOf(500), "garden");
         List<Item> items = new ArrayList<>();
         items.add(item);
-        items.add(item);
-        Cart cart = new Cart(1L, items, user, BigDecimal.valueOf(50000));
+        Cart cart = new Cart(1L, items, user, BigDecimal.valueOf(500));
         user.setCart(cart);
 
-        when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
-        when(itemRepository.findById((long) 1)).thenReturn(Optional.of(item));
+        when(cartService.removeFromCart(user.getUsername(), 1L, 1)).thenReturn(CartResult.success(cart));
 
         ModifyCartRequest modifyCartRequest = new ModifyCartRequest(user.getUsername(), 1L, 1);
-        ResponseEntity<Cart> cartResponse = cartController.addToCart(
-                modifyCartRequest,
-                authFor(user.getUsername()),
-                new MockHttpServletRequest()
-        );
         ResponseEntity<Cart> cartRemovedResponse = cartController.removeFromCart(
                 modifyCartRequest,
                 authFor(user.getUsername()),
@@ -104,5 +96,6 @@ public class CartControllerTest {
         );
         assertNotNull(cartRemovedResponse);
         assertEquals(HttpStatus.OK.value(), cartRemovedResponse.getStatusCodeValue());
+        verify(cartService).removeFromCart(user.getUsername(), 1L, 1);
     }
 }

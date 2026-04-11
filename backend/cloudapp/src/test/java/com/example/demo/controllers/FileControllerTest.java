@@ -1,11 +1,11 @@
 package com.example.demo.controllers;
 
 import com.example.demo.TestUtils;
+import com.example.demo.content.FileContentService;
+import com.example.demo.content.FileUploadResult;
 import com.example.demo.model.persistence.File;
 import com.example.demo.model.persistence.User;
-import com.example.demo.model.persistence.repositories.FileRepository;
-import com.example.demo.model.persistence.repositories.UserRepository;
-import com.example.demo.security.InternalRequestAuthorizer;
+import com.example.demo.security.CloudappAccessPolicy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -22,14 +22,15 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class FileControllerTest {
 
     private FileController fileController;
-    private FileRepository fileRepository;
-    private UserRepository userRepository;
-    private InternalRequestAuthorizer internalRequestAuthorizer;
+    private FileContentService fileContentService;
+    private CloudappAccessPolicy cloudappAccessPolicy;
 
     private Authentication authFor(String username, Long userId) {
         return new UsernamePasswordAuthenticationToken(
@@ -42,21 +43,17 @@ class FileControllerTest {
     @BeforeEach
     void setup() {
         fileController = new FileController();
-        fileRepository = mock(FileRepository.class);
-        userRepository = mock(UserRepository.class);
-        internalRequestAuthorizer = mock(InternalRequestAuthorizer.class);
-        TestUtils.injectObjects(fileController, "fileRepository", fileRepository);
-        TestUtils.injectObjects(fileController, "userRepository", userRepository);
-        TestUtils.injectObjects(fileController, "internalRequestAuthorizer", internalRequestAuthorizer);
-        when(internalRequestAuthorizer.isInternalRequest(any())).thenReturn(false);
+        fileContentService = mock(FileContentService.class);
+        cloudappAccessPolicy = mock(CloudappAccessPolicy.class);
+        TestUtils.injectObjects(fileController, "fileContentService", fileContentService);
+        TestUtils.injectObjects(fileController, "cloudappAccessPolicy", cloudappAccessPolicy);
+        when(cloudappAccessPolicy.canAccessUsername(any(), any(), anyString())).thenReturn(true);
+        when(cloudappAccessPolicy.canAccessUserId(any(), any(), anyLong())).thenReturn(true);
     }
 
     @Test
     void getNotes_happyPath() {
-        User user = new User();
-        user.setId(10L);
-        when(userRepository.findByUsername("alice")).thenReturn(user);
-        when(fileRepository.findByUserid(10L)).thenReturn(List.of(new File()));
+        when(fileContentService.findFilesForUsername("alice")).thenReturn(Optional.of(List.of(new File())));
 
         ResponseEntity<List<File>> resp = fileController.getNotes("alice", authFor("alice", 10L), new MockHttpServletRequest());
         assertEquals(HttpStatus.OK, resp.getStatusCode());
@@ -68,10 +65,7 @@ class FileControllerTest {
     void getFile_happyPath() {
         byte[] payload = "hello".getBytes(StandardCharsets.UTF_8);
         File file = new File("greeting.txt", "text/plain", "5", 1L, payload);
-        when(fileRepository.findById(11L)).thenReturn(Optional.of(file));
-        User user = new User();
-        user.setId(1L);
-        when(userRepository.findByUsername("alice")).thenReturn(user);
+        when(fileContentService.findFileById(11L)).thenReturn(Optional.of(file));
 
         ResponseEntity<byte[]> response = fileController.getFile(11L, authFor("alice", 1L), new MockHttpServletRequest());
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -80,7 +74,9 @@ class FileControllerTest {
 
     @Test
     void uploadFile_userNotFound() {
-        when(userRepository.findByUsername("ghost")).thenReturn(null);
+        when(fileContentService.storeFile(eq("ghost"), any())).thenReturn(
+                FileUploadResult.failure(FileUploadResult.Status.USER_NOT_FOUND)
+        );
         MockMultipartFile file = new MockMultipartFile(
                 "fileUpload",
                 "a.txt",
@@ -90,15 +86,14 @@ class FileControllerTest {
 
         ResponseEntity<?> resp = fileController.uploadFile(file, "ghost", authFor("ghost", 99L), new MockHttpServletRequest());
         assertEquals(HttpStatus.NOT_FOUND, resp.getStatusCode());
-        verify(fileRepository, never()).save(any(File.class));
+        verify(fileContentService).storeFile("ghost", file);
     }
 
     @Test
     void uploadFile_duplicateName() {
-        User user = new User();
-        user.setId(2L);
-        when(userRepository.findByUsername("alice")).thenReturn(user);
-        when(fileRepository.getFilesListByUserId(2L)).thenReturn(new String[]{"dup.txt"});
+        when(fileContentService.storeFile(eq("alice"), any())).thenReturn(
+                FileUploadResult.failure(FileUploadResult.Status.DUPLICATE_FILE)
+        );
         MockMultipartFile file = new MockMultipartFile(
                 "fileUpload",
                 "dup.txt",
@@ -108,15 +103,13 @@ class FileControllerTest {
 
         ResponseEntity<?> resp = fileController.uploadFile(file, "alice", authFor("alice", 2L), new MockHttpServletRequest());
         assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
-        verify(fileRepository, never()).save(any(File.class));
+        verify(fileContentService).storeFile("alice", file);
     }
 
     @Test
     void uploadFile_happyPath() {
-        User user = new User();
-        user.setId(3L);
-        when(userRepository.findByUsername("alice")).thenReturn(user);
-        when(fileRepository.getFilesListByUserId(3L)).thenReturn(new String[0]);
+        File storedFile = new File("ok.txt", "text/plain", "5", 3L, "hello".getBytes(StandardCharsets.UTF_8));
+        when(fileContentService.storeFile(eq("alice"), any())).thenReturn(FileUploadResult.success(storedFile));
         MockMultipartFile file = new MockMultipartFile(
                 "fileUpload",
                 "ok.txt",
@@ -126,19 +119,16 @@ class FileControllerTest {
 
         ResponseEntity<?> resp = fileController.uploadFile(file, "alice", authFor("alice", 3L), new MockHttpServletRequest());
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        verify(fileRepository, times(1)).save(any(File.class));
+        verify(fileContentService).storeFile("alice", file);
     }
 
     @Test
     void deleteFile_happyPath() {
         File file = new File("x.txt", "text/plain", "1", 4L, "x".getBytes(StandardCharsets.UTF_8));
-        when(fileRepository.findById(99L)).thenReturn(Optional.of(file));
-        User user = new User();
-        user.setId(4L);
-        when(userRepository.findByUsername("alice")).thenReturn(user);
+        when(fileContentService.findFileById(99L)).thenReturn(Optional.of(file));
 
         ResponseEntity<?> resp = fileController.deleteFile(99L, authFor("alice", 4L), new MockHttpServletRequest());
         assertEquals(HttpStatus.OK, resp.getStatusCode());
-        verify(fileRepository, times(1)).deleteById(99L);
+        verify(fileContentService).deleteFile(file);
     }
 }

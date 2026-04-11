@@ -1,5 +1,6 @@
 package com.example.demo.model.service;
 
+import com.example.demo.commerce.OrderService;
 import com.example.demo.exceptions.RequestValidationException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.model.persistence.Cart;

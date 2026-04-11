@@ -1,7 +1,7 @@
 package com.example.demo.controllers;
 
 import com.example.demo.model.persistence.model.Message;
-import com.example.demo.model.service.inf.IMessageService;
+import com.example.demo.collaboration.IMessageService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 

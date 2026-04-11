@@ -122,8 +122,11 @@ public class WebSecurityConfiguration {
                 .authenticated()
         );
 
-        http.addFilterBefore(internalServiceAuthenticationFilter, JWTAuthenticationVerificationFilter.class);
-        http.addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        // Register both custom filters relative to a Spring Security filter that
+        // already has a known order. Internal service auth runs first so JWT
+        // verification can no-op when the request is already authenticated.
+        http.addFilterBefore(internalServiceAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(authenticationTokenFilter, InternalServiceAuthenticationFilter.class);
         return http.build();
     }
 

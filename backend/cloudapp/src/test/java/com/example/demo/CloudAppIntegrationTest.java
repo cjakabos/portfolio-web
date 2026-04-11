@@ -465,8 +465,8 @@ public class CloudAppIntegrationTest {
 
     @Test
     @Order(21)
-    @DisplayName("POST /cart/addToCart — nonexistent user returns 404")
-    void addToCart_noUser() throws Exception {
+    @DisplayName("POST /cart/addToCart — cross-user cart access returns 403")
+    void addToCart_otherUserForbidden() throws Exception {
         ModifyCartRequest request = new ModifyCartRequest();
         request.setUsername("ghostuser");
         request.setItemId(1L);
@@ -476,7 +476,7 @@ public class CloudAppIntegrationTest {
                         .header("Authorization", jwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
     }
 
     @Test

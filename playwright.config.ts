@@ -22,7 +22,18 @@ import { defineConfig, devices } from "@playwright/test";
 const isCI = !!process.env.CI;
 const baseURL = process.env.BASE_URL || "http://localhost:5001";
 const backendURL = process.env.BACKEND_URL || "http://localhost:80";
+const showcaseProfile = process.env.SHOWCASE_E2E_PROFILE || "extended";
 const mobileSpecPattern = /mobile\.(visual|interactions)\.spec\.ts/;
+const extendedOnlySpecPatterns = [
+  /mlops\.spec\.ts/,
+  /module-federation\.spec\.ts/,
+  /monitor\.spec\.ts/,
+  /nightly-.*\.spec\.ts/,
+];
+const desktopTestIgnore =
+  showcaseProfile === "core"
+    ? [mobileSpecPattern, ...extendedOnlySpecPatterns]
+    : mobileSpecPattern;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -65,7 +76,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: mobileSpecPattern,
+      testIgnore: desktopTestIgnore,
     },
 
     // --- Firefox (opt-in: npx playwright test --project=firefox) ----------
@@ -76,7 +87,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: mobileSpecPattern,
+      testIgnore: desktopTestIgnore,
     },
 
     // --- WebKit (opt-in) --------------------------------------------------
@@ -87,7 +98,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: mobileSpecPattern,
+      testIgnore: desktopTestIgnore,
     },
 
     // --- Mobile Chromium visual + interaction regression -------------------
