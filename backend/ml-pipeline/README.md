@@ -70,15 +70,19 @@ GRANT ALL ON SCHEMA public TO segmentmaster;
 exit
 ```
 
-### 2- Run init_segmentationdb and Flask App in one terminal, run the rest of the steps in another terminal
+### 2- Run init_segmentationdb and the local Flask dev server in one terminal, run the rest of the steps in another terminal
 ```bash
 virtualenv venv
 source venv/bin/active
 pip3 install -r requirements.txt
 cd src
 python3 init_segmentationdb.py
-python3 app.py
+FLASK_DEBUG=true python3 app.py
 ```
+
+`python3 app.py` now defaults to `FLASK_DEBUG=false`. Keep `FLASK_DEBUG=true`
+for local troubleshooting only. The containerized service path uses Gunicorn via
+`Dockerfile_PY` instead of the Flask development server.
 
 Example of sending a new customer request, this will triger the full Customer Segmentation pipeline:
 ```
