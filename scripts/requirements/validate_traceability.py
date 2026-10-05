@@ -23,6 +23,7 @@ SUITES = {
     "test-backend-petstore": "backend/petstore/src/test/",
     "test-backend-vehicles": "backend/vehicles-api/src/test/",
     "test-backend-webproxy": "backend/web-proxy/src/test/",
+    "test-ml-pipeline": "tests/ml-pipeline/",
 }
 
 
@@ -40,7 +41,7 @@ def validate(root: Path = ROOT) -> tuple[list[str], dict]:
     report = {
         "schema_version": 1,
         "git_sha": os.environ.get("TRACEABILITY_COMMIT", "unknown"),
-        "evidence": "exact source declarations; execution only from context-matched JUnit XML",
+        "evidence": "exact source declarations; execution only from context-matched JUnit XML or Jest/Vitest JSON",
         "cases": {},
     }
     try:

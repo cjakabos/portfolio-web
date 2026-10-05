@@ -281,6 +281,7 @@ export default function CloudMaps() {
                             <h3 className="font-bold text-gray-900 dark:text-white">
                                 {v.details.manufacturer.name} {v.details.model}
                             </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{v.price || "Price unavailable"}</p>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${v.condition === 'NEW' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                                     {v.condition}
@@ -291,10 +292,10 @@ export default function CloudMaps() {
                         <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             {canManageVehicles && (
                                 <>
-                                    <button onClick={() => openEditIfAdmin(v)} className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded">
+                                    <button aria-label={`Edit ${v.details.model}`} onClick={() => openEditIfAdmin(v)} className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded">
                                         <Edit size={16} />
                                     </button>
-                                    <button onClick={() => deleteVehicleIfAdmin(v.id)} className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded">
+                                    <button aria-label={`Delete ${v.details.model}`} onClick={() => deleteVehicleIfAdmin(v.id)} className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded">
                                         <Trash2 size={16} />
                                     </button>
                                 </>
@@ -348,6 +349,7 @@ export default function CloudMaps() {
                             <div className="p-1">
                                 <strong className="block text-sm mb-1">{v.details.manufacturer.name}</strong>
                                 <span className="text-xs text-gray-600">{v.details.model}</span>
+                                <p className="text-xs text-gray-600">{v.price || "Price unavailable"}</p>
                                 <div className="mt-2 flex gap-2">
                                     {canManageVehicles && (
                                         <>

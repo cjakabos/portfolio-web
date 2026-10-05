@@ -246,6 +246,37 @@ describe("cloudapp hooks", () => {
     expect(result.current.notes).toEqual(empty);
   });
 
+  test("useCart refreshes contents and total after add and clear", async () => {
+    const { result } = renderHook(() => useCart("alice"));
+    mockFetchJson("POST", `${API_URL}/cart/addToCart`, {});
+    mockFetchJson("POST", `${API_URL}/cart/getCart`, { id: 7, items: [{ id: 3, price: 12.5 }], total: 12.5 });
+    await act(async () => { await result.current.addToCart({ id: 3, price: 12.5 }); });
+    expect(result.current.cart.items).toEqual([{ id: 3, price: 12.5 }]);
+    expect(result.current.total).toBe(12.5);
+    const request = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/cart/addToCart"));
+    expect(JSON.parse(request?.[1]?.body as string)).toEqual({ username: "alice", itemId: 3, quantity: 1 });
+    mockFetchJson("POST", `${API_URL}/cart/clearCart`, { id: 7, items: [], total: 0 });
+    await act(async () => { await result.current.clearCart(); });
+    expect(result.current.cart.items).toEqual([]);
+    expect(result.current.total).toBe(0);
+    expect(fetchRoutes).toEqual([]);
+  });
+
+  test("useCart checkout clears the cart and immediately refreshes order history", async () => {
+    const { result } = renderHook(() => useCart("alice"));
+    mockFetchJson("POST", `${API_URL}/order/submit/alice`, {});
+    mockFetchJson("POST", `${API_URL}/cart/clearCart`, { id: 7, items: [], total: 0 });
+    mockFetchJson("GET", `${API_URL}/order/history/alice`, [{ id: 10, items: [{ id: 3 }], total: 12.5 }]);
+    await act(async () => { await result.current.submitOrder(); });
+    expect(result.current.cart.items).toEqual([]);
+    expect(result.current.total).toBe(0);
+    expect(result.current.history).toEqual([{ id: 10, items: [{ id: 3 }], total: 12.5 }]);
+    expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual([
+      "/cloudapp/order/submit/alice", "/cloudapp/cart/clearCart", "/cloudapp/order/history/alice",
+    ]);
+    expect(fetchRoutes).toEqual([]);
+  });
+
   test("useLogin posts credentials, keeps auth in cookies, and emits auth change", async () => {
     const dispatchSpy = jest.spyOn(window, "dispatchEvent");
     mockFetchJson("POST", `${API_URL}/user/user-login`, { message: "Login successful" });

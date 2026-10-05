@@ -15,7 +15,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts/requirements"
 sys.path.insert(0, str(SCRIPTS))
 from model import artifacts, load_requirements, parse_requirement
-from report_results import attach_results
+from report_results import attach_results, attach_json_results
+from record_execution import context, digest
+from merge_evidence import merge
 from test_sources import declarations
 from validate_traceability import validate
 
@@ -467,6 +469,99 @@ class TraceabilityValidatorTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("does not match", result.stderr)
 
+    def test_json_results_match_file_and_exact_title_and_reset_missing_results(self):
+        target = {"path": "frontend/cloudapp-shell/src/__tests__/example.test.tsx",
+                  "test_id": "renders a result", "suite": "test-frontend-unit"}
+        report = {"cases": {"example": {"tests": [target]}}}
+        output = self.root / "jest.json"
+        def attach(name, title, status):
+            output.write_text(json.dumps({"testResults": [{"name": name,
+                "assertionResults": [{"title": title, "status": status}]}]}))
+            attach_json_results(report, "test-frontend-unit", [output])
+        attach("/build/other/example.test.tsx", target["test_id"], "passed")
+        self.assertEqual(target["outcome"], "not-run")
+        attach("/build/" + target["path"], "renders something else", "passed")
+        self.assertEqual(target["outcome"], "not-run")
+        for status, expected in [("passed", "passed"), ("failed", "failed"),
+                                 ("pending", "skipped"), ("todo", "skipped"), ("unknown", "not-run")]:
+            attach("/build/" + target["path"], target["test_id"], status)
+            self.assertEqual(target["outcome"], expected)
+        output.write_text('{"testResults": []}')
+        attach_json_results(report, "test-frontend-unit", [output])
+        self.assertEqual(target["outcome"], "not-run")
+        self.assertNotIn("evidence", target)
+
+    def test_json_duplicate_identities_are_not_passing_evidence(self):
+        target = {"path": "ai-orchestration/ai-orchestration-monitor/tests/example.test.tsx",
+                  "test_id": "renders a result", "suite": "test-ai-monitor-component"}
+        report = {"cases": {"example": {"tests": [target]}}}
+        output = self.root / "vitest.json"
+        output.write_text(json.dumps({"testResults": [{"name": "/build/" + target["path"],
+            "assertionResults": [{"title": target["test_id"], "status": "passed"}] * 2}]}))
+        attach_json_results(report, "test-ai-monitor-component", [output])
+        self.assertEqual(target["outcome"], "not-run")
+
+    def test_execution_context_changes_with_application_and_runner_inputs(self):
+        source = self.root / "backend/cloudapp/src/main/Example.java"
+        source.parent.mkdir(parents=True)
+        source.write_text("class Example {}")
+        first = context(self.root)
+        source.write_text("class Example { int value = 2; }")
+        self.assertNotEqual(first, context(self.root))
+        first = context(self.root)
+        compose = self.root / "docker-compose.test.yml"
+        compose.write_text(compose.read_text() + "# runner changed\n")
+        self.assertNotEqual(first, context(self.root))
+        first = context(self.root)
+        cache = self.root / "backend/cloudapp/target/generated.class"
+        cache.parent.mkdir(parents=True)
+        cache.write_bytes(b"cached output")
+        self.assertEqual(first, context(self.root))
+
+    def test_merged_evidence_requires_current_context_and_all_default_targets(self):
+        results = self.root / "results"
+        folder = results / "requirements"
+        (folder / "junit").mkdir(parents=True)
+        (folder / "context.json").write_text(json.dumps(context(self.root)))
+        xml = folder / "junit/TEST-example.xml"
+        xml.write_text('<testsuite><testcase classname="test_example.Example" name="test_exact"/></testsuite>')
+        def completed():
+            (folder / "run.json").write_text(json.dumps({"exit_code": 0,
+                "context_sha256": digest(folder / "context.json"),
+                "reports": {"junit/TEST-example.xml": digest(xml)}}))
+        completed()
+        report = merge(self.root, results)
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(report["execution"], {"passed": 1})
+        xml.write_text(xml.read_text() + "\n")
+        self.assertTrue(any("report bytes" in error for error in merge(self.root, results)["errors"]))
+        xml.write_text('<testsuite><testcase classname="test_example.Example" name="test_exact"><skipped/></testcase></testsuite>')
+        completed()
+        self.assertTrue(merge(self.root, results)["errors"])
+        (folder / "context.json").write_text("{}")
+        self.assertTrue(any("context does not match" in error for error in merge(self.root, results)["errors"]))
+        (folder / "context.json").unlink()
+        self.assertTrue(merge(self.root, results)["errors"])
+
+    def test_native_wrapper_invalidates_stale_reports_and_records_completion(self):
+        folder = self.root / "runner"
+        (folder / "junit").mkdir(parents=True)
+        xml = folder / "junit/TEST-example.xml"
+        xml.write_text("stale pass")
+        args = [sys.executable, str(SCRIPTS / "run_native.py"), "--root", str(self.root),
+                "--results", str(folder), "--result", "junit", "--", sys.executable, "-c"]
+        failed = subprocess.run(args + ["raise SystemExit(7)"], capture_output=True)
+        self.assertEqual(failed.returncode, 7)
+        self.assertFalse(xml.exists())
+        self.assertEqual(json.loads((folder / "run.json").read_text())["exit_code"], 7)
+        script = f"from pathlib import Path; Path({str(xml)!r}).write_text('<testsuite/>')"
+        passed = subprocess.run(args + [script], capture_output=True)
+        self.assertEqual(passed.returncode, 0)
+        manifest = json.loads((folder / "run.json").read_text())
+        self.assertEqual(manifest["exit_code"], 0)
+        self.assertEqual(manifest["reports"], {"junit/TEST-example.xml": digest(xml)})
+        self.assertEqual(manifest["context_sha256"], digest(folder / "context.json"))
+
     def test_ai_framework_dependency_versions_match_application(self):
         def versions(path):
             result = {}
@@ -480,7 +575,7 @@ class TraceabilityValidatorTests(unittest.TestCase):
             ROOT / "ai-orchestration/ai-orchestration-layer/requirements.txt"
         )
         tests = versions(ROOT / "tests/ai-orchestration-layer/requirements.txt")
-        for package in ["fastapi", "pydantic", "python-multipart", "httpx"]:
+        for package in ["fastapi", "pydantic", "python-multipart", "httpx", "langchain-core", "langchain-ollama", "langchain-chroma", "chromadb", "langgraph"]:
             self.assertEqual(tests[package], app[package])
 
 

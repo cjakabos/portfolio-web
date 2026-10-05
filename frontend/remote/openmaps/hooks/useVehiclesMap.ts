@@ -25,6 +25,7 @@ export const FUEL_TYPE_OPTIONS = ['Gasoline', 'Diesel', 'Hybrid', 'Electric', 'P
 
 export interface Vehicle {
     id: VehicleId;
+    price?: string;
     condition: VehicleCondition;
     details: {
         model: string;

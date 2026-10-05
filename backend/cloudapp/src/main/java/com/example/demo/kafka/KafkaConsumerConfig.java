@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Switched to manual acknowledgment (AckMode.RECORD) with a
+ * Uses manual acknowledgment (AckMode.MANUAL_IMMEDIATE) with a
  * {@link DefaultErrorHandler} that retries 3 times (1 s back-off) and
  * publishes failed records to the {@code <topic>.DLT} dead-letter topic.
  */
@@ -66,7 +66,7 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(consumerFactory());
 
         // Manual acknowledgment — commit after each successfully processed record
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Dead-letter recoverer: failed records go to <topic>.DLT after retries
         DeadLetterPublishingRecoverer recoverer =

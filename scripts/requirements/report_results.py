@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Attach exact Python/JUnit XML outcomes to a validated source report.
-
-Results must come from the same checkout as the source report. Browser runner
-adapters are not implemented; their outcomes remain not-run.
-"""
+"""Attach exact JUnit XML or Jest/Vitest JSON outcomes to a source report."""
 import argparse
 import json
 from pathlib import Path
@@ -63,11 +59,42 @@ def attach_results(report: dict, suite: str, xml_paths: list[Path]) -> dict:
     return report
 
 
+def attach_json_results(report: dict, suite: str, paths: list[Path]) -> dict:
+    """Match file and leaf title; an identically named test elsewhere cannot pass."""
+    records = []
+    for path in paths:
+        data = json.loads(path.read_text())
+        for file in data.get("testResults", []):
+            name = file.get("name", "").replace("\\", "/")
+            for assertion in file.get("assertionResults", []):
+                records.append((name, assertion.get("title", ""), assertion.get("status")))
+    for case in report["cases"].values():
+        for target in case["tests"]:
+            if target["suite"] != suite:
+                continue
+            target["outcome"] = "not-run"
+            target.pop("evidence", None)
+            source = target["path"]
+            matches = [status for name, title, status in records
+                       if (name == source or name.endswith("/" + source))
+                       and title == target["test_id"]]
+            if matches:
+                # Duplicate identities are ambiguous; unknown and skipped states
+                # never inherit a pass from another result file.
+                target["outcome"] = ("failed" if "failed" in matches else
+                    "passed" if len(matches) == 1 and matches[0] == "passed" else
+                    "skipped" if len(matches) == 1 and matches[0] in {"pending", "skipped", "todo", "disabled"} else "not-run")
+                target["evidence"] = [str(path) for path in paths]
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--suite", required=True)
-    parser.add_argument("--junit", type=Path, required=True)
+    formats = parser.add_mutually_exclusive_group(required=True)
+    formats.add_argument("--junit", type=Path)
+    formats.add_argument("--json-results", type=Path)
     parser.add_argument(
         "--context",
         type=Path,
@@ -75,9 +102,11 @@ def main():
         help="checkout context recorded immediately before this runner",
     )
     args = parser.parse_args()
-    paths = sorted(args.junit.glob("*.xml")) if args.junit.is_dir() else [args.junit]
+    result = args.junit or args.json_results
+    suffix = "*.xml" if args.junit else "*.json"
+    paths = sorted(result.glob(suffix)) if result.is_dir() else [result]
     if not paths:
-        parser.error("no JUnit XML reports found")
+        parser.error("no test reports found")
     report = json.loads(args.report.read_text())
     if report.get("errors"):
         parser.error("cannot attach evidence to a failed source validation")
@@ -85,7 +114,8 @@ def main():
         parser.error(
             "runner context does not match the validated requirement/test revision"
         )
-    report = attach_results(report, args.suite, paths)
+    adapter = attach_results if args.junit else attach_json_results
+    report = adapter(report, args.suite, paths)
     args.report.write_text(json.dumps(report, indent=2) + "\n")
     return 0
 

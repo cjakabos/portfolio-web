@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record the checkout inputs for a runner's JUnit XML without extra dependencies."""
+"""Record application, test and runner inputs without extra dependencies."""
 import argparse
 import hashlib
 import json
@@ -19,6 +19,18 @@ def context(root):
         for entry in data["cases"].values()
         for target in entry["targets"]
     }
+    # Prune build/dependency directories before walking. Implementation changes
+    # must invalidate evidence even when mapped test declarations stay the same.
+    inputs = []
+    excluded = {"node_modules", "target", "dist", "build", ".next", "coverage",
+                "__pycache__", ".pytest_cache", ".git", "test-results", "playwright-report", "Pods", ".gradle"}
+    for directory in ("backend", "frontend", "packages", "ai-orchestration", "tests", "scripts", ".github/workflows"):
+        for parent, children, files in os.walk(root / directory):
+            children[:] = sorted(set(children) - excluded)
+            inputs.extend(Path(parent) / name for name in sorted(files)
+                          if not name.startswith(".env") and not name.endswith((".pyc", ".tsbuildinfo", ".log")))
+    inputs.extend(path for pattern in ("Dockerfile*", "docker-compose*.yml", "package*.json", ".npmrc")
+                  for path in root.glob(pattern) if path.is_file())
     return {
         "git_sha": os.environ.get("TRACEABILITY_COMMIT", "unknown"),
         "test_map": digest(mapping),
@@ -37,6 +49,7 @@ def context(root):
             )
         },
         "test_sources": {path: digest(root / path) for path in sorted(paths)},
+        "execution_inputs": {str(path.relative_to(root)): digest(path) for path in sorted(set(inputs))},
     }
 
 

@@ -27,9 +27,10 @@ async function supportsThinking(model: string): Promise<boolean> {
                 options: { num_predict: 1 },
             }),
         });
-        // 400 = "does not support thinking", anything else = it works
-        const canThink = res.status !== 400;
-        thinkingCache.set(model, canThink);
+        // Only a successful probe establishes support. Transient server errors
+        // should be retried on the next request rather than cached as support.
+        const canThink = res.ok;
+        if (res.ok || res.status === 400) thinkingCache.set(model, canThink);
         return canThink;
     } catch {
         return false;

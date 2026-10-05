@@ -58,8 +58,23 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
 - Core PR gate for canonical requirement schema, generated feature/index
   freshness, reviewed case digests, exact test declarations, and command tests.
 - Reports are under `test-results/requirements/`. Coverage and execution outcomes
-  are separate; unresolved behavior gaps are recorded in `requirements/test-map.json`.
-- AI unit tests produce scoped XML/context under `test-results/ai-orchestration/`.
+  are separate; coverage assertions and test boundaries are recorded in `requirements/test-map.json`.
+- All 46 current scenarios have complete reviewed native-test mappings. Source
+  completeness remains separate from whether the current checkout passed.
+- Mapped native suites persist JUnit XML or Jest/Vitest JSON plus source/config
+  fingerprints under `test-results/`; see `requirements/README.md` for paths.
+- After the harness, four backend, ML, AI, frontend unit and monitor component
+  suites finish, run the executed-evidence gate:
+
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requirement-evidence
+```
+
+- The gate rejects missing, skipped, failed, interrupted or stale default evidence and writes
+  `test-results/requirements/executed-traceability.json`. CI downloads native
+  artifacts before running it; Test Summary requires it.
+- External model/Jira/Leaflet and operator data boundaries use deterministic
+  fixtures. Live/nightly tests remain separate opt-in provider checks.
 
 ## Frontend Static Checks
 ```bash

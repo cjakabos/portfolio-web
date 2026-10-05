@@ -164,15 +164,59 @@ Coverage completeness and passed/failed/skipped/not-run outcomes stay separate.
 A skipped or unmapped test never counts as passing evidence.
 
 Execution context records the commit identifier, canonical requirement digests,
-test-map digest, mapped test source digests, harness implementation digests,
-and AI implementation digests before a runner starts. The XML
-adapter refuses a context that differs from the validated report. Python and
-Java JUnit identities are supported; browser result adapters are future work and
-browser targets remain `not-run` in this report. No second Gherkin execution
-framework is introduced. XML describes results, not the requirement baseline.
+test-map digest, mapped test source digests, application source/configuration,
+dependency manifests, migrations, Docker definitions and harness sources before
+each runner starts. Build caches, generated runtime output and environment files
+are excluded. Changed implementation or runner inputs invalidate previous evidence.
+The adapters refuse a context that differs from the validated report.
 
-Reports are written under `test-results/requirements/`; AI unit XML/context are
-under `test-results/ai-orchestration/`. GitHub CI runs the requirement job as a
-Core Showcase gate, includes it in the summary, and uploads both evidence sets.
-Branch protection must require that job or the Test Summary to enforce it at
-merge time; this repository change does not alter GitHub repository settings.
+Python/Java JUnit XML and Jest/Vitest JSON identities are supported. JSON results
+must match the exact repository-relative source path and unique test title;
+missing, ambiguous and skipped results cannot become passing evidence. The
+portable Gherkin scenarios remain the acceptance contract, linked to the existing
+native runners without a second execution framework.
+
+All 46 current scenarios have reviewed complete mappings. Completeness describes
+the assertions at their documented boundaries; it is separate from execution and
+from exhaustive product coverage. The tests exercise real application components,
+API clients, databases, Kafka, document parsing, Chroma and KMeans where relevant.
+External Ollama/model responses, Jira, map tiles/Leaflet geometry and operator hook
+responses use deterministic fixtures. This does not establish live provider
+availability, model quality, visual layout correctness or a production deployment.
+Existing live/nightly browser checks remain complementary opt-in checks. They are
+not prerequisites for the default mapped acceptance evidence.
+
+Each native runner starts through `run_native.py`. The wrapper invalidates old
+completion records and result files before dependency installation or discovery,
+records source context, then records the exit status and report/context digests.
+A failed or interrupted rerun cannot reuse previous passing evidence, and modified
+report bytes are rejected even if the source context matches.
+
+Native suites write reports, context and `run.json` under `test-results/`:
+
+| Suite | Evidence directory | Result format |
+| --- | --- | --- |
+| Requirement harness | `requirements/` | JUnit XML |
+| CloudApp, Petstore, Vehicles, Web Proxy | `backend/<service>/` | JUnit XML |
+| ML pipeline | `ml-pipeline/` | JUnit XML |
+| AI orchestration | `ai-orchestration/` | JUnit XML |
+| Shell and remote components/hooks | `frontend-unit/` | Jest JSON |
+| Operator monitor components | `ai-monitor-component/` | Vitest JSON |
+
+After these suites run against the same checkout, require current passing evidence
+for every default target:
+
+    docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requirement-evidence
+
+This writes `test-results/requirements/executed-traceability.json` with per-target
+and per-case outcomes. It fails for incomplete coverage, missing reports, stale
+context, skipped targets or failed targets. `test-all` runs this aggregation last.
+Set `TRACEABILITY_COMMIT` consistently for all suites and aggregation (CI uses the
+checkout SHA; local runs default to `unknown` and still compare source digests).
+
+GitHub CI uploads native evidence, downloads it in the Executed Requirement
+Evidence job, validates the checkout and merges outcomes in Docker. Test Summary
+requires both source validation and executed evidence. Branch protection must
+require one of these gates or Test Summary to enforce it at merge time; repository
+settings are unchanged. Product review is still required to accept the proposed
+requirement baseline.
