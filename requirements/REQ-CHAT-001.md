@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-CHAT-001
 title: Shared chat rooms and live messaging
 status: proposed
@@ -31,10 +32,10 @@ These statements describe current code behavior. Confirm them as product intent 
 Feature: Join chat rooms and exchange live messages
 
   @AC-REQ-CHAT-001-01
-  Scenario: Create a room and find it in the user's room list
+  Scenario: Create a room and open it using its code
     Given an authenticated user
     When the user creates a room with a name
-    Then the room has a code and appears in that user's room list
+    Then the room has a code and the room page opens for that code
 
   @AC-REQ-CHAT-001-02
   Scenario: Join a room by its code

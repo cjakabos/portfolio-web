@@ -272,11 +272,34 @@ services:
       [
         "sh",
         "-c",
-        "pip install --no-cache-dir pytest pytest-asyncio pytest-timeout httpx fastapi pydantic && PYTHONPATH=/app/src:/app/src/tools AI_ORCH_SRC=/app/src pytest /tests -v --tb=short --timeout=60 -p no:cacheprovider",
+        "pip install --no-cache-dir -r /tests/requirements.txt && python3 /workspace/scripts/requirements/record_execution.py --output /results/context.json && PYTHONPATH=/app/src:/app/src/tools AI_ORCH_SRC=/app/src pytest /tests -o asyncio_default_fixture_loop_scope=function -v --tb=short --timeout=60 -p no:cacheprovider --junitxml=/results/ai-orchestration.xml",
       ]
     volumes:
       - ./ai-orchestration/ai-orchestration-layer/src:/app/src:ro
       - ./tests/ai-orchestration-layer:/tests:ro
+      - ./test-results/ai-orchestration:/results
+      - ./:/workspace:ro
+    environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
+
+  # Requirement-to-test traceability checks and harness unit tests.
+  test-requirements:
+    image: portfolio-web-requirements:local
+    build:
+      context: .
+      dockerfile: scripts/requirements/Dockerfile
+    working_dir: /workspace
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "set -e; python3 scripts/requirements/validate_traceability.py --report /results/source-traceability.json; python3 scripts/requirements/record_execution.py --output /results/context.json; mkdir -p /results/junit; rm -f /results/junit/TEST-*.xml; status=0; python3 -m xmlrunner discover -s tests/requirement-cases -p 'test_*.py' -v -o /results/junit || status=$$?; python3 scripts/requirements/report_results.py --report /results/source-traceability.json --suite test-requirements --junit /results/junit --context /results/context.json; exit $$status",
+      ]
+    volumes:
+      - ./:/workspace:ro
+      - ./test-results/requirements:/results
+    environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
 
   # =========================================================================
   # AI ORCHESTRATION MONITOR CHECKS (TypeScript typecheck + lint + build)
@@ -424,7 +447,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-static test-frontend-budgets test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$${BASE_PROJECT}_$${svc}\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-requirements test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-static test-frontend-budgets test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$${BASE_PROJECT}_$${svc}\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit --exit-code-from $$svc $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================

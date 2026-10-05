@@ -46,8 +46,20 @@ PROJECT=portfolio_focus
 SERVICE=test-e2e-core
 docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- Common services: `test-requirements`, `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 - CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
+
+## Requirement Traceability
+
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-requirements test-requirements
+```
+
+- Core PR gate for canonical requirement schema, generated feature/index
+  freshness, reviewed case digests, exact test declarations, and command tests.
+- Reports are under `test-results/requirements/`. Coverage and execution outcomes
+  are separate; unresolved behavior gaps are recorded in `requirements/test-map.json`.
+- AI unit tests produce scoped XML/context under `test-results/ai-orchestration/`.
 
 ## Frontend Static Checks
 ```bash

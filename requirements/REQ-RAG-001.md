@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-RAG-001
 title: Document ingestion and retrieval-augmented answers
 status: proposed

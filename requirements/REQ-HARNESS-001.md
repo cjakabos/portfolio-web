@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-HARNESS-001
 title: Jira change requests remain traceable to requirements and test cases
 status: proposed

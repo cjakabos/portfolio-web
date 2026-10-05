@@ -34,6 +34,7 @@ Use one Markdown file per stable requirement. Each file starts with simple
 front matter:
 
     ---
+    schema_version: 1
     id: REQ-AREA-001
     title: Short requirement name
     status: proposed
@@ -92,7 +93,8 @@ new stable ID when no existing requirement covers its behavior.
 The current dummy intake reads only committed JSON fixtures. It uses no Jira
 credentials, makes no network calls, and does not create a Jira ticket:
 
-    python3 scripts/requirements/intake_jira.py --issue DEMO-001
+    docker compose -f docker-compose.test.yml build test-requirements
+    docker run --rm -v "$PWD:/workspace:rw" portfolio-web-requirements:local python3 scripts/requirements/intake_jira.py --issue DEMO-001
 
 It writes a reviewable snapshot and requirement-amendment proposal to
 work-items/DEMO-001.md. Existing output is not overwritten unless --force is
@@ -107,9 +109,21 @@ integration test.
 
 Regenerate portable Gherkin case files from requirement Markdown with:
 
-    python3 scripts/requirements/generate_cases.py
+    docker compose -f docker-compose.test.yml build test-requirements
+    docker run --rm -v "$PWD:/workspace:rw" portfolio-web-requirements:local python3 scripts/requirements/generate_cases.py
 
-Generated files live under tests/requirement-cases/generated/. They are
+Check freshness without writing:
+
+    docker compose -f docker-compose.test.yml run --rm --no-deps --entrypoint python3 test-requirements scripts/requirements/generate_cases.py --check
+
+The shared compiler validates YAML schema version 1 and uses Cucumber's official
+Gherkin parser. Use exactly one Feature block per requirement and exactly one
+`@AC-REQ-AREA-001-NN` tag on each Scenario. Tags must belong to their requirement,
+and IDs must be unique across the baseline. Scenario Outlines require Examples.
+Retired and removed requirements do not retain generated features.
+
+Generated files and `index.json` live under tests/requirement-cases/generated/.
+The index includes requirement and case digests. They are
 derived artifacts: edit the Markdown source, then regenerate. Gherkin files
 make test cases structured and portable, but they are not executable by this
 repository's current Playwright, JUnit, or pytest runners until matching step
@@ -120,3 +134,45 @@ not a requirement source format.
 
 REQ-HARNESS-001 and DEMO-001 demonstrate the traceability flow only. They are
 not claims about a live Jira issue or a released product commitment.
+
+## Test Evidence Contract
+
+`test-map.json` uses schema version 2. Each canonical case has a reviewed
+`case_digest`, a coverage owner, coverage (`complete`, `partial`, or `missing`),
+a list of test targets, and a specific remaining gap. Complete coverage is a
+reviewed assertion about the mapped tests; static validation cannot prove its
+semantic completeness. Missing coverage has no targets and must explain the gap.
+Changing requirement text or status invalidates its reviewed case digests.
+Regenerate artifacts, review the affected assertions, then update the map digests
+from the generated index in the same PR.
+
+Targets use exact test declarations: Python function or `Class.method`, Java
+`Class.method`, and a unique TypeScript test title within its source file.
+Python AST and Java/TypeScript syntax trees reject comments, generic prefixes,
+and ambiguous titles. Each target records what it asserts, its Docker suite,
+and `default` or `opt-in` execution. Nightly/live tests remain opt-in.
+This is declaration validation, not native runner discovery or execution.
+
+Run the PR gate and command regression tests with:
+
+    docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-requirements test-requirements
+
+The gate compares features/index with canonical Markdown and checks exact test
+links. Its JSON report initially labels every outcome `not-run`. The harness
+runner produces JUnit XML and then attaches exact outcomes for its own tests.
+Coverage completeness and passed/failed/skipped/not-run outcomes stay separate.
+A skipped or unmapped test never counts as passing evidence.
+
+Execution context records the commit identifier, canonical requirement digests,
+test-map digest, mapped test source digests, harness implementation digests,
+and AI implementation digests before a runner starts. The XML
+adapter refuses a context that differs from the validated report. Python and
+Java JUnit identities are supported; browser result adapters are future work and
+browser targets remain `not-run` in this report. No second Gherkin execution
+framework is introduced. XML describes results, not the requirement baseline.
+
+Reports are written under `test-results/requirements/`; AI unit XML/context are
+under `test-results/ai-orchestration/`. GitHub CI runs the requirement job as a
+Core Showcase gate, includes it in the summary, and uploads both evidence sets.
+Branch protection must require that job or the Test Summary to enforce it at
+merge time; this repository change does not alter GitHub repository settings.

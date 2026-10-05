@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-APPROVAL-001
 title: Human review of risk-sensitive AI actions
 status: proposed

@@ -15,6 +15,7 @@ services, and contract governance.
 | Jira proxy integration | `test-backend-webproxy` | Proxy request validation and backend behavior |
 | ML pipeline tests | `test-ml-pipeline` | Flask endpoints, validation, and segmentation behavior |
 | AI orchestration tests | `test-ai-orchestration-layer` | FastAPI orchestration helpers, auth/config behavior, and HTTP client logic |
+| Requirement traceability | `test-requirements` | Checks canonical requirement schema, generated freshness, exact test declarations and suite boundaries; runs command regression tests and emits scoped JUnit evidence |
 | Frontend static checks | `test-frontend-static` | Workspace version validation plus shell, remote, and AI monitor typecheck/lint coverage |
 | Frontend budget checks | `test-frontend-budgets` | Build-time gzip budget checks for the CloudApp shell hero entry bundle |
 | AI monitor static checks | `test-ai-monitor-lint` | Operator app install, typecheck, linting, production build validation, and AI monitor bundle-budget enforcement |
@@ -43,6 +44,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-backend-petstore
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-backend-vehicles
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-backend-webproxy
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-requirements
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ml-pipeline
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-ai-orchestration-layer
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-static
@@ -111,6 +113,34 @@ The contract test service:
 - validates generated TypeScript contract output
 
 This is the primary protection against backend/frontend drift.
+
+## Requirement Traceability
+
+Canonical cases live in `requirements/REQ-*.md`. The shared YAML/Cucumber model
+produces feature files and a digest index in `tests/requirement-cases/generated/`.
+`requirements/test-map.json` links reviewed case revisions to one or more exact
+test declarations and Docker services. It distinguishes complete, partial, and
+missing coverage, records an owner and explicit gaps, and labels each target as
+default or opt-in. See `requirements/README.md` for the full schema and workflow.
+
+The validator checks canonical Markdown directly, generated artifact freshness,
+case revisions, syntax-tree test declarations, and runner/source boundaries.
+It does not claim native runner discovery or semantic coverage verification.
+Source links alone remain `not-run`; scoped XML results record passed, failed,
+or skipped outcomes only when their recorded checkout context matches.
+Browser execution-result adapters remain future work.
+
+`test-requirements` runs actual intake/generator commands in temporary roots and
+covers malformed data, unknown/retired IDs, baseline preservation, overwrite
+protection, tag placement, duplicate IDs, generation freshness, temporary output,
+selector drift, and result-context mismatches. It emits XML and a trace report.
+AI unit tests use pinned framework versions matching the application, include
+`python-multipart`, and emit XML plus checkout context.
+
+    docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-requirements test-requirements
+
+The gate is included in both `test-all` and PR CI. Validation permits explicit
+coverage gaps; it never manufactures tests to label every requirement complete.
 
 ## AI Synthetic Load Tests
 

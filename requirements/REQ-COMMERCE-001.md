@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-COMMERCE-001
 title: Product catalog, personal cart, and order history
 status: proposed

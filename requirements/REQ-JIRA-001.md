@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-JIRA-001
 title: Jira issue board and local AI refinement
 status: proposed

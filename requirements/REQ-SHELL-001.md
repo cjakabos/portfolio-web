@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-SHELL-001
 title: Authenticated CloudApp shell and remote-module navigation
 status: proposed

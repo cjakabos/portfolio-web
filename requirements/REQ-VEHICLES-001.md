@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-VEHICLES-001
 title: Vehicle map and administrator vehicle maintenance
 status: proposed

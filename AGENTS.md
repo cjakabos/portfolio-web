@@ -18,6 +18,8 @@
 - A Jira change proposes a requirement amendment. Update the canonical
   requirement and regenerate its cases in the same reviewed PR as the
   implementation. The merged PR becomes the current baseline.
+- Run the Docker `test-requirements` gate for requirement/harness changes.
+  Review changed case digests and update coverage assertions/gaps in test-map.json.
 - Do not edit generated requirement cases directly. Edit their requirement
   source and regenerate them.
 - Select focused checks from TESTING.md and the relevant smoke-path and

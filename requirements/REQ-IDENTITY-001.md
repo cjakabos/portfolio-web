@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-IDENTITY-001
 title: User registration, sessions, and role-based access
 status: proposed

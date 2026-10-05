@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-CHATLLM-001
 title: Local model chat with streamed responses
 status: proposed

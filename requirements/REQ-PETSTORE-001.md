@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-PETSTORE-001
 title: Petstore customer, pet, employee, and schedule workflows
 status: proposed

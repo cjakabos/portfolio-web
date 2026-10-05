@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-MLOPS-001
 title: Customer segmentation workflow and results
 status: proposed

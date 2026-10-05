@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-AIOPS-001
 title: AI operator console and orchestration control plane
 status: proposed

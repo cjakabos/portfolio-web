@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: REQ-WORKSPACE-001
 title: Personal notes and file workspace
 status: proposed

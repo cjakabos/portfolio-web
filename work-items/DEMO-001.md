@@ -20,6 +20,7 @@ As a repository maintainer, I want each imported change request to map its Jira 
 ## Requirement links
 
 - [REQ-HARNESS-001 — Jira change requests remain traceable to requirements and test cases](../requirements/REQ-HARNESS-001.md)
+  Baseline SHA-256: 6bf7d40e66112ab20b3eefac02594abb8a63e2029d26342957e365bc724b3a1c
 
   Linked acceptance scenarios:
   - AC-REQ-HARNESS-001-01 — Import a linked Jira change from the read-only fixture source
