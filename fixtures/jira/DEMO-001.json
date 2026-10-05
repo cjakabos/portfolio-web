@@ -1,0 +1,16 @@
+{
+  "source": "synthetic-fixture",
+  "key": "DEMO-001",
+  "url": "https://jira.example.invalid/browse/DEMO-001",
+  "issue_type": "Task",
+  "status": "To Do",
+  "priority": "Medium",
+  "created_at": "2026-10-05T09:00:00Z",
+  "updated_at": "2026-10-05T09:30:00Z",
+  "summary": "Add direct scenario-to-test trace links",
+  "description": "As a repository maintainer, I want each imported change request to map its Jira key to stable requirement and acceptance scenario IDs and generated test cases, so reviewers can follow the full change history.",
+  "requirement_ids": [
+    "REQ-HARNESS-001"
+  ],
+  "proposed_requirement_change": "Record the chain from the Jira issue through the linked requirement and acceptance scenario to the generated case and eventual PR. Keep the requirement amendment as a proposal until a person accepts it."
+}

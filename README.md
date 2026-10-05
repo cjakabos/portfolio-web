@@ -498,6 +498,8 @@ Then open `https://<your-laptop-lan-ip>` on the phone.
 | AI orchestration | `ai-orchestration/ai-orchestration-layer/` | FastAPI orchestration + RAG + HITL |
 | AI admin monitor | `ai-orchestration/ai-orchestration-monitor/` | React/Vite operator console |
 | Test suites | `tests/`, `e2e/` | Python, Java, gateway, E2E coverage |
+| Requirements | `requirements/` | Stable requirement IDs, Jira change traceability, and generated acceptance cases |
+| Agent guidance | `AGENTS.md` | Repository map and safe agent workflow rules |
 
 </details>
 
