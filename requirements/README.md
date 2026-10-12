@@ -122,12 +122,13 @@ decision. Source code alone cannot establish that existing behavior is intended.
 The [initial hero/harness review](reviews/BASELINE-2026-10-12.md) states the scope
 and demo limits of the first acceptance batch.
 
-The repository owner accepted nine requirements covering 33 scenarios on
-2026-10-12: shell, identity, workspace, commerce, chat, vehicles, the development
-harness, and [administrator-only MLOps/RAG workflows](reviews/ACCESS-2026-10-12.md).
-The other five requirements and 15 scenarios remain proposed. Acceptance is
-scoped to the local showcase and does not establish
-production readiness or live-provider test execution.
+The repository owner accepted all 14 current requirements covering 48 scenarios
+on 2026-10-12. The decisions cover the initial hero/harness scope,
+[administrator-only MLOps/RAG workflows](reviews/ACCESS-2026-10-12.md), and
+[Jira, ChatLLM, Petstore, the AI operator console, and AI approvals](reviews/REMAINING-2026-10-12.md).
+No current requirement remains proposed. Acceptance is scoped to the local
+showcase and does not establish production readiness or live-provider test
+execution. New proposals and future amendments still require human review.
 
 | Requirement | Current behavior area |
 | --- | --- |

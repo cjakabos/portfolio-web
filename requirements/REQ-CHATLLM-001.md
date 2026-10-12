@@ -2,19 +2,20 @@
 schema_version: 1
 id: REQ-CHATLLM-001
 title: Local model chat with streamed responses
-status: proposed
+status: accepted
 owner: chatllm-module
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/REMAINING-2026-10-12.md
 ---
 
 # REQ-CHATLLM-001 — Local model chat
 
-## Observed behavior
+## Product intent
 
 The ChatLLM remote obtains available model names from the configured local Ollama service, lets the user choose a model, and streams chat responses through the module's API route. The adapter probes whether a model supports reasoning output and includes that output when supported. Changing the selected model clears the current conversation.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+See [the human decision](reviews/REMAINING-2026-10-12.md) for scope and limits.
 
 ## Evidence
 

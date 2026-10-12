@@ -1,11 +1,29 @@
 {
   "schema_version": 1,
   "requirements": {
+    "REQ-AIOPS-001": {
+      "digest": "614ba7fbb56af80195bf6d2ef8513e648a0b0a1fe04e521e51f9e9473dd68b3d",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/REMAINING-2026-10-12.md"
+    },
+    "REQ-APPROVAL-001": {
+      "digest": "3cc7c52ed04c51f52d95f2a0ca6cc38284e2084259cab76133a71e5c3a8a123c",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/REMAINING-2026-10-12.md"
+    },
     "REQ-CHAT-001": {
       "digest": "0076888732307fcfb3569a6bcd9b00e32c1de84f368d8414ce8be315cac62623",
       "accepted_by": "repository-owner",
       "accepted_on": "2026-10-12",
       "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-CHATLLM-001": {
+      "digest": "1e1615ab09ab8362c740a25928dac5adc73b4888658a32501d202b12af61f0bc",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/REMAINING-2026-10-12.md"
     },
     "REQ-COMMERCE-001": {
       "digest": "faa79b0a0d4bfb54eb0f3cc858b12b90f65ac8d85d82978f68b446bfd165a969",
@@ -25,11 +43,23 @@
       "accepted_on": "2026-10-12",
       "decision": "requirements/reviews/BASELINE-2026-10-12.md"
     },
+    "REQ-JIRA-001": {
+      "digest": "84e1d3fecdc1984b7e8bbe5e7a52f58d9936c4e2b645c2da7fc78cc34fdb5934",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/REMAINING-2026-10-12.md"
+    },
     "REQ-MLOPS-001": {
       "digest": "dc60e25f4f6ac2f2eff16b155557df0ab0f4303f66727e9b63c3a77eb87bc3b7",
       "accepted_by": "repository-owner",
       "accepted_on": "2026-10-12",
       "decision": "requirements/reviews/ACCESS-2026-10-12.md"
+    },
+    "REQ-PETSTORE-001": {
+      "digest": "f35f9dd76e91947e28c1cd34c65109662bd488bf3506a3f197a3245127233f13",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/REMAINING-2026-10-12.md"
     },
     "REQ-RAG-001": {
       "digest": "2081c0d78493aa65a8ee390b09101fa12dd00a962122c2f290f6cc0eae1cf0e1",

@@ -43,11 +43,12 @@ implementation, and trace acceptance scenarios to executed native tests.
 Intake writes a proposal under `work-items/`. Product and engineering review the
 requirement amendment alongside code and tests in the same implementation PR;
 merging the reviewed PR establishes the updated baseline. The repository owner
-has accepted [seven hero/harness requirements](./requirements/reviews/BASELINE-2026-10-12.md)
-and [administrator-only MLOps/RAG intent](./requirements/reviews/ACCESS-2026-10-12.md),
-covering 33 scenarios across nine requirements for the local showcase. Their exact
-revisions are recorded in [the product-intent baseline](./requirements/baseline.json);
-the other five requirements and 15 scenarios remain proposed. CI validates acceptance separately
+has accepted all 14 current requirements and their 48 scenarios for the local
+showcase through the [hero/harness review](./requirements/reviews/BASELINE-2026-10-12.md),
+[administrator-only MLOps/RAG decision](./requirements/reviews/ACCESS-2026-10-12.md),
+and [remaining product-intent approval](./requirements/reviews/REMAINING-2026-10-12.md).
+Their exact revisions are recorded in [the product-intent baseline](./requirements/baseline.json);
+no current requirement remains proposed. CI validates acceptance separately
 from coverage and execution. Generated Gherkin is linked to the existing runners
 through the test map; those native tests provide the executable assertions.
 

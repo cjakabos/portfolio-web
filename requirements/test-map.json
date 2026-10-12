@@ -3,7 +3,7 @@
   "generated_cases": "tests/requirement-cases/generated",
   "cases": {
     "AC-REQ-AIOPS-001-01": {
-      "case_digest": "6a46dc4288b28dc2275189e224a1c9f0cac14f6bccd9b0e2ab0fe51cf227591e",
+      "case_digest": "f304a9c2cbf420b211a4387166b9e3e1995244833aa8934a946553f4b8ca2a8d",
       "coverage": "complete",
       "targets": [
         {
@@ -18,7 +18,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-AIOPS-001-02": {
-      "case_digest": "92ec343fcce74be59ba3f227335e66aea40e9338732945132c5bcdc033c22869",
+      "case_digest": "9b9c02df6368352fbee1c3e2d7e292ab533e42ae4196dd3da6e8c2a5bb0fa4e1",
       "coverage": "complete",
       "targets": [
         {
@@ -47,7 +47,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-AIOPS-001-03": {
-      "case_digest": "a58228a11eec13ef82ada79a8a50a8d7761deec5a097e907bbd9227b813af79b",
+      "case_digest": "5aab2e46d14d1ac1f52430e1175bc0a19a22ebd753bd6b498b8c78ed9220a41c",
       "coverage": "complete",
       "targets": [
         {
@@ -62,7 +62,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-APPROVAL-001-01": {
-      "case_digest": "d68203735e7ee93be64b2fb19831967fb9400a095251699cf870867b3b7d668c",
+      "case_digest": "a5585221167992e7454e0c489db9fd97ff709240e84e966571f2196ecb9001f3",
       "coverage": "complete",
       "targets": [
         {
@@ -77,7 +77,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-APPROVAL-001-02": {
-      "case_digest": "c5dcd062d995da22524bd15636b750f1e72cecc45f5e3bc793a36d30f1bcbcf5",
+      "case_digest": "be211591cbe5d63f110fd112425ff39ec5dd1b908fdfb9ed5bbcb7b096e097bb",
       "coverage": "complete",
       "targets": [
         {
@@ -92,7 +92,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-APPROVAL-001-03": {
-      "case_digest": "4841952c57e26476c3ee5dfb1569866d4c9c5f3d3dc3e96136802bed878d019d",
+      "case_digest": "2e97bae35aa6f93504ce4fcffe2bdb087599fdba2bf55374650421153a8c1930",
       "coverage": "complete",
       "targets": [
         {
@@ -188,7 +188,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-CHATLLM-001-01": {
-      "case_digest": "8049b7889583967b1b0458a8047e30f765cff4b6e76728d65ebdfab782cd5b85",
+      "case_digest": "19ec50f2e4b4cb14bcb3958c21e2488852605fb3f7749350a71a245e61fadf1c",
       "coverage": "complete",
       "targets": [
         {
@@ -210,7 +210,7 @@
       "owner": "chatllm-module"
     },
     "AC-REQ-CHATLLM-001-02": {
-      "case_digest": "ce65f8cbe3890e4daaa2ed507dc9c31617363e0cb0c9bd2119ae6ca893964a1c",
+      "case_digest": "b76b40748725e014f6f404178e2b2164bb7c772c0d936c5854d9528224b9f60d",
       "coverage": "complete",
       "targets": [
         {
@@ -225,7 +225,7 @@
       "owner": "chatllm-module"
     },
     "AC-REQ-CHATLLM-001-03": {
-      "case_digest": "989a44430af71b659587b39209f7b8167d75d1a2c47fda51d2b5e6962b9d9064",
+      "case_digest": "4502e0e9004e257704500082e6ca9d7a9b9fe72c770d709b207a97a50742d746",
       "coverage": "complete",
       "targets": [
         {
@@ -489,7 +489,7 @@
       "owner": "cloudapp-backend"
     },
     "AC-REQ-JIRA-001-01": {
-      "case_digest": "8a294c5d8c97f0931aa249a6b7b119d2628d11e50eee2fc170e58aacfb48919f",
+      "case_digest": "569a6f7ffa89855d6448fa59ab0a01acb364bf5e3b1cc825834fa7848bd58d11",
       "coverage": "complete",
       "targets": [
         {
@@ -532,7 +532,7 @@
       "owner": "jira-module"
     },
     "AC-REQ-JIRA-001-02": {
-      "case_digest": "bc1add8b5e01655a6b452a9af466b8f9a08414eb8d33292a6f8db13726a26872",
+      "case_digest": "1adfd8ec7a92c37b35763d33239ef5305ffcc2822999d7d46077e186bb58a34e",
       "coverage": "complete",
       "targets": [
         {
@@ -547,7 +547,7 @@
       "owner": "jira-module"
     },
     "AC-REQ-JIRA-001-03": {
-      "case_digest": "140071cafec0aaa114dc79776baec9cbfd48f976094ee181c7c65a2560aa7517",
+      "case_digest": "8876aefdc9c7c538d289a844074aa8118e7298ce96143783753543a28face57a",
       "coverage": "complete",
       "targets": [
         {
@@ -643,7 +643,7 @@
       ]
     },
     "AC-REQ-PETSTORE-001-01": {
-      "case_digest": "c2a266aba81f0508a01000f41899a05db3fa94c9856fe7d7bc88355a2bde3afc",
+      "case_digest": "a21d0e2e0290341fd23f4a3e0fffcc420204b6e4f101b7cec9390fb2d2767f40",
       "coverage": "complete",
       "targets": [
         {
@@ -672,7 +672,7 @@
       "owner": "petstore-module"
     },
     "AC-REQ-PETSTORE-001-02": {
-      "case_digest": "19922c4a4321010141f447279f470f513562537abb3c94f9a653a40f602b62d4",
+      "case_digest": "e72c507026f1406e9883331fff95c8597086bfe8702fc6627b576cd8df35836e",
       "coverage": "complete",
       "targets": [
         {
@@ -687,7 +687,7 @@
       "owner": "petstore-module"
     },
     "AC-REQ-PETSTORE-001-03": {
-      "case_digest": "5cc9de603ea3fcf51b9a0d03a1142efa98f075b3d6991301bacba7ef570e27ce",
+      "case_digest": "0d630faaf41e5f0232cb203d4c56e4b2dea225c5f168fdedcde823419e06959f",
       "coverage": "complete",
       "targets": [
         {

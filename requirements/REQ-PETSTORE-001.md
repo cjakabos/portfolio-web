@@ -2,19 +2,20 @@
 schema_version: 1
 id: REQ-PETSTORE-001
 title: Petstore customer, pet, employee, and schedule workflows
-status: proposed
+status: accepted
 owner: petstore-module
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/REMAINING-2026-10-12.md
 ---
 
 # REQ-PETSTORE-001 — Petstore domain workflows
 
-## Observed behavior
+## Product intent
 
 The PetStore remote is exposed as an administrator-only module. Its service API supports customer and pet records, employee records and availability, and schedules that associate dates, activities, pets, and employees. Schedule data can be listed or queried by pet, employee, or customer.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+See [the human decision](reviews/REMAINING-2026-10-12.md) for scope and limits.
 
 ## Evidence
 
