@@ -3,6 +3,13 @@
 Use this document to decide whether a change can be promoted beyond local or
 branch validation.
 
+Every promoted behavior must link to accepted requirement intent, a recorded
+human decision, and current native evidence. Run `test-requirement-evidence`
+with `--requirement-id` for every affected requirement; proposed, retired, or
+unknown requirements are rejected even when their tests pass. The accepted
+revision must match `requirements/baseline.json`. Draft generation and source
+verification remain available before acceptance.
+
 ## Change Classes
 
 | Change class | Minimum promotion gates | Required docs updates |
@@ -34,6 +41,8 @@ Do not promote when any of the following are true:
    capability does this demonstrate?`
 9. the official tours or demo setup changed without updating the reader-facing
    docs
+10. an affected requirement is proposed, retired, unknown, or differs from its
+    recorded human-accepted revision
 
 ## Release Notes Expectations
 

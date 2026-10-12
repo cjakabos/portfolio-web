@@ -194,6 +194,7 @@ class RequirementHarnessTests(unittest.TestCase):
         retired = self.root / "requirements/REQ-IDENTITY-001.md"
         retired.write_text(
             retired.read_text().replace("status: proposed", "status: retired")
+            .replace("status: accepted", "status: retired")
         )
         (self.root / "requirements/REQ-CHAT-001.md").unlink()
         self.assertNotEqual(self.command("generate_cases.py", "--check").returncode, 0)
@@ -333,12 +334,163 @@ class TraceabilityValidatorTests(unittest.TestCase):
     def write_map(self):
         self.map_path.write_text(json.dumps(self.mapping))
 
+    def refresh_requirement_revisions(self):
+        requirements = load_requirements(self.root)
+        output = self.root / "tests/requirement-cases/generated"
+        for name, text in artifacts(requirements, self.root).items():
+            (output / name).write_text(text)
+        for requirement in requirements:
+            for case in requirement.cases:
+                self.mapping["cases"][case.id]["case_digest"] = case.digest
+        self.write_map()
+
+    def record_acceptance(self):
+        self.source.write_text(
+            self.source.read_text().replace("status: proposed", "status: accepted")
+            .replace("owner: maintainers", "owner: maintainers\nreview: requirements/reviews/DECISION.md")
+        )
+        review = self.root / "requirements/reviews/DECISION.md"
+        review.parent.mkdir()
+        review.write_text(
+            '---\nschema_version: 1\nid: DECISION\nstatus: accepted\n'
+            'decided_by: fixture-reviewer\ndecided_on: "2026-10-12"\n'
+            'requirements: [REQ-TEST-001]\nrequirement_digests:\n'
+            f'  REQ-TEST-001: {parse_requirement(self.source).digest}\n'
+            '---\n\nFixture human decision.\n'
+        )
+        self.baseline_path = self.root / "requirements/baseline.json"
+        self.baseline = {"schema_version": 1, "requirements": {
+            "REQ-TEST-001": {
+                "digest": parse_requirement(self.source).digest,
+                "accepted_by": "fixture-reviewer", "accepted_on": "2026-10-12",
+                "decision": "requirements/reviews/DECISION.md",
+            }
+        }}
+        self.baseline_path.write_text(json.dumps(self.baseline))
+        self.refresh_requirement_revisions()
+
+    def write_passing_evidence(self, results):
+        folder = results / "requirements"
+        (folder / "junit").mkdir(parents=True)
+        (folder / "context.json").write_text(json.dumps(context(self.root)))
+        xml = folder / "junit/TEST-example.xml"
+        xml.write_text('<testsuite><testcase classname="test_example.Example" name="test_exact"/></testsuite>')
+        (folder / "run.json").write_text(json.dumps({"exit_code": 0,
+            "context_sha256": digest(folder / "context.json"),
+            "reports": {"junit/TEST-example.xml": digest(xml)}}))
+
     def test_source_validation_does_not_claim_execution(self):
         errors, report = validate(self.root)
         self.assertEqual(errors, [])
         self.assertEqual(
             report["cases"]["AC-REQ-TEST-001-01"]["tests"][0]["outcome"], "not-run"
         )
+        self.assertEqual(report["intent"]["counts"], {"proposed": 1})
+        self.assertIsNone(report["intent"]["baseline"])
+        self.assertEqual(report["cases"]["AC-REQ-TEST-001-01"]["requirement_status"], "proposed")
+
+    def test_draft_validation_cannot_satisfy_required_accepted_baseline(self):
+        self.assertTrue(validate(self.root, require_accepted_baseline=True)[0])
+
+    def test_recorded_accepted_intent_is_validated_without_claiming_execution(self):
+        self.record_acceptance()
+        errors, report = validate(self.root, require_accepted_baseline=True)
+        self.assertEqual(errors, [])
+        self.assertEqual(report["intent"]["counts"], {"accepted": 1})
+        self.assertEqual(report["cases"]["AC-REQ-TEST-001-01"]["requirement_status"], "accepted")
+        self.assertEqual(report["cases"]["AC-REQ-TEST-001-01"]["tests"][0]["outcome"], "not-run")
+
+    def test_changing_status_alone_does_not_establish_accepted_intent(self):
+        self.source.write_text(self.source.read_text().replace("status: proposed", "status: accepted"))
+        self.refresh_requirement_revisions()
+        self.assertTrue(any("baseline.json" in error for error in validate(self.root)[0]))
+
+    def test_accepted_intent_change_requires_fresh_human_review(self):
+        self.record_acceptance()
+        self.source.write_text(self.source.read_text().replace("visible", "persisted"))
+        self.refresh_requirement_revisions()
+        self.assertTrue(any("accepted revision changed" in error for error in validate(self.root)[0]))
+        self.baseline["requirements"]["REQ-TEST-001"]["digest"] = parse_requirement(self.source).digest
+        self.baseline_path.write_text(json.dumps(self.baseline))
+        self.assertTrue(any("human decision record" in error for error in validate(self.root)[0]))
+
+    def test_baseline_rejects_proposed_unknown_and_unrecorded_requirements(self):
+        self.record_acceptance()
+        self.source.write_text(self.source.read_text().replace("status: accepted", "status: proposed"))
+        self.refresh_requirement_revisions()
+        self.assertTrue(any("not accepted" in error for error in validate(self.root)[0]))
+        self.source.write_text(self.source.read_text().replace("status: proposed", "status: accepted"))
+        self.refresh_requirement_revisions()
+        entry = self.baseline["requirements"].pop("REQ-TEST-001")
+        self.baseline["requirements"]["REQ-UNKNOWN-001"] = entry
+        self.baseline_path.write_text(json.dumps(self.baseline))
+        errors, _ = validate(self.root)
+        self.assertTrue(any("unknown baseline requirement" in error for error in errors))
+        self.assertTrue(any("no recorded baseline revision" in error for error in errors))
+
+    def test_baseline_rejects_missing_pending_and_mismatched_decisions(self):
+        self.record_acceptance()
+        review = self.root / "requirements/reviews/DECISION.md"
+        original = review.read_text()
+        for text in (
+            original.replace("status: accepted", "status: pending"),
+            original.replace("fixture-reviewer", "someone-else"),
+            original.replace("REQ-TEST-001", "REQ-OTHER-001"),
+        ):
+            with self.subTest(text=text):
+                review.write_text(text)
+                self.assertTrue(validate(self.root)[0])
+        review.unlink()
+        self.assertTrue(validate(self.root)[0])
+
+    def test_baseline_rejects_invalid_dates_duplicate_keys_and_unsafe_references(self):
+        self.record_acceptance()
+        entry = self.baseline["requirements"]["REQ-TEST-001"]
+        for date_value in ("", "12 October 2026", "2026-02-30"):
+            with self.subTest(date=date_value):
+                entry["accepted_on"] = date_value
+                self.baseline_path.write_text(json.dumps(self.baseline))
+                self.assertTrue(validate(self.root)[0])
+        entry["accepted_on"] = "2026-10-12"
+        entry["decision"] = "requirements/reviews/../../outside.md"
+        self.baseline_path.write_text(json.dumps(self.baseline))
+        self.assertTrue(validate(self.root)[0])
+        self.baseline_path.write_text('{"schema_version": 1, "schema_version": 1, "requirements": {}}')
+        self.assertTrue(any("duplicate JSON key" in error for error in validate(self.root)[0]))
+
+    def test_intent_decisions_invalidate_previous_execution_context(self):
+        self.record_acceptance()
+        before = context(self.root)
+        review = self.root / "requirements/reviews/DECISION.md"
+        review.write_text(review.read_text() + "\nReview notes changed.\n")
+        self.assertNotEqual(before, context(self.root))
+
+    def test_passing_draft_evidence_cannot_be_promoted_as_accepted_intent(self):
+        self.record_acceptance()
+        draft = self.root / "requirements/REQ-DRAFT-001.md"
+        draft.write_text(DOCUMENT.replace("REQ-TEST-001", "REQ-DRAFT-001"))
+        self.mapping["cases"]["AC-REQ-DRAFT-001-01"] = json.loads(json.dumps(
+            self.mapping["cases"]["AC-REQ-TEST-001-01"]
+        ))
+        self.refresh_requirement_revisions()
+        results = self.root / "results"
+        self.write_passing_evidence(results)
+        report = merge(self.root, results, ["REQ-TEST-001"])
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(report["execution_by_intent"], {"accepted": {"passed": 1}, "proposed": {"passed": 1}})
+        report = merge(self.root, results, ["REQ-DRAFT-001"])
+        self.assertTrue(any("promotion requires accepted intent" in error for error in report["errors"]))
+        self.assertEqual(report["execution"], {"passed": 2})
+        command = subprocess.run(
+            [sys.executable, str(SCRIPTS / "merge_evidence.py"), "--root", str(self.root),
+             "--results", str(results), "--requirement-id", "REQ-DRAFT-001"],
+            capture_output=True, text=True,
+        )
+        self.assertNotEqual(command.returncode, 0)
+        self.assertIn("promotion requires accepted intent", command.stdout)
+        self.assertEqual(merge(self.root, results, ["REQ-UNKNOWN-001"])["execution"], {"passed": 2})
+        self.assertTrue(any("status=unknown" in error for error in
+                            merge(self.root, results, ["REQ-UNKNOWN-001"])["errors"]))
 
     def test_stale_canonical_text_and_review_digest_fail(self):
         self.source.write_text(DOCUMENT.replace("visible", "persisted"))
@@ -520,6 +672,7 @@ class TraceabilityValidatorTests(unittest.TestCase):
         self.assertEqual(first, context(self.root))
 
     def test_merged_evidence_requires_current_context_and_all_default_targets(self):
+        self.record_acceptance()
         results = self.root / "results"
         folder = results / "requirements"
         (folder / "junit").mkdir(parents=True)

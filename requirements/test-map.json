@@ -107,7 +107,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-CHAT-001-01": {
-      "case_digest": "51f38e058bdcb0a622e2d76f886c359c3038a1b683490069b09e104ea76e695c",
+      "case_digest": "cbb958888b14de6b20558c478dde364d0b9321002084b0ca725e03702a5fcc1a",
       "coverage": "complete",
       "targets": [
         {
@@ -129,7 +129,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-CHAT-001-02": {
-      "case_digest": "4d5184db5665583434d1fa04f061a816d900cae92c8c468346cd06aa3e426620",
+      "case_digest": "84565d34dff5fef731a94df5d28ff74284dca77ad1f6a661df5c581400c9c6ef",
       "coverage": "complete",
       "targets": [
         {
@@ -151,7 +151,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-CHAT-001-03": {
-      "case_digest": "618bc4f2f7c07b0a2521eab77bf8dd91e2ab1a2f29346d28e1e5a2a2c777ec14",
+      "case_digest": "21d5c7f35eca59f5115b1aa7819cbd37ac91d8c727b69bc3e3b5051d8ae80049",
       "coverage": "complete",
       "targets": [
         {
@@ -173,7 +173,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-CHAT-001-04": {
-      "case_digest": "64fae6983887f52e2a309ed3383ff65ccfda61b4f88467c465b79885cb14a86b",
+      "case_digest": "5443611d8b2b99adb5b6012454fbfc76e384244849a27f515ec49db887105121",
       "coverage": "complete",
       "targets": [
         {
@@ -247,7 +247,7 @@
       "owner": "chatllm-module"
     },
     "AC-REQ-COMMERCE-001-01": {
-      "case_digest": "7afa8d0cf012dc191aeef6ce92d2e0e0709cfa7cdce1d19022eb3c407eb76bef",
+      "case_digest": "32ac36efea36408d529266348680efff2cf2944f368fa5381845ba0fd0225933",
       "coverage": "complete",
       "targets": [
         {
@@ -269,7 +269,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-COMMERCE-001-02": {
-      "case_digest": "ced3679c21b2e1745b1f78cad7208ab5134febc4e09e3fe07c9f264acb4a3083",
+      "case_digest": "874f7220a88b026879de279aa37a247e6b7df0e20d2df355ea84d8c4832d9c71",
       "coverage": "complete",
       "targets": [
         {
@@ -291,7 +291,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-COMMERCE-001-03": {
-      "case_digest": "4ff21ac0c29f546cf8f8deda76e5360e9d5baab38a3c464de8ec7fe8a9a8dd11",
+      "case_digest": "8857d12d85009f9c8a3a5cbc8c18bc0fcc63a77d67eccf0b6ddd77699e481ebd",
       "coverage": "complete",
       "targets": [
         {
@@ -320,7 +320,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-HARNESS-001-01": {
-      "case_digest": "7925eaba08dfaba8fdfd6f0b68d7e68e4dda4364879431fccb01b9a349be6e34",
+      "case_digest": "6eae184a400f42c60c5ca0d164fb6b9d2348c86dd47573ae0b0ce76d98eb3f94",
       "coverage": "complete",
       "targets": [
         {
@@ -335,7 +335,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-HARNESS-001-02": {
-      "case_digest": "d36171061748655e0dba0fd5858a4a85c8a0bec32420bb63d2b09f011236242f",
+      "case_digest": "b065241bcc0a0d463bab780b7dd693ea8b19a5657c4380e6b7894a423b11412d",
       "coverage": "complete",
       "targets": [
         {
@@ -350,7 +350,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-HARNESS-001-03": {
-      "case_digest": "d56398231d68eb2cfc9d2f84c3728c0f35261634d7b44d28554ee59210867c9f",
+      "case_digest": "3f4ff0b85b0cb18676ddb29e964db501afd2ceba65da801dd51d2f65254db66a",
       "coverage": "complete",
       "targets": [
         {
@@ -365,7 +365,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-HARNESS-001-04": {
-      "case_digest": "05fffd7803f585c0e29c93b63712e02c9941d7ea10d115c89e44f3df8fbf2ec1",
+      "case_digest": "2e6f1d469c8815500230ac675872d5999668f862e7e227bf8964266fd4d41e08",
       "coverage": "complete",
       "targets": [
         {
@@ -380,7 +380,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-IDENTITY-001-01": {
-      "case_digest": "3f6736f532963258af31b5844eb8d8ff80afe01e4e5d012f1ba4e44b901516eb",
+      "case_digest": "70b3f565bf750b7e7d9822ae1c5c1fe31bfb792de9600f7e84649d6c34f3d50e",
       "coverage": "complete",
       "targets": [
         {
@@ -395,7 +395,7 @@
       "owner": "cloudapp-backend"
     },
     "AC-REQ-IDENTITY-001-02": {
-      "case_digest": "91606f0dcc419acb69b0a758bd27103655d9463580fb5dec32e7de35d474feb1",
+      "case_digest": "48326ca61731753ff93faa3a128303c80f1aa26dae6d1d985a9ed16a54f63433",
       "coverage": "complete",
       "targets": [
         {
@@ -424,7 +424,7 @@
       "owner": "cloudapp-backend"
     },
     "AC-REQ-IDENTITY-001-03": {
-      "case_digest": "c8483982e3946b4316435ff1dcb6bc16f2f42a9a374d743467f68ac8a66db73a",
+      "case_digest": "cc8e8f3ed74b199ef121577451d85620de23fd3614c18e32dcb58abb02d41ecf",
       "coverage": "complete",
       "targets": [
         {
@@ -446,7 +446,7 @@
       "owner": "cloudapp-backend"
     },
     "AC-REQ-IDENTITY-001-04": {
-      "case_digest": "cd8773d21c9186bf133a21e797b7470452b21bf77b86fb0804c305428ba1bd07",
+      "case_digest": "8558bfe779683cea58d53ceed84f3ea3d2af12af51329186c814d9270f682e11",
       "coverage": "complete",
       "targets": [
         {
@@ -732,7 +732,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-SHELL-001-01": {
-      "case_digest": "ad2ea5ab1a7330cd56f0d77fcedcba93116b3ee0243a1cacb1827a6e06f3eb7d",
+      "case_digest": "4d8d31e2e573a4e00860961748e200bfe699be87687b5af45df5ef6d28648da9",
       "coverage": "complete",
       "targets": [
         {
@@ -747,7 +747,7 @@
       "owner": "frontend-platform"
     },
     "AC-REQ-SHELL-001-02": {
-      "case_digest": "1cb5d7f5e95edada200be1b533e8c18640249c46845b1e0b5e1d7e0dd8aa4b44",
+      "case_digest": "8daa319f9f84635526eac7bf23ffce158e0db86268101f3030a16fc556610bd4",
       "coverage": "complete",
       "targets": [
         {
@@ -762,7 +762,7 @@
       "owner": "frontend-platform"
     },
     "AC-REQ-SHELL-001-03": {
-      "case_digest": "595d3c53ad043719df6c6c0bb6a2c6d31e8e13f5a26600965ae9478b3c236975",
+      "case_digest": "518120c4245cfa6a25c20d543c96c3a75291d67c98638e94962f179fd1bf5b8c",
       "coverage": "complete",
       "targets": [
         {
@@ -784,7 +784,7 @@
       "owner": "frontend-platform"
     },
     "AC-REQ-VEHICLES-001-01": {
-      "case_digest": "1cccdeadac7a604237ba6cfa18efbe24fd769154b765589cbe3cfc3c258e7249",
+      "case_digest": "f182465366a4328fa8970dc897d77d2186a6fdcdfccd49c97ba6a295282cfeb5",
       "coverage": "complete",
       "targets": [
         {
@@ -806,7 +806,7 @@
       "owner": "vehicles-and-maps"
     },
     "AC-REQ-VEHICLES-001-02": {
-      "case_digest": "7d285ac49889ae01e6ac187c59d49bddcc62d671aa11effb096038e316c93130",
+      "case_digest": "ddd751a75ea9f7e403004eb21834f226103bcce526eeec5830228be6dacc2700",
       "coverage": "complete",
       "targets": [
         {
@@ -842,7 +842,7 @@
       "owner": "vehicles-and-maps"
     },
     "AC-REQ-VEHICLES-001-03": {
-      "case_digest": "a43ab0f9d2164769c377ad40de3ae8cf05776dc31b0a1762a19372abb5ada50a",
+      "case_digest": "5a0970f80d7507ae99745803ff08a312eb3b778ddf8739dbc6f88fe68d51869e",
       "coverage": "complete",
       "targets": [
         {
@@ -864,7 +864,7 @@
       "owner": "vehicles-and-maps"
     },
     "AC-REQ-WORKSPACE-001-01": {
-      "case_digest": "c94c3bcdacbb8974c8003b77dd0de49a629b84ebe45cb932abc56dac1db95f38",
+      "case_digest": "e7df8faaa475ab15cb92e4c43a05e9fa7bae59fe2abdfa92a42783b5e9c4b422",
       "coverage": "complete",
       "targets": [
         {
@@ -893,7 +893,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-WORKSPACE-001-02": {
-      "case_digest": "bc59cb0f5642846723f7fed8f982361b0f0c2d7cff26a38a37ace958bbf0846c",
+      "case_digest": "b7a9e27b3657b0466fa443a8ba1b6a09e462d970f1eda90a80eee30a040e1654",
       "coverage": "complete",
       "targets": [
         {
@@ -915,7 +915,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-WORKSPACE-001-03": {
-      "case_digest": "db90d97e85cff6ffe5d535be3b252a6c6bc2413828cc6de5efeac529f47ef6c5",
+      "case_digest": "76156177ce62da09d266b183364ec856c09347af66ed027fc9ee656d2447ccd7",
       "coverage": "complete",
       "targets": [
         {
@@ -930,7 +930,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-WORKSPACE-001-04": {
-      "case_digest": "3317449ec55ebbe59efaf2a3288d29afab73ad68a4300f639890aef63505e176",
+      "case_digest": "c6f661e50fb32836941d8f04431f39dd0eb43611d0cc9f4c5d98ac6ce50d4e7d",
       "coverage": "complete",
       "targets": [
         {

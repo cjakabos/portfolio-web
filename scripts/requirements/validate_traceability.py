@@ -11,6 +11,7 @@ import yaml
 from model import ROOT, artifacts, freshness_errors, load_requirements
 from test_sources import declarations
 from record_execution import context
+from intent_baseline import validate_intent
 
 # Explicit runner/source boundaries prevent attaching a test to an unrelated service.
 SUITES = {
@@ -36,7 +37,7 @@ def unique_json(pairs):
     return result
 
 
-def validate(root: Path = ROOT) -> tuple[list[str], dict]:
+def validate(root: Path = ROOT, require_accepted_baseline: bool = False) -> tuple[list[str], dict]:
     errors = []
     report = {
         "schema_version": 1,
@@ -46,6 +47,8 @@ def validate(root: Path = ROOT) -> tuple[list[str], dict]:
     }
     try:
         requirements = load_requirements(root)
+        intent_errors, report["intent"] = validate_intent(root, requirements, require_accepted_baseline)
+        errors.extend(intent_errors)
         expected = artifacts(requirements, root)
         errors.extend(
             freshness_errors(root / "tests/requirement-cases/generated", expected)
@@ -181,6 +184,7 @@ def validate(root: Path = ROOT) -> tuple[list[str], dict]:
                     )
                 report["cases"][case_id] = {
                     "requirement": req.id,
+                    "requirement_status": req.status,
                     "case_digest": case.digest,
                     "coverage": entry["coverage"],
                     "gap": entry["gap"],
@@ -211,12 +215,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument(
+        "--require-accepted-baseline", action="store_true",
+        help="require a recorded accepted product baseline in addition to draft source validation",
+    )
+    parser.add_argument(
         "--report",
         type=Path,
         help="write a source-validation JSON report; outcomes remain not-run",
     )
     args = parser.parse_args()
-    errors, report = validate(args.root.resolve())
+    errors, report = validate(args.root.resolve(), args.require_accepted_baseline)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + "\n")
@@ -230,6 +238,7 @@ def main() -> int:
     print(
         f'Validated {len(report["cases"])} canonical acceptance cases; declared coverage: {report["coverage"]}. Execution: not-run.'
     )
+    print(f'Product intent: {report["intent"]["counts"]}; accepted baseline recorded: {report["intent"]["baseline"] is not None}.')
     return 0
 
 

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "requirements": {
+    "REQ-CHAT-001": {
+      "digest": "0076888732307fcfb3569a6bcd9b00e32c1de84f368d8414ce8be315cac62623",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-COMMERCE-001": {
+      "digest": "faa79b0a0d4bfb54eb0f3cc858b12b90f65ac8d85d82978f68b446bfd165a969",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-HARNESS-001": {
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-IDENTITY-001": {
+      "digest": "dcf4edd146b7f0dd3c78fdfcbc97609bf8a5abd2e893bd05246379060c78b9a3",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-SHELL-001": {
+      "digest": "df7152ec015d96fe8023ebce58615615ba77ccef41e4c542b6dea5830e58b702",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-VEHICLES-001": {
+      "digest": "ff0721bd50e488ec3cc6a57dc6267c95ad20216a5d85ca1b91a71020852b6638",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    },
+    "REQ-WORKSPACE-001": {
+      "digest": "24022caf70c700942f52f71e54cce4a9349ab5254884216562af22df4cf7eb58",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/BASELINE-2026-10-12.md"
+    }
+  }
+}

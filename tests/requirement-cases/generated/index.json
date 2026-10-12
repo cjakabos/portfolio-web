@@ -49,29 +49,29 @@
     },
     {
       "id": "REQ-CHAT-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-CHAT-001.md",
-      "digest": "c1226c417ab51895a5732732a79590809666f6aad87772fe480d0faeedfda7ab",
+      "digest": "0076888732307fcfb3569a6bcd9b00e32c1de84f368d8414ce8be315cac62623",
       "cases": [
         {
           "id": "AC-REQ-CHAT-001-01",
           "name": "Create a room and open it using its code",
-          "digest": "51f38e058bdcb0a622e2d76f886c359c3038a1b683490069b09e104ea76e695c"
+          "digest": "cbb958888b14de6b20558c478dde364d0b9321002084b0ca725e03702a5fcc1a"
         },
         {
           "id": "AC-REQ-CHAT-001-02",
           "name": "Join a room by its code",
-          "digest": "4d5184db5665583434d1fa04f061a816d900cae92c8c468346cd06aa3e426620"
+          "digest": "84565d34dff5fef731a94df5d28ff74284dca77ad1f6a661df5c581400c9c6ef"
         },
         {
           "id": "AC-REQ-CHAT-001-03",
           "name": "Send a message over a live connection",
-          "digest": "618bc4f2f7c07b0a2521eab77bf8dd91e2ab1a2f29346d28e1e5a2a2c777ec14"
+          "digest": "21d5c7f35eca59f5115b1aa7819cbd37ac91d8c727b69bc3e3b5051d8ae80049"
         },
         {
           "id": "AC-REQ-CHAT-001-04",
           "name": "Prevent sending while disconnected",
-          "digest": "64fae6983887f52e2a309ed3383ff65ccfda61b4f88467c465b79885cb14a86b"
+          "digest": "5443611d8b2b99adb5b6012454fbfc76e384244849a27f515ec49db887105121"
         }
       ]
     },
@@ -100,80 +100,80 @@
     },
     {
       "id": "REQ-COMMERCE-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-COMMERCE-001.md",
-      "digest": "9130a4549e66a8bec9a672b3a72f70c58189cecd3e30ac06c9e26c481308396f",
+      "digest": "faa79b0a0d4bfb54eb0f3cc858b12b90f65ac8d85d82978f68b446bfd165a969",
       "cases": [
         {
           "id": "AC-REQ-COMMERCE-001-01",
           "name": "Add catalog items to a personal cart",
-          "digest": "7afa8d0cf012dc191aeef6ce92d2e0e0709cfa7cdce1d19022eb3c407eb76bef"
+          "digest": "32ac36efea36408d529266348680efff2cf2944f368fa5381845ba0fd0225933"
         },
         {
           "id": "AC-REQ-COMMERCE-001-02",
           "name": "Submit checkout and view the resulting order",
-          "digest": "ced3679c21b2e1745b1f78cad7208ab5134febc4e09e3fe07c9f264acb4a3083"
+          "digest": "874f7220a88b026879de279aa37a247e6b7df0e20d2df355ea84d8c4832d9c71"
         },
         {
           "id": "AC-REQ-COMMERCE-001-03",
           "name": "Restrict catalog maintenance to administrators",
-          "digest": "4ff21ac0c29f546cf8f8deda76e5360e9d5baab38a3c464de8ec7fe8a9a8dd11"
+          "digest": "8857d12d85009f9c8a3a5cbc8c18bc0fcc63a77d67eccf0b6ddd77699e481ebd"
         }
       ]
     },
     {
       "id": "REQ-HARNESS-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-HARNESS-001.md",
-      "digest": "47e69d4925210be446fffcbd3a8d134f0ab9ba67df89ed9b1d2e20985265ffe7",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
       "cases": [
         {
           "id": "AC-REQ-HARNESS-001-01",
           "name": "Import a linked Jira change from the read-only fixture source",
-          "digest": "7925eaba08dfaba8fdfd6f0b68d7e68e4dda4364879431fccb01b9a349be6e34"
+          "digest": "6eae184a400f42c60c5ca0d164fb6b9d2348c86dd47573ae0b0ce76d98eb3f94"
         },
         {
           "id": "AC-REQ-HARNESS-001-02",
           "name": "Reject an issue that references an unknown requirement",
-          "digest": "d36171061748655e0dba0fd5858a4a85c8a0bec32420bb63d2b09f011236242f"
+          "digest": "b065241bcc0a0d463bab780b7dd693ea8b19a5657c4380e6b7894a423b11412d"
         },
         {
           "id": "AC-REQ-HARNESS-001-03",
           "name": "Keep a proposed requirement change separate from the accepted baseline",
-          "digest": "d56398231d68eb2cfc9d2f84c3728c0f35261634d7b44d28554ee59210867c9f"
+          "digest": "3f4ff0b85b0cb18676ddb29e964db501afd2ceba65da801dd51d2f65254db66a"
         },
         {
           "id": "AC-REQ-HARNESS-001-04",
           "name": "Generate portable cases from requirement scenarios",
-          "digest": "05fffd7803f585c0e29c93b63712e02c9941d7ea10d115c89e44f3df8fbf2ec1"
+          "digest": "2e6f1d469c8815500230ac675872d5999668f862e7e227bf8964266fd4d41e08"
         }
       ]
     },
     {
       "id": "REQ-IDENTITY-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-IDENTITY-001.md",
-      "digest": "8f580523014387a8ae1e471902bdb9dfd4ddc4ee03cda0d0734e3e742aac0fc4",
+      "digest": "dcf4edd146b7f0dd3c78fdfcbc97609bf8a5abd2e893bd05246379060c78b9a3",
       "cases": [
         {
           "id": "AC-REQ-IDENTITY-001-01",
           "name": "Register a regular user with valid credentials",
-          "digest": "3f6736f532963258af31b5844eb8d8ff80afe01e4e5d012f1ba4e44b901516eb"
+          "digest": "70b3f565bf750b7e7d9822ae1c5c1fe31bfb792de9600f7e84649d6c34f3d50e"
         },
         {
           "id": "AC-REQ-IDENTITY-001-02",
           "name": "Reject invalid or duplicate registration",
-          "digest": "91606f0dcc419acb69b0a758bd27103655d9463580fb5dec32e7de35d474feb1"
+          "digest": "48326ca61731753ff93faa3a128303c80f1aa26dae6d1d985a9ed16a54f63433"
         },
         {
           "id": "AC-REQ-IDENTITY-001-03",
           "name": "Establish and clear an authenticated session",
-          "digest": "c8483982e3946b4316435ff1dcb6bc16f2f42a9a374d743467f68ac8a66db73a"
+          "digest": "cc8e8f3ed74b199ef121577451d85620de23fd3614c18e32dcb58abb02d41ecf"
         },
         {
           "id": "AC-REQ-IDENTITY-001-04",
           "name": "Restrict administrator operations",
-          "digest": "cd8773d21c9186bf133a21e797b7470452b21bf77b86fb0804c305428ba1bd07"
+          "digest": "8558bfe779683cea58d53ceed84f3ea3d2af12af51329186c814d9270f682e11"
         }
       ]
     },
@@ -271,75 +271,75 @@
     },
     {
       "id": "REQ-SHELL-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-SHELL-001.md",
-      "digest": "a1c7ec4fc58d153938bc56a33f020502ef7e074432e9ca0b58872d1ccad74bc1",
+      "digest": "df7152ec015d96fe8023ebce58615615ba77ccef41e4c542b6dea5830e58b702",
       "cases": [
         {
           "id": "AC-REQ-SHELL-001-01",
           "name": "Show only routes available to the signed-in user",
-          "digest": "ad2ea5ab1a7330cd56f0d77fcedcba93116b3ee0243a1cacb1827a6e06f3eb7d"
+          "digest": "4d8d31e2e573a4e00860961748e200bfe699be87687b5af45df5ef6d28648da9"
         },
         {
           "id": "AC-REQ-SHELL-001-02",
           "name": "Hide administrator modules from a regular user",
-          "digest": "1cb5d7f5e95edada200be1b533e8c18640249c46845b1e0b5e1d7e0dd8aa4b44"
+          "digest": "8daa319f9f84635526eac7bf23ffce158e0db86268101f3030a16fc556610bd4"
         },
         {
           "id": "AC-REQ-SHELL-001-03",
           "name": "Explain an unavailable or opt-in remote",
-          "digest": "595d3c53ad043719df6c6c0bb6a2c6d31e8e13f5a26600965ae9478b3c236975"
+          "digest": "518120c4245cfa6a25c20d543c96c3a75291d67c98638e94962f179fd1bf5b8c"
         }
       ]
     },
     {
       "id": "REQ-VEHICLES-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-VEHICLES-001.md",
-      "digest": "8d1dec6ddfbf460d151daa698c4bf405889af0eafcddc22cae037d396d282e1b",
+      "digest": "ff0721bd50e488ec3cc6a57dc6267c95ad20216a5d85ca1b91a71020852b6638",
       "cases": [
         {
           "id": "AC-REQ-VEHICLES-001-01",
           "name": "View vehicle locations and details",
-          "digest": "1cccdeadac7a604237ba6cfa18efbe24fd769154b765589cbe3cfc3c258e7249"
+          "digest": "f182465366a4328fa8970dc897d77d2186a6fdcdfccd49c97ba6a295282cfeb5"
         },
         {
           "id": "AC-REQ-VEHICLES-001-02",
           "name": "Restrict vehicle changes in the map interface",
-          "digest": "7d285ac49889ae01e6ac187c59d49bddcc62d671aa11effb096038e316c93130"
+          "digest": "ddd751a75ea9f7e403004eb21834f226103bcce526eeec5830228be6dacc2700"
         },
         {
           "id": "AC-REQ-VEHICLES-001-03",
           "name": "Create a vehicle from a map location",
-          "digest": "a43ab0f9d2164769c377ad40de3ae8cf05776dc31b0a1762a19372abb5ada50a"
+          "digest": "5a0970f80d7507ae99745803ff08a312eb3b778ddf8739dbc6f88fe68d51869e"
         }
       ]
     },
     {
       "id": "REQ-WORKSPACE-001",
-      "status": "proposed",
+      "status": "accepted",
       "source": "requirements/REQ-WORKSPACE-001.md",
-      "digest": "a4952dbcae6815d03dd4412c102089fc04c7fa9215cb98dbc9200cb4de960bb2",
+      "digest": "24022caf70c700942f52f71e54cce4a9349ab5254884216562af22df4cf7eb58",
       "cases": [
         {
           "id": "AC-REQ-WORKSPACE-001-01",
           "name": "Create and maintain a personal note",
-          "digest": "c94c3bcdacbb8974c8003b77dd0de49a629b84ebe45cb932abc56dac1db95f38"
+          "digest": "e7df8faaa475ab15cb92e4c43a05e9fa7bae59fe2abdfa92a42783b5e9c4b422"
         },
         {
           "id": "AC-REQ-WORKSPACE-001-02",
           "name": "Prevent access to another user's notes and files",
-          "digest": "bc59cb0f5642846723f7fed8f982361b0f0c2d7cff26a38a37ace958bbf0846c"
+          "digest": "b7a9e27b3657b0466fa443a8ba1b6a09e462d970f1eda90a80eee30a040e1654"
         },
         {
           "id": "AC-REQ-WORKSPACE-001-03",
           "name": "Upload and retrieve an allowed file",
-          "digest": "db90d97e85cff6ffe5d535be3b252a6c6bc2413828cc6de5efeac529f47ef6c5"
+          "digest": "76156177ce62da09d266b183364ec856c09347af66ed027fc9ee656d2447ccd7"
         },
         {
           "id": "AC-REQ-WORKSPACE-001-04",
           "name": "Reject invalid file uploads",
-          "digest": "3317449ec55ebbe59efaf2a3288d29afab73ad68a4300f639890aef63505e176"
+          "digest": "c6f661e50fb32836941d8f04431f39dd0eb43611d0cc9f4c5d98ac6ce50d4e7d"
         }
       ]
     }

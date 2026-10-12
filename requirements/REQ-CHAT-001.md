@@ -2,19 +2,21 @@
 schema_version: 1
 id: REQ-CHAT-001
 title: Shared chat rooms and live messaging
-status: proposed
+status: accepted
 owner: cloudapp-product
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-CHAT-001 — Community chat
 
-## Observed behavior
+## Product intent
 
 A signed-in user can create a named room and receive a room code, list rooms derived from their message records, and open a room using its code. The current directory does not store a separate membership record: it finds rooms by messages whose sender matches the username. Room messages are sent over the CloudApp WebSocket/STOMP path and broadcast to the room topic. The message service also publishes each sent message to Kafka and stores a message record. The room page reports connection state and disables sending while disconnected.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records the scope and demo
+limits; implementation evidence remains as provenance.
 
 ## Evidence
 

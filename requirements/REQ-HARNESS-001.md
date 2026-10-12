@@ -2,13 +2,15 @@
 schema_version: 1
 id: REQ-HARNESS-001
 title: Jira change requests remain traceable to requirements and test cases
-status: proposed
+status: accepted
 owner: repository-maintainers
+basis: repository-workflow-policy
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-HARNESS-001 — Traceable Jira change intake
 
-## Requirement
+## Product intent
 
 The development workflow must import Jira change requests without writing to
 Jira, link each request to stable requirement IDs, and produce a reviewable
@@ -22,6 +24,9 @@ The trace must be navigable in both directions:
 
 Jira tracks the A-to-B change and delivery workflow. It does not replace the
 long-lived requirement or its rationale.
+
+The repository owner accepted this workflow for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records its scope and limits.
 
 ## Intake source configuration
 

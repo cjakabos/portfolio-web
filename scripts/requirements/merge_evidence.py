@@ -8,6 +8,7 @@ from model import ROOT
 from report_results import attach_results, attach_json_results
 from validate_traceability import validate
 from record_execution import digest
+from intent_baseline import promotion_errors
 
 RUNNERS = {
     "test-requirements": ("requirements", "junit", "xml"),
@@ -22,10 +23,11 @@ RUNNERS = {
 }
 
 
-def merge(root, results):
-    errors, report = validate(root)
+def merge(root, results, required_requirements=()):
+    errors, report = validate(root, require_accepted_baseline=True)
     if errors:
         return report
+    errors.extend(promotion_errors(report["intent"], required_requirements))
     suites = {target["suite"] for case in report["cases"].values()
               for target in case["tests"] if target["execution"] == "default"}
     for suite in sorted(suites):
@@ -57,6 +59,11 @@ def merge(root, results):
         if case["coverage"] != "complete" or case["execution"] != "passed":
             errors.append(f"{case_id}: coverage={case['coverage']}, execution={case['execution']}")
     report["execution"] = dict(Counter(case["execution"] for case in report["cases"].values()))
+    report["execution_by_intent"] = {
+        status: dict(Counter(case["execution"] for case in report["cases"].values()
+                            if case["requirement_status"] == status))
+        for status in ("accepted", "proposed")
+    }
     report["errors"] = errors
     return report
 
@@ -66,13 +73,17 @@ def main():
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--results", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--requirement-id", action="append", default=[],
+        help="require accepted intent for each selected promotion requirement (repeatable)",
+    )
     args = parser.parse_args()
     results = args.results or args.root / "test-results"
     output = args.output or results / "requirements/executed-traceability.json"
-    report = merge(args.root, results)
+    report = merge(args.root, results, args.requirement_id)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n")
-    print(json.dumps({"coverage": report.get("coverage"), "execution": report.get("execution"), "errors": report["errors"]}, indent=2))
+    print(json.dumps({"intent": report.get("intent", {}).get("counts"), "coverage": report.get("coverage"), "execution": report.get("execution"), "execution_by_intent": report.get("execution_by_intent"), "errors": report["errors"]}, indent=2))
     return bool(report["errors"])
 
 

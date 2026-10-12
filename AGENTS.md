@@ -12,6 +12,9 @@
 
 - Keep changes small and aligned with the repository's showcase tiers.
 - Treat accepted requirement Markdown as the product requirement baseline.
+- Accepted revisions must link to a real human decision under requirements/reviews/
+  and match requirements/baseline.json. Never invent acceptance or infer it from
+  passing tests. For promotion, require accepted intent for each affected ID.
 - Jira is a change and workflow tracker. Intake is read-only by default; never
   create, edit, transition, or delete Jira issues unless a human approves the
   exact operation.

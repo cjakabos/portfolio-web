@@ -60,7 +60,9 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
 ```
 
 - Core PR gate for canonical requirement schema, generated feature/index
-  freshness, reviewed case digests, exact test declarations, and command tests.
+  freshness, reviewed case digests, exact test declarations, recorded accepted
+  product intent, and command tests. Accepted revisions must match the human
+  decision and SHA-256 in `requirements/baseline.json`.
 - Reports are under `test-results/requirements/`. Coverage and execution outcomes
   are separate; coverage assertions and test boundaries are recorded in `requirements/test-map.json`.
 - All 46 current scenarios have complete reviewed native-test mappings. Source
@@ -77,6 +79,10 @@ docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requir
 - The gate rejects missing, skipped, failed, interrupted or stale default evidence and writes
   `test-results/requirements/executed-traceability.json`. CI downloads native
   artifacts before running it; Test Summary requires it.
+- Reports separate accepted/proposed intent from coverage and execution.
+  For promotion, append `--requirement-id REQ-AREA-001` to the evidence command
+  for each affected requirement. Proposed requirements cannot be promoted even
+  with passing tests. See `requirements/README.md#product-intent-acceptance`.
 - External model/Jira/Leaflet and operator data boundaries use deterministic
   fixtures. Live/nightly tests remain separate opt-in provider checks.
 - Browser traces, screenshots and JUnit XML use `test-results/playwright/`;

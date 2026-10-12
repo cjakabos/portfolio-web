@@ -38,6 +38,13 @@ def context(root):
             path.name: digest(path)
             for path in sorted((root / "requirements").glob("REQ-*.md"))
         },
+        "intent_records": {
+            str(path.relative_to(root)): digest(path)
+            for path in sorted([
+                *([root / "requirements/baseline.json"] if (root / "requirements/baseline.json").is_file() else []),
+                *(root / "requirements/reviews").rglob("*.md"),
+            ])
+        },
         "harness_sources": {
             str(path.relative_to(root)): digest(path)
             for path in sorted((root / "scripts/requirements").glob("*.py"))

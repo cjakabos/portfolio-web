@@ -42,10 +42,13 @@ implementation, and trace acceptance scenarios to executed native tests.
 
 Intake writes a proposal under `work-items/`. Product and engineering review the
 requirement amendment alongside code and tests in the same implementation PR;
-merging the reviewed PR establishes the updated baseline. The current
-code-derived requirements are **proposed**, pending product validation. Generated
-Gherkin is linked to the existing runners through the test map; those native tests
-provide the executable assertions.
+merging the reviewed PR establishes the updated baseline. The repository owner
+has accepted [seven hero/harness requirements](./requirements/reviews/BASELINE-2026-10-12.md)
+covering 25 scenarios for the local showcase. Their exact revisions are recorded
+in [the product-intent baseline](./requirements/baseline.json); the other seven
+requirements and 21 scenarios remain proposed. CI validates acceptance separately
+from coverage and execution. Generated Gherkin is linked to the existing runners
+through the test map; those native tests provide the executable assertions.
 
 **Recorded Docker verification (2026-10-05, commit `7d8615d`):** 291 tests passed
 across nine native suites, with all 46 acceptance scenarios mapped as complete and
