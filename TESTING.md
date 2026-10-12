@@ -76,6 +76,19 @@ docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requir
 - External model/Jira/Leaflet and operator data boundaries use deterministic
   fixtures. Live/nightly tests remain separate opt-in provider checks.
 
+### Read-only Jira intake command
+
+`jira-intake` is an opt-in operator service, outside the automated suite matrix.
+It shares the requirements image but receives only dedicated `JIRA_INTAKE_*`
+configuration. Fixture mode is the default; `--source jira` explicitly enables
+live GET requests. The fixture harness regression suite remains credential-free.
+
+See [requirements/README.md](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
+for Cloud/Data Center setup, requirement links and Docker examples. Live provider
+checks require an explicitly chosen issue and identity. Existing 46 acceptance
+mappings do not establish live-adapter execution coverage, and changes to the
+adapter/Compose definition invalidate previously recorded execution context.
+
 ## Frontend Static Checks
 ```bash
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit test-frontend-static

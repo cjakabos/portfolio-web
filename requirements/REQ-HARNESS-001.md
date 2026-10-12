@@ -23,6 +23,20 @@ The trace must be navigable in both directions:
 Jira tracks the A-to-B change and delivery workflow. It does not replace the
 long-lived requirement or its rationale.
 
+## Intake source configuration
+
+Fixture intake remains the default. A person can opt into live read-only intake
+using `--source jira` and dedicated local/deployment `JIRA_INTAKE_*` settings.
+Cloud basic authentication, scoped-token gateway routing and Data Center bearer
+PATs use the same Markdown and requirement-validation pipeline. Requirements
+can be linked by explicit CLI IDs, existing Jira labels or an optional field.
+Canonical requirement updates still require review with the implementation PR.
+
+The live source uses verified HTTPS GET requests, rejects authenticated redirects,
+and preserves existing work items unless replacement is explicitly requested.
+The acceptance scenarios below retain their fixture scope; they do not assert
+live-provider execution coverage.
+
 ## Acceptance Scenarios
 
 ```gherkin

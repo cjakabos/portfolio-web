@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-"""Read a Jira-shaped fixture and create a traceable Markdown work item.
-
-This prototype is deliberately fixture-only: it performs no network requests
-and has no Jira write operations. A future read-only adapter can produce the
-same normalized issue shape.
-"""
+"""Import a fixture or read-only Jira issue as a traceable Markdown proposal."""
 
 from __future__ import annotations
 
 import argparse
-import hashlib
-import json
-import re
+import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from model import ROOT, REQ_ID, parse_requirement, parse_feature
+from jira_sources import ISSUE_KEY, load_fixture, load_jira
 
 
-ISSUE_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9]+-\d+$")
+ISSUE_KEY_PATTERN = ISSUE_KEY
 
 
 def scenario_tags(body: str, requirement_id: str) -> list[tuple[str, str]]:
@@ -54,13 +49,19 @@ def render_work_item(
     fingerprint: str,
     requirements: list[tuple[str, Path, dict[str, str], str]],
     root: Path = ROOT,
+    output_dir: Path | None = None,
 ) -> str:
     issue_key = markdown_text(issue["key"])
+    output_dir = output_dir or root / "work-items"
+    notice = (["> Synthetic fixture intake. No Jira connection was made and no Jira",
+               "> operation was performed."] if issue["source"] == "synthetic-fixture" else
+              ["> Read-only Jira snapshot. The source was read using GET; no Jira",
+               "> create, update, transition, or delete operation was performed.",
+               "> Imported issue content is source data for human review."])
     lines = [
         f"# {issue_key} — {markdown_text(issue['summary'])}",
         "",
-        "> Synthetic fixture intake. No Jira connection was made and no Jira",
-        "> operation was performed.",
+        *notice,
         "",
         "## Source snapshot",
         "",
@@ -71,6 +72,9 @@ def render_work_item(
         f"| Type / status / priority | {table_value(issue.get('issue_type'))} / {table_value(issue.get('status'))} / {table_value(issue.get('priority'))} |",
         f"| Created / updated | {table_value(issue.get('created_at'))} / {table_value(issue.get('updated_at'))} |",
         f"| Snapshot SHA-256 | {fingerprint} |",
+        *([f"| Retrieved at | {table_value(issue['retrieved_at'])} |"] if issue.get("retrieved_at") else []),
+        *([f"| Requested issue | {table_value(issue['requested_key'])} |"] if issue.get("requested_key") else []),
+        *([f"| Requirement link source | {table_value(issue['requirement_link_source'])} |"] if issue.get("requirement_link_source") else []),
         "",
         "## Change request",
         "",
@@ -82,7 +86,8 @@ def render_work_item(
     for requirement_id, path, metadata, body in requirements:
         relative_path = path.relative_to(root).as_posix()
         title = metadata.get("title", requirement_id)
-        lines.append(f"- [{requirement_id} — {title}](../{relative_path})")
+        link = Path(os.path.relpath(root / relative_path, output_dir)).as_posix()
+        lines.append(f"- [{requirement_id} — {title}]({link})")
         lines.append(
             f"  Baseline SHA-256: {hashlib.sha256(path.read_bytes()).hexdigest()}"
         )
@@ -139,98 +144,86 @@ def render_work_item(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--issue", required=True, help="issue key in the fixture source"
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="replace an existing work-item snapshot",
-    )
-    parser.add_argument(
-        "--root",
-        type=Path,
-        default=ROOT,
-        help="repository containing fixtures and requirements",
-    )
+    parser.add_argument("--issue", required=True, help="existing issue key, such as PROJECT-123")
+    parser.add_argument("--source", choices=["fixture", "jira"], default="fixture",
+                        help="fixture by default; Jira uses dedicated JIRA_INTAKE_* settings")
+    parser.add_argument("--requirement-id", action="append", dest="requirements",
+                        help="explicit requirement link; repeat for multiple IDs; overrides source links")
+    parser.add_argument("--proposed-change", help="human-authored requirement amendment proposal")
+    parser.add_argument("--force", action="store_true", help="replace an existing work-item snapshot after review")
+    parser.add_argument("--root", type=Path, default=ROOT, help="repository containing fixtures and requirements")
+    parser.add_argument("--output-dir", type=Path, default=Path("work-items"),
+                        help="snapshot directory; relative paths resolve under the repository")
     args = parser.parse_args()
     root = args.root.resolve()
-
-    issue_key = args.issue.strip()
+    output_dir = (args.output_dir if args.output_dir.is_absolute() else root / args.output_dir).resolve()
+    issue_key = args.issue.strip().upper()
     if not ISSUE_KEY_PATTERN.fullmatch(issue_key):
         parser.error("issue key must use PROJECT-123 format")
 
-    fixture_path = (root / "fixtures/jira") / f"{issue_key}.json"
-    if not fixture_path.is_file():
-        print(f"No fixture found for {issue_key}.", file=sys.stderr)
-        print(
-            "This prototype is fixture-only; it does not connect to Jira.",
-            file=sys.stderr,
-        )
-        return 2
+    def protect_existing(key):
+        path = output_dir / f"{key}.md"
+        if path.exists() and not args.force:
+            raise ValueError(f"Refusing to overwrite {key}.md; use --force after reviewing.")
+        return path
 
-    raw = fixture_path.read_bytes()
     try:
-        issue = json.loads(raw)
-    except json.JSONDecodeError as error:
-        print(f"Invalid fixture JSON: {error}", file=sys.stderr)
-        return 2
-    if (
-        not isinstance(issue, dict)
-        or not isinstance(issue.get("summary"), str)
-        or not issue["summary"].strip()
-    ):
-        print("Fixture must be an object with a non-empty summary.", file=sys.stderr)
-        return 2
-    if issue.get("key") != issue_key:
-        print(
-            f"Fixture key mismatch: expected {issue_key}, got {issue.get('key')}",
-            file=sys.stderr,
-        )
-        return 2
-    if issue.get("source") != "synthetic-fixture":
-        print("Refusing a fixture that is not marked synthetic.", file=sys.stderr)
-        return 2
-    if not isinstance(issue.get("url"), str) or not issue["url"].startswith(
-        "https://jira.example.invalid/"
-    ):
-        print(
-            "Fixture URL must use the non-routable example.invalid domain.",
-            file=sys.stderr,
-        )
-        return 2
-
-    linked_requirements: list[tuple[str, Path, dict[str, str], str]] = []
-    try:
+        # Invalid local links and existing human edits are rejected before any GET.
+        protect_existing(issue_key)
+        if args.requirements:
+            if len(args.requirements) != len(set(args.requirements)):
+                raise ValueError("issue contains duplicate requirement IDs")
+            for identity in args.requirements:
+                load_requirement(identity, root)
+        snapshot = load_fixture(root, issue_key) if args.source == "fixture" else load_jira(issue_key)
+        issue = dict(snapshot.issue)
+        if not isinstance(issue.get("summary"), str) or not issue["summary"].strip():
+            raise ValueError("Issue must be an object with a non-empty summary.")
+        if args.requirements:
+            issue["requirement_ids"] = args.requirements
+            issue["requirement_link_source"] = "Explicit --requirement-id arguments"
+        if args.proposed_change is not None:
+            issue["proposed_requirement_change"] = args.proposed_change
         requirement_ids = issue.get("requirement_ids", [])
         if not isinstance(requirement_ids, list) or not requirement_ids:
-            raise ValueError("issue has no linked requirement IDs")
+            raise ValueError("issue has no linked requirement IDs; use --requirement-id, "
+                             "REQ-* Jira labels, or JIRA_INTAKE_REQUIREMENTS_FIELD")
+        if any(not isinstance(identity, str) for identity in requirement_ids):
+            raise ValueError("requirement IDs must be strings")
         if len(requirement_ids) != len(set(requirement_ids)):
             raise ValueError("issue contains duplicate requirement IDs")
-        for requirement_id in requirement_ids:
-            path, metadata, body = load_requirement(requirement_id, root)
-            linked_requirements.append((requirement_id, path, metadata, body))
-    except (TypeError, ValueError) as error:
+        linked_requirements = []
+        for identity in requirement_ids:
+            path, metadata, body = load_requirement(identity, root)
+            linked_requirements.append((identity, path, metadata, body))
+        # Jira resolves moved issue keys; use and protect its canonical key too.
+        output_path = protect_existing(issue["key"])
+        rendered = render_work_item(issue, snapshot.fingerprint, linked_requirements, root, output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Finish the snapshot before publishing it. Hard-link creation is
+        # exclusive, so a concurrent importer/editor cannot be overwritten.
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{issue['key']}.", suffix=".tmp", dir=output_dir)
+        temporary_path = Path(temporary)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+                output.write(rendered)
+                output.flush()
+                os.fsync(output.fileno())
+            if args.force:
+                os.replace(temporary_path, output_path)
+            else:
+                os.link(temporary_path, output_path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
+    except (OSError, ValueError, TypeError, RecursionError) as error:
         print(f"Cannot import {issue_key}: {error}", file=sys.stderr)
         return 2
-
-    output_path = (root / "work-items") / f"{issue_key}.md"
-    if output_path.exists() and not args.force:
-        print(
-            f"Refusing to overwrite {output_path.relative_to(root)}; use --force after reviewing.",
-            file=sys.stderr,
-        )
-        return 2
-
-    (root / "work-items").mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        render_work_item(
-            issue, hashlib.sha256(raw).hexdigest(), linked_requirements, root
-        ),
-        encoding="utf-8",
-    )
-    print(f"Wrote {output_path.relative_to(root)}")
-    print("Source: synthetic fixture; network and Jira write operations: none")
+    display = output_path.relative_to(root) if output_path.is_relative_to(root) else output_path
+    print(f"Wrote {display}")
+    if args.source == "fixture":
+        print("Source: synthetic fixture; network and Jira write operations: none")
+    else:
+        print("Source: Jira GET; Jira write operations: none")
     return 0
 
 

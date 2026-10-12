@@ -88,22 +88,123 @@ This is a practical first baseline, not a claim of exhaustive requirements
 coverage. New change work should link to the closest requirement or propose a
 new stable ID when no existing requirement covers its behavior.
 
-## Jira Fixture Intake
+## Jira Intake: Fixture or Read-only Live Source
 
-The current dummy intake reads only committed JSON fixtures. It uses no Jira
-credentials, makes no network calls, and does not create a Jira ticket:
+Both sources use the same requirement validation and Markdown renderer. Fixture
+mode is the default, even when Jira credentials are configured. The live source
+is selected explicitly with `--source jira`; it sends only GET requests and uses
+a dedicated identity, separate from the product Jira board/proxy credentials.
+No app stack, Jira administration change, or source-code edit is required.
 
-    docker compose -f docker-compose.test.yml build test-requirements
-    docker run --rm -v "$PWD:/workspace:rw" portfolio-web-requirements:local python3 scripts/requirements/intake_jira.py --issue DEMO-001
+### Fixture mode
 
-It writes a reviewable snapshot and requirement-amendment proposal to
-work-items/DEMO-001.md. Existing output is not overwritten unless --force is
-passed.
+Preview the committed synthetic issue in a separate directory so the existing
+reviewed example is preserved:
 
-The fixture is explicitly synthetic. A future live adapter should use a
-read-only Jira identity and preserve this output contract. It must not reuse
-the product's broad Jira CRUD flow or credentials used by the live Jira
-integration test.
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps \
+  --user "$(id -u):$(id -g)" jira-intake \
+  --issue DEMO-001 --output-dir work-items/fixture-preview
+```
+
+This reads `fixtures/jira/DEMO-001.json` without network access and writes
+`work-items/fixture-preview/DEMO-001.md`. The original example remains at
+[work-items/DEMO-001.md](../work-items/DEMO-001.md). The `intake` Compose profile
+keeps this operator command outside the automated test matrix.
+
+### Jira Cloud
+
+Put the following values in your local ignored `.env` or deployment environment:
+
+```dotenv
+JIRA_INTAKE_URL=https://your-company.atlassian.net
+JIRA_INTAKE_EMAIL=you@example.com
+JIRA_INTAKE_API_TOKEN=your-dedicated-intake-token
+```
+
+For a **scoped API token**, also set `JIRA_INTAKE_CLOUD_ID` to your site's UUID.
+The adapter selects `https://api.atlassian.com/ex/jira/<cloud-id>` automatically;
+`JIRA_INTAKE_URL` remains the browser URL used in snapshot links. Tokens without
+scopes use the site URL directly. See
+[Atlassian's token documentation](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
+The identity needs permission to read the target issue and the scopes needed by
+[Get issue](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get).
+Use a dedicated read-scoped token/account for this command.
+
+Import an **existing** issue and link it to a requirement locally:
+
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps \
+  --user "$(id -u):$(id -g)" jira-intake \
+  --source jira --issue PROJECT-123 --requirement-id REQ-IDENTITY-001
+```
+
+The output is `work-items/PROJECT-123.md`. It includes the issue link, source
+created/updated timestamps, retrieval time, a SHA-256 of the API response, linked
+requirement/scenario IDs, and their baseline fingerprints. Jira Cloud rich-text
+(ADF) descriptions are converted to readable text. Moved issues use their returned
+canonical key and preserve the requested key as provenance.
+
+### Requirement links and amendments
+
+- Repeat `--requirement-id` to link multiple requirements. Explicit arguments
+  override source links and are validated locally before the API request.
+- Without explicit arguments, exact `REQ-AREA-001` Jira labels supply links.
+- An existing custom field can also supply IDs via
+  `JIRA_INTAKE_REQUIREMENTS_FIELD=customfield_12345`. Text, multi-value/select and
+  ADF text fields are supported. Creating a custom field is optional.
+- Missing, duplicate or unknown explicit IDs are rejected. Duplicate IDs found
+  across Jira labels/fields are consolidated. Retired requirements are rejected.
+- `--proposed-change "Describe the intended requirement amendment"` adds a
+  human-authored proposal. Otherwise the snapshot states that no delta was
+  supplied; intake does not invent a requirement change from issue text.
+- Existing work items are published atomically and preserved on repeat imports.
+  After reviewing source changes and keeping human notes/PR links, explicitly
+  use `--force` to replace the snapshot.
+- Canonical requirements remain unchanged during either form of intake. Review
+  amendments with the implementation PR and regenerate cases in that PR.
+
+### Jira Data Center and deployment options
+
+For a Data Center personal access token, configure:
+
+```dotenv
+JIRA_INTAKE_URL=https://jira.your-company.example/jira
+JIRA_INTAKE_AUTH=bearer
+JIRA_INTAKE_API_TOKEN=your-dedicated-personal-access-token
+```
+
+Bearer mode defaults to API v2 and needs no email. Basic mode defaults to API v3.
+`JIRA_INTAKE_API_VERSION=2` or `3` overrides either default. See
+[Atlassian's PAT documentation](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html).
+
+Additional configuration requires no adapter changes:
+
+| Setting | Purpose |
+| --- | --- |
+| `JIRA_INTAKE_API_BASE_URL` | API/proxy base URL when different from the browser URL; use this or `JIRA_INTAKE_CLOUD_ID` |
+| `JIRA_INTAKE_API_TOKEN_FILE` | Read a mounted token file inside the container; leave `JIRA_INTAKE_API_TOKEN` empty |
+| `JIRA_INTAKE_CA_CERT` | PEM CA bundle inside the container for an internal certificate authority |
+| `--output-dir` | Alternative snapshot directory; relative paths resolve under the repository |
+
+Mount secret files or CA bundles read-only at the configured container paths using
+Compose overrides or `docker compose run --volume`. HTTPS verification stays
+enabled; authenticated redirects are rejected. Requests have a 15-second timeout,
+a 5 MiB response limit, and at most two retries for rate limits/transient gateway
+errors. Longer server-requested delays produce a retry-later message. Authentication
+and HTTP errors do not echo tokens, headers or response bodies.
+
+The Linux/macOS examples use `--user "$(id -u):$(id -g)"` so snapshots belong to
+your host account. On Windows/PowerShell, omit that option and run the command on
+one line. Snapshots are created with owner-only permissions because live issue
+data can be private. Source scripts, requirements and fixtures are mounted
+read-only; only `work-items/` is writable. The local `.env` file is not mounted.
+For an output directory outside `work-items/`, explicitly mount it writable too.
+
+The current client is a local/operator command with environment-provided tokens.
+It does not implement hosted multi-user OAuth onboarding or token refresh.
+The existing mapped harness scenarios exercise fixture intake; live provider
+verification requires an explicit follow-up test run and its own evidence.
 
 ## Generate Acceptance Cases
 
@@ -130,10 +231,12 @@ repository's current Playwright, JUnit, or pytest runners until matching step
 definitions or runner adapters are added. JUnit XML is a test-result format,
 not a requirement source format.
 
-## Dummy Scope
+## Fixture Example Scope
 
-REQ-HARNESS-001 and DEMO-001 demonstrate the traceability flow only. They are
-not claims about a live Jira issue or a released product commitment.
+DEMO-001 remains a synthetic example of the traceability flow. It does not refer
+to a live Jira issue or a released product commitment. REQ-HARNESS-001 describes
+the intake workflow, including its configurable sources, and remains proposed
+pending product validation.
 
 ## Test Evidence Contract
 

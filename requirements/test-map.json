@@ -320,7 +320,7 @@
       "owner": "cloudapp-product"
     },
     "AC-REQ-HARNESS-001-01": {
-      "case_digest": "01809ab73ec67fc7274ba1ba6b221dbac6d5859413a73c40d70d74e6f96adf0b",
+      "case_digest": "7925eaba08dfaba8fdfd6f0b68d7e68e4dda4364879431fccb01b9a349be6e34",
       "coverage": "complete",
       "targets": [
         {
@@ -335,7 +335,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-HARNESS-001-02": {
-      "case_digest": "90b7228b7c0a3635ede74e7c6d408a239eb028e6bd4ba5d86bb862c0485d824d",
+      "case_digest": "d36171061748655e0dba0fd5858a4a85c8a0bec32420bb63d2b09f011236242f",
       "coverage": "complete",
       "targets": [
         {
@@ -350,7 +350,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-HARNESS-001-03": {
-      "case_digest": "852c334ee998f0064aabf0a32c8cbfd6bd95ea876f16180471336dce88087a66",
+      "case_digest": "d56398231d68eb2cfc9d2f84c3728c0f35261634d7b44d28554ee59210867c9f",
       "coverage": "complete",
       "targets": [
         {
@@ -365,7 +365,7 @@
       "owner": "repository-maintainers"
     },
     "AC-REQ-HARNESS-001-04": {
-      "case_digest": "e159aab502eba2585713b433e465e3261299c8e82be529549e5bdfd754d1e47e",
+      "case_digest": "05fffd7803f585c0e29c93b63712e02c9941d7ea10d115c89e44f3df8fbf2ec1",
       "coverage": "complete",
       "targets": [
         {

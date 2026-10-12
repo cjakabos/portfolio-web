@@ -35,7 +35,7 @@ implementation, and trace acceptance scenarios to executed native tests.
 | Capability | Implementation |
 | --- | --- |
 | Central requirements | [14 requirement documents](./requirements/README.md#current-application-requirement-map) with stable IDs, ownership, and 46 tagged Gherkin acceptance scenarios |
-| Read-only Jira intake prototype | A [synthetic issue fixture](./fixtures/jira/DEMO-001.json) becomes a [Markdown change snapshot](./work-items/DEMO-001.md) with requirement/scenario links, fingerprints, and an amendment proposal; no Jira connection or credentials are used |
+| Read-only Jira intake | [Fixture or live Jira source](./requirements/README.md#jira-intake-fixture-or-read-only-live-source) produces a Markdown snapshot with requirement/scenario links and fingerprints; fixtures are the default, while Cloud/Data Center access is selected through CLI flags and dedicated configuration |
 | Portable acceptance cases | [Generated features and index](./tests/requirement-cases/generated/) preserve scenario IDs and source digests; the [test map](./requirements/test-map.json) links them to exact JUnit, pytest, Jest, and Vitest test declarations |
 | Verified execution evidence | Docker runners record source/configuration fingerprints, completion status, and report digests; CI combines JUnit XML and Jest/Vitest JSON into per-scenario outcomes |
 | Shared agent guidance | [AGENTS.md](./AGENTS.md) defines requirement ownership, read-only intake, PR review, and focused Docker verification rules |
@@ -53,6 +53,21 @@ reported passing. Coverage describes these reviewed scenarios and their document
 test boundaries. External model/Jira responses, Leaflet geometry, and operator
 provider data use deterministic fixtures; live/nightly checks exercise providers
 separately.
+
+To import an existing Jira issue, configure `JIRA_INTAKE_URL`,
+`JIRA_INTAKE_EMAIL`, and `JIRA_INTAKE_API_TOKEN` in your local `.env`, then run:
+
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps \
+  --user "$(id -u):$(id -g)" jira-intake \
+  --source jira --issue PROJECT-123 --requirement-id REQ-IDENTITY-001
+```
+
+Scoped Cloud tokens also need `JIRA_INTAKE_CLOUD_ID`; Data Center supports bearer
+PATs through configuration. The [intake setup guide](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
+covers authentication, automatic label links, and fixture previews. The recorded
+verification snapshot above predates the live adapter; its existing harness
+acceptance mappings cover fixture intake.
 
 See the [requirements and traceability guide](./requirements/README.md) for the
 workflow, the [testing guide](./TESTING.md#requirement-traceability) for Docker
@@ -535,7 +550,7 @@ Then open `https://<your-laptop-lan-ip>` on the phone.
 | AI admin monitor | `ai-orchestration/ai-orchestration-monitor/` | React/Vite operator console |
 | Test suites | `tests/`, `e2e/` | Python, Java, gateway, E2E coverage |
 | Requirements | [requirements/](./requirements/README.md) | Central behavior baseline, acceptance scenarios, and reviewed test mappings |
-| Change proposals | [fixtures/jira/](./fixtures/jira/) and [work-items/](./work-items/) | Synthetic read-only Jira intake and Markdown amendment snapshots |
+| Change proposals | [fixtures/jira/](./fixtures/jira/) and [work-items/](./work-items/) | Fixture examples and Markdown snapshots from read-only issue intake |
 | Development harness | [scripts/requirements/](./scripts/requirements/) | Intake, case generation, source validation, and execution-evidence aggregation |
 | Agent guidance | [AGENTS.md](./AGENTS.md) | Repository map and shared agent workflow rules |
 

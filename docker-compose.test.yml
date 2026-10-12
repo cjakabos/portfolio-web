@@ -325,6 +325,33 @@ services:
     environment:
       - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
 
+  # Opt-in operator command, deliberately outside the automated test matrix.
+  jira-intake:
+    profiles: ["intake"]
+    image: portfolio-web-requirements:local
+    build:
+      context: .
+      dockerfile: scripts/requirements/Dockerfile
+    working_dir: /workspace
+    entrypoint: ["python3", "scripts/requirements/intake_jira.py"]
+    command: ["--help"]
+    environment:
+      JIRA_INTAKE_URL: ${JIRA_INTAKE_URL:-}
+      JIRA_INTAKE_EMAIL: ${JIRA_INTAKE_EMAIL:-}
+      JIRA_INTAKE_API_TOKEN: ${JIRA_INTAKE_API_TOKEN:-}
+      JIRA_INTAKE_API_TOKEN_FILE: ${JIRA_INTAKE_API_TOKEN_FILE:-}
+      JIRA_INTAKE_AUTH: ${JIRA_INTAKE_AUTH:-basic}
+      JIRA_INTAKE_CLOUD_ID: ${JIRA_INTAKE_CLOUD_ID:-}
+      JIRA_INTAKE_API_BASE_URL: ${JIRA_INTAKE_API_BASE_URL:-}
+      JIRA_INTAKE_API_VERSION: ${JIRA_INTAKE_API_VERSION:-}
+      JIRA_INTAKE_REQUIREMENTS_FIELD: ${JIRA_INTAKE_REQUIREMENTS_FIELD:-}
+      JIRA_INTAKE_CA_CERT: ${JIRA_INTAKE_CA_CERT:-}
+    volumes:
+      - ./scripts/requirements:/workspace/scripts/requirements:ro
+      - ./requirements:/workspace/requirements:ro
+      - ./fixtures/jira:/workspace/fixtures/jira:ro
+      - ./work-items:/workspace/work-items
+
   # Combines all default acceptance targets. Run after their native suites.
   test-requirement-evidence:
     image: portfolio-web-requirements:local
