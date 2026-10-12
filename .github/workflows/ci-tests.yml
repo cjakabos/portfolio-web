@@ -42,8 +42,87 @@ concurrency:
 
 env:
   COMPOSE_FILE: docker-compose.test.yml
+  TRACEABILITY_COMMIT: ${{ github.sha }}
 
 jobs:
+  requirements-tests:
+    name: "Core Showcase — Requirement Traceability"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run canonical requirement gate and command regression tests
+        run: docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-requirements test-requirements
+        env:
+          TRACEABILITY_COMMIT: ${{ github.sha }}
+      - name: Upload requirement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: requirement-traceability
+          path: test-results/requirements/
+          retention-days: 7
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v --remove-orphans
+
+  requirement-execution-evidence:
+    name: "Core Showcase — Executed Requirement Evidence"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs: [requirements-tests, backend-tests, ml-pipeline-tests, ai-orchestration-tests, frontend-unit-tests, ai-monitor-component-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download requirement-traceability
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: requirement-traceability
+          path: test-results/requirements/
+      - name: Download backend-test-results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-test-results
+          path: test-results/backend/
+      - name: Download ml-pipeline-results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: ml-pipeline-results
+          path: test-results/ml-pipeline/
+      - name: Download ai-orchestration-unit-results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-orchestration-unit-results
+          path: test-results/ai-orchestration/
+      - name: Download frontend-coverage
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: test-results/frontend-unit/
+      - name: Download ai-monitor-component-results
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-monitor-component-results
+          path: test-results/ai-monitor-component/
+      - name: Require current passing evidence for every default acceptance target
+        if: always()
+        run: docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requirement-evidence
+      - name: Upload executed requirement report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: executed-requirement-traceability
+          path: test-results/requirements/executed-traceability.json
+          retention-days: 7
+
   # =========================================================================
   # JOB 1: Backend Integration Tests (Spring Boot)
   # =========================================================================
@@ -70,7 +149,7 @@ jobs:
       - name: Run CloudApp integration tests
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-backend
+            --exit-code-from test-backend test-backend
         env:
           DOCKER_BUILDKIT: 1
 
@@ -78,35 +157,19 @@ jobs:
         if: always()
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-backend-petstore
+            --exit-code-from test-backend-petstore test-backend-petstore
 
       - name: Run Vehicles API integration tests
         if: always()
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-backend-vehicles
+            --exit-code-from test-backend-vehicles test-backend-vehicles
 
       - name: Run Web Proxy integration tests
         if: always()
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-backend-webproxy
-
-      - name: Collect test reports
-        if: always()
-        run: |
-          mkdir -p test-results/backend/cloudapp
-          mkdir -p test-results/backend/petstore
-          mkdir -p test-results/backend/vehicles-api
-          mkdir -p test-results/backend/web-proxy
-          docker compose -f docker-compose.test.yml cp \
-            test-backend:/home/root/target/surefire-reports/ test-results/backend/cloudapp/ 2>/dev/null || true
-          docker compose -f docker-compose.test.yml cp \
-            test-backend-petstore:/home/root/target/surefire-reports/ test-results/backend/petstore/ 2>/dev/null || true
-          docker compose -f docker-compose.test.yml cp \
-            test-backend-vehicles:/home/root/target/surefire-reports/ test-results/backend/vehicles-api/ 2>/dev/null || true
-          docker compose -f docker-compose.test.yml cp \
-            test-backend-webproxy:/home/root/target/surefire-reports/ test-results/backend/web-proxy/ 2>/dev/null || true
+            --exit-code-from test-backend-webproxy test-backend-webproxy
 
       - name: Upload test results
         if: always()
@@ -135,7 +198,15 @@ jobs:
       - name: Run ML Pipeline tests
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-ml-pipeline
+            --exit-code-from test-ml-pipeline test-ml-pipeline
+
+      - name: Upload native execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-pipeline-results
+          path: test-results/ml-pipeline/
+          retention-days: 7
 
       - name: Cleanup
         if: always()
@@ -230,14 +301,14 @@ jobs:
       - name: Run unit tests
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-frontend-unit
+            --exit-code-from test-frontend-unit test-frontend-unit
 
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: frontend/cloudapp-shell/coverage/
+          path: test-results/frontend-unit/
           retention-days: 7
 
       - name: Cleanup
@@ -1009,7 +1080,17 @@ jobs:
       - name: Run AI orchestration layer tests
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-ai-orchestration-layer
+            --exit-code-from test-ai-orchestration-layer test-ai-orchestration-layer
+        env:
+          TRACEABILITY_COMMIT: ${{ github.sha }}
+
+      - name: Upload AI unit execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-orchestration-unit-results
+          path: test-results/ai-orchestration/
+          retention-days: 7
 
       - name: Cleanup
         if: always()
@@ -1051,7 +1132,15 @@ jobs:
       - name: Run AI monitor component behavior tests
         run: |
           docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-ai-monitor-component
+            --exit-code-from test-ai-monitor-component test-ai-monitor-component
+
+      - name: Upload native execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-monitor-component-results
+          path: test-results/ai-monitor-component/
+          retention-days: 7
 
       - name: Cleanup
         if: always()
@@ -1232,7 +1321,7 @@ jobs:
   test-summary:
     name: "Test Summary"
     runs-on: ubuntu-latest
-    needs: [backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, frontend-budget-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
+    needs: [requirements-tests, requirement-execution-evidence, backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, frontend-budget-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
     if: always()
 
     steps:
@@ -1244,6 +1333,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Layer | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Requirement Traceability | ${{ needs.requirements-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Executed Requirement Evidence | ${{ needs.requirement-execution-evidence.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Backend (Spring Boot) | ${{ needs.backend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| NGINX Gateway | ${{ needs.nginx-gateway-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| API Contracts | ${{ needs.api-contract-tests.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -1272,3 +1363,12 @@ jobs:
           echo "| Dependency Scan | ${{ needs.dependency-scans.outputs.summary }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Official tour-to-test mapping lives in docs/platform/showcase-smoke-paths.md." >> $GITHUB_STEP_SUMMARY
+
+      - name: Enforce requirement traceability gate
+        if: always()
+        env:
+          REQUIREMENTS_RESULT: ${{ needs.requirements-tests.result }}
+          EVIDENCE_RESULT: ${{ needs.requirement-execution-evidence.result }}
+        run: |
+          test "$REQUIREMENTS_RESULT" = success
+          test "$EVIDENCE_RESULT" = success

@@ -762,6 +762,7 @@ export default function CloudMLOps() {
                         {/* Pagination Controls */}
                         <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4 mt-2">
                             <button
+                                aria-label="Previous customer page"
                                 onClick={() => handlePageChange('prev')}
                                 disabled={currentPage === 1}
                                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
@@ -772,6 +773,7 @@ export default function CloudMLOps() {
                                 Page {currentPage} of {totalPages || 1}
                             </span>
                             <button
+                                aria-label="Next customer page"
                                 onClick={() => handlePageChange('next')}
                                 disabled={currentPage === totalPages}
                                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"

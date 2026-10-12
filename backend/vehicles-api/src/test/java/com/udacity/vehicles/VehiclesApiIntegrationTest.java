@@ -101,6 +101,9 @@ public class VehiclesApiIntegrationTest {
         JsonNode node = objectMapper.readTree(response);
         carId = node.path("id").asLong();
         assertTrue(carId > 0, "Created car id must be populated");
+        Car persisted = carRepository.findById(carId).orElseThrow();
+        assertEquals(40.730610, persisted.getLocation().getLat(), 0.000001);
+        assertEquals(-73.935242, persisted.getLocation().getLon(), 0.000001);
     }
 
     // =========================================================================
@@ -126,7 +129,10 @@ public class VehiclesApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(carId))
                 .andExpect(jsonPath("$.details.model").value("TestModel X"))
-                .andExpect(jsonPath("$.condition").value("USED"));
+                .andExpect(jsonPath("$.condition").value("USED"))
+                .andExpect(jsonPath("$.location.lat").value(40.730610))
+                .andExpect(jsonPath("$.location.lon").value(-73.935242))
+                .andExpect(jsonPath("$.price").isNotEmpty());
     }
 
     @Test

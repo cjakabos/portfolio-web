@@ -1,0 +1,948 @@
+{
+  "schema_version": 2,
+  "generated_cases": "tests/requirement-cases/generated",
+  "cases": {
+    "AC-REQ-AIOPS-001-01": {
+      "case_digest": "6a46dc4288b28dc2275189e224a1c9f0cac14f6bccd9b0e2ab0fe51cf227591e",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_operator_requirements.py",
+          "test_id": "test_operator_http_routes_reject_unauthenticated_and_regular_users",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Actual operator HTTP routes reject missing credentials and non-admin CloudApp identities."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-AIOPS-001-02": {
+      "case_digest": "92ec343fcce74be59ba3f227335e66aea40e9338732945132c5bcdc033c22869",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "ai-orchestration/ai-orchestration-monitor/tests/UnifiedDashboard.test.tsx",
+          "test_id": "renders the service health state and key operator counters",
+          "suite": "test-ai-monitor-component",
+          "execution": "default",
+          "asserts": "Renders service health and operator counters from provider data."
+        },
+        {
+          "path": "ai-orchestration/ai-orchestration-monitor/tests/OperatorDashboards.test.tsx",
+          "test_id": "renders execution activity and available request latency and success metrics",
+          "suite": "test-ai-monitor-component",
+          "execution": "default",
+          "asserts": "Renders execution type, capabilities, duration, request count and success rate."
+        },
+        {
+          "path": "ai-orchestration/ai-orchestration-monitor/tests/OperatorDashboards.test.tsx",
+          "test_id": "renders service health circuit state and categorized error information",
+          "suite": "test-ai-monitor-component",
+          "execution": "default",
+          "asserts": "Renders breaker health and categorized errors."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-AIOPS-001-03": {
+      "case_digest": "a58228a11eec13ef82ada79a8a50a8d7761deec5a097e907bbd9227b813af79b",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_operator_requirements.py",
+          "test_id": "test_actual_tool_catalog_and_invocation_execute_the_cloudapp_tool",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Discovers the actual tool manager catalog and invokes the real item tool through a deterministic downstream HTTP transport."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-APPROVAL-001-01": {
+      "case_digest": "d68203735e7ee93be64b2fb19831967fb9400a095251699cf870867b3b7d668c",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_operator_requirements.py",
+          "test_id": "test_real_risk_gate_stays_pending_and_is_visible_in_operator_queue",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Actual risk gate remains pending, is listed over authenticated HTTP, and signals its waiter on approval."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-APPROVAL-001-02": {
+      "case_digest": "c5dcd062d995da22524bd15636b750f1e72cecc45f5e3bc793a36d30f1bcbcf5",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_operator_requirements.py",
+          "test_id": "test_http_approval_and_rejection_use_verified_identity_and_history",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Actual approve/reject routes persist verified administrator identity and history, ignoring spoofed request identity."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-APPROVAL-001-03": {
+      "case_digest": "4841952c57e26476c3ee5dfb1569866d4c9c5f3d3dc3e96136802bed878d019d",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_approvals_router.py",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Resume handler preserves original requester and session through downstream graph calls.",
+          "test_id": "test_resume_after_approval_uses_original_requester_identity"
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-CHAT-001-01": {
+      "case_digest": "51f38e058bdcb0a622e2d76f886c359c3038a1b683490069b09e104ea76e695c",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.roomCreationAndLookupPersistTheSameCode",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real MongoDB room creation and lookup retain the same room code and name."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chat-requirements.test.tsx",
+          "test_id": "Creating a room passes its name and user and opens the returned room code",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real room UI/API client submits name/user and navigates to the returned code."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-CHAT-001-02": {
+      "case_digest": "4d5184db5665583434d1fa04f061a816d900cae92c8c468346cd06aa3e426620",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.roomCreationAndLookupPersistTheSameCode",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real MongoDB room creation and lookup retain the same room code and name."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chat-requirements.test.tsx",
+          "test_id": "Joining an existing room verifies its code and opens that room",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real room UI/API client checks the code and navigates to the matching room."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-CHAT-001-03": {
+      "case_digest": "618bc4f2f7c07b0a2521eab77bf8dd91e2ab1a2f29346d28e1e5a2a2c777ec14",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real WebSocket/STOMP and Kafka delivery reaches a room subscriber with sender, content and timestamp."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chat-requirements.test.tsx",
+          "test_id": "Connected room sends to its destination and renders sender and broadcast content",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Room UI sends to its room destination and renders sender/content without duplicating its broadcast."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-CHAT-001-04": {
+      "case_digest": "64fae6983887f52e2a309ed3383ff65ccfda61b4f88467c465b79885cb14a86b",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chat-requirements.test.tsx",
+          "test_id": "Disconnected room disables sending until its live connection returns",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Room UI disables sending before connection and after errors, and enables it on connection."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-CHATLLM-001-01": {
+      "case_digest": "8049b7889583967b1b0458a8047e30f765cff4b6e76728d65ebdfab782cd5b85",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chatllm-requirements.test.tsx",
+          "test_id": "ChatLLM selects available chat models and sends the chosen model",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real UI filters embedding models, sends the selected chat model and renders successive answer updates from the SDK boundary."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chatllm-api-requirements.test.ts",
+          "test_id": "Chat adapter streams successive answer chunks from the selected model",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real API adapter forwards the chosen model and streams successive chunks supplied at the SDK/model boundary."
+        }
+      ],
+      "gap": "",
+      "owner": "chatllm-module"
+    },
+    "AC-REQ-CHATLLM-001-02": {
+      "case_digest": "ce65f8cbe3890e4daaa2ed507dc9c31617363e0cb0c9bd2119ae6ca893964a1c",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chatllm-requirements.test.tsx",
+          "test_id": "Changing the selected ChatLLM model clears the rendered conversation",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Changing models clears prior rendered messages before continuing."
+        }
+      ],
+      "gap": "",
+      "owner": "chatllm-module"
+    },
+    "AC-REQ-CHATLLM-001-03": {
+      "case_digest": "989a44430af71b659587b39209f7b8167d75d1a2c47fda51d2b5e6962b9d9064",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chatllm-api-requirements.test.ts",
+          "test_id": "Chat adapter enables reasoning only after a successful support probe",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Supported/unsupported probes control provider reasoning and the outgoing stream reasoning flag."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/chatllm-api-requirements.test.ts",
+          "test_id": "Failed reasoning probes do not enable reasoning or poison the support cache",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Server errors do not enable reasoning or cache a permanent capability result."
+        }
+      ],
+      "gap": "",
+      "owner": "chatllm-module"
+    },
+    "AC-REQ-COMMERCE-001-01": {
+      "case_digest": "7afa8d0cf012dc191aeef6ce92d2e0e0709cfa7cdce1d19022eb3c407eb76bef",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.personalCartAndCheckoutPersistWithoutChangingAnotherUsersCart",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real cart/order persistence retains quantities and totals and leaves another user's cart unchanged."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/hooks.test.tsx",
+          "test_id": "useCart refreshes contents and total after add and clear",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real hook/API client refreshes displayed contents and totals after mutations."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-COMMERCE-001-02": {
+      "case_digest": "ced3679c21b2e1745b1f78cad7208ab5134febc4e09e3fe07c9f264acb4a3083",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.personalCartAndCheckoutPersistWithoutChangingAnotherUsersCart",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real cart/order persistence retains quantities and totals and leaves another user's cart unchanged."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/hooks.test.tsx",
+          "test_id": "useCart checkout clears the cart and immediately refreshes order history",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real checkout hook/API client submits, clears and refreshes order history in sequence."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-COMMERCE-001-03": {
+      "case_digest": "4ff21ac0c29f546cf8f8deda76e5360e9d5baab38a3c464de8ec7fe8a9a8dd11",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.createItemRequiresAdministrator",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Regular users are forbidden and administrators persist the catalog mutation."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.updateItem_adminOnly",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Regular users are forbidden and administrators persist the catalog mutation."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.deleteItem_adminOnly",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Regular users are forbidden and administrators persist the catalog mutation."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-HARNESS-001-01": {
+      "case_digest": "7925eaba08dfaba8fdfd6f0b68d7e68e4dda4364879431fccb01b9a349be6e34",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_traceability.py",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "Actual fixture intake command writes a timestamped/fingerprinted work item with requirement/case links under a network audit guard.",
+          "test_id": "RequirementHarnessTests.test_fixture_intake_snapshot_links_requirement_and_cases"
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-HARNESS-001-02": {
+      "case_digest": "d36171061748655e0dba0fd5858a4a85c8a0bec32420bb63d2b09f011236242f",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_traceability.py",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "Actual intake command rejects an unknown requirement and creates no work item.",
+          "test_id": "RequirementHarnessTests.test_unknown_requirement_is_rejected"
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-HARNESS-001-03": {
+      "case_digest": "d56398231d68eb2cfc9d2f84c3728c0f35261634d7b44d28554ee59210867c9f",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_traceability.py",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "Actual intake command preserves canonical files and labels the amendment proposal.",
+          "test_id": "RequirementHarnessTests.test_proposed_delta_does_not_change_canonical_requirement"
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-HARNESS-001-04": {
+      "case_digest": "05fffd7803f585c0e29c93b63712e02c9941d7ea10d115c89e44f3df8fbf2ec1",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_traceability.py",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "Actual generator writes all features and index to an absolute temporary directory, preserves IDs/source links, and passes freshness checking.",
+          "test_id": "RequirementHarnessTests.test_generator_emits_requirement_and_acceptance_ids"
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-IDENTITY-001-01": {
+      "case_digest": "3f6736f532963258af31b5844eb8d8ff80afe01e4e5d012f1ba4e44b901516eb",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.registerUser_happyPath",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Registration persists an account with exactly ROLE_USER and its associated cart."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-backend"
+    },
+    "AC-REQ-IDENTITY-001-02": {
+      "case_digest": "91606f0dcc419acb69b0a758bd27103655d9463580fb5dec32e7de35d474feb1",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.registerUser_shortPassword",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Rejected invalid/duplicate registration creates no account and preserves existing credentials/cart."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.registerUser_passwordMismatch",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Rejected invalid/duplicate registration creates no account and preserves existing credentials/cart."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.duplicateRegistrationDoesNotChangeExistingAccount",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Rejected invalid/duplicate registration creates no account and preserves existing credentials/cart."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-backend"
+    },
+    "AC-REQ-IDENTITY-001-03": {
+      "case_digest": "c8483982e3946b4316435ff1dcb6bc16f2f42a9a374d743467f68ac8a66db73a",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.login_happyPath",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Login emits a non-empty HttpOnly CLOUDAPP_AUTH cookie."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.logoutClearsCookie",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Logout expires CLOUDAPP_AUTH and empty cookie cannot access a protected route."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-backend"
+    },
+    "AC-REQ-IDENTITY-001-04": {
+      "case_digest": "cd8773d21c9186bf133a21e797b7470452b21bf77b86fb0804c305428ba1bd07",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.createItemRequiresAdministrator",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Regular users are forbidden and administrators persist the catalog mutation."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.updateItem_adminOnly",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Regular users are forbidden and administrators persist the catalog mutation."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.deleteItem_adminOnly",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Regular users are forbidden and administrators persist the catalog mutation."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.adminUsers_nonAdminForbidden",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Backend rejects regular-user access to administrator user/role routes."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.adminRoles_nonAdminForbidden",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Backend rejects regular-user access to administrator user/role routes."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-backend"
+    },
+    "AC-REQ-JIRA-001-01": {
+      "case_digest": "8a294c5d8c97f0931aa249a6b7b119d2628d11e50eee2fc170e58aacfb48919f",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/jira-requirements.test.tsx",
+          "test_id": "Jira board scopes reads and performs explicit create edit delete proxy operations",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real board scopes project reads and constructs create/edit/delete proxy requests after explicit UI actions."
+        },
+        {
+          "path": "backend/web-proxy/src/test/java/com/example/demo/controllers/WebControllerTest.java",
+          "test_id": "WebControllerTest.getTicket_returnsJsonObject",
+          "suite": "test-backend-webproxy",
+          "execution": "default",
+          "asserts": "Actual proxy controller forwards the Jira operation to a local HTTP server."
+        },
+        {
+          "path": "backend/web-proxy/src/test/java/com/example/demo/controllers/WebControllerTest.java",
+          "test_id": "WebControllerTest.createTicket_forwardsBody",
+          "suite": "test-backend-webproxy",
+          "execution": "default",
+          "asserts": "Actual proxy controller forwards the Jira operation to a local HTTP server."
+        },
+        {
+          "path": "backend/web-proxy/src/test/java/com/example/demo/controllers/WebControllerTest.java",
+          "test_id": "WebControllerTest.updateTicket_returnsRemoteStatusLine",
+          "suite": "test-backend-webproxy",
+          "execution": "default",
+          "asserts": "Actual proxy controller forwards the Jira operation to a local HTTP server."
+        },
+        {
+          "path": "backend/web-proxy/src/test/java/com/example/demo/controllers/WebControllerTest.java",
+          "test_id": "WebControllerTest.deleteTicket_returnsRemoteStatusLine",
+          "suite": "test-backend-webproxy",
+          "execution": "default",
+          "asserts": "Actual proxy controller forwards the Jira operation to a local HTTP server."
+        }
+      ],
+      "gap": "",
+      "owner": "jira-module"
+    },
+    "AC-REQ-JIRA-001-02": {
+      "case_digest": "bc1add8b5e01655a6b452a9af466b8f9a08414eb8d33292a6f8db13726a26872",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/jira-requirements.test.tsx",
+          "test_id": "Jira AI comparison remains read-only until explicit approval",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Original/proposal comparison causes no Jira mutation until Approve & Update."
+        }
+      ],
+      "gap": "",
+      "owner": "jira-module"
+    },
+    "AC-REQ-JIRA-001-03": {
+      "case_digest": "140071cafec0aaa114dc79776baec9cbfd48f976094ee181c7c65a2560aa7517",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/jira-requirements.test.tsx",
+          "test_id": "Jira child creation excludes unselected and whitespace-only suggestions",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Only selected non-blank suggestions are created with the configured project and parent."
+        }
+      ],
+      "gap": "",
+      "owner": "jira-module"
+    },
+    "AC-REQ-MLOPS-001-01": {
+      "case_digest": "7bb0203f5a6850a5fde58ce8cce56ec22498db4d2f0f93ab71b474954ac5ddad",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ml-pipeline/test_requirements.py",
+          "test_id": "TestRequirementSegmentation.test_supported_samples_run_real_initialization_and_segmentation",
+          "suite": "test-ml-pipeline",
+          "execution": "default",
+          "asserts": "Every offered sample size succeeds through real subprocess initialization, KMeans and PostgreSQL, with aligned chart results."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/mlops-requirements.test.tsx",
+          "test_id": "MLOps sample submission refreshes chart results and customer records",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Sample selection posts its value and refreshes chart data and customers."
+        }
+      ],
+      "gap": "",
+      "owner": "mlops-module"
+    },
+    "AC-REQ-MLOPS-001-02": {
+      "case_digest": "6f276c2fd642660ce6ed6f17ee31c716405b9f50ba25693a81e928b8fc80e479",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ml-pipeline/test_requirements.py",
+          "test_id": "TestRequirementSegmentation.test_added_customer_is_persisted_and_included_after_real_reclustering",
+          "suite": "test-ml-pipeline",
+          "execution": "default",
+          "asserts": "Real database customer insertion and reclustering include the submitted attributes and customer in results."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/mlops-requirements.test.tsx",
+          "test_id": "MLOps customer form submits its attributes then reclusters and refreshes results",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real form/hook submits attributes then reclusters and refreshes customer/chart results."
+        }
+      ],
+      "gap": "",
+      "owner": "mlops-module"
+    },
+    "AC-REQ-MLOPS-001-03": {
+      "case_digest": "f30cb4b8319cf799e2703ebd110a11b5612190584e32151d06c2029b333995c5",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/mlops-requirements.test.tsx",
+          "test_id": "MLOps renders cluster and spending charts and paginates actual table rows",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real Recharts SVG renders cluster and spending marks, and actual customer rows paginate in both directions."
+        }
+      ],
+      "gap": "",
+      "owner": "mlops-module"
+    },
+    "AC-REQ-PETSTORE-001-01": {
+      "case_digest": "c2a266aba81f0508a01000f41899a05db3fa94c9856fe7d7bc88355a2bde3afc",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/petstore/src/test/java/com/udacity/jdnd/course3/petstore/PetstoreFunctionalTest.java",
+          "test_id": "PetstoreFunctionalTest.testAddPetsToCustomer",
+          "suite": "test-backend-petstore",
+          "execution": "default",
+          "asserts": "Creating a pet retains its customer association."
+        },
+        {
+          "path": "backend/petstore/src/test/java/com/udacity/jdnd/course3/petstore/PetstoreFunctionalTest.java",
+          "test_id": "PetstoreFunctionalTest.testFindPetsByOwner",
+          "suite": "test-backend-petstore",
+          "execution": "default",
+          "asserts": "Owner query returns associated pets."
+        },
+        {
+          "path": "backend/petstore/src/test/java/com/udacity/jdnd/course3/petstore/PetstoreFunctionalTest.java",
+          "test_id": "PetstoreFunctionalTest.testUpdatePetOwnerMovesOwnerQueries",
+          "suite": "test-backend-petstore",
+          "execution": "default",
+          "asserts": "Changing a pet owner persists the new association and moves the pet between real MySQL owner queries."
+        }
+      ],
+      "gap": "",
+      "owner": "petstore-module"
+    },
+    "AC-REQ-PETSTORE-001-02": {
+      "case_digest": "19922c4a4321010141f447279f470f513562537abb3c94f9a653a40f602b62d4",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/petstore/src/test/java/com/udacity/jdnd/course3/petstore/PetstoreFunctionalTest.java",
+          "suite": "test-backend-petstore",
+          "execution": "default",
+          "asserts": "Matching service skills and dates return the expected employee IDs.",
+          "test_id": "PetstoreFunctionalTest.testFindEmployeesByServiceAndTime"
+        }
+      ],
+      "gap": "",
+      "owner": "petstore-module"
+    },
+    "AC-REQ-PETSTORE-001-03": {
+      "case_digest": "5cc9de603ea3fcf51b9a0d03a1142efa98f075b3d6991301bacba7ef570e27ce",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/petstore/src/test/java/com/udacity/jdnd/course3/petstore/PetstoreFunctionalTest.java",
+          "test_id": "PetstoreFunctionalTest.testSchedulePetsForServiceWithEmployee",
+          "suite": "test-backend-petstore",
+          "execution": "default",
+          "asserts": "Schedule fields and linked pet/employee IDs are saved."
+        },
+        {
+          "path": "backend/petstore/src/test/java/com/udacity/jdnd/course3/petstore/PetstoreFunctionalTest.java",
+          "test_id": "PetstoreFunctionalTest.testFindScheduleByEntities",
+          "suite": "test-backend-petstore",
+          "execution": "default",
+          "asserts": "Schedules are returned by employee, pet, and customer queries."
+        }
+      ],
+      "gap": "",
+      "owner": "petstore-module"
+    },
+    "AC-REQ-RAG-001-01": {
+      "case_digest": "72b3679614abfc99f87a785f0f30aa13aa49bf3932af376c12f30e1f6d726f3a",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_integration.py",
+          "test_id": "test_real_upload_jobs_progress_to_completed_and_failed",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Real parser, persisted job manager and Chroma ingestion expose pending/progress/completed/failed states and survive job reload."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-RAG-001-02": {
+      "case_digest": "586b8c2dbd6674201b147a4a71c2e1236d8cab2d318c7fbc668ef255b31d44b3",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_integration.py",
+          "test_id": "test_real_corpus_ranks_retrieved_context_and_builds_grounded_answer_prompt",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Real Chroma retrieval ranks indexed documents and supplies retrieved context to the answer model boundary."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-RAG-001-03": {
+      "case_digest": "5e882e97bd2f7b406e5b3feb322ba0f7a5d4eae694759723cbb939bf7eba32a1",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_integration.py",
+          "test_id": "test_real_delete_removes_vectors_registry_and_reloaded_document_list",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Deletion removes real Chroma vectors and persisted registry entries, document listings and subsequent query sources."
+        }
+      ],
+      "gap": "",
+      "owner": "ai-platform"
+    },
+    "AC-REQ-SHELL-001-01": {
+      "case_digest": "ad2ea5ab1a7330cd56f0d77fcedcba93116b3ee0243a1cacb1827a6e06f3eb7d",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/shell-requirements.test.tsx",
+          "test_id": "Rendered navigation and dashboard apply role and loaded remote availability",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Actual navigation/dashboard hide disabled and unreachable remotes and reflect enabled availability."
+        }
+      ],
+      "gap": "",
+      "owner": "frontend-platform"
+    },
+    "AC-REQ-SHELL-001-02": {
+      "case_digest": "1cb5d7f5e95edada200be1b533e8c18640249c46845b1e0b5e1d7e0dd8aa4b44",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/shell-requirements.test.tsx",
+          "test_id": "Rendered administrator modules appear only for administrators",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Actual navigation/dashboard omit Jira, MLOps and PetStore for regular users and show them to administrators."
+        }
+      ],
+      "gap": "",
+      "owner": "frontend-platform"
+    },
+    "AC-REQ-SHELL-001-03": {
+      "case_digest": "595d3c53ad043719df6c6c0bb6a2c6d31e8e13f5a26600965ae9478b3c236975",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/shell-requirements.test.tsx",
+          "test_id": "Disabled remote explains opt-in profile and expected public URL",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Actual route renders opt-in profile, public URL and recovery guidance."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/shell-requirements.test.tsx",
+          "test_id": "Unreachable remote explains recovery and retries the availability check",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Actual route explains unavailability and refreshes availability on retry."
+        }
+      ],
+      "gap": "",
+      "owner": "frontend-platform"
+    },
+    "AC-REQ-VEHICLES-001-01": {
+      "case_digest": "1cccdeadac7a604237ba6cfa18efbe24fd769154b765589cbe3cfc3c258e7249",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/maps-requirements.test.tsx",
+          "test_id": "Vehicle list and map show the returned coordinates model and price",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Actual UI/hook renders list and Leaflet marker coordinates, model and returned price."
+        },
+        {
+          "path": "backend/vehicles-api/src/test/java/com/udacity/vehicles/VehiclesApiIntegrationTest.java",
+          "test_id": "VehiclesApiIntegrationTest.getCarById",
+          "suite": "test-backend-vehicles",
+          "execution": "default",
+          "asserts": "Real API returns persisted vehicle coordinates and enriched price."
+        }
+      ],
+      "gap": "",
+      "owner": "vehicles-and-maps"
+    },
+    "AC-REQ-VEHICLES-001-02": {
+      "case_digest": "7d285ac49889ae01e6ac187c59d49bddcc62d671aa11effb096038e316c93130",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/maps-requirements.test.tsx",
+          "test_id": "Regular map users have read-only controls while administrators create edit and delete",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real UI/hook denies regular-user controls/map creation and performs administrator create/update/delete with rendered refresh."
+        },
+        {
+          "path": "backend/vehicles-api/src/test/java/com/udacity/vehicles/VehiclesApiIntegrationTest.java",
+          "test_id": "VehiclesApiIntegrationTest.createCar",
+          "suite": "test-backend-vehicles",
+          "execution": "default",
+          "asserts": "Vehicle API persists the corresponding CRUD operation in H2."
+        },
+        {
+          "path": "backend/vehicles-api/src/test/java/com/udacity/vehicles/VehiclesApiIntegrationTest.java",
+          "test_id": "VehiclesApiIntegrationTest.updateCar",
+          "suite": "test-backend-vehicles",
+          "execution": "default",
+          "asserts": "Vehicle API persists the corresponding CRUD operation in H2."
+        },
+        {
+          "path": "backend/vehicles-api/src/test/java/com/udacity/vehicles/VehiclesApiIntegrationTest.java",
+          "test_id": "VehiclesApiIntegrationTest.deleteCar",
+          "suite": "test-backend-vehicles",
+          "execution": "default",
+          "asserts": "Vehicle API persists the corresponding CRUD operation in H2."
+        }
+      ],
+      "gap": "",
+      "owner": "vehicles-and-maps"
+    },
+    "AC-REQ-VEHICLES-001-03": {
+      "case_digest": "a43ab0f9d2164769c377ad40de3ae8cf05776dc31b0a1762a19372abb5ada50a",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/maps-requirements.test.tsx",
+          "test_id": "Selected map coordinates are submitted and the created vehicle refreshes list and map",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Selected Leaflet coordinates populate the actual form, reach its HTTP payload and appear in refreshed list/markers."
+        },
+        {
+          "path": "backend/vehicles-api/src/test/java/com/udacity/vehicles/VehiclesApiIntegrationTest.java",
+          "test_id": "VehiclesApiIntegrationTest.createCar",
+          "suite": "test-backend-vehicles",
+          "execution": "default",
+          "asserts": "Actual vehicle API persists the supplied coordinates in H2."
+        }
+      ],
+      "gap": "",
+      "owner": "vehicles-and-maps"
+    },
+    "AC-REQ-WORKSPACE-001-01": {
+      "case_digest": "c94c3bcdacbb8974c8003b77dd0de49a629b84ebe45cb932abc56dac1db95f38",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.noteLifecycleRefreshesOwnedListAtDescriptionBoundary",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real API/database create/update/delete and refreshed owned lists support descriptions from empty to 999 characters."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.productionMigrationWidensNotesAndPreservesExistingDescriptions",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real production Flyway migrations upgrade the note column and preserve an existing description."
+        },
+        {
+          "path": "frontend/cloudapp-shell/src/__tests__/hooks.test.tsx",
+          "test_id": "useNotes add/update/delete refreshes notes",
+          "suite": "test-frontend-unit",
+          "execution": "default",
+          "asserts": "Real note hook refreshes its list after each mutation."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-WORKSPACE-001-02": {
+      "case_digest": "bc59cb0f5642846723f7fed8f982361b0f0c2d7cff26a38a37ace958bbf0846c",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.notesAndFilesDenyCrossUserListsAndRecordMutations",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real backend denies cross-user note/file lists, record mutations and file download/upload without changing owned data."
+        },
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.addNote_forbiddenForOtherUser",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real backend denies note creation under another username."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-WORKSPACE-001-03": {
+      "case_digest": "db90d97e85cff6ffe5d535be3b252a6c6bc2413828cc6de5efeac529f47ef6c5",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.fileLifecyclePersistsBytesAndAllowsMaximumSize",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real API/PostgreSQL persist, list, download exact bytes and delete files at 1 byte and the 2,000,000-byte maximum."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    },
+    "AC-REQ-WORKSPACE-001-04": {
+      "case_digest": "3317449ec55ebbe59efaf2a3288d29afab73ad68a4300f639890aef63505e176",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+          "test_id": "CloudAppIntegrationTest.invalidFileUploadsDoNotPersistAndDuplicateNamesAreUserScoped",
+          "suite": "test-backend",
+          "execution": "default",
+          "asserts": "Real API rejects empty/oversized/unnamed/duplicate-owner files without persistence; identical names for different users are valid."
+        }
+      ],
+      "gap": "",
+      "owner": "cloudapp-product"
+    }
+  }
+}

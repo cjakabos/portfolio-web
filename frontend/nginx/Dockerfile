@@ -1,4 +1,5 @@
-FROM debian:bullseye-slim AS ngx_http_auth_jwt_builder_base
+# Keep the compiler and runtime on the same supported Debian release.
+FROM debian:bookworm-slim AS ngx_http_auth_jwt_builder_base
 LABEL stage=ngx_http_auth_jwt_builder
 RUN set -eux; \
     apt-get update -o Acquire::Retries=5; \
@@ -84,7 +85,7 @@ LABEL maintainer="TeslaGov" email="developers@teslagov.com"
 ENV NGINX_VERSION 1.25.5
 RUN set -eux; \
     apt-get update -o Acquire::Retries=5; \
-    apt-get install -y --no-install-recommends libssl1.1 gettext-base wget openssl; \
+    apt-get install -y --no-install-recommends libssl3 gettext-base wget openssl; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 

@@ -20,5 +20,5 @@
     "forceConsistentCasingInFileNames": true,
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "cypress", "ios", "android", ".next", "out", "dist"]
+  "exclude": ["node_modules", "cypress", "ios", "android", ".next", "out", "dist", "**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "jest.setup.ts"]
 }

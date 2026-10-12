@@ -120,6 +120,25 @@ public class PetstoreFunctionalTest {
     }
 
     @Test
+    public void testUpdatePetOwnerMovesOwnerQueries() {
+        CustomerDTO first = userController.saveCustomer(createCustomerDTO());
+        CustomerDTO secondInput = createCustomerDTO();
+        secondInput.setName("New owner");
+        CustomerDTO second = userController.saveCustomer(secondInput);
+        PetDTO input = createPetDTO();
+        input.setOwnerId(first.getId());
+        PetDTO pet = petController.savePet(input);
+        pet.setOwnerId(second.getId());
+        pet.setName("Updated pet");
+        PetDTO updated = petController.updatePet(pet.getId(), pet);
+        Assertions.assertEquals(second.getId(), updated.getOwnerId());
+        Assertions.assertEquals("Updated pet", petController.getPet(pet.getId()).getName());
+        Assertions.assertTrue(petController.getPetsByOwner(first.getId()).isEmpty());
+        Assertions.assertEquals(List.of(pet.getId()), petController.getPetsByOwner(second.getId())
+                .stream().map(PetDTO::getId).collect(Collectors.toList()));
+    }
+
+    @Test
     public void testChangeEmployeeAvailability() {
         EmployeeDTO employeeDTO = createEmployeeDTO();
         EmployeeDTO emp1 = userController.saveEmployee(employeeDTO);

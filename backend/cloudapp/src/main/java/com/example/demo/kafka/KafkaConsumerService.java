@@ -11,7 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 /**
- * Added manual acknowledgment — records are only committed after
+ * Manual acknowledgment — records are only committed after
  * successful WebSocket forwarding.  Failures are handled by the
  * {@link org.springframework.kafka.listener.DefaultErrorHandler} configured
  * in {@link KafkaConsumerConfig}, which retries and then dead-letters.

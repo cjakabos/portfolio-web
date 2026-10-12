@@ -28,10 +28,18 @@ import requests
 NGINX_URL = os.getenv("NGINX_URL", "http://test-nginx:80")
 BACKEND_URL = os.getenv("BACKEND_URL", f"{NGINX_URL}")
 
-# A valid JWT for testing — obtained from the cloudapp /user/user-login endpoint
-# In CI, this is obtained dynamically. For local testing, use a pre-generated one.
+# Authentication is obtained from CloudApp's cookie-based login contract.
 TEST_JWT = None
 TEST_AUTH_COOKIE = None
+
+
+def routing_health(path):
+    """Routing checks tolerate the shared limiter, but still require HTTP 200."""
+    for attempt in range(5):
+        response = requests.get(f"{BACKEND_URL}{path}", timeout=10)
+        if response.status_code != 429 or attempt == 4:
+            return response
+        time.sleep(0.25)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -47,11 +55,8 @@ def register_and_login():
         "password": "securePass123",
         "confirmPassword": "securePass123"
     }
-    try:
-        resp = requests.post(reg_url, json=reg_payload, timeout=10)
-        # Ignore if user already exists (re-run)
-    except requests.exceptions.ConnectionError:
-        pytest.skip("NGINX/backend not reachable")
+    # Ignore an existing user on repeat runs; login below must succeed.
+    requests.post(reg_url, json=reg_payload, timeout=10)
 
     # Login
     login_url = f"{BACKEND_URL}/cloudapp/user/user-login"
@@ -59,13 +64,12 @@ def register_and_login():
         "username": "nginxtest",
         "password": "securePass123"
     }
-    try:
-        resp = requests.post(login_url, json=login_payload, timeout=10)
-        if resp.status_code == 200:
-            TEST_JWT = resp.headers.get("Authorization", "")
-            TEST_AUTH_COOKIE = resp.cookies.get("CLOUDAPP_AUTH")
-    except requests.exceptions.ConnectionError:
-        pytest.skip("NGINX/backend not reachable")
+    resp = requests.post(login_url, json=login_payload, timeout=10)
+    assert resp.status_code == 200, f"Gateway test login failed (HTTP {resp.status_code})"
+    TEST_AUTH_COOKIE = resp.cookies.get("CLOUDAPP_AUTH")
+    assert TEST_AUTH_COOKIE, "CloudApp login must return the CLOUDAPP_AUTH cookie"
+    # Exercise both supported transports with the JWT issued in that cookie.
+    TEST_JWT = f"Bearer {TEST_AUTH_COOKIE}"
 
 
 # ===========================================================================
@@ -200,7 +204,7 @@ class TestJwtAuthentication:
 
     def test_actuator_health_is_public(self):
         """Health check endpoints should be accessible without JWT."""
-        resp = requests.get(f"{BACKEND_URL}/cloudapp/actuator/health", timeout=5)
+        resp = routing_health("/cloudapp/actuator/health")
         assert resp.status_code == 200, \
             f"Actuator health should be public, got {resp.status_code}"
 
@@ -295,17 +299,17 @@ class TestCors:
 class TestRouting:
     def test_cloudapp_routing(self):
         """Requests to /cloudapp/ should route to the cloudapp backend."""
-        resp = requests.get(f"{BACKEND_URL}/cloudapp/actuator/health", timeout=5)
+        resp = routing_health("/cloudapp/actuator/health")
         assert resp.status_code == 200
 
     def test_petstore_routing(self):
         """Requests to /petstore/ should route to the petstore backend."""
-        resp = requests.get(f"{BACKEND_URL}/petstore/actuator/health", timeout=5)
+        resp = routing_health("/petstore/actuator/health")
         assert resp.status_code == 200
 
     def test_vehicles_routing(self):
         """Requests to /vehicles/ should route to the vehicles backend."""
-        resp = requests.get(f"{BACKEND_URL}/vehicles/actuator/health", timeout=5)
+        resp = routing_health("/vehicles/actuator/health")
         assert resp.status_code == 200
 
     def test_jiraproxy_routing(self):
@@ -315,7 +319,7 @@ class TestRouting:
 
     def test_mlops_routing(self):
         """Requests to /mlops-segmentation/ should route to the ML pipeline."""
-        resp = requests.get(f"{BACKEND_URL}/mlops-segmentation/health", timeout=10)
+        resp = routing_health("/mlops-segmentation/health")
         assert resp.status_code == 200
 
 #     def test_nonexistent_route(self):

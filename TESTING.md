@@ -46,8 +46,57 @@ PROJECT=portfolio_focus
 SERVICE=test-e2e-core
 docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- Common services: `test-requirements`, `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 - CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
+
+## Requirement Traceability
+
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-requirements test-requirements
+```
+
+- Core PR gate for canonical requirement schema, generated feature/index
+  freshness, reviewed case digests, exact test declarations, and command tests.
+- Reports are under `test-results/requirements/`. Coverage and execution outcomes
+  are separate; coverage assertions and test boundaries are recorded in `requirements/test-map.json`.
+- All 46 current scenarios have complete reviewed native-test mappings. Source
+  completeness remains separate from whether the current checkout passed.
+- Mapped native suites persist JUnit XML or Jest/Vitest JSON plus source/config
+  fingerprints under `test-results/`; see `requirements/README.md` for paths.
+- After the harness, four backend, ML, AI, frontend unit and monitor component
+  suites finish, run the executed-evidence gate:
+
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requirement-evidence
+```
+
+- The gate rejects missing, skipped, failed, interrupted or stale default evidence and writes
+  `test-results/requirements/executed-traceability.json`. CI downloads native
+  artifacts before running it; Test Summary requires it.
+- External model/Jira/Leaflet and operator data boundaries use deterministic
+  fixtures. Live/nightly tests remain separate opt-in provider checks.
+- Browser traces, screenshots and JUnit XML use `test-results/playwright/`;
+  monitor-only runs use `test-results-monitor/playwright/`. Playwright clears
+  its own output folder when starting a run, so keep native evidence outside it.
+
+### Read-only Jira intake command
+
+`jira-intake` is an opt-in operator service, outside the automated suite matrix.
+It shares the requirements image but receives only dedicated `JIRA_INTAKE_*`
+configuration. Fixture mode is the default; `--source jira` explicitly enables
+live GET requests. The harness regression suite remains credential-free.
+
+`test-requirements` also exercises the live adapter with a deterministic HTTPS
+transport: Cloud basic authentication and scoped-token URLs, Data Center bearer
+token files, ADF/plain descriptions, requirement fingerprints and links, safe
+access/redirect failures, and preservation of existing human snapshots. These
+tests call the intake CLI without contacting a Jira server.
+
+See [requirements/README.md](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
+for Cloud/Data Center setup, requirement links and Docker examples. Live provider
+checks require an explicitly chosen issue and identity. Existing 46 acceptance
+mappings do not establish live-adapter execution coverage, and changes to the
+adapter/Compose definition invalidate previously recorded execution context.
 
 ## Frontend Static Checks
 ```bash
@@ -61,6 +110,10 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 ```
 - Builds the CloudApp shell and enforces the hero entry bundle gzip budget.
 - The AI monitor budget is enforced inside `test-ai-monitor-lint`.
+- Production shell builds use `tsconfig.json`; test files and Jest setup are
+  compiled through `tsconfig.jest.json` by `test-frontend-unit`. Those tests
+  import remote implementations and need the remote workspace dependencies
+  installed by the unit runner. Production images install their own workspace.
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`

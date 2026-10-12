@@ -157,9 +157,10 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/cloudapp
-      target: builder
-    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+      target: test
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - SPRING_DATASOURCE_URL=jdbc:postgresql://test-postgres:5432/cloudappdb_test
       - SPRING_DATASOURCE_USERNAME=testuser
       - SPRING_DATASOURCE_PASSWORD=testpass
@@ -169,6 +170,12 @@ services:
       - JWT_EXPIRATION_MS=3600000
       - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
       - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
+    volumes:
+      - ./:/workspace:ro
+      - ./backend/cloudapp/src:/home/root/src:ro
+      - ./backend/cloudapp/pom.xml:/home/root/pom.xml:ro
+      - ./test-results/backend/cloudapp:/results
+      - ./test-results/backend/cloudapp/junit:/home/root/target/surefire-reports
     depends_on:
       test-postgres:
         condition: service_healthy
@@ -188,14 +195,21 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/petstore
-      target: builder
-    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+      target: test
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - SPRING_DATASOURCE_URL=jdbc:mysql://test-mysql:3306/petstore_test?serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=testpass
       - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
       - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
+    volumes:
+      - ./:/workspace:ro
+      - ./backend/petstore/src:/home/root/src:ro
+      - ./backend/petstore/pom.xml:/home/root/pom.xml:ro
+      - ./test-results/backend/petstore:/results
+      - ./test-results/backend/petstore/junit:/home/root/target/surefire-reports
     depends_on:
       test-mysql:
         condition: service_healthy
@@ -211,11 +225,18 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/vehicles-api
-      target: builder
-    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+      target: test
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
       - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
+    volumes:
+      - ./:/workspace:ro
+      - ./backend/vehicles-api/src:/home/root/src:ro
+      - ./backend/vehicles-api/pom.xml:/home/root/pom.xml:ro
+      - ./test-results/backend/vehicles-api:/results
+      - ./test-results/backend/vehicles-api/junit:/home/root/target/surefire-reports
     networks:
       - test-backend
 
@@ -228,11 +249,18 @@ services:
       dockerfile: Dockerfile_BE
       args:
         SERVICE_PATH: backend/web-proxy
-      target: builder
-    entrypoint: ["mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
+      target: test
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "mvn", "verify", "-f", "/home/root/pom.xml", "-Dspring.profiles.active=test"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - INTERNAL_GATEWAY_ADMIN_TOKEN=test-gateway-admin-token
       - INTERNAL_AI_ORCHESTRATION_TOKEN=test-ai-orchestration-token
+    volumes:
+      - ./:/workspace:ro
+      - ./backend/web-proxy/src:/home/root/src:ro
+      - ./backend/web-proxy/pom.xml:/home/root/pom.xml:ro
+      - ./test-results/backend/web-proxy:/results
+      - ./test-results/backend/web-proxy/junit:/home/root/target/surefire-reports
     networks:
       - test-backend
 
@@ -246,8 +274,9 @@ services:
       args:
         SERVICE_PATH: backend/ml-pipeline
         SERVICE_PORT: 8600
-    entrypoint: ["sh", "-c", "pip install pytest pytest-cov pytest-timeout && cd /src && pytest /tests -v --tb=short --timeout=120"]
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "ml-pipeline.xml", "--", "sh", "-c", "pip install pytest pytest-cov pytest-timeout && cd /src && pytest /tests -v --tb=short --timeout=120 -p no:cacheprovider --junitxml=/results/ml-pipeline.xml"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - ML_DB_USER=testuser
       - ML_DB_PASSWORD=testpass
       - ML_DB_HOST=test-postgres-ml
@@ -256,6 +285,9 @@ services:
       - OTEL_ENABLED=false
     volumes:
       - ./tests/ml-pipeline:/tests:ro
+      - ./backend/ml-pipeline/src:/src:ro
+      - ./:/workspace:ro
+      - ./test-results/ml-pipeline:/results
     depends_on:
       test-postgres-ml:
         condition: service_healthy
@@ -266,17 +298,73 @@ services:
   # AI ORCHESTRATION LAYER UNIT TESTS (pytest)
   # =========================================================================
   test-ai-orchestration-layer:
-    image: python:3.12-slim
+    build:
+      context: .
+      dockerfile: tests/ai-orchestration-layer/Dockerfile
     working_dir: /app
-    entrypoint:
-      [
-        "sh",
-        "-c",
-        "pip install --no-cache-dir pytest pytest-asyncio pytest-timeout httpx fastapi pydantic && PYTHONPATH=/app/src:/app/src/tools AI_ORCH_SRC=/app/src pytest /tests -v --tb=short --timeout=60 -p no:cacheprovider",
-      ]
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "ai-orchestration.xml", "--", "sh", "-c", "PYTHONPATH=/app/src:/app/src/tools AI_ORCH_SRC=/app/src pytest /tests -o asyncio_default_fixture_loop_scope=function -v --tb=short --timeout=60 -p no:cacheprovider --junitxml=/results/ai-orchestration.xml"]
     volumes:
       - ./ai-orchestration/ai-orchestration-layer/src:/app/src:ro
       - ./tests/ai-orchestration-layer:/tests:ro
+      - ./test-results/ai-orchestration:/results
+      - ./:/workspace:ro
+    environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
+
+  # Requirement-to-test traceability checks and harness unit tests.
+  test-requirements:
+    image: portfolio-web-requirements:local
+    build:
+      context: .
+      dockerfile: scripts/requirements/Dockerfile
+    working_dir: /workspace
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "sh", "-c", "set -e; python3 scripts/requirements/validate_traceability.py --report /results/source-traceability.json; status=0; python3 -m xmlrunner discover -s tests/requirement-cases -p 'test_*.py' -v -o /results/junit || status=$$?; python3 scripts/requirements/report_results.py --report /results/source-traceability.json --suite test-requirements --junit /results/junit --context /results/context.json; exit $$status"]
+    volumes:
+      - ./:/workspace:ro
+      - ./test-results/requirements:/results
+    environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
+
+  # Opt-in operator command, deliberately outside the automated test matrix.
+  jira-intake:
+    profiles: ["intake"]
+    image: portfolio-web-requirements:local
+    build:
+      context: .
+      dockerfile: scripts/requirements/Dockerfile
+    working_dir: /workspace
+    entrypoint: ["python3", "scripts/requirements/intake_jira.py"]
+    command: ["--help"]
+    environment:
+      JIRA_INTAKE_URL: ${JIRA_INTAKE_URL:-}
+      JIRA_INTAKE_EMAIL: ${JIRA_INTAKE_EMAIL:-}
+      JIRA_INTAKE_API_TOKEN: ${JIRA_INTAKE_API_TOKEN:-}
+      JIRA_INTAKE_API_TOKEN_FILE: ${JIRA_INTAKE_API_TOKEN_FILE:-}
+      JIRA_INTAKE_AUTH: ${JIRA_INTAKE_AUTH:-basic}
+      JIRA_INTAKE_CLOUD_ID: ${JIRA_INTAKE_CLOUD_ID:-}
+      JIRA_INTAKE_API_BASE_URL: ${JIRA_INTAKE_API_BASE_URL:-}
+      JIRA_INTAKE_API_VERSION: ${JIRA_INTAKE_API_VERSION:-}
+      JIRA_INTAKE_REQUIREMENTS_FIELD: ${JIRA_INTAKE_REQUIREMENTS_FIELD:-}
+      JIRA_INTAKE_CA_CERT: ${JIRA_INTAKE_CA_CERT:-}
+    volumes:
+      - ./scripts/requirements:/workspace/scripts/requirements:ro
+      - ./requirements:/workspace/requirements:ro
+      - ./fixtures/jira:/workspace/fixtures/jira:ro
+      - ./work-items:/workspace/work-items
+
+  # Combines all default acceptance targets. Run after their native suites.
+  test-requirement-evidence:
+    image: portfolio-web-requirements:local
+    build:
+      context: .
+      dockerfile: scripts/requirements/Dockerfile
+    working_dir: /workspace
+    entrypoint: ["python3", "scripts/requirements/merge_evidence.py"]
+    volumes:
+      - ./:/workspace:ro
+      - ./test-results:/workspace/test-results
+    environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
 
   # =========================================================================
   # AI ORCHESTRATION MONITOR CHECKS (TypeScript typecheck + lint + build)
@@ -288,7 +376,7 @@ services:
       [
         "sh",
         "-lc",
-        "tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run typecheck && npm run lint && npm run build:budget",
+        "tar --exclude='.git' --exclude='.env*' --exclude='test-results' --exclude='coverage' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run typecheck && npm run lint && npm run build:budget",
       ]
     environment:
       - CI=true
@@ -299,18 +387,18 @@ services:
   # AI ORCHESTRATION MONITOR COMPONENT TESTS (Vitest + jsdom)
   # =========================================================================
   test-ai-monitor-component:
-    image: node:20-slim
+    image: portfolio-web-frontend-tests:local
+    build:
+      context: .
+      dockerfile: tests/frontend/Dockerfile
     working_dir: /build
-    entrypoint:
-      [
-        "sh",
-        "-lc",
-        "tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run test -- --reporter=dot",
-      ]
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "vitest.json", "--", "sh", "-lc", "set -e; tar --exclude='.git' --exclude='.env*' --exclude='test-results' --exclude='coverage' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build/ai-orchestration/ai-orchestration-monitor && npm install --no-audit --no-fund ../../packages/contracts ../../packages/api-clients ../../packages/auth ../../packages/ui && npm install --no-audit --no-fund && case \"$(node -p \"process.arch\")\" in arm64) ROLLUP_PACKAGE='@rollup/rollup-linux-arm64-gnu' ;; x64) ROLLUP_PACKAGE='@rollup/rollup-linux-x64-gnu' ;; *) ROLLUP_PACKAGE='' ;; esac && if [ -n \"$${ROLLUP_PACKAGE}\" ] && [ ! -d \"node_modules/$${ROLLUP_PACKAGE}\" ]; then ROLLUP_VERSION=\"$(node -p \"require('./node_modules/rollup/package.json').version\")\" && npm install --no-save \"$${ROLLUP_PACKAGE}@$${ROLLUP_VERSION}\"; fi && node -e \"require('./node_modules/rollup/dist/native.js')\" && npm run test -- --reporter=dot --reporter=json --outputFile=/results/vitest.json --maxWorkers=1 --no-file-parallelism"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - CI=true
     volumes:
       - ./:/workspace:ro
+      - ./test-results/ai-monitor-component:/results
 
   # =========================================================================
   # AI ORCHESTRATION MONITOR BEHAVIOR TESTS (Playwright monitor flow)
@@ -367,18 +455,19 @@ services:
       ]
 
   test-frontend-unit:
-    image: node:20-alpine
+    image: portfolio-web-frontend-tests:local
+    build:
+      context: .
+      dockerfile: tests/frontend/Dockerfile
     working_dir: /build
-    entrypoint:
-      [
-        "sh",
-        "-lc",
-        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false && npm run --workspace frontend/cloudapp-shell test -- --coverage",
-      ]
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "jest.json", "--", "sh", "-lc", "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='.env*' --exclude='test-results' --exclude='coverage' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --workspace frontend/remote/chatllm --workspace frontend/remote/jira --workspace frontend/remote/openmaps --workspace frontend/remote/mlops --include-workspace-root=false && npm run --workspace frontend/cloudapp-shell test -- --coverage --coverageDirectory=/results/coverage --runInBand --json --outputFile=/results/jest.json"]
     environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
       - CI=true
+      - CYPRESS_INSTALL_BINARY=0
     volumes:
       - ./:/workspace:ro
+      - ./test-results/frontend-unit:/results
 
   test-frontend-static:
     image: node:20-slim
@@ -387,7 +476,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --ignore-scripts --workspaces --include-workspace-root=false --include=optional && npm run frontend:check-versions && npm run architecture:check && npm run frontend:static",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='.env*' --exclude='test-results' --exclude='coverage' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --ignore-scripts --workspaces --include-workspace-root=false --include=optional && npm run frontend:check-versions && npm run architecture:check && npm run frontend:static",
       ]
     environment:
       - CI=true
@@ -401,7 +490,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false --include=optional && case \"$(node -p \"process.arch\")\" in arm64) NATIVE_SUFFIX='arm64-gnu' ;; x64) NATIVE_SUFFIX='x64-gnu' ;; arm) NATIVE_SUFFIX='arm-gnueabihf' ;; *) NATIVE_SUFFIX='' ;; esac && MISSING_NATIVE_PACKAGES='' && if [ -n \"$${NATIVE_SUFFIX}\" ]; then if [ ! -d \"frontend/cloudapp-shell/node_modules/lightningcss-linux-$${NATIVE_SUFFIX}\" ]; then LIGHTNING_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/lightningcss/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} lightningcss-linux-$${NATIVE_SUFFIX}@$${LIGHTNING_VERSION}\"; fi && if [ -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide\" ] && [ ! -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide-linux-$${NATIVE_SUFFIX}\" ]; then OXIDE_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/@tailwindcss/oxide/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} @tailwindcss/oxide-linux-$${NATIVE_SUFFIX}@$${OXIDE_VERSION}\"; fi && if [ -n \"$${MISSING_NATIVE_PACKAGES}\" ]; then npm install --workspace frontend/cloudapp-shell --no-save $${MISSING_NATIVE_PACKAGES}; fi; fi && node -e \"require('./frontend/cloudapp-shell/node_modules/lightningcss')\" && npm run --workspace frontend/cloudapp-shell build:budget",
+        "set -e; rm -rf /build && mkdir -p /build && tar --exclude='.git' --exclude='.env*' --exclude='test-results' --exclude='coverage' --exclude='node_modules' --exclude='*/node_modules' -cf - -C /workspace . | tar -xf - -C /build && cd /build && npm ci --workspace frontend/cloudapp-shell --include-workspace-root=false --include=optional && case \"$(node -p \"process.arch\")\" in arm64) NATIVE_SUFFIX='arm64-gnu' ;; x64) NATIVE_SUFFIX='x64-gnu' ;; arm) NATIVE_SUFFIX='arm-gnueabihf' ;; *) NATIVE_SUFFIX='' ;; esac && MISSING_NATIVE_PACKAGES='' && if [ -n \"$${NATIVE_SUFFIX}\" ]; then if [ ! -d \"frontend/cloudapp-shell/node_modules/lightningcss-linux-$${NATIVE_SUFFIX}\" ]; then LIGHTNING_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/lightningcss/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} lightningcss-linux-$${NATIVE_SUFFIX}@$${LIGHTNING_VERSION}\"; fi && if [ -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide\" ] && [ ! -d \"frontend/cloudapp-shell/node_modules/@tailwindcss/oxide-linux-$${NATIVE_SUFFIX}\" ]; then OXIDE_VERSION=\"$(node -p \"require('./frontend/cloudapp-shell/node_modules/@tailwindcss/oxide/package.json').version\")\" && MISSING_NATIVE_PACKAGES=\"$${MISSING_NATIVE_PACKAGES} @tailwindcss/oxide-linux-$${NATIVE_SUFFIX}@$${OXIDE_VERSION}\"; fi && if [ -n \"$${MISSING_NATIVE_PACKAGES}\" ]; then npm install --workspace frontend/cloudapp-shell --no-save $${MISSING_NATIVE_PACKAGES}; fi; fi && node -e \"require('./frontend/cloudapp-shell/node_modules/lightningcss')\" && npm run --workspace frontend/cloudapp-shell build:budget",
       ]
     environment:
       - CI=true
@@ -424,7 +513,7 @@ services:
       [
         "sh",
         "-lc",
-        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-static test-frontend-budgets test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$${BASE_PROJECT}_$${svc}\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
+        "set -eu; BASE_PROJECT=portfolio_test_all; PROJECT=$$BASE_PROJECT; SERVICES='test-requirements test-backend test-backend-petstore test-backend-vehicles test-backend-webproxy test-ml-pipeline test-ai-orchestration-layer test-frontend-static test-frontend-budgets test-ai-monitor-lint test-ai-monitor-component test-ai-monitor-behavior test-frontend-unit test-nginx-gateway test-api-contracts test-e2e test-requirement-evidence'; cleanup(){ docker compose -p $$PROJECT -f docker-compose.test.yml down -v --remove-orphans >/dev/null 2>&1 || true; }; trap cleanup EXIT INT TERM; cleanup; for svc in $$SERVICES; do PROJECT=\"$${BASE_PROJECT}_$${svc}\"; echo ''; echo \"=== Running $$svc ===\"; cleanup; docker compose -p $$PROJECT -f docker-compose.test.yml up --build --force-recreate --abort-on-container-exit --exit-code-from $$svc $$svc; cleanup; done; PROJECT=$$BASE_PROJECT; trap - EXIT INT TERM; cleanup; echo ''; echo 'All test suites passed.'",
       ]
 
   # =========================================================================

@@ -17,7 +17,7 @@ public class Note {
     @Column(nullable = false)
     @JsonProperty
     private String title;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     @JsonProperty
     private String description;
     @Column(nullable = false)

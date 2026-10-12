@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from fastapi import HTTPException, Request, WebSocket
 
-from core.orchestrator import AIOrchestrationLayer
-from memory.context_store import ContextStore
-from memory.memory_manager import MemoryManager
+if TYPE_CHECKING:
+    from core.orchestrator import AIOrchestrationLayer
+    from memory.context_store import ContextStore
+    from memory.memory_manager import MemoryManager
 
 
 @dataclass

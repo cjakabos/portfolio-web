@@ -26,6 +26,53 @@ it for the first time, pick one of these tours:
 | `Architect deep dive` | Senior engineers, architects, technical interviewers | Understand the gateway, remotes, service boundaries, contracts, and CI discipline | Portfolio mode, then selective extended modules |
 | `AI/operator tour` | AI engineers, platform engineers, operators | Focus on orchestration, approvals, RAG, observability, and degraded-mode behavior | AI/operator setup |
 
+## Development Harness: Requirements to Test Evidence
+
+The repository also demonstrates a development workflow for people and coding
+agents: keep durable requirements in Markdown, review proposed changes with the
+implementation, and trace acceptance scenarios to executed native tests.
+
+| Capability | Implementation |
+| --- | --- |
+| Central requirements | [14 requirement documents](./requirements/README.md#current-application-requirement-map) with stable IDs, ownership, and 46 tagged Gherkin acceptance scenarios |
+| Read-only Jira intake | [Fixture or live Jira source](./requirements/README.md#jira-intake-fixture-or-read-only-live-source) produces a Markdown snapshot with requirement/scenario links and fingerprints; fixtures are the default, while Cloud/Data Center access is selected through CLI flags and dedicated configuration |
+| Portable acceptance cases | [Generated features and index](./tests/requirement-cases/generated/) preserve scenario IDs and source digests; the [test map](./requirements/test-map.json) links them to exact JUnit, pytest, Jest, and Vitest test declarations |
+| Verified execution evidence | Docker runners record source/configuration fingerprints, completion status, and report digests; CI combines JUnit XML and Jest/Vitest JSON into per-scenario outcomes |
+| Shared agent guidance | [AGENTS.md](./AGENTS.md) defines requirement ownership, read-only intake, PR review, and focused Docker verification rules |
+
+Intake writes a proposal under `work-items/`. Product and engineering review the
+requirement amendment alongside code and tests in the same implementation PR;
+merging the reviewed PR establishes the updated baseline. The current
+code-derived requirements are **proposed**, pending product validation. Generated
+Gherkin is linked to the existing runners through the test map; those native tests
+provide the executable assertions.
+
+**Recorded Docker verification (2026-10-05, commit `7d8615d`):** 291 tests passed
+across nine native suites, with all 46 acceptance scenarios mapped as complete and
+reported passing. Coverage describes these reviewed scenarios and their documented
+test boundaries. External model/Jira responses, Leaflet geometry, and operator
+provider data use deterministic fixtures; live/nightly checks exercise providers
+separately.
+
+To import an existing Jira issue, configure `JIRA_INTAKE_URL`,
+`JIRA_INTAKE_EMAIL`, and `JIRA_INTAKE_API_TOKEN` in your local `.env`, then run:
+
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps \
+  --user "$(id -u):$(id -g)" jira-intake \
+  --source jira --issue PROJECT-123 --requirement-id REQ-IDENTITY-001
+```
+
+Scoped Cloud tokens also need `JIRA_INTAKE_CLOUD_ID`; Data Center supports bearer
+PATs through configuration. The [intake setup guide](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
+covers authentication, automatic label links, and fixture previews. The recorded
+verification snapshot above predates the live adapter; its existing harness
+acceptance mappings cover fixture intake.
+
+See the [requirements and traceability guide](./requirements/README.md) for the
+workflow, the [testing guide](./TESTING.md#requirement-traceability) for Docker
+commands, and [requirement evidence checks](#requirement-evidence-checks) below.
+
 ## Showcase Tiers
 
 - `Hero`: the main platform story and the first surfaces a reader should see.
@@ -76,28 +123,31 @@ live in
 ## 4) Real-Time Chat
 
 - Create rooms or join other people's room by shared room code.
+- Live messages include sender labels; sending is disabled while disconnected.
 
 ![Chat rooms](./examples/10.png)
 ![Chat messages](./examples/11.png)
 
 ## 5) Maps with vehicle locations
 
-- Regular user: view vehicle locations on OpenStreetMap.
-- Admin user: Add/remove vehicles.
+- Regular user: view vehicle locations and price details in the fleet list and map.
+- Admin user: add vehicles at a selected map location, edit them, or delete them.
 
 ![Maps module](./examples/4.png)
 
 ## 6) Local AI chat
 
-- Discuss with local models directly from UI
-- Optional chain-of-thought display for models that support it
+- Select a local model and receive streamed answers in the conversation.
+- Changing models clears the prior conversation.
+- Optional model-provided reasoning when the selected model supports it.
 
 ![Local LLM chat](./examples/5.png)
 
 ## 7) Jira + AI Refinement
 
 - Create/list/update/delete Jira tickets
-- Refine ticket drafts and batch create child ticket proposals with local LLM
+- Compare the original ticket with a local-model proposal before explicitly approving an update.
+- Select which non-empty child ticket suggestions to create under a parent.
 
 ![Jira module](./examples/7.png)
 ![Jira module](./examples/8.png)
@@ -106,11 +156,11 @@ live in
 
 MLOps interface for [Customer Segmentation API](backend/ml-pipeline/README.md), the user is able to auto trigger the whole customer segmentation process and generate the latest segmentation plots with these options:
 - Add new customer data point to the database.
-- Sample reference database with predefined 10-20-50-100-200 amount of samples.
+- Choose from 10, 20, 50, 100, 200, or 500 sample settings, capped by the available reference dataset.
 
 View results:
 - Graphs: correlation between parameters and the different segments.
-- Table: current list of customers from postgres db.
+- Table: paginated customer rows from PostgreSQL, refreshed after reclustering.
 
 ![](examples/6.png)
 
@@ -172,6 +222,7 @@ want to study or reuse:
 - Jira and OpenMaps integration
 - Android and iOS deployment with Capacitor
 - Full observability, testable, containerized, CI-ready workflows
+- Markdown requirements, Jira change proposals, and acceptance evidence shared by people and coding agents
 
 Platform governance docs live in [docs/platform/](./docs/platform/README.md),
 including the deployable inventory, ADRs, secret-classification rules, AI
@@ -498,6 +549,10 @@ Then open `https://<your-laptop-lan-ip>` on the phone.
 | AI orchestration | `ai-orchestration/ai-orchestration-layer/` | FastAPI orchestration + RAG + HITL |
 | AI admin monitor | `ai-orchestration/ai-orchestration-monitor/` | React/Vite operator console |
 | Test suites | `tests/`, `e2e/` | Python, Java, gateway, E2E coverage |
+| Requirements | [requirements/](./requirements/README.md) | Central behavior baseline, acceptance scenarios, and reviewed test mappings |
+| Change proposals | [fixtures/jira/](./fixtures/jira/) and [work-items/](./work-items/) | Fixture examples and Markdown snapshots from read-only issue intake |
+| Development harness | [scripts/requirements/](./scripts/requirements/) | Intake, case generation, source validation, and execution-evidence aggregation |
+| Agent guidance | [AGENTS.md](./AGENTS.md) | Repository map and shared agent workflow rules |
 
 </details>
 
@@ -592,6 +647,20 @@ Workflows:
 - `.github/workflows/nightly-ai-integrations.yml`
 
 CI covers backend, ML, gateway, contract checks, frontend unit tests, E2E, and AI monitor checks.
+
+Requirement governance adds two gates:
+
+- **Requirement Traceability** validates canonical Markdown, generated artifact
+  freshness, reviewed case digests, and exact native-test links.
+- **Executed Requirement Evidence** downloads native-suite artifacts and requires
+  current passing results for every default acceptance target. Missing, skipped,
+  failed, interrupted, stale, or modified evidence fails the gate.
+
+The **Test Summary** job requires both gates. Reports are uploaded as CI artifacts;
+the combined report is generated locally at
+`test-results/requirements/executed-traceability.json`. See
+[requirements/README.md](./requirements/README.md#test-evidence-contract) for the
+evidence contract and branch-protection setup.
 
 </details>
 
@@ -755,8 +824,30 @@ PROJECT=portfolio_focus
 SERVICE=test-e2e-core
 docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-container-exit "$SERVICE"
 ```
-- Common services: `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
+- Common services: `test-requirements`, `test-requirement-evidence`, `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 - CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See [docs/platform/showcase-smoke-paths.md](./docs/platform/showcase-smoke-paths.md).
+
+## Requirement Evidence Checks
+
+Run canonical source validation and harness regression tests:
+
+```bash
+docker compose -p portfolio_focus -f docker-compose.test.yml run --build --rm --no-deps test-requirements
+```
+
+After running all nine mapped native suites against the same checkout, combine
+their persisted reports and require current passing acceptance evidence:
+
+```bash
+docker compose -p portfolio_focus -f docker-compose.test.yml run --build --rm --no-deps test-requirement-evidence
+```
+
+The source gate checks declarations and artifact freshness. Execution outcomes
+come from native runner reports; the aggregation gate needs those reports to
+exist and match the checkout. `test-all` runs aggregation last. See
+[TESTING.md](./TESTING.md#requirement-traceability) for the mapped suites and
+[requirements/README.md](./requirements/README.md#test-evidence-contract) for
+report locations and execution context.
 
 ## Frontend Static Checks
 ```bash

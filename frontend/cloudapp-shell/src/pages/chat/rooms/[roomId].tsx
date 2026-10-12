@@ -254,7 +254,7 @@ const CloudChat: React.FC = () => {
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                   <div className="flex items-center gap-2 mb-1 px-1">
-                    {!isMe && <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{msg.sender}</span>}
+                    <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{msg.sender}</span>
                     <span className="text-[10px] text-gray-400 flex items-center gap-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>

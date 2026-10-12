@@ -37,6 +37,9 @@ const desktopTestIgnore =
 
 export default defineConfig({
   testDir: "./e2e",
+  // Playwright clears its output directory at startup. Give browser artifacts
+  // their own folder so native suite reports and fingerprints survive.
+  outputDir: "./test-results/playwright",
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   fullyParallel: false, // tests share auth state — run sequentially
   forbidOnly: isCI,
@@ -46,7 +49,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
 
   reporter: isCI
-    ? [["line"], ["html", { open: "never" }], ["junit", { outputFile: "results/junit.xml" }]]
+    ? [["line"], ["html", { open: "never" }], ["junit", { outputFile: "test-results/playwright/junit.xml" }]]
     : [["list"], ["html", { open: "on-failure" }]],
 
   use: {

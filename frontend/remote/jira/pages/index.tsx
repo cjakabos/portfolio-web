@@ -868,7 +868,7 @@ const CloudJira: React.FC = () => {
 
   const handleBatchCreate = async () => {
     const childType = batchModal.childType || "Task";
-    const selectedSuggestions = batchModal.suggestions.filter((s) => s.create && s.summary);
+    const selectedSuggestions = batchModal.suggestions.filter((s) => s.create && s.summary.trim());
     if (selectedSuggestions.length === 0) {
       return;
     }
@@ -959,7 +959,7 @@ const CloudJira: React.FC = () => {
           description: String(it?.description || ""),
           create: true
         }))
-        .filter((x: any) => x.summary);
+        .filter((x: any) => x.summary.trim());
 
       if (suggestions.length >= batchModal.count) {
         setBatchModal((prev) => ({ ...prev, suggestions, loading: false, error: undefined }));

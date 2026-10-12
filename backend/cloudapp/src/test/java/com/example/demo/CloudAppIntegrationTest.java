@@ -14,6 +14,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.stomp.*;
+import org.springframework.web.socket.WebSocketHttpHeaders;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
+import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.WebSocketTransport;
+import java.lang.reflect.Type;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -38,7 +50,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Run via docker-compose.test.yml:
  *   docker compose -f docker-compose.test.yml up --build test-backend --abort-on-container-exit
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "kafka.group.id=integration-live-chat")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -65,6 +78,15 @@ public class CloudAppIntegrationTest {
 
     @Autowired
     private NoteRepository noteRepository;
+
+    @Autowired
+    private FileRepository fileRepository;
+
+    @Autowired
+    private javax.sql.DataSource dataSource;
+
+    @LocalServerPort
+    private int serverPort;
 
     @Autowired
     private JwtUtilities jwtUtilities;
@@ -104,6 +126,8 @@ public class CloudAppIntegrationTest {
         User dbUser = userRepository.findByUsername(TEST_USERNAME);
         assertNotNull(dbUser, "User should exist in database after registration");
         assertNotNull(dbUser.getCart(), "User should have a cart created automatically");
+        assertEquals(java.util.Set.of("ROLE_USER"), dbUser.getRoles());
+        assertEquals(dbUser.getId(), dbUser.getCart().getUser().getId());
     }
 
     @Test
@@ -119,6 +143,7 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+        assertNull(userRepository.findByUsername("shortpwduser"));
     }
 
     @Test
@@ -134,6 +159,7 @@ public class CloudAppIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+        assertNull(userRepository.findByUsername("mismatchuser"));
     }
 
     @Test
@@ -961,6 +987,217 @@ public class CloudAppIntegrationTest {
                 .andExpect(status().isOk());
 
         assertFalse(itemRepository.findById(temporaryItem.getId()).isPresent(), "Admin delete should remove item");
+    }
+
+    @Test
+    @Order(100)
+    void duplicateRegistrationDoesNotChangeExistingAccount() throws Exception {
+        User before = userRepository.findByUsername(TEST_USERNAME);
+        mockMvc.perform(post("/user/user-register").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME,
+                        "password", "anotherPassword123", "confirmPassword", "anotherPassword123"))))
+                .andExpect(status().isConflict());
+        User after = userRepository.findByUsername(TEST_USERNAME);
+        assertEquals(before.getId(), after.getId());
+        assertEquals(before.getPassword(), after.getPassword());
+        assertEquals(before.getCart().getId(), after.getCart().getId());
+    }
+
+    @Test
+    @Order(101)
+    void createItemRequiresAdministrator() throws Exception {
+        String payload = objectMapper.writeValueAsString(Map.of("name", "Acceptance catalog item",
+                "description", "Created through the API", "price", 12.50));
+        mockMvc.perform(post("/item").header("Authorization", jwtToken)
+                .contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isForbidden());
+        assertTrue(itemRepository.findByName("Acceptance catalog item").isEmpty());
+        mockMvc.perform(post("/item").header("Authorization", ensureAdminJwtToken())
+                .contentType(MediaType.APPLICATION_JSON).content(payload)).andExpect(status().isOk());
+        assertEquals(1, itemRepository.findByName("Acceptance catalog item").size());
+    }
+
+    @Test
+    @Order(102)
+    void noteLifecycleRefreshesOwnedListAtDescriptionBoundary() throws Exception {
+        for (String description : List.of("", "A description", "x".repeat(999))) {
+            MvcResult created = mockMvc.perform(post("/note/addNote").header("Authorization", jwtToken)
+                    .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(
+                            Map.of("user", TEST_USERNAME, "title", "Acceptance note", "description", description))))
+                    .andExpect(status().isOk()).andReturn();
+            long id = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asLong();
+            mockMvc.perform(get("/note/user/" + TEST_USERNAME).header("Authorization", jwtToken))
+                    .andExpect(jsonPath("$[?(@.id == " + id + ")].description").value(hasItem(description)));
+            mockMvc.perform(post("/note/updateNote").header("Authorization", jwtToken)
+                    .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(
+                            Map.of("id", id, "title", "Updated acceptance note", "description", "changed"))))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get("/note/user/" + TEST_USERNAME).header("Authorization", jwtToken))
+                    .andExpect(jsonPath("$[?(@.id == " + id + ")].title").value(hasItem("Updated acceptance note")));
+            mockMvc.perform(delete("/note/delete/" + id).header("Authorization", jwtToken)).andExpect(status().isOk());
+            mockMvc.perform(get("/note/user/" + TEST_USERNAME).header("Authorization", jwtToken))
+                    .andExpect(jsonPath("$[?(@.id == " + id + ")]").isEmpty());
+            assertFalse(noteRepository.existsById(id));
+        }
+    }
+
+    @Test
+    @Order(103)
+    void notesAndFilesDenyCrossUserListsAndRecordMutations() throws Exception {
+        User owner = userRepository.findByUsername(TEST_USERNAME);
+        Note note = noteRepository.save(new Note("Private", "secret", owner.getId()));
+        File file = fileRepository.save(new File("private.txt", "text/plain", "6", owner.getId(), "secret".getBytes()));
+        for (String path : List.of("/note/user/", "/file/user/")) {
+            mockMvc.perform(get(path + TEST_USERNAME).header("Authorization", jwtTokenOtherUser)).andExpect(status().isForbidden());
+        }
+        mockMvc.perform(post("/note/updateNote").header("Authorization", jwtTokenOtherUser)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(
+                        Map.of("id", note.getId(), "title", "stolen", "description", "changed"))))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/note/delete/" + note.getId()).header("Authorization", jwtTokenOtherUser)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/file/get-file/" + file.getFileId()).header("Authorization", jwtTokenOtherUser)).andExpect(status().isForbidden());
+        mockMvc.perform(delete("/file/delete-file/" + file.getFileId()).header("Authorization", jwtTokenOtherUser)).andExpect(status().isForbidden());
+        mockMvc.perform(multipart("/file/upload").file(new MockMultipartFile("fileUpload", "intruder.txt", "text/plain", new byte[]{1}))
+                .param("username", TEST_USERNAME).header("Authorization", jwtTokenOtherUser)).andExpect(status().isForbidden());
+        assertEquals("secret", noteRepository.findById(note.getId()).orElseThrow().getDescription());
+        assertArrayEquals("secret".getBytes(), fileRepository.findById(file.getFileId()).orElseThrow().getFileData());
+        noteRepository.delete(note);
+        fileRepository.delete(file);
+    }
+
+    @Test
+    @Order(104)
+    void fileLifecyclePersistsBytesAndAllowsMaximumSize() throws Exception {
+        for (int size : List.of(1, 2_000_000)) {
+            byte[] data = new byte[size];
+            java.util.Arrays.fill(data, (byte) 42);
+            String filename = "acceptance-" + size + ".bin";
+            mockMvc.perform(multipart("/file/upload").file(new MockMultipartFile("fileUpload", filename, "application/octet-stream", data))
+                    .param("username", TEST_USERNAME).header("Authorization", jwtToken)).andExpect(status().isOk());
+            File stored = fileRepository.findByUserid(userRepository.findByUsername(TEST_USERNAME).getId()).stream()
+                    .filter(f -> filename.equals(f.getFileName())).findFirst().orElseThrow();
+            mockMvc.perform(get("/file/user/" + TEST_USERNAME).header("Authorization", jwtToken))
+                    .andExpect(jsonPath("$[*].fileName").value(hasItem(filename)));
+            mockMvc.perform(get("/file/get-file/" + stored.getFileId()).header("Authorization", jwtToken))
+                    .andExpect(status().isOk()).andExpect(content().bytes(data));
+            mockMvc.perform(delete("/file/delete-file/" + stored.getFileId()).header("Authorization", jwtToken)).andExpect(status().isOk());
+            mockMvc.perform(get("/file/user/" + TEST_USERNAME).header("Authorization", jwtToken))
+                    .andExpect(jsonPath("$[*].fileName").value(not(hasItem(filename))));
+            assertFalse(fileRepository.existsById(stored.getFileId()));
+        }
+    }
+
+    @Test
+    @Order(105)
+    void invalidFileUploadsDoNotPersistAndDuplicateNamesAreUserScoped() throws Exception {
+        long before = fileRepository.count();
+        for (MockMultipartFile invalid : List.of(
+                new MockMultipartFile("fileUpload", "empty.txt", "text/plain", new byte[0]),
+                new MockMultipartFile("fileUpload", "large.txt", "text/plain", new byte[2_000_001]),
+                new MockMultipartFile("fileUpload", "", "text/plain", new byte[]{1}))) {
+            mockMvc.perform(multipart("/file/upload").file(invalid).param("username", TEST_USERNAME)
+                    .header("Authorization", jwtToken)).andExpect(status().isBadRequest());
+        }
+        assertEquals(before, fileRepository.count());
+        MockMultipartFile upload = new MockMultipartFile("fileUpload", "shared-name.txt", "text/plain", new byte[]{1});
+        mockMvc.perform(multipart("/file/upload").file(upload).param("username", TEST_USERNAME).header("Authorization", jwtToken)).andExpect(status().isOk());
+        mockMvc.perform(multipart("/file/upload").file(upload).param("username", TEST_USERNAME).header("Authorization", jwtToken)).andExpect(status().isBadRequest());
+        mockMvc.perform(multipart("/file/upload").file(upload).param("username", OTHER_USERNAME).header("Authorization", jwtTokenOtherUser)).andExpect(status().isOk());
+        assertEquals(before + 2, fileRepository.count());
+    }
+
+    @Test
+    @Order(106)
+    void personalCartAndCheckoutPersistWithoutChangingAnotherUsersCart() throws Exception {
+        Item item = itemRepository.findByName("Acceptance catalog item").get(0);
+        String request = objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME, "itemId", item.getId(), "quantity", 2));
+        mockMvc.perform(post("/cart/clearCart").header("Authorization", jwtToken).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME)))).andExpect(status().isOk());
+        MvcResult otherBefore = mockMvc.perform(post("/cart/getCart").header("Authorization", jwtTokenOtherUser)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("username", OTHER_USERNAME))))
+                .andExpect(status().isOk()).andReturn();
+        mockMvc.perform(post("/cart/addToCart").header("Authorization", jwtToken).contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(25.0)).andExpect(jsonPath("$.items.length()").value(2));
+        MvcResult order = mockMvc.perform(post("/order/submit/" + TEST_USERNAME).header("Authorization", jwtToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(25.0)).andExpect(jsonPath("$.items.length()").value(2)).andReturn();
+        long orderId = objectMapper.readTree(order.getResponse().getContentAsString()).get("id").asLong();
+        mockMvc.perform(post("/cart/clearCart").header("Authorization", jwtToken).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("username", TEST_USERNAME))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty()).andExpect(jsonPath("$.total").value(0));
+        mockMvc.perform(get("/order/history/" + TEST_USERNAME).header("Authorization", jwtToken))
+                .andExpect(jsonPath("$[?(@.id == " + orderId + ")].total").value(hasItem(25.0)));
+        assertTrue(orderRepository.existsById(orderId));
+        MvcResult otherAfter = mockMvc.perform(post("/cart/getCart").header("Authorization", jwtTokenOtherUser)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("username", OTHER_USERNAME))))
+                .andExpect(status().isOk()).andReturn();
+        assertEquals(objectMapper.readTree(otherBefore.getResponse().getContentAsString()), objectMapper.readTree(otherAfter.getResponse().getContentAsString()));
+    }
+
+    @Test
+    @Order(107)
+    void roomCreationAndLookupPersistTheSameCode() throws Exception {
+        MvcResult created = mockMvc.perform(post("/room").header("Authorization", jwtToken)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(
+                        Map.of("username", TEST_USERNAME, "name", "Acceptance live room"))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.err_code").value(0)).andReturn();
+        String code = objectMapper.readTree(created.getResponse().getContentAsString()).path("data").path("code").asText();
+        assertFalse(code.isBlank());
+        mockMvc.perform(get("/room/" + code).header("Authorization", jwtTokenOtherUser))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.code").value(code))
+                .andExpect(jsonPath("$.data.name").value("Acceptance live room"));
+    }
+
+    @Test
+    @Order(108)
+    void realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers() throws Exception {
+        WebSocketStompClient client = new WebSocketStompClient(new SockJsClient(
+                List.of(new WebSocketTransport(new StandardWebSocketClient()))));
+        client.setMessageConverter(new MappingJackson2MessageConverter());
+        String code = "acceptance-" + java.util.UUID.randomUUID();
+        LinkedBlockingQueue<com.example.demo.model.persistence.model.Message> received = new LinkedBlockingQueue<>();
+        StompSession session = null;
+        try {
+            session = client.connectAsync("ws://localhost:" + serverPort + "/cloudapp/ws", new WebSocketHttpHeaders(),
+                    new StompSessionHandlerAdapter() {}).get(10, TimeUnit.SECONDS);
+            session.subscribe("/topic/group/" + code, new StompFrameHandler() {
+                public Type getPayloadType(StompHeaders headers) { return com.example.demo.model.persistence.model.Message.class; }
+                public void handleFrame(StompHeaders headers, Object payload) {
+                    received.add((com.example.demo.model.persistence.model.Message) payload);
+                }
+            });
+            com.example.demo.model.persistence.model.Message message = new com.example.demo.model.persistence.model.Message();
+            message.setSender(TEST_USERNAME);
+            message.setContent("Acceptance message via Kafka");
+            session.send("/app/sendMessage/" + code, message);
+            var result = received.poll(15, TimeUnit.SECONDS);
+            assertNotNull(result, "The real room subscriber must receive the Kafka broadcast");
+            assertEquals(TEST_USERNAME, result.getSender());
+            assertEquals("Acceptance message via Kafka", result.getContent());
+            assertTrue(result.getTimestamp() > 0);
+        } finally {
+            if (session != null && session.isConnected()) session.disconnect();
+            client.stop();
+        }
+    }
+
+    @Test
+    @Order(109)
+    void productionMigrationWidensNotesAndPreservesExistingDescriptions() {
+        String schema = "acceptance_" + java.util.UUID.randomUUID().toString().replace("-", "");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        try {
+            org.flywaydb.core.Flyway.configure().dataSource(dataSource).schemas(schema)
+                    .defaultSchema(schema).locations("classpath:db/migration").target("3").load().migrate();
+            jdbc.update("INSERT INTO " + schema + ".notes (title, description, userid) VALUES (?, ?, ?)",
+                    "Existing note", "Preserved text", 1L);
+            org.flywaydb.core.Flyway.configure().dataSource(dataSource).schemas(schema)
+                    .defaultSchema(schema).locations("classpath:db/migration").load().migrate();
+            assertEquals("Preserved text", jdbc.queryForObject("SELECT description FROM " + schema + ".notes", String.class));
+            String description = "x".repeat(999);
+            jdbc.update("UPDATE " + schema + ".notes SET description = ?", description);
+            assertEquals(description, jdbc.queryForObject("SELECT description FROM " + schema + ".notes", String.class));
+        } finally {
+            jdbc.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
+        }
     }
 
     private String fetchCsrfTokenForAuthCookie(String authCookieToken) throws Exception {
