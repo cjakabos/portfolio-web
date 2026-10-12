@@ -75,13 +75,22 @@ docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requir
   artifacts before running it; Test Summary requires it.
 - External model/Jira/Leaflet and operator data boundaries use deterministic
   fixtures. Live/nightly tests remain separate opt-in provider checks.
+- Browser traces, screenshots and JUnit XML use `test-results/playwright/`;
+  monitor-only runs use `test-results-monitor/playwright/`. Playwright clears
+  its own output folder when starting a run, so keep native evidence outside it.
 
 ### Read-only Jira intake command
 
 `jira-intake` is an opt-in operator service, outside the automated suite matrix.
 It shares the requirements image but receives only dedicated `JIRA_INTAKE_*`
 configuration. Fixture mode is the default; `--source jira` explicitly enables
-live GET requests. The fixture harness regression suite remains credential-free.
+live GET requests. The harness regression suite remains credential-free.
+
+`test-requirements` also exercises the live adapter with a deterministic HTTPS
+transport: Cloud basic authentication and scoped-token URLs, Data Center bearer
+token files, ADF/plain descriptions, requirement fingerprints and links, safe
+access/redirect failures, and preservation of existing human snapshots. These
+tests call the intake CLI without contacting a Jira server.
 
 See [requirements/README.md](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
 for Cloud/Data Center setup, requirement links and Docker examples. Live provider
@@ -101,6 +110,10 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 ```
 - Builds the CloudApp shell and enforces the hero entry bundle gzip budget.
 - The AI monitor budget is enforced inside `test-ai-monitor-lint`.
+- Production shell builds use `tsconfig.json`; test files and Jest setup are
+  compiled through `tsconfig.jest.json` by `test-frontend-unit`. Those tests
+  import remote implementations and need the remote workspace dependencies
+  installed by the unit runner. Production images install their own workspace.
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`

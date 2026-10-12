@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -561,6 +562,16 @@ class TraceabilityValidatorTests(unittest.TestCase):
         self.assertEqual(manifest["exit_code"], 0)
         self.assertEqual(manifest["reports"], {"junit/TEST-example.xml": digest(xml)})
         self.assertEqual(manifest["context_sha256"], digest(folder / "context.json"))
+
+    def test_playwright_output_is_isolated_from_native_evidence(self):
+        config = (ROOT / "playwright.config.ts").read_text()
+        output = re.search(r'outputDir\s*:\s*["\']([^"\']+)["\']', config)
+        junit = re.search(r'outputFile\s*:\s*["\']([^"\']+)["\']', config)
+        self.assertIsNotNone(output, "Playwright must explicitly isolate its cleanup directory")
+        self.assertIsNotNone(junit, "Browser JUnit must be written to the mounted result directory")
+        output_path = Path(output.group(1))
+        self.assertEqual(output_path, Path("test-results/playwright"))
+        self.assertEqual(Path(junit.group(1)), output_path / "junit.xml")
 
     def test_ai_framework_dependency_versions_match_application(self):
         def versions(path):
