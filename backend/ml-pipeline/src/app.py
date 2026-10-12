@@ -20,6 +20,7 @@ from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # Import centralized DB config instead of hardcoding credentials
 from db_config import get_db_connection, get_sqlalchemy_connection
+from access_control import require_admin
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,6 +30,13 @@ app = Flask(__name__)
 default_prefix = '/mlops-segmentation'
 
 app.config['APPLICATION_ROOT'] = default_prefix
+
+
+@app.before_request
+def enforce_operator_access():
+    if request.endpoint in (None, "health") or request.method == "OPTIONS":
+        return None
+    return require_admin()
 
 # ===========================================================================
 # OpenTelemetry — initialize tracing (no-op if OTEL_ENABLED != "true")

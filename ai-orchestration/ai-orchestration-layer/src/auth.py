@@ -81,7 +81,7 @@ def _coerce_roles(response: httpx.Response) -> tuple[str, ...]:
     except ValueError:
         payload = {}
 
-    roles = payload.get("roles")
+    roles = payload.get("roles") if isinstance(payload, dict) else None
     if isinstance(roles, list):
         return tuple(str(role) for role in roles)
 
@@ -97,7 +97,7 @@ def _coerce_username(response: httpx.Response) -> Optional[str]:
     except ValueError:
         payload = {}
 
-    username = payload.get("username")
+    username = payload.get("username") if isinstance(payload, dict) else None
     if isinstance(username, str) and username.strip():
         return username.strip()
 
@@ -111,7 +111,7 @@ async def _verify_cloudapp_identity(
     require_admin: bool = False,
 ) -> AuthenticatedPrincipal:
     forwarded_headers = _auth_forward_headers(headers, cookies)
-    if not forwarded_headers:
+    if not forwarded_headers.get("Authorization") and not forwarded_headers.get("Cookie"):
         raise HTTPException(status_code=401, detail="Authentication required")
 
     config = get_config()
@@ -130,7 +130,7 @@ async def _verify_cloudapp_identity(
         raise HTTPException(status_code=401, detail="Authentication required")
     if response.status_code == 403:
         raise HTTPException(status_code=403, detail="Admin access required")
-    if response.status_code >= 400:
+    if response.status_code != 200:
         logger.error("Unexpected auth-check failure from CloudApp: %s", response.status_code)
         raise HTTPException(status_code=503, detail="Authentication verification failed")
 
@@ -186,6 +186,21 @@ async def require_admin_user(request: Request) -> str:
         request.cookies,
         require_admin=True,
     )
+    return principal.username
+
+
+async def verify_cloudapp_admin(
+    headers: Mapping[str, str],
+    cookies: Optional[Mapping[str, str]] = None,
+) -> AuthenticatedPrincipal:
+    """Verify administrator credentials without accepting service-token authority."""
+    return await _verify_cloudapp_identity(
+        httpx.Headers(headers), cookies, require_admin=True,
+    )
+
+
+async def require_cloudapp_admin_user(request: Request) -> str:
+    principal = await verify_cloudapp_admin(request.headers, request.cookies)
     return principal.username
 
 

@@ -4,6 +4,7 @@ import types
 from pathlib import Path
 
 import pytest
+from fastapi import Request
 
 SOURCE_ROOT = Path(os.getenv("AI_ORCH_SRC", "")).resolve() if os.getenv("AI_ORCH_SRC") else None
 if SOURCE_ROOT is None or not SOURCE_ROOT.exists():
@@ -185,6 +186,7 @@ async def test_resume_after_approval_uses_original_requester_identity(monkeypatc
     result = await approvals_router.resume_after_approval(
         "apr_456",
         approvals_router.ResumeRequest(session_id="ignored-by-server"),
+        http_request=Request({"type": "http", "headers": []}),
         admin_user="admin-user",
     )
 

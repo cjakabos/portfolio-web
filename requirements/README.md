@@ -122,11 +122,11 @@ decision. Source code alone cannot establish that existing behavior is intended.
 The [initial hero/harness review](reviews/BASELINE-2026-10-12.md) states the scope
 and demo limits of the first acceptance batch.
 
-The repository owner accepted seven requirements covering 25 scenarios on
-2026-10-12: shell, identity, workspace, commerce, chat, vehicles, and the
-development harness. The other seven requirements and 21 scenarios remain
-proposed, including MLOps and RAG access-control decisions awaiting separate
-review. Acceptance is scoped to the local showcase and does not establish
+The repository owner accepted nine requirements covering 33 scenarios on
+2026-10-12: shell, identity, workspace, commerce, chat, vehicles, the development
+harness, and [administrator-only MLOps/RAG workflows](reviews/ACCESS-2026-10-12.md).
+The other five requirements and 15 scenarios remain proposed. Acceptance is
+scoped to the local showcase and does not establish
 production readiness or live-provider test execution.
 
 | Requirement | Current behavior area |
@@ -342,7 +342,7 @@ missing, ambiguous and skipped results cannot become passing evidence. The
 portable Gherkin scenarios remain the acceptance contract, linked to the existing
 native runners without a second execution framework.
 
-All 46 current scenarios have reviewed complete mappings. Completeness describes
+All 48 current scenarios have reviewed complete mappings. Completeness describes
 the assertions at their documented boundaries; it is separate from execution and
 from exhaustive product coverage. The tests exercise real application components,
 API clients, databases, Kafka, document parsing, Chroma and KMeans where relevant.

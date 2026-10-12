@@ -51,3 +51,6 @@ tests run in the Docker `test-requirements` suite.
   `Extended showcase` path before they are presented as demo-ready.
 - `Optional security posture` findings should be triaged and documented, but
   they are not the same thing as a broken flagship tour.
+- MLOps and RAG role changes require backend HTTP denial checks plus the
+  `nginx-gateway-tests` operator-path checks, which cover anonymous/regular
+  callers, spoofed identity headers, versioned routes, and administrator access.

@@ -72,6 +72,66 @@ def register_and_login():
     TEST_JWT = f"Bearer {TEST_AUTH_COOKIE}"
 
 
+@pytest.fixture(scope="session")
+def operator_admin_cookie():
+    """The isolated CloudApp test configuration grants this account ROLE_ADMIN."""
+    credentials = {"username": "integrationadmin", "password": "secureAdminPass123"}
+    requests.post(f"{BACKEND_URL}/cloudapp/user/user-register",
+                  json={**credentials, "confirmPassword": credentials["password"]}, timeout=10)
+    response = requests.post(f"{BACKEND_URL}/cloudapp/user/user-login", json=credentials, timeout=10)
+    assert response.status_code == 200
+    cookie = response.cookies.get("CLOUDAPP_AUTH")
+    assert cookie
+    check = requests.get(f"{BACKEND_URL}/cloudapp/user/admin/auth-check",
+                         cookies={"CLOUDAPP_AUTH": cookie}, timeout=10)
+    assert check.status_code == 200
+    assert "ROLE_ADMIN" in check.json()["roles"]
+    return cookie
+
+
+class TestOperatorAccess:
+    @pytest.mark.parametrize("method,path", [
+        ("GET", "/mlops-segmentation/getSegmentationCustomers"),
+        ("POST", "/mlops-segmentation/getMLInfo"),
+        ("POST", "/mlops-segmentation/addCustomer"),
+        ("POST", "/ai/rag/documents/upload"),
+        ("GET", "/ai/rag/documents"),
+        ("POST", "/ai/rag/query"),
+        ("DELETE", "/ai/rag/documents/doc-1"),
+        ("GET", "/v1/ai/rag/documents"),
+        ("GET", "/v1/mlops-segmentation/getSegmentationCustomers"),
+    ])
+    def test_operator_routes_reject_anonymous_and_regular_users(self, method, path):
+        spoofed = {"X-Auth-User": "admin", "X-Auth-Roles": "ROLE_ADMIN",
+                   "X-Internal-Service-Name": "ai-orchestration",
+                   "X-Internal-Service-Token": "test-ai-orchestration-token"}
+        # CloudApp's gateway auth contract permits 401/403 for anonymous callers.
+        for cookie, expected in ((None, (401, 403)), (TEST_AUTH_COOKIE, (403,))):
+            cookies = {"CLOUDAPP_AUTH": cookie} if cookie else {}
+            for attempt in range(10):
+                response = requests.request(method, f"{BACKEND_URL}{path}", headers=spoofed,
+                                            cookies=cookies, timeout=10)
+                if response.status_code != 429:
+                    break
+                time.sleep(0.5)
+            assert response.status_code in expected, (method, path, response.text)
+
+    def test_administrator_reads_ml_results_through_gateway_and_backend(self, operator_admin_cookie):
+        response = requests.get(f"{BACKEND_URL}/mlops-segmentation/getSegmentationCustomers",
+                                cookies={"CLOUDAPP_AUTH": operator_admin_cookie}, timeout=10)
+        assert response.status_code == 200, response.text
+        assert isinstance(response.json(), list)
+
+    def test_administrator_reads_and_deletes_rag_through_gateway_and_backend(self, operator_admin_cookie):
+        cookies = {"CLOUDAPP_AUTH": operator_admin_cookie}
+        response = requests.get(f"{BACKEND_URL}/ai/rag/documents", cookies=cookies, timeout=10)
+        assert response.status_code == 200, response.text
+        assert response.json()["documents"] == []
+        response = requests.delete(f"{BACKEND_URL}/ai/rag/documents/doc-1", cookies=cookies, timeout=10)
+        assert response.status_code == 200, response.text
+        assert response.json()["deleted"] is True
+
+
 # ===========================================================================
 # NGINX HEALTH CHECK
 # ===========================================================================

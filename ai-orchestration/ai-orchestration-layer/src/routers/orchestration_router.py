@@ -24,7 +24,7 @@ from services.orchestration_support import (
     resolve_effective_user_id,
 )
 from tools.http_client import HTTPClient
-from auth import require_authenticated_user, require_websocket_user
+from auth import require_authenticated_user, require_cloudapp_admin_user, require_websocket_user
 
 # Import metrics collector for recording real metrics
 from routers.metrics_router import collector
@@ -64,6 +64,8 @@ async def orchestrate(
     User identity is derived server-side from the gateway-validated auth
     headers rather than trusting the client-supplied ``user_id``.
     """
+    if request.orchestration_type == OrchestrationType.RAG_QUERY.value:
+        await require_cloudapp_admin_user(http_request)
     runtime_state = _require_orchestration_state(state)
 
     request.user_id = resolve_effective_user_id(request.user_id, auth_user)
@@ -201,6 +203,8 @@ async def orchestrate(
             )
 
         logger.error(f"Orchestration failed: {e}", exc_info=True)
+        if isinstance(e, HTTPException):
+            raise
         raise HTTPException(status_code=500, detail=str(e))
     
     finally:
@@ -307,6 +311,7 @@ async def websocket_stream(websocket: WebSocket):
             start_time = time.time()
             request_id = str(uuid.uuid4())
             collector.start_orchestration(request_id)
+            header_ctx_token = HTTPClient.set_request_context_headers(extract_downstream_headers(websocket))
 
             # 3. ACKNOWLEDGMENT
             if websocket.client_state == WebSocketState.CONNECTED:
@@ -459,6 +464,7 @@ async def websocket_stream(websocket: WebSocket):
 
             finally:
                 collector.end_orchestration(request_id)
+                HTTPClient.reset_request_context_headers(header_ctx_token)
 
     except Exception as e:
         logger.error(f"WebSocket {client_id} top-level error: {e}")

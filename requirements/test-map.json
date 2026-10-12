@@ -562,7 +562,7 @@
       "owner": "jira-module"
     },
     "AC-REQ-MLOPS-001-01": {
-      "case_digest": "7bb0203f5a6850a5fde58ce8cce56ec22498db4d2f0f93ab71b474954ac5ddad",
+      "case_digest": "8c77f05cd1af185d400a7eefccb61824244d6efa3a03370ba25c1c911ae5188d",
       "coverage": "complete",
       "targets": [
         {
@@ -584,7 +584,7 @@
       "owner": "mlops-module"
     },
     "AC-REQ-MLOPS-001-02": {
-      "case_digest": "6f276c2fd642660ce6ed6f17ee31c716405b9f50ba25693a81e928b8fc80e479",
+      "case_digest": "4d1eb40bcb2562a6e9978f1808038700997dba3040c73666d570de4148d967e7",
       "coverage": "complete",
       "targets": [
         {
@@ -606,7 +606,7 @@
       "owner": "mlops-module"
     },
     "AC-REQ-MLOPS-001-03": {
-      "case_digest": "f30cb4b8319cf799e2703ebd110a11b5612190584e32151d06c2029b333995c5",
+      "case_digest": "a298203d8f2066237511e4787db98c3f374e1dd4652b3b51e9351bf5715db477",
       "coverage": "complete",
       "targets": [
         {
@@ -619,6 +619,28 @@
       ],
       "gap": "",
       "owner": "mlops-module"
+    },
+    "AC-REQ-MLOPS-001-04": {
+      "case_digest": "1049e2652ddfa117fdf84539c18a9759fbcb4002feecdf826748020fc538ecfb",
+      "coverage": "complete",
+      "gap": "",
+      "owner": "mlops-module",
+      "targets": [
+        {
+          "path": "tests/ml-pipeline/test_access_control.py",
+          "test_id": "test_ml_operations_reject_unauthenticated_and_regular_users",
+          "suite": "test-ml-pipeline",
+          "execution": "default",
+          "asserts": "Real Flask HTTP requests for customer reads, creation and segmentation reject missing/invalid credentials and regular users before data/job work; spoofed identity/service headers do not grant access. The external CloudApp check uses deterministic responses."
+        },
+        {
+          "path": "tests/ml-pipeline/test_access_control.py",
+          "test_id": "test_admin_cookie_can_read_customer_results_and_health_stays_public",
+          "suite": "test-ml-pipeline",
+          "execution": "default",
+          "asserts": "Verified administrator cookie permits customer reads against the real test database, while readiness remains public."
+        }
+      ]
     },
     "AC-REQ-PETSTORE-001-01": {
       "case_digest": "c2a266aba81f0508a01000f41899a05db3fa94c9856fe7d7bc88355a2bde3afc",
@@ -687,7 +709,7 @@
       "owner": "petstore-module"
     },
     "AC-REQ-RAG-001-01": {
-      "case_digest": "72b3679614abfc99f87a785f0f30aa13aa49bf3932af376c12f30e1f6d726f3a",
+      "case_digest": "622d9200c711c3efa8661edf2a54908085c9e83edff0f9f00f1ace75cd56431b",
       "coverage": "complete",
       "targets": [
         {
@@ -702,7 +724,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-RAG-001-02": {
-      "case_digest": "586b8c2dbd6674201b147a4a71c2e1236d8cab2d318c7fbc668ef255b31d44b3",
+      "case_digest": "e7b2ed0eda16e8cbda637cace24eb37fd7edbe2a95a2b4fae2418d6c0570ebd5",
       "coverage": "complete",
       "targets": [
         {
@@ -717,7 +739,7 @@
       "owner": "ai-platform"
     },
     "AC-REQ-RAG-001-03": {
-      "case_digest": "5e882e97bd2f7b406e5b3feb322ba0f7a5d4eae694759723cbb939bf7eba32a1",
+      "case_digest": "a5e4affc02aef6be4fd183757579f40ff3ed2e23ce8289d551fde6dab3a10e33",
       "coverage": "complete",
       "targets": [
         {
@@ -730,6 +752,70 @@
       ],
       "gap": "",
       "owner": "ai-platform"
+    },
+    "AC-REQ-RAG-001-04": {
+      "case_digest": "62a6f341bd6c51d1456daeceb3c25c5f5a91dd753ce1c6d083d96f2251309b8c",
+      "coverage": "complete",
+      "gap": "",
+      "owner": "ai-platform",
+      "targets": [
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_rag_http_routes_reject_unauthenticated_and_regular_users",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Every real RAG HTTP route rejects anonymous and regular callers through administrator verification before RAG operations, including attempts with trusted service-token or spoofed-role headers. CloudApp identity responses are deterministic."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_verified_admin_can_read_and_delete_shared_corpus_documents",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "A verified administrator cookie or bearer session reaches shared-corpus list/delete operations; user IDs are administrator-selected filters."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_orchestration_cannot_bypass_rag_administrator_policy",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "The HTTP orchestration route and real RAG capability reject regular credentials despite spoofed context/service-token authority, and accept an administrator cookie. Routing and corpus I/O are deterministic."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_streaming_rag_uses_verified_handshake_credentials",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "The real WebSocket handler propagates its handshake credentials into the real RAG capability; regular sessions cannot query, while an administrator cookie receives the deterministic answer."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_parallel_rag_checks_credentials_in_worker_tasks",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "The actual parallel coordinator/manager passes request-local credentials into worker tasks and denies unauthenticated and regular RAG capability execution before corpus I/O."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_rag_capability_requires_credentials_even_after_approval",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "The real capability denies credential-free execution despite approved/resumed state and caller-supplied administrator context."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_rag_resume_cannot_elevate_the_original_requester",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "The actual approval-resume HTTP flow retains original requester identity: a regular requester cannot gain RAG access from an administrator approval/resume, while the original verified administrator can resume."
+        },
+        {
+          "path": "tests/ai-orchestration-layer/test_rag_access.py",
+          "test_id": "test_rag_authentication_failures_deny_access",
+          "suite": "test-ai-orchestration-layer",
+          "execution": "default",
+          "asserts": "Redirects, malformed or missing identity, absent administrator role, server failures and identity-provider connection failures deny corpus access."
+        }
+      ]
     },
     "AC-REQ-SHELL-001-01": {
       "case_digest": "4d8d31e2e573a4e00860961748e200bfe699be87687b5af45df5ef6d28648da9",

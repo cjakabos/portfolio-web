@@ -18,6 +18,8 @@ The scripts are written for `k6` and target the current AI service topology.
 - `k6` installed locally or available via Docker
 - the AI orchestration layer reachable directly or through the gateway
 - a valid internal service identity header pair when the target requires authenticated access
+- for RAG, a CloudApp administrator bearer token in `ADMIN_AUTH_TOKEN`; internal
+  service tokens do not grant RAG access
 
 The orchestration and approvals scripts default to the repo test token
 `test-internal-token`. Override it for real environments.
@@ -28,6 +30,7 @@ The orchestration and approvals scripts default to the repo test token
 | --- | --- | --- |
 | `AI_BASE_URL` | `http://localhost:8700` | base URL for the AI service; can be direct service or gateway-prefixed |
 | `INTERNAL_TOKEN` | `test-internal-token` | internal auth token for governed operator routes |
+| `ADMIN_AUTH_TOKEN` | required for RAG | JWT from a verified CloudApp administrator session; supply through the environment |
 | `TARGET_VUS` | script-specific | target virtual users for the load profile |
 | `WARMUP_DURATION` | script-specific | warmup stage duration |
 | `SUSTAIN_DURATION` | script-specific | steady-state stage duration |
@@ -42,7 +45,7 @@ Direct AI service:
 ```bash
 k6 run tests/ai-load/orchestration.js
 k6 run tests/ai-load/approvals.js
-k6 run tests/ai-load/rag-upload.js
+ADMIN_AUTH_TOKEN="$ADMIN_AUTH_TOKEN" k6 run tests/ai-load/rag-upload.js
 ```
 
 Gateway-routed AI service:
@@ -50,7 +53,7 @@ Gateway-routed AI service:
 ```bash
 k6 run -e AI_BASE_URL=http://localhost/ai tests/ai-load/orchestration.js
 k6 run -e AI_BASE_URL=http://localhost/ai -e INTERNAL_TOKEN=nightly-internal-token tests/ai-load/approvals.js
-k6 run -e AI_BASE_URL=http://localhost/ai tests/ai-load/rag-upload.js
+AI_BASE_URL=http://localhost/ai ADMIN_AUTH_TOKEN="$ADMIN_AUTH_TOKEN" k6 run tests/ai-load/rag-upload.js
 ```
 
 Docker-based execution:

@@ -34,7 +34,7 @@ implementation, and trace acceptance scenarios to executed native tests.
 
 | Capability | Implementation |
 | --- | --- |
-| Central requirements | [14 requirement documents](./requirements/README.md#current-application-requirement-map) with stable IDs, ownership, and 46 tagged Gherkin acceptance scenarios |
+| Central requirements | [14 requirement documents](./requirements/README.md#current-application-requirement-map) with stable IDs, ownership, and 48 tagged Gherkin acceptance scenarios |
 | Read-only Jira intake | [Fixture or live Jira source](./requirements/README.md#jira-intake-fixture-or-read-only-live-source) produces a Markdown snapshot with requirement/scenario links and fingerprints; fixtures are the default, while Cloud/Data Center access is selected through CLI flags and dedicated configuration |
 | Portable acceptance cases | [Generated features and index](./tests/requirement-cases/generated/) preserve scenario IDs and source digests; the [test map](./requirements/test-map.json) links them to exact JUnit, pytest, Jest, and Vitest test declarations |
 | Verified execution evidence | Docker runners record source/configuration fingerprints, completion status, and report digests; CI combines JUnit XML and Jest/Vitest JSON into per-scenario outcomes |
@@ -44,9 +44,10 @@ Intake writes a proposal under `work-items/`. Product and engineering review the
 requirement amendment alongside code and tests in the same implementation PR;
 merging the reviewed PR establishes the updated baseline. The repository owner
 has accepted [seven hero/harness requirements](./requirements/reviews/BASELINE-2026-10-12.md)
-covering 25 scenarios for the local showcase. Their exact revisions are recorded
-in [the product-intent baseline](./requirements/baseline.json); the other seven
-requirements and 21 scenarios remain proposed. CI validates acceptance separately
+and [administrator-only MLOps/RAG intent](./requirements/reviews/ACCESS-2026-10-12.md),
+covering 33 scenarios across nine requirements for the local showcase. Their exact
+revisions are recorded in [the product-intent baseline](./requirements/baseline.json);
+the other five requirements and 15 scenarios remain proposed. CI validates acceptance separately
 from coverage and execution. Generated Gherkin is linked to the existing runners
 through the test map; those native tests provide the executable assertions.
 

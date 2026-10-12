@@ -65,7 +65,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
   decision and SHA-256 in `requirements/baseline.json`.
 - Reports are under `test-results/requirements/`. Coverage and execution outcomes
   are separate; coverage assertions and test boundaries are recorded in `requirements/test-map.json`.
-- All 46 current scenarios have complete reviewed native-test mappings. Source
+- All 48 current scenarios have complete reviewed native-test mappings. Source
   completeness remains separate from whether the current checkout passed.
 - Mapped native suites persist JUnit XML or Jest/Vitest JSON plus source/config
   fingerprints under `test-results/`; see `requirements/README.md` for paths.
@@ -104,9 +104,24 @@ tests call the intake CLI without contacting a Jira server.
 
 See [requirements/README.md](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
 for Cloud/Data Center setup, requirement links and Docker examples. Live provider
-checks require an explicitly chosen issue and identity. Existing 46 acceptance
+checks require an explicitly chosen issue and identity. Existing 48 acceptance
 mappings do not establish live-adapter execution coverage, and changes to the
 adapter/Compose definition invalidate previously recorded execution context.
+
+### Operator access checks
+
+MLOps and RAG require a verified CloudApp administrator session at the gateway
+and backend. Run `test-ml-pipeline`, `test-ai-orchestration-layer`, and
+`test-nginx-gateway` for changes to these boundaries. Backend suites use
+deterministic identity-check responses while exercising real HTTP authorization
+logic; gateway tests use real CloudApp regular/admin sessions. RAG load checks
+also require `ADMIN_AUTH_TOKEN`, rather than an internal service token. The
+gateway RAG fixture serves the actual router and identity verifier with
+deterministic corpus I/O, so checks do not need live models or vector storage.
+AI tests also exercise real RAG capability authorization through orchestration,
+streaming, parallel workers, and approval resumption. Model routing and corpus
+I/O are deterministic; credentials remain request-local and are verified before
+the restricted capability executes.
 
 ## Frontend Static Checks
 ```bash

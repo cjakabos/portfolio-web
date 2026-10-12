@@ -67,8 +67,8 @@ Recommended panels:
 ### RAG ingestion
 
 ```bash
-curl -s http://localhost:8700/rag/health | jq '{status, initialized, total_documents, total_chunks, embedding_model}'
-curl -s http://localhost:8700/rag/stats | jq '{total_documents, total_chunks, documents_by_type}'
+curl -s http://localhost:8700/rag/health -H "Authorization: Bearer $ADMIN_AUTH_TOKEN" | jq '{status, initialized, total_documents, total_chunks, embedding_model}'
+curl -s http://localhost:8700/rag/stats -H "Authorization: Bearer $ADMIN_AUTH_TOKEN" | jq '{total_documents, total_chunks, documents_by_type}'
 ```
 
 Recommended panels:
@@ -77,6 +77,10 @@ Recommended panels:
 - total indexed documents and chunks
 - upload completion rate from the synthetic load test
 - upload completion latency from the synthetic load test
+
+RAG synthetic checks and dashboard queries require a CloudApp administrator
+session. Supply `ADMIN_AUTH_TOKEN` through the environment. `/ai/health` remains
+the general readiness endpoint; RAG-specific health and statistics are protected.
 
 ### Admin access and operator path
 

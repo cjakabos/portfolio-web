@@ -15,13 +15,17 @@ import logging
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from auth import require_cloudapp_admin_user
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/rag", tags=["RAG - Document Intelligence"])
+router = APIRouter(
+    prefix="/rag", tags=["RAG - Document Intelligence"],
+    dependencies=[Depends(require_cloudapp_admin_user)],
+)
 
 # ============================================================================
 # PYDANTIC MODELS

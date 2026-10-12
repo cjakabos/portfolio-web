@@ -25,6 +25,18 @@
       "accepted_on": "2026-10-12",
       "decision": "requirements/reviews/BASELINE-2026-10-12.md"
     },
+    "REQ-MLOPS-001": {
+      "digest": "dc60e25f4f6ac2f2eff16b155557df0ab0f4303f66727e9b63c3a77eb87bc3b7",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/ACCESS-2026-10-12.md"
+    },
+    "REQ-RAG-001": {
+      "digest": "2081c0d78493aa65a8ee390b09101fa12dd00a962122c2f290f6cc0eae1cf0e1",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-12",
+      "decision": "requirements/reviews/ACCESS-2026-10-12.md"
+    },
     "REQ-SHELL-001": {
       "digest": "df7152ec015d96fe8023ebce58615615ba77ccef41e4c542b6dea5830e58b702",
       "accepted_by": "repository-owner",
