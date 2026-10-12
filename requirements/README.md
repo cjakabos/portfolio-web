@@ -319,7 +319,8 @@ checkout SHA; local runs default to `unknown` and still compare source digests).
 
 GitHub CI uploads native evidence, downloads it in the Executed Requirement
 Evidence job, validates the checkout and merges outcomes in Docker. Test Summary
-requires both source validation and executed evidence. Branch protection must
-require one of these gates or Test Summary to enforce it at merge time; repository
-settings are unchanged. Product review is still required to accept the proposed
-requirement baseline.
+requires every Core Showcase job to succeed, including source validation and
+executed evidence. Require Test Summary in branch protection to enforce the full
+core tier at merge time; requiring only a requirement gate protects traceability
+without enforcing the other core checks. Repository settings are unchanged.
+Product review is still required to accept the proposed requirement baseline.

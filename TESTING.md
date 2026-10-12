@@ -48,6 +48,10 @@ docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-co
 ```
 - Common services: `test-requirements`, `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 - CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
+- `Test Summary` requires every Core Showcase job to report `success`; failed,
+  cancelled, skipped, missing, or unrecognized core results fail it. The Docker
+  `test-requirements` suite exercises the actual summary shell gate against
+  synthetic job results, including optional failures and each core failure state.
 
 ## Requirement Traceability
 

@@ -1364,11 +1364,37 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Official tour-to-test mapping lives in docs/platform/showcase-smoke-paths.md." >> $GITHUB_STEP_SUMMARY
 
-      - name: Enforce requirement traceability gate
+      - name: Enforce Core Showcase gates
         if: always()
         env:
           REQUIREMENTS_RESULT: ${{ needs.requirements-tests.result }}
           EVIDENCE_RESULT: ${{ needs.requirement-execution-evidence.result }}
+          BACKEND_RESULT: ${{ needs.backend-tests.result }}
+          GATEWAY_RESULT: ${{ needs.nginx-gateway-tests.result }}
+          CONTRACTS_RESULT: ${{ needs.api-contract-tests.result }}
+          FRONTEND_UNIT_RESULT: ${{ needs.frontend-unit-tests.result }}
+          FRONTEND_STATIC_RESULT: ${{ needs.frontend-static-checks.result }}
+          FRONTEND_BUDGET_RESULT: ${{ needs.frontend-budget-checks.result }}
+          DOCS_DRIFT_RESULT: ${{ needs.docs-drift-checks.result }}
+          FRONTEND_LOCKFILES_RESULT: ${{ needs.frontend-lockfile-checks.result }}
+          HERO_E2E_RESULT: ${{ needs.e2e-core-tests.result }}
         run: |
-          test "$REQUIREMENTS_RESULT" = success
-          test "$EVIDENCE_RESULT" = success
+          failed=0
+          for job in \
+            "requirements-tests=$REQUIREMENTS_RESULT" \
+            "requirement-execution-evidence=$EVIDENCE_RESULT" \
+            "backend-tests=$BACKEND_RESULT" \
+            "nginx-gateway-tests=$GATEWAY_RESULT" \
+            "api-contract-tests=$CONTRACTS_RESULT" \
+            "frontend-unit-tests=$FRONTEND_UNIT_RESULT" \
+            "frontend-static-checks=$FRONTEND_STATIC_RESULT" \
+            "frontend-budget-checks=$FRONTEND_BUDGET_RESULT" \
+            "docs-drift-checks=$DOCS_DRIFT_RESULT" \
+            "frontend-lockfile-checks=$FRONTEND_LOCKFILES_RESULT" \
+            "e2e-core-tests=$HERO_E2E_RESULT"; do
+            if [ "${job#*=}" != success ]; then
+              echo "::error::Required Core Showcase job $job (expected success)"
+              failed=1
+            fi
+          done
+          exit "$failed"
