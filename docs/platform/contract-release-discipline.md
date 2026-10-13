@@ -24,6 +24,9 @@ The governed browser-facing contract surface is:
    metadata. The contract tool validates that alignment.
 5. `releaseCritical` marks whether a contract change should block broad release
    until its consumers are verified.
+6. Revisions never decrease. A new governed service starts at revision 1.
+   Removing a snapshot requires a separately reviewed retirement policy;
+   deleting its manifest entry cannot bypass the history check.
 
 ## Required Workflow
 
@@ -48,6 +51,25 @@ Validate the manifest and generated TypeScript output without live services:
 ```bash
 python3 scripts/contracts/openapi_contracts.py generate-ts --check
 ```
+
+Enforce revision changes against an available reviewed Git base:
+
+```bash
+python3 scripts/contracts/openapi_contracts.py check-revisions --base-ref origin/main
+```
+
+This compares exact checked-in snapshot bytes, including formatting changes,
+with the base commit. A changed snapshot requires a strictly greater revision
+even when `info.version` and generated operations are unchanged. Missing,
+invalid, or non-ancestor comparison history fails closed. Fetch the base before
+running locally; a current-files-only manifest/client check cannot establish
+that a revision increased.
+
+The mandatory CI API-contract job fetches full history and compares with the PR
+base SHA or previous push SHA. New branches use their merge base with the remote
+default branch. These event-derived bases are the CI authority; choosing `HEAD`
+manually only verifies an unchanged checkout and is not release evidence.
+Temporary-repository regressions run in the Docker `test-requirements` gate.
 
 Validate live contract drift plus manifest and generated output:
 

@@ -262,6 +262,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enforce contract revision increases
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          base="${PR_BASE:-$PUSH_BASE}"
+          if [ -z "$base" ] || [ "$base" = 0000000000000000000000000000000000000000 ]; then
+            base="$(git merge-base HEAD "origin/$DEFAULT_BRANCH")"
+          fi
+          python3 scripts/contracts/openapi_contracts.py check-revisions --base-ref "$base"
 
       - name: Start backend services
         run: |

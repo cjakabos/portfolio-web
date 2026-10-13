@@ -102,6 +102,17 @@ intent, credential/network expansion, untrusted-input/review omissions, missing
 Git bases, and out-of-scope files. Validation does not execute task commands or
 authenticate the human approval source; see the coding-agent authority guide.
 
+Contract history checks run without live services:
+
+```bash
+python3 scripts/contracts/openapi_contracts.py check-revisions --base-ref origin/main
+python3 scripts/contracts/openapi_contracts.py generate-ts --check
+```
+
+The Docker requirement gate exercises changed snapshots without bumps,
+decreases, unchanged upstream versions, new/removal cases, and unavailable Git
+bases. CI also requires this comparison in the API-contract job before startup.
+
 ### Read-only Jira intake command
 
 `jira-intake` is an opt-in operator service, outside the automated suite matrix.

@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -93,8 +94,11 @@ def validate_contract_manifest(snapshot_dir: Path, manifest_path: Path) -> tuple
         print(f"[manifest] invalid JSON in {manifest_path}: {exc}", file=sys.stderr)
         return None, 1
 
+    if not isinstance(manifest, dict):
+        print("[manifest] manifest must be an object", file=sys.stderr)
+        return None, 1
     failures = 0
-    if manifest.get("schemaVersion") != 1:
+    if type(manifest.get("schemaVersion")) is not int or manifest.get("schemaVersion") != 1:
         print("[manifest] schemaVersion must be 1", file=sys.stderr)
         failures += 1
 
@@ -139,7 +143,7 @@ def validate_contract_manifest(snapshot_dir: Path, manifest_path: Path) -> tuple
         upstream_version = str(info.get("version") or "")
 
         revision = service_manifest.get("snapshotRevision")
-        if not isinstance(revision, int) or revision < 1:
+        if type(revision) is not int or revision < 1:
             print(
                 f"[manifest] snapshotRevision must be a positive integer for {service_name}",
                 file=sys.stderr,
@@ -181,6 +185,90 @@ def validate_contract_manifest(snapshot_dir: Path, manifest_path: Path) -> tuple
     if failures == 0:
         print(f"[manifest] {manifest_path.name}: OK")
     return manifest, failures
+
+
+def check_snapshot_revisions(repo_root: Path, snapshot_dir: Path, manifest_path: Path, base_ref: str) -> int:
+    """Require changed snapshot bytes to advance from a trusted Git baseline."""
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-c", f"safe.directory={repo_root.resolve()}", "-C", str(repo_root), *args],
+            capture_output=True, text=True,
+        )
+        if result.returncode:
+            raise ValueError("comparison base/history unavailable; fetch the reviewed base before checking")
+        return result.stdout
+
+    try:
+        # Preserve the governed Git namespace. Resolving a directory symlink
+        # first could make changed snapshots appear to be newly added services.
+        root = repo_root.absolute()
+        relative_dir = snapshot_dir.absolute().relative_to(root).as_posix()
+        relative_manifest = manifest_path.absolute().relative_to(root).as_posix()
+        for relative in (relative_dir, relative_manifest):
+            current = root
+            for part in Path(relative).parts:
+                if part == "..":
+                    raise ValueError("governed paths cannot traverse parents")
+                current /= part
+                if current.is_symlink():
+                    raise ValueError("governed paths cannot use symlink aliases")
+        if manifest_path.parent.resolve() != snapshot_dir.resolve():
+            raise ValueError("manifest must be in the governed snapshot directory")
+        if manifest_path.is_symlink():
+            raise ValueError("governed manifest must be a regular file")
+        base = git("rev-parse", "--verify", "--end-of-options", f"{base_ref}^{{commit}}").strip()
+        git("merge-base", "--is-ancestor", base, "HEAD")
+        manifest, failures = validate_contract_manifest(snapshot_dir, manifest_path)
+        if manifest is None or failures:
+            return 1
+        base_files = set(filter(None, git("ls-tree", "-r", "--name-only", "-z", base, "--", relative_dir).split("\0")))
+        base_snapshots = {Path(name).stem: name for name in base_files
+                          if Path(name).parent.as_posix() == relative_dir and name.endswith(".json") and name != relative_manifest}
+        if relative_manifest in base_files:
+            previous = json.loads(git("show", f"{base}:{relative_manifest}"))
+            if (not isinstance(previous, dict) or type(previous.get("schemaVersion")) is not int or previous.get("schemaVersion") != 1
+                    or not isinstance(previous.get("services"), dict)):
+                raise ValueError("comparison manifest is invalid")
+            previous_services = previous["services"]
+            if set(previous_services) != set(base_snapshots):
+                raise ValueError("comparison manifest and snapshots disagree")
+        elif base_snapshots:
+            raise ValueError("comparison manifest is missing for existing snapshots")
+        else:
+            previous_services = {}
+        current_services = manifest["services"]
+        for service in sorted(set(previous_services) - set(current_services)):
+            print(f"[revision] {service}: removing a governed snapshot requires a reviewed retirement policy", file=sys.stderr)
+            failures += 1
+        for service, entry in current_services.items():
+            revision = entry["snapshotRevision"]
+            snapshot_path = snapshot_dir / f"{service}.json"
+            if snapshot_path.is_symlink():
+                raise ValueError("governed snapshots must be regular files")
+            old_entry = previous_services.get(service)
+            if old_entry is None:
+                if revision != 1:
+                    print(f"[revision] {service}: a new snapshot must start at revision 1", file=sys.stderr)
+                    failures += 1
+                continue
+            if not isinstance(old_entry, dict) or type(old_entry.get("snapshotRevision")) is not int or old_entry["snapshotRevision"] < 1:
+                raise ValueError(f"comparison revision is invalid for {service}")
+            previous_revision = old_entry["snapshotRevision"]
+            old_bytes = subprocess.run(
+                ["git", "-c", f"safe.directory={repo_root.resolve()}", "-C", str(repo_root), "show", f"{base}:{base_snapshots[service]}"],
+                capture_output=True, check=True,
+            ).stdout
+            changed = snapshot_path.read_bytes() != old_bytes
+            if revision < previous_revision or (changed and revision <= previous_revision):
+                print(f"[revision] {service}: snapshot {'changed' if changed else 'unchanged'}; "
+                      f"revision {revision} must be {'greater than' if changed else 'at least'} {previous_revision}", file=sys.stderr)
+                failures += 1
+        if not failures:
+            print(f"[revision] all governed snapshots: OK against {base}")
+        return 1 if failures else 0
+    except (OSError, ValueError, TypeError, KeyError, subprocess.CalledProcessError) as error:
+        print(f"[revision] cannot validate revisions: {error}", file=sys.stderr)
+        return 1
 
 
 def export_snapshots(snapshot_dir: Path) -> int:
@@ -581,6 +669,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="OpenAPI contract governance utilities")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    revision_parser = sub.add_parser("check-revisions", help="Enforce revision increases against a reviewed Git base (no live services)")
+    revision_parser.add_argument("--base-ref", required=True)
+    revision_parser.add_argument("--repo-root", type=Path, default=ROOT)
+    revision_parser.add_argument("--snapshot-dir", type=Path, default=DEFAULT_SNAPSHOT_DIR)
+    revision_parser.add_argument("--manifest-path", type=Path, default=DEFAULT_MANIFEST_PATH)
+
     export_parser = sub.add_parser("export", help="Fetch and write normalized OpenAPI snapshots")
     export_parser.add_argument("--snapshot-dir", type=Path, default=DEFAULT_SNAPSHOT_DIR)
 
@@ -601,6 +695,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.command == "check-revisions":
+        return check_snapshot_revisions(args.repo_root, args.snapshot_dir, args.manifest_path, args.base_ref)
     if args.command == "export":
         return export_snapshots(args.snapshot_dir)
     if args.command == "check":
