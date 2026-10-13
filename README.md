@@ -38,7 +38,7 @@ implementation, and trace acceptance scenarios to executed native tests.
 | Read-only Jira intake | [Fixture or live Jira source](./requirements/README.md#jira-intake-fixture-or-read-only-live-source) produces a Markdown snapshot with requirement/scenario links and fingerprints; fixtures are the default, while Cloud/Data Center access is selected through CLI flags and dedicated configuration |
 | Portable acceptance cases | [Generated features and index](./tests/requirement-cases/generated/) preserve scenario IDs and source digests; the [test map](./requirements/test-map.json) links them to exact JUnit, pytest, Jest, and Vitest test declarations |
 | Verified execution evidence | Docker runners record source/configuration fingerprints, completion status, and report digests; CI combines JUnit XML and Jest/Vitest JSON into per-scenario outcomes |
-| Shared agent guidance | [AGENTS.md](./AGENTS.md) defines requirement ownership, read-only intake, PR review, and focused Docker verification rules |
+| Scoped coding-agent authority | [AGENTS.md](./AGENTS.md) and [task contracts](./docs/platform/coding-agent-authority.md) record accepted intent, permitted actions, credentials, untrusted inputs, escalation, and independent review |
 
 Intake writes a proposal under `work-items/`. Product and engineering review the
 requirement amendment alongside code and tests in the same implementation PR;

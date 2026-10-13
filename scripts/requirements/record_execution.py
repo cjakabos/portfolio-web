@@ -31,6 +31,10 @@ def context(root):
                           if not name.startswith(".env") and not name.endswith((".pyc", ".tsbuildinfo", ".log")))
     inputs.extend(path for pattern in ("Dockerfile*", "docker-compose*.yml", "package*.json", ".npmrc")
                   for path in root.glob(pattern) if path.is_file())
+    inputs.extend(path for path in (
+        root / "AGENTS.md", root / "docs/platform/coding-agent-authority.md",
+        *(root / "work-items/agent-tasks").glob("*.json"),
+    ) if path.is_file())
     return {
         "git_sha": os.environ.get("TRACEABILITY_COMMIT", "unknown"),
         "test_map": digest(mapping),

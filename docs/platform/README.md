@@ -5,6 +5,8 @@ define the current platform direction.
 
 ## Core Docs
 
+- [coding-agent-authority.md](./coding-agent-authority.md): reproducible coding
+  task scope, credentials, untrusted inputs, escalation, and independent review
 - [ai-degraded-mode.md](./ai-degraded-mode.md): dependency failure matrix,
   degraded-mode expectations, and incident-detection signals for the AI stack
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,

@@ -89,6 +89,19 @@ docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requir
   monitor-only runs use `test-results-monitor/playwright/`. Playwright clears
   its own output folder when starting a run, so keep native evidence outside it.
 
+### Coding-agent authority
+
+Validate the scoped task declarations and the branch diff before review:
+
+```bash
+python3 scripts/adlc/task_contract.py work-items/agent-tasks/ADLC-2026-10-13.json --check-diff
+```
+
+The Docker `test-requirements` gate includes authority regressions for stale
+intent, credential/network expansion, untrusted-input/review omissions, missing
+Git bases, and out-of-scope files. Validation does not execute task commands or
+authenticate the human approval source; see the coding-agent authority guide.
+
 ### Read-only Jira intake command
 
 `jira-intake` is an opt-in operator service, outside the automated suite matrix.

@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "id": "ADLC-2026-10-13",
+  "objective": "Implement coding-agent authority, enforce OpenAPI snapshot revision increases, publish a bounded ADLC example, and make unattended live Jira tests read-only, each in one detailed commit on the existing branch.",
+  "branch": "codex/adlc-review-fixes",
+  "base_commit": "3ff99b0f53e2fd9f010c6571b07fef033c3155ea",
+  "requirements": [
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-01",
+        "AC-REQ-HARNESS-001-04"
+      ]
+    },
+    {
+      "id": "REQ-JIRA-001",
+      "digest": "84e1d3fecdc1984b7e8bbe5e7a52f58d9936c4e2b645c2da7fc78cc34fdb5934",
+      "scenario_ids": [
+        "AC-REQ-JIRA-001-02"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-13",
+    "source": "Repository-owner chat instruction on 2026-10-13: implement the four listed ADLC improvements, each as one detailed commit on the same branch; separate-agent review explicitly authorized in the follow-up reply.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "AGENTS.md",
+      "CONTRIBUTING.md",
+      "README.md",
+      "TESTING.md",
+      "docs/platform",
+      "scripts/adlc",
+      "scripts/contracts",
+      "tests/requirement-cases",
+      "work-items/agent-tasks",
+      ".github/workflows/ci-tests.yml",
+      ".github/workflows/nightly-ai-integrations.yml",
+      "e2e/nightly-jira-ai.spec.ts",
+      "e2e/fixtures/jira-read-only.ts",
+      "e2e/jira-authority.spec.ts",
+      "scripts/requirements/record_execution.py",
+      "e2e/jira-authority.config.ts",
+      "scripts/requirements/Dockerfile"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/task_contract.py",
+        "work-items/agent-tasks/ADLC-2026-10-13.json",
+        "--check-diff"
+      ],
+      "purpose": "Validate task intent and all four commits against the declared write boundary."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-requirements",
+        "test-requirements"
+      ],
+      "purpose": "Run credential-free requirement/harness regressions including authority and contract gates."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Check repo-facing documentation consistency."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}
