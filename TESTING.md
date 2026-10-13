@@ -172,11 +172,18 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`
-- Scope: ChatLLM (live Ollama), AI Monitor model selectors (`chat` / `rag` / `embedding`), Jira AI refine + child proposal flow with cleanup.
+- Scope: ChatLLM (live Ollama), AI Monitor model selectors (`chat` / `rag` / `embedding`), and an opt-in read-only Jira board/AI proposal preview.
 - Required models:
   - `qwen3:1.7b`
   - `qwen3-embedding:4b`
-- Jira nightly spec auto-skips when Jira secrets are missing.
+- Jira is disabled by default. Manual dispatch with `jira_read_only=true` uses
+  dedicated `JIRA_READ_ONLY_*` settings and an existing fixture project; missing
+  settings fail a requested run. Credentials alone cannot enable live tests.
+- Live Jira create/update/delete/transition and cleanup need exact-operation
+  human approval; the unattended spec has no mutation mode. See
+  [live Jira authority](docs/platform/live-jira-test-authority.md).
+- Run the credential-free browser/API boundary checks with
+  `docker compose -f docker-compose.test.yml run --build --rm --no-deps test-e2e e2e/jira-authority.spec.ts --config e2e/jira-authority.config.ts`.
 
 ## Cleanup
 ```bash

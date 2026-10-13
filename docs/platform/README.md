@@ -9,6 +9,8 @@ define the current platform direction.
   task scope, credentials, untrusted inputs, escalation, and independent review
 - [adlc-example/README.md](./adlc-example/README.md): executed accepted-intent
   lifecycle with scoped task, independent review, local rehearsal, and recovery
+- [live-jira-test-authority.md](./live-jira-test-authority.md): read-only live
+  integration opt-in and exact-operation approval for Jira mutations and cleanup
 - [ai-degraded-mode.md](./ai-degraded-mode.md): dependency failure matrix,
   degraded-mode expectations, and incident-detection signals for the AI stack
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,
