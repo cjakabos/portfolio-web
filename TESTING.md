@@ -113,6 +113,12 @@ The Docker requirement gate exercises changed snapshots without bumps,
 decreases, unchanged upstream versions, new/removal cases, and unavailable Git
 bases. CI also requires this comparison in the API-contract job before startup.
 
+The [bounded ADLC example](docs/platform/adlc-example/README.md) runs real case
+generation in a disposable workspace with networking disabled. Its Docker
+replay records success, a missing-artifact failure, regeneration recovery,
+source/artifact digests, and cleanup. The requirement gate runs replay
+regressions; the example also publishes independent review and feedback.
+
 ### Read-only Jira intake command
 
 `jira-intake` is an opt-in operator service, outside the automated suite matrix.

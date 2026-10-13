@@ -39,6 +39,7 @@ implementation, and trace acceptance scenarios to executed native tests.
 | Portable acceptance cases | [Generated features and index](./tests/requirement-cases/generated/) preserve scenario IDs and source digests; the [test map](./requirements/test-map.json) links them to exact JUnit, pytest, Jest, and Vitest test declarations |
 | Verified execution evidence | Docker runners record source/configuration fingerprints, completion status, and report digests; CI combines JUnit XML and Jest/Vitest JSON into per-scenario outcomes |
 | Scoped coding-agent authority | [AGENTS.md](./AGENTS.md) and [task contracts](./docs/platform/coding-agent-authority.md) record accepted intent, permitted actions, credentials, untrusted inputs, escalation, and independent review |
+| Complete bounded lifecycle | [Executed ADLC example](./docs/platform/adlc-example/README.md) connects accepted intent to a scoped task, implementation hashes, execution evidence, independent review, local release rehearsal, and failure/recovery feedback |
 
 Intake writes a proposal under `work-items/`. Product and engineering review the
 requirement amendment alongside code and tests in the same implementation PR;

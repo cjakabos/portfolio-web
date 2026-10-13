@@ -7,6 +7,8 @@ define the current platform direction.
 
 - [coding-agent-authority.md](./coding-agent-authority.md): reproducible coding
   task scope, credentials, untrusted inputs, escalation, and independent review
+- [adlc-example/README.md](./adlc-example/README.md): executed accepted-intent
+  lifecycle with scoped task, independent review, local rehearsal, and recovery
 - [ai-degraded-mode.md](./ai-degraded-mode.md): dependency failure matrix,
   degraded-mode expectations, and incident-detection signals for the AI stack
 - [deployable-inventory.md](./deployable-inventory.md): deployable inventory,

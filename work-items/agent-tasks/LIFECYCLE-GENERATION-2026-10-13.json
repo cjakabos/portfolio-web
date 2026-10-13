@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "id": "LIFECYCLE-GENERATION-2026-10-13",
+  "objective": "Demonstrate accepted AC-REQ-HARNESS-001-04 through isolated generation, a missing-artifact failure, regeneration recovery, independent engineering review, and a local release rehearsal.",
+  "branch": "codex/adlc-review-fixes",
+  "base_commit": "48688970f2d3046c97c5ca71f0ff71842e301581",
+  "requirements": [
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-04"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-13",
+    "source": "Repository-owner instruction on 2026-10-13, item 3: publish one bounded complete lifecycle example including failure/recovery; independent separate-agent review explicitly authorized in the follow-up reply. This is the bounded subtask of ADLC-2026-10-13.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "scripts/adlc/rehearse_generation.py",
+      "tests/requirement-cases/test_lifecycle_generation.py",
+      "docs/platform/adlc-example",
+      "docs/platform/README.md",
+      "README.md",
+      "TESTING.md",
+      "work-items/agent-tasks/LIFECYCLE-GENERATION-2026-10-13.json"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/rehearse_generation.py"
+      ],
+      "purpose": "Replay generation, fault rejection, recovery, and rollback equivalence in a temporary workspace; emit bound execution evidence."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-requirements",
+        "test-requirements"
+      ],
+      "purpose": "Run credential-free requirement/harness regressions including authority and contract gates."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Check repo-facing documentation consistency."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}
