@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "id": "IMPLEMENT-PR01-06-2026-10-14",
+  "objective": "Implement the six authorized ADLC plan slices, including two replacements for PR #68, on a new branch with exactly one detailed commit per slice.",
+  "branch": "codex/adlc-pr1-6",
+  "base_commit": "e169d93ab6965d8933ae0cc6ba8835275799790e",
+  "requirements": [
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-01"
+      ]
+    },
+    {
+      "id": "REQ-APPROVAL-001",
+      "digest": "3cc7c52ed04c51f52d95f2a0ca6cc38284e2084259cab76133a71e5c3a8a123c",
+      "scenario_ids": [
+        "AC-REQ-APPROVAL-001-01"
+      ]
+    },
+    {
+      "id": "REQ-AIOPS-001",
+      "digest": "614ba7fbb56af80195bf6d2ef8513e648a0b0a1fe04e521e51f9e9473dd68b3d",
+      "scenario_ids": [
+        "AC-REQ-AIOPS-001-01"
+      ]
+    },
+    {
+      "id": "REQ-RAG-001",
+      "digest": "2081c0d78493aa65a8ee390b09101fa12dd00a962122c2f290f6cc0eae1cf0e1",
+      "scenario_ids": [
+        "AC-REQ-RAG-001-01"
+      ]
+    },
+    {
+      "id": "REQ-MLOPS-001",
+      "digest": "dc60e25f4f6ac2f2eff16b155557df0ab0f4303f66727e9b63c3a77eb87bc3b7",
+      "scenario_ids": [
+        "AC-REQ-MLOPS-001-01"
+      ]
+    },
+    {
+      "id": "REQ-CHATLLM-001",
+      "digest": "1e1615ab09ab8362c740a25928dac5adc73b4888658a32501d202b12af61f0bc",
+      "scenario_ids": [
+        "AC-REQ-CHATLLM-001-01"
+      ]
+    },
+    {
+      "id": "REQ-JIRA-001",
+      "digest": "84e1d3fecdc1984b7e8bbe5e7a52f58d9936c4e2b645c2da7fc78cc34fdb5934",
+      "scenario_ids": [
+        "AC-REQ-JIRA-001-01"
+      ]
+    },
+    {
+      "id": "REQ-IDENTITY-001",
+      "digest": "dcf4edd146b7f0dd3c78fdfcbc97609bf8a5abd2e893bd05246379060c78b9a3",
+      "scenario_ids": [
+        "AC-REQ-IDENTITY-001-01"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-14",
+    "source": "Repository-owner instruction in this chat: Implement PR1 to 6 in a new branch where each commit is a representation of a single PR with detailed commit message. This authorizes scoped repository implementation, dependency downloads, disposable local checks, and six commits; independent review remains required before promotion, and no separate-agent reviewer is authorized by this request.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "scripts/adlc",
+      "scripts/requirements",
+      "tests/requirement-cases",
+      "work-items/agent-tasks",
+      "work-items/agent-reviews",
+      "docs/platform",
+      "CONTRIBUTING.md",
+      "TESTING.md",
+      "README.md",
+      ".github/pull_request_template.md",
+      ".github/workflows/ci-tests.yml",
+      "ai-orchestration/ai-orchestration-layer/src/core/orchestrator.py",
+      "ai-orchestration/ai-orchestration-layer/src/routers/approvals_router.py",
+      "ai-orchestration/ai-orchestration-layer/src/tools/http_client.py",
+      "tests/ai-orchestration-layer",
+      "backend/ml-pipeline",
+      "Dockerfile_PY",
+      "docker-compose-app.yml",
+      "docker-compose.test.yml",
+      "frontend/remote/chatllm",
+      "frontend/remote/jira",
+      "frontend/cloudapp-shell/src",
+      "frontend/cloudapp-shell/next.config.js",
+      "frontend/cloudapp-shell/jest.config.js",
+      "frontend/nginx",
+      "packages/api-clients",
+      "package.json",
+      "package-lock.json",
+      "scripts/architecture",
+      "env.example",
+      ".gitignore",
+      "e2e"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/task_contract.py",
+        "work-items/agent-tasks/IMPLEMENT-PR01-06-2026-10-14.json",
+        "--check-diff"
+      ],
+      "purpose": "Validate accepted intent and the authorized complete branch diff."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-requirements",
+        "test-requirements"
+      ],
+      "purpose": "Requirement/harness gate and regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ai-orchestration-layer",
+        "test-ai-orchestration-layer"
+      ],
+      "purpose": "Approval and orchestration regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ml-pipeline",
+        "test-ml-pipeline"
+      ],
+      "purpose": "ML runtime and authorization regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--build",
+        "--rm",
+        "--no-deps",
+        "test-frontend-unit"
+      ],
+      "purpose": "Frontend and API helper behavior."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-frontend-static",
+        "test-frontend-static"
+      ],
+      "purpose": "Frontend type/lint checks."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Documentation consistency."
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "architecture:check"
+      ],
+      "purpose": "Architecture boundary checks."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none"
+      ],
+      "purpose": "Read-only isolated focused checks using existing test images; exact arguments retained in command evidence."
+    },
+    {
+      "argv": [
+        "git",
+        "switch",
+        "-c",
+        "codex/adlc-pr1-6",
+        "origin/main"
+      ],
+      "purpose": "Create the requested branch from the merged baseline."
+    },
+    {
+      "argv": [
+        "git",
+        "commit"
+      ],
+      "purpose": "Create exactly one detailed commit per authorized slice, with explicit scoped staging."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}

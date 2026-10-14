@@ -94,3 +94,31 @@ evidence bound to its inputs, independent review, a release rehearsal, and
 feedback. Rehearsal uses disposable local resources and does not grant authority
 to deploy. Requirement amendments and acceptance renewals follow the existing
 requirements review workflow.
+
+## Incoming-change enforcement
+
+`work-items/agent-tasks/change-selection.json` selects the actual task records
+for a change. `scripts/adlc/change_gate.py --base-ref <event-base> --head-ref HEAD
+--branch <event-branch> --author <PR-author> --github-pr <number>` checks the
+entire incoming diff against their combined write scope, accepted intent,
+recorded ancestor bases, and event branch. A task-selected convenient base
+cannot hide files in the event-derived diff. Detached CI checkouts are supported.
+
+The Core Showcase ADLC job obtains native GitHub reviews using a read-only CI
+token. At least one independent human with owner/member/collaborator association
+must approve the exact PR head. Bots, author self-review, stale approvals, and
+unresolved changes-requested dispositions cannot satisfy the gate. Its report
+records reviewer, review ID, reviewed commit and incoming diff digest outside
+the implementation tree, avoiding self-referential hashes. Review submission
+and dismissal events rerun CI. Local `--reviews` files are diagnostic fixtures;
+they cannot authenticate human decisions. `--scope-only` is declaration checking
+for post-merge/manual diagnostics and never evidence of promotion approval.
+
+Repository owners must require Test Summary, independent latest-push review,
+conversation resolution, and protected ownership of AGENTS.md, task selections,
+acceptance records, workflows and harness policy. Include administrators in the
+protection policy as appropriate. Workflow source cannot enforce its own trust
+when an actor can replace it or bypass repository rules; settings verification
+is a separate human responsibility. Policy changes need that protected human
+review. The initial gate bootstrap itself requires independent review before
+merge. No review has been invented for an implementing agent's own work.

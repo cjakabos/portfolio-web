@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "id": "PR01-2026-10-14",
+  "objective": "Enforce event-derived task scope and exact-head independent human review for incoming changes.",
+  "branch": "codex/adlc-pr1-6",
+  "base_commit": "e169d93ab6965d8933ae0cc6ba8835275799790e",
+  "requirements": [
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-01"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-14",
+    "source": "Repository-owner instruction in this chat: Implement PR1 to 6 in a new branch where each commit is a representation of a single PR with detailed commit message. This authorizes scoped repository implementation, dependency downloads, disposable local checks, and six commits; independent review remains required before promotion, and no separate-agent reviewer is authorized by this request.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "scripts/adlc",
+      "tests/requirement-cases",
+      "work-items/agent-tasks",
+      "docs/platform",
+      "TESTING.md",
+      ".github/pull_request_template.md",
+      ".github/workflows/ci-tests.yml"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/task_contract.py",
+        "work-items/agent-tasks/IMPLEMENT-PR01-06-2026-10-14.json",
+        "--check-diff"
+      ],
+      "purpose": "Validate accepted intent and the authorized complete branch diff."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-requirements",
+        "test-requirements"
+      ],
+      "purpose": "Requirement/harness gate and regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ai-orchestration-layer",
+        "test-ai-orchestration-layer"
+      ],
+      "purpose": "Approval and orchestration regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ml-pipeline",
+        "test-ml-pipeline"
+      ],
+      "purpose": "ML runtime and authorization regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--build",
+        "--rm",
+        "--no-deps",
+        "test-frontend-unit"
+      ],
+      "purpose": "Frontend and API helper behavior."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-frontend-static",
+        "test-frontend-static"
+      ],
+      "purpose": "Frontend type/lint checks."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Documentation consistency."
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "architecture:check"
+      ],
+      "purpose": "Architecture boundary checks."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none"
+      ],
+      "purpose": "Read-only isolated focused checks using existing test images; exact arguments retained in command evidence."
+    },
+    {
+      "argv": [
+        "git",
+        "switch",
+        "-c",
+        "codex/adlc-pr1-6",
+        "origin/main"
+      ],
+      "purpose": "Create the requested branch from the merged baseline."
+    },
+    {
+      "argv": [
+        "git",
+        "commit"
+      ],
+      "purpose": "Create exactly one detailed commit per authorized slice, with explicit scoped staging."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}

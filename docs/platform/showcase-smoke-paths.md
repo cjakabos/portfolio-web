@@ -8,7 +8,7 @@ surface, but to make the coverage model explicit.
 
 | Tier | Intent | Representative jobs |
 | --- | --- | --- |
-| `Core showcase` | Protect the README-first story, portfolio mode, and architecture spine | `requirements-tests`, `requirement-execution-evidence`, `backend-tests`, `nginx-gateway-tests`, `api-contract-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `docs-drift-checks`, `frontend-lockfile-checks`, `e2e-core-tests` |
+| `Core showcase` | Protect the README-first story, portfolio mode, and architecture spine | `adlc-change-gate`, `requirements-tests`, `requirement-execution-evidence`, `backend-tests`, `nginx-gateway-tests`, `api-contract-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `docs-drift-checks`, `frontend-lockfile-checks`, `e2e-core-tests` |
 | `Extended showcase` | Keep the deeper integrations, remotes, and operator surfaces healthy | `ml-pipeline-tests`, `ai-orchestration-tests`, `ai-monitor-checks`, `ai-monitor-component-tests`, `ai-monitor-behavior-tests`, `e2e-remote-tests` |
 | `Optional security posture` | Surface dependency risk without blocking routine showcase curation | `dependency-scans` |
 

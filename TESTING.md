@@ -96,6 +96,11 @@ docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requir
 
 ### Coding-agent authority
 
+The mandatory `adlc-change-gate` checks the incoming event-derived diff against
+`work-items/agent-tasks/change-selection.json` and requires exact-head independent
+human GitHub review on PR events. Review submission/dismissal reruns CI.
+Scope-only local and post-merge checks are diagnostics, not promotion approval.
+
 Validate the scoped task declarations and the branch diff before review:
 
 ```bash

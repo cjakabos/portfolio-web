@@ -3,6 +3,7 @@
 - What changed?
 - Why was it needed?
 - Which requirement and acceptance scenario IDs are affected?
+- Link the selected coding-agent task(s), the authority/evidence report, and the independent review of the exact head revision.
 - For an intent change, link the human acceptance decision and describe the delta.
 
 ## Validation

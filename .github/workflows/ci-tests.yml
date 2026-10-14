@@ -31,6 +31,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  pull_request_review:
+    types: [submitted, dismissed]
   workflow_dispatch:
 
 permissions:
@@ -45,6 +47,55 @@ env:
   TRACEABILITY_COMMIT: ${{ github.sha }}
 
 jobs:
+  adlc-change-gate:
+    name: "Core Showcase — ADLC Change Authority"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Validate incoming task scope and exact-head independent review
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PUSH_BASE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.test.yml build test-requirements
+          base="${PR_BASE:-$PUSH_BASE}"
+          if [ -z "$base" ] || [ "$base" = 0000000000000000000000000000000000000000 ]; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          args=(--base-ref "$base" --head-ref HEAD)
+          if [ -n "$PR_NUMBER" ]; then
+            args+=(--branch "$PR_BRANCH" --author "$PR_AUTHOR" --github-pr "$PR_NUMBER")
+          else
+            # Post-merge/manual runs validate declarations; PR review authority
+            # is checked on PR events and enforced by protected repository rules.
+            args+=(--scope-only)
+          fi
+          mkdir -p test-results/adlc-change
+          docker run --rm --network bridge \
+            --mount type=bind,source="$PWD",target=/workspace,readonly \
+            --mount type=bind,source="$PWD/test-results/adlc-change",target=/results \
+            --env GH_TOKEN --env GITHUB_REPOSITORY \
+            --entrypoint python3 portfolio-web-requirements:local \
+            scripts/adlc/change_gate.py "${args[@]}" --output /results/report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adlc-change-authority
+          path: test-results/adlc-change/
+          retention-days: 30
+
   requirements-tests:
     name: "Core Showcase — Requirement Traceability"
     runs-on: ubuntu-latest
@@ -1337,7 +1388,7 @@ jobs:
   test-summary:
     name: "Test Summary"
     runs-on: ubuntu-latest
-    needs: [requirements-tests, requirement-execution-evidence, backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, frontend-budget-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
+    needs: [adlc-change-gate, requirements-tests, requirement-execution-evidence, backend-tests, ml-pipeline-tests, nginx-gateway-tests, api-contract-tests, frontend-unit-tests, frontend-static-checks, frontend-budget-checks, docs-drift-checks, frontend-lockfile-checks, dependency-scans, ai-orchestration-tests, ai-monitor-checks, ai-monitor-component-tests, ai-monitor-behavior-tests, e2e-core-tests, e2e-remote-tests]
     if: always()
 
     steps:
@@ -1349,6 +1400,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Layer | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ADLC Change Authority | ${{ needs.adlc-change-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Requirement Traceability | ${{ needs.requirements-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Executed Requirement Evidence | ${{ needs.requirement-execution-evidence.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Backend (Spring Boot) | ${{ needs.backend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -1383,6 +1435,7 @@ jobs:
       - name: Enforce Core Showcase gates
         if: always()
         env:
+          ADLC_RESULT: ${{ needs.adlc-change-gate.result }}
           REQUIREMENTS_RESULT: ${{ needs.requirements-tests.result }}
           EVIDENCE_RESULT: ${{ needs.requirement-execution-evidence.result }}
           BACKEND_RESULT: ${{ needs.backend-tests.result }}
@@ -1397,6 +1450,7 @@ jobs:
         run: |
           failed=0
           for job in \
+            "adlc-change-gate=$ADLC_RESULT" \
             "requirements-tests=$REQUIREMENTS_RESULT" \
             "requirement-execution-evidence=$EVIDENCE_RESULT" \
             "backend-tests=$BACKEND_RESULT" \

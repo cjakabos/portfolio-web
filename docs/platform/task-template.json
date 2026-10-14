@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "id": "REPLACE-TASK-ID",
+  "objective": "Describe the human-authorized objective",
+  "branch": "codex/replace-task",
+  "base_commit": "0000000000000000000000000000000000000000",
+  "requirements": [
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "replace-with-exact-accepted-digest",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-04"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "draft",
+    "approved_by": "",
+    "approved_on": "",
+    "source": "",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "replace/scoped/path"
+    ],
+    "credentials": {
+      "mode": "none",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": false,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/task_contract.py",
+        "work-items/agent-tasks/IMPLEMENT-PR01-06-2026-10-14.json",
+        "--check-diff"
+      ],
+      "purpose": "Validate accepted intent and the authorized complete branch diff."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-requirements",
+        "test-requirements"
+      ],
+      "purpose": "Requirement/harness gate and regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ai-orchestration-layer",
+        "test-ai-orchestration-layer"
+      ],
+      "purpose": "Approval and orchestration regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ml-pipeline",
+        "test-ml-pipeline"
+      ],
+      "purpose": "ML runtime and authorization regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--build",
+        "--rm",
+        "--no-deps",
+        "test-frontend-unit"
+      ],
+      "purpose": "Frontend and API helper behavior."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-frontend-static",
+        "test-frontend-static"
+      ],
+      "purpose": "Frontend type/lint checks."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Documentation consistency."
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "architecture:check"
+      ],
+      "purpose": "Architecture boundary checks."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none"
+      ],
+      "purpose": "Read-only isolated focused checks using existing test images; exact arguments retained in command evidence."
+    },
+    {
+      "argv": [
+        "git",
+        "switch",
+        "-c",
+        "codex/adlc-pr1-6",
+        "origin/main"
+      ],
+      "purpose": "Create the requested branch from the merged baseline."
+    },
+    {
+      "argv": [
+        "git",
+        "commit"
+      ],
+      "purpose": "Create exactly one detailed commit per authorized slice, with explicit scoped staging."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}
