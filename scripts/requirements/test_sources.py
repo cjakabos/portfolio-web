@@ -94,3 +94,31 @@ def declarations(path: Path) -> set[str]:
                 raise ValueError(f"ambiguous duplicate test title in {path}: {title}")
             result.add(title)
     return result
+
+
+SUITE_ROOTS = {
+    "test-requirements": "tests/requirement-cases/",
+    "test-ai-orchestration-layer": "tests/ai-orchestration-layer/",
+    "test-ml-pipeline": "tests/ml-pipeline/",
+    "test-backend": "backend/cloudapp/src/test/",
+    "test-backend-petstore": "backend/petstore/src/test/",
+    "test-backend-vehicles": "backend/vehicles-api/src/test/",
+    "test-backend-webproxy": "backend/web-proxy/src/test/",
+}
+
+
+def runner_identity(path, test_id, suite, root):
+    """Resolve the native identity from the governed source namespace."""
+    source = root / path
+    if source.suffix == ".java":
+        tree = Parser(Language(tree_sitter_java.language())).parse(source.read_bytes())
+        package = next((node for node in tree.root_node.named_children if node.type == "package_declaration"), None)
+        names = ([node for node in package.named_children if node.type in {"identifier", "scoped_identifier"}]
+                 if package else [])
+        prefix = names[-1].text.decode() + "." if names else ""
+        return prefix + test_id
+    if source.suffix == ".py":
+        relative = Path(path).relative_to(SUITE_ROOTS[suite])
+        module = ".".join(relative.with_suffix("").parts)
+        return module + "." + test_id
+    return None

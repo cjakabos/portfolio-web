@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 import yaml
 from model import ROOT, artifacts, freshness_errors, load_requirements
-from test_sources import declarations
+from test_sources import declarations, runner_identity
 from record_execution import context
 from intent_baseline import validate_intent
 
@@ -180,7 +180,8 @@ def validate(root: Path = ROOT, require_accepted_baseline: bool = False) -> tupl
                             f'exact test declaration not found: {path}::{target["test_id"]}'
                         )
                     checked.append(
-                        {**target, "declaration": "found", "outcome": "not-run"}
+                        {**target, "declaration": "found", "outcome": "not-run",
+                         "runner_id": runner_identity(path, target["test_id"], suite, root)}
                     )
                 report["cases"][case_id] = {
                     "requirement": req.id,

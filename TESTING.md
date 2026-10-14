@@ -129,6 +129,14 @@ replay records success, a missing-artifact failure, regeneration recovery,
 source/artifact digests, and cleanup. The requirement gate runs replay
 regressions; the example also publishes independent review and feedback.
 
+### Exact native result identity
+
+JUnit evidence uses Java package/class/method identity and Python suite-relative
+module/class/function identity. A same-named test in another package/module
+cannot supply evidence. Distinct parameter invocation suffixes aggregate; exact
+duplicate identities are ambiguous, failures take precedence, and skipped or
+missing results never pass. Source validation records each native runner identity.
+
 ### Read-only Jira intake command
 
 `jira-intake` is an opt-in operator service, outside the automated suite matrix.

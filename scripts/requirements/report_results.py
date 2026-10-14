@@ -2,8 +2,12 @@
 """Attach exact JUnit XML or Jest/Vitest JSON outcomes to a source report."""
 import argparse
 import json
+import re
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from test_sources import runner_identity
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def attach_results(report: dict, suite: str, xml_paths: list[Path]) -> dict:
@@ -26,34 +30,24 @@ def attach_results(report: dict, suite: str, xml_paths: list[Path]) -> dict:
         for target in case["tests"]:
             if target["suite"] != suite:
                 continue
-            source = Path(target["path"])
-            identity = target["test_id"]
+            expected = target.get("runner_id") or runner_identity(
+                target["path"], target["test_id"], suite, ROOT)
             matches = []
+            identities = []
             for classname, name, outcome in records:
-                if source.suffix == ".py":
-                    module = source.stem
-                    class_parts = classname.split(".")
-                    if "." in identity:
-                        found = (
-                            module in class_parts
-                            and f"{class_parts[-1]}.{name}" == identity
-                        )
-                    else:
-                        found = class_parts[-1] == module and name == identity
-                elif source.suffix == ".java":
-                    found = (
-                        f'{classname.split(".")[-1]}.{name}' == identity
-                        and classname.split(".")[-1] == source.stem
-                    )
-                else:
-                    found = False
+                native = classname.replace("$", ".") + "." + name
+                # Distinct parameter invocations can aggregate; repeated exact
+                # identities are ambiguous and never supply passing evidence.
+                found = native == expected or bool(expected and re.fullmatch(
+                    re.escape(expected) + r"(?:\([^)]*\))?\[[^\]]+\]", native))
                 if found:
                     matches.append(outcome)
+                    identities.append(native)
             if matches:
                 target["outcome"] = (
-                    "failed"
-                    if "failed" in matches
-                    else "skipped" if "skipped" in matches else "passed"
+                    "failed" if "failed" in matches else
+                    "skipped" if "skipped" in matches else
+                    "passed" if len(identities) == len(set(identities)) else "not-run"
                 )
                 target["evidence"] = [str(path) for path in xml_paths]
     return report
