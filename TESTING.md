@@ -379,3 +379,35 @@ python3 scripts/check_frontend_native_lockfiles.py
 
 - This check guards the `Dockerfile_FE` services against missing Linux SWC and Tailwind oxide entries.
 - The AI monitor uses a separate Dockerfile fallback for Rollup native bindings. Keep that fallback in place unless the monitor lockfile becomes reliably multi-platform in CI and nightly container builds.
+
+
+### AI remote boundary regressions
+
+Run `test-frontend-unit` for deterministic adapter/model discovery, identity,
+role and origin denial, request limits/deadlines, SSE/reasoning behavior,
+disconnect cancellation, and prompt-log privacy. Run `test-frontend-static`
+for workspace types, lint, versions, and architecture boundaries. Build the
+ChatLLM and Jira remotes to verify the edge adapters and federation output.
+`test-nginx-gateway` checks the AI remote route denials with real CloudApp
+sessions; it does not require a live model provider for those denials.
+
+The configured provider and Jira are optional. Positive live-provider tests
+remain opt-in; use disposable deterministic provider fixtures for default
+verification. See [the boundary contract](./docs/platform/ai-remote-boundary.md)
+for gateway paths, server configuration, and timeout behavior.
+
+Reproduce the production-image check with real disposable CloudApp sessions and
+a deterministic Ollama HTTP transport (standalone pages, federation entries,
+models and SSE through direct and gateway paths):
+
+```bash
+docker compose --env-file /dev/null -p ai_remote_check \
+  -f docker-compose.test.yml \
+  -f tests/nginx-gateway/ai-remotes-runtime/compose.yml \
+  up --build --abort-on-container-exit \
+  --exit-code-from test-ai-remotes-runtime test-ai-remotes-runtime
+```
+
+The result, input context, and runner completion are recorded under
+`test-results/ai-remotes-runtime/`. Clean up the disposable project with the
+same two Compose files and `down -v` after inspection.

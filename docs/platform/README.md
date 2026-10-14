@@ -33,6 +33,8 @@ define the current platform direction.
   typed route-to-remote contracts for the shell and module-federated remotes
 - [ai-monitor-boundary.md](./ai-monitor-boundary.md): canonical monitor client
   surface, operator capability matrix, and gateway-enforced route classes
+- [ai-remote-boundary.md](./ai-remote-boundary.md): authenticated ChatLLM/Jira
+  adapters, gateway paths, server configuration, limits, and privacy
 - [ai-product-boundary.md](./ai-product-boundary.md): current classification of
   AI capabilities as core product, operator-only, or experimental
 - [ai-slos-and-dashboards.md](./ai-slos-and-dashboards.md): SLO targets,

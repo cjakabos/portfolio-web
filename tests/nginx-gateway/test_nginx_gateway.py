@@ -506,3 +506,26 @@ class TestSecurityHeaders:
         if "charset" in ct:
             assert ";" in ct, \
                 f"Content-Type header malformed (missing semicolon): {ct}"
+
+
+class TestAiRemoteAccess:
+    @pytest.mark.parametrize("method,path", [
+        ("GET", "/ai-remotes/chatllm/models"),
+        ("POST", "/ai-remotes/chatllm/chat"),
+        ("GET", "/ai-remotes/jira/models"),
+        ("POST", "/ai-remotes/jira/chat"),
+    ])
+    def test_ai_remote_routes_reject_anonymous_callers(self, method, path):
+        headers = {"X-Auth-User": "admin", "X-Auth-Roles": "ROLE_ADMIN",
+                   "X-Internal-Service-Token": "forged"}
+        response = requests.request(method, f"{BACKEND_URL}{path}", headers=headers, timeout=10)
+        assert response.status_code in (401, 403), (method, path, response.text)
+
+    @pytest.mark.parametrize("method,path", [
+        ("GET", "/ai-remotes/jira/models"),
+        ("POST", "/ai-remotes/jira/chat"),
+    ])
+    def test_jira_ai_denies_regular_users_at_gateway(self, method, path):
+        response = requests.request(method, f"{BACKEND_URL}{path}",
+                                    cookies={"CLOUDAPP_AUTH": TEST_AUTH_COOKIE}, timeout=10)
+        assert response.status_code == 403, (method, path, response.text)

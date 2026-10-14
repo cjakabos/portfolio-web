@@ -1,0 +1,41 @@
+# Overlay for disposable verification, used after docker-compose.test.yml.
+services:
+  test-ai-provider:
+    image: python:3.12-slim
+    entrypoint: ["python3", "/fixture.py"]
+    volumes:
+      - ./tests/nginx-gateway/ai-remotes-runtime/ollama_fixture.py:/fixture.py:ro
+    networks: [test-backend]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:11434/api/tags', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  test-chatllm-frontend:
+    environment:
+      OLLAMA_URL: http://test-ai-provider:11434
+  test-jira-frontend:
+    environment:
+      OLLAMA_URL: http://test-ai-provider:11434
+  test-ai-remotes-runtime:
+    image: python:3.12-slim
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "ai-remotes-runtime.xml", "--", "sh", "-c", "pip install pytest requests && pytest /tests/checks.py -v -p no:cacheprovider --junitxml=/results/ai-remotes-runtime.xml"]
+    environment:
+      - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
+      - NGINX_URL=http://test-nginx:80
+    volumes:
+      - ./:/workspace:ro
+      - ./tests/nginx-gateway/ai-remotes-runtime:/tests:ro
+      - ./test-results/ai-remotes-runtime:/results
+    depends_on:
+      test-nginx:
+        condition: service_healthy
+      test-cloudapp:
+        condition: service_healthy
+      test-ai-provider:
+        condition: service_healthy
+      test-chatllm-frontend:
+        condition: service_healthy
+      test-jira-frontend:
+        condition: service_healthy
+    networks: [test-frontend, test-backend]

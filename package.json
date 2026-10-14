@@ -8,7 +8,7 @@
     "ai-orchestration/ai-orchestration-monitor"
   ],
   "scripts": {
-    "architecture:check": "node ./scripts/architecture/check_internal_service_identity.mjs && node ./scripts/architecture/check_cloudapp_controller_boundaries.mjs && node ./scripts/architecture/check_frontend_hook_http.mjs",
+    "architecture:check": "node ./scripts/architecture/check_internal_service_identity.mjs && node ./scripts/architecture/check_cloudapp_controller_boundaries.mjs && node ./scripts/architecture/check_frontend_hook_http.mjs && node ./scripts/architecture/check_ai_remote_browser_boundaries.mjs",
     "frontend:check-versions": "node ./scripts/frontend/check-workspace-versions.mjs",
     "frontend:typecheck": "npm run typecheck --workspaces --if-present",
     "frontend:lint": "npm run lint --workspaces --if-present",

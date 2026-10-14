@@ -381,6 +381,15 @@ stay opt-in through the `CLOUDAPP_SEED_DEMO_USERS_*` variables in your local
 variables shown in [env.example](./env.example) when you want the seeded
 showcase users outside the supported portfolio bootstrap path.
 
+### AI remote access
+
+ChatLLM uses a signed-in CloudApp session; Jira AI assistance requires an
+administrator. Both remotes discover models and stream answers through
+`/ai-remotes/{chatllm,jira}/{models,chat}` on the gateway. Configure the provider
+with server-side `OLLAMA_URL`, rebuild with the correct
+`NEXT_PUBLIC_GATEWAY_BASE_URL`, and see the [AI remote boundary](./docs/platform/ai-remote-boundary.md)
+for identity checks, CORS settings, limits, and degraded behavior.
+
 ### 4) Optional: setup Ollama
 <details>
 <summary>See details for Mac</summary>

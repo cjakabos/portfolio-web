@@ -933,7 +933,13 @@ services:
         NEXT_PRIVATE_LOCAL_WEBPACK: true
         NEXT_PUBLIC_GATEWAY_BASE_URL: http://test-nginx:80
     networks:
-      - test-frontend
+      test-frontend:
+        aliases: [next-jira]
+      test-backend: {}
+    environment:
+      - CLOUDAPP_URL=http://test-cloudapp:8099/cloudapp
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - CORS_ALLOWED_ORIGINS=http://test-shell:5001,http://test-shell-core:5001,http://localhost:5001
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:5003/ || exit 1"]
       interval: 10s
@@ -991,8 +997,15 @@ services:
         SERVICE_PATH: frontend/remote/chatllm
         SERVICE_PORT: 5333
         NEXT_PRIVATE_LOCAL_WEBPACK: true
+        NEXT_PUBLIC_GATEWAY_BASE_URL: http://test-nginx:80
     networks:
-      - test-frontend
+      test-frontend:
+        aliases: [next-chatllm]
+      test-backend: {}
+    environment:
+      - CLOUDAPP_URL=http://test-cloudapp:8099/cloudapp
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - CORS_ALLOWED_ORIGINS=http://test-shell:5001,http://test-shell-core:5001,http://localhost:5001
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:5333/ || exit 1"]
       interval: 10s

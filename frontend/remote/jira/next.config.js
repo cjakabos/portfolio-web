@@ -3,8 +3,11 @@ const { NextFederationPlugin } = require("@module-federation/nextjs-mf");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    experimental: {
+      externalDir: true,
+    },
     output: 'standalone',
-    transpilePackages: ['@mui/x-data-grid'],
+    transpilePackages: ['@mui/x-data-grid', '@portfolio/api-clients', '@portfolio/contracts'],
     webpack(config, options) {
       const { isServer } = options;
       const remoteDir = isServer ? "ssr" : "chunks";

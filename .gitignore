@@ -86,3 +86,6 @@ frontend/cloudapp-shell/ios/DerivedData/
 frontend/cloudapp-shell/ios/App/App.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
 
 e2e/.auth/
+
+# TypeScript incremental build output
+*.tsbuildinfo

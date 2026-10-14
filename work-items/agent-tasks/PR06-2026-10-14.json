@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "id": "PR06-2026-10-14",
+  "objective": "Replace the AI remote portion of PR #68 with shared adapters behind gateway and direct identity verification, bounded requests/streams, and privacy-preserving diagnostics.",
+  "branch": "codex/adlc-pr1-6",
+  "base_commit": "103bc2376db47f2f9b7fa2a2d5af0e21882b7f15",
+  "requirements": [
+    {
+      "id": "REQ-CHATLLM-001",
+      "digest": "1e1615ab09ab8362c740a25928dac5adc73b4888658a32501d202b12af61f0bc",
+      "scenario_ids": [
+        "AC-REQ-CHATLLM-001-01"
+      ]
+    },
+    {
+      "id": "REQ-JIRA-001",
+      "digest": "84e1d3fecdc1984b7e8bbe5e7a52f58d9936c4e2b645c2da7fc78cc34fdb5934",
+      "scenario_ids": [
+        "AC-REQ-JIRA-001-01"
+      ]
+    },
+    {
+      "id": "REQ-IDENTITY-001",
+      "digest": "dcf4edd146b7f0dd3c78fdfcbc97609bf8a5abd2e893bd05246379060c78b9a3",
+      "scenario_ids": [
+        "AC-REQ-IDENTITY-001-01"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-14",
+    "source": "Repository-owner instruction in this chat: Implement PR1 to 6 in a new branch where each commit is a representation of a single PR with detailed commit message. This authorizes scoped repository implementation, dependency downloads, disposable local checks, and six commits; independent review remains required before promotion, and no separate-agent reviewer is authorized by this request.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "frontend/remote/chatllm",
+      "frontend/remote/jira",
+      "frontend/cloudapp-shell/src",
+      "frontend/cloudapp-shell/jest.config.cjs",
+      "frontend/nginx",
+      "packages/api-clients",
+      "package.json",
+      "package-lock.json",
+      "scripts/architecture",
+      "docker-compose-app.yml",
+      "docker-compose.test.yml",
+      "env.example",
+      ".gitignore",
+      "README.md",
+      "TESTING.md",
+      "docs/platform",
+      "tests/nginx-gateway",
+      "work-items/agent-tasks/PR06-2026-10-14.json"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/task_contract.py",
+        "work-items/agent-tasks/IMPLEMENT-PR01-06-2026-10-14.json",
+        "--check-diff"
+      ],
+      "purpose": "Validate accepted intent and the authorized complete branch diff."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-requirements",
+        "test-requirements"
+      ],
+      "purpose": "Requirement/harness gate and regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ai-orchestration-layer",
+        "test-ai-orchestration-layer"
+      ],
+      "purpose": "Approval and orchestration regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ml-pipeline",
+        "test-ml-pipeline"
+      ],
+      "purpose": "ML runtime and authorization regressions."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--build",
+        "--rm",
+        "--no-deps",
+        "test-frontend-unit"
+      ],
+      "purpose": "Frontend and API helper behavior."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-frontend-static",
+        "test-frontend-static"
+      ],
+      "purpose": "Frontend type/lint checks."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Documentation consistency."
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "architecture:check"
+      ],
+      "purpose": "Architecture boundary checks."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none"
+      ],
+      "purpose": "Read-only isolated focused checks using existing test images; exact arguments retained in command evidence."
+    },
+    {
+      "argv": [
+        "git",
+        "switch",
+        "-c",
+        "codex/adlc-pr1-6",
+        "origin/main"
+      ],
+      "purpose": "Create the requested branch from the merged baseline."
+    },
+    {
+      "argv": [
+        "git",
+        "commit"
+      ],
+      "purpose": "Create exactly one detailed commit per authorized slice, with explicit scoped staging."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "-f",
+        "tests/nginx-gateway/ai-remotes-runtime/compose.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-ai-remotes-runtime",
+        "test-ai-remotes-runtime"
+      ],
+      "purpose": "Reproduce actual production-image identity, model discovery, SSE, standalone and federation-asset checks with disposable identities and a deterministic provider."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}
