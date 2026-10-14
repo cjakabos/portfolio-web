@@ -230,10 +230,10 @@ jobs:
           if ! docker compose -f docker-compose.test.yml up -d --wait --wait-timeout 360 \
             test-postgres test-postgres-ml test-mysql test-mongo \
             test-zookeeper test-kafka \
-            test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops test-nginx; then
+            test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops test-nginx test-rag-auth; then
             docker compose -f docker-compose.test.yml ps || true
             docker compose -f docker-compose.test.yml logs --tail=300 \
-              test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops \
+              test-cloudapp test-petstore test-vehicles test-jiraproxy test-mlops test-rag-auth \
               test-postgres test-postgres-ml test-mysql test-mongo test-kafka test-zookeeper test-nginx || true
             exit 1
           fi
@@ -244,8 +244,9 @@ jobs:
 
       - name: Run NGINX gateway tests
         run: |
-          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit \
-            test-nginx-gateway
+          # Reuse the initialized stack: a second `up` can recreate tmpfs-backed
+          # databases without restarting the applications that migrated them.
+          docker compose -f docker-compose.test.yml run --rm --no-deps test-nginx-gateway
 
       - name: Cleanup
         if: always()

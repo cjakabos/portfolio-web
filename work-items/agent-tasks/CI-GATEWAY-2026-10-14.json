@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "id": "CI-GATEWAY-2026-10-14",
+  "objective": "Diagnose the reported gateway CI failure and fix the reproduced gateway test lifecycle reset while preserving administrator access and core gates.",
+  "branch": "codex/adlc-review-fixes",
+  "base_commit": "7e78ad305020df24aa0563171c1cb86d8c8e9507",
+  "requirements": [
+    {
+      "id": "REQ-IDENTITY-001",
+      "digest": "dcf4edd146b7f0dd3c78fdfcbc97609bf8a5abd2e893bd05246379060c78b9a3",
+      "scenario_ids": [
+        "AC-REQ-IDENTITY-001-03",
+        "AC-REQ-IDENTITY-001-04"
+      ]
+    },
+    {
+      "id": "REQ-MLOPS-001",
+      "digest": "dc60e25f4f6ac2f2eff16b155557df0ab0f4303f66727e9b63c3a77eb87bc3b7",
+      "scenario_ids": [
+        "AC-REQ-MLOPS-001-04"
+      ]
+    },
+    {
+      "id": "REQ-RAG-001",
+      "digest": "2081c0d78493aa65a8ee390b09101fa12dd00a962122c2f290f6cc0eae1cf0e1",
+      "scenario_ids": [
+        "AC-REQ-RAG-001-04"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-14",
+    "source": "Repository-owner follow-up on 2026-10-14 reports failed gateway integration in PR #70 and supplies job 115705517559. The ongoing authorized branch-fix task covers diagnosis, focused local reproduction, and a scoped CI correction; public CI metadata is read without credentials.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks",
+      "commit-on-task-branch"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      ".github/workflows/ci-tests.yml",
+      "TESTING.md",
+      "work-items/agent-tasks/CI-GATEWAY-2026-10-14.json"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/adlc/task_contract.py",
+        "work-items/agent-tasks/CI-GATEWAY-2026-10-14.json",
+        "--check-diff"
+      ],
+      "purpose": "Validate this follow-up against accepted intent and its specific write scope."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "-d",
+        "--wait",
+        "--wait-timeout",
+        "360",
+        "test-nginx",
+        "test-rag-auth"
+      ],
+      "purpose": "Start the gateway and all required dependencies in a fresh disposable project."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--rm",
+        "--no-deps",
+        "test-nginx-gateway"
+      ],
+      "purpose": "Execute all gateway checks while preserving the initialized backend and database containers."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Verify testing documentation remains consistent."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}

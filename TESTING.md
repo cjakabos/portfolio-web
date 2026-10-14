@@ -52,6 +52,11 @@ docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-co
   cancelled, skipped, missing, or unrecognized core results fail it. The Docker
   `test-requirements` suite exercises the actual summary shell gate against
   synthetic job results, including optional failures and each core failure state.
+- Gateway CI starts the backend stack and `test-rag-auth` before running
+  `docker compose -f docker-compose.test.yml run --rm --no-deps test-nginx-gateway`.
+  Reuse those healthy dependencies so a second Compose `up` cannot reset the
+  tmpfs databases underneath already-running applications. From a fresh local
+  project, the normal one-step `up` remains supported.
 
 ## Requirement Traceability
 
