@@ -122,7 +122,9 @@ class HTTPClient:
             merged_headers.update(headers)
         request_headers = merged_headers or None
 
-        for attempt in range(self.max_retries):
+        # An unknown write outcome must be reconciled, not blindly replayed.
+        attempts = self.max_retries if method.upper() in {"GET", "HEAD", "OPTIONS"} else 1
+        for attempt in range(attempts):
             try:
                 if self._use_httpx:
                     client = await self._get_client()
@@ -159,12 +161,12 @@ class HTTPClient:
 
             except Exception as e:
                 last_error = e
-                if attempt >= self.max_retries - 1:
+                if attempt >= attempts - 1:
                     break
                 delay = min(2 ** attempt, 10)
                 await asyncio.sleep(delay)
 
-        raise Exception(f"HTTP request failed after {self.max_retries} attempts: {last_error}")
+        raise Exception(f"HTTP request failed after {attempts} attempts: {last_error}")
 
     async def get(self, url: str, params: Optional[Dict[str, Any]] = None, **kwargs) -> Any:
         return await self.request("GET", url, params=params, **kwargs)

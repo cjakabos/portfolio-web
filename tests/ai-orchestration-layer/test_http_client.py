@@ -51,6 +51,27 @@ class DummyAsyncClient:
 
 
 @pytest.mark.asyncio
+async def test_unknown_write_outcome_is_not_retried(monkeypatch):
+    client = HTTPClient(base_url="http://example", max_retries=3)
+    transport = DummyAsyncClient([RuntimeError("connection lost after write"), DummyResponse(json_payload={"ok": True})])
+    monkeypatch.setattr(client, "_get_client", AsyncMock(return_value=transport))
+    with pytest.raises(Exception, match="after 1 attempts"):
+        await client.post("/order", json={"item": 1})
+    assert len(transport.calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_safe_read_retry_is_preserved(monkeypatch):
+    client = HTTPClient(base_url="http://example", max_retries=3)
+    transport = DummyAsyncClient([RuntimeError("temporary read failure"), DummyResponse(json_payload={"ok": True})])
+    monkeypatch.setattr(client, "_get_client", AsyncMock(return_value=transport))
+    import http_client
+    monkeypatch.setattr(http_client.asyncio, "sleep", AsyncMock())
+    assert await client.get("/item") == {"ok": True}
+    assert len(transport.calls) == 2
+
+
+@pytest.mark.asyncio
 async def test_request_merges_headers_with_expected_precedence(monkeypatch):
     client = HTTPClient(
         base_url="http://example",

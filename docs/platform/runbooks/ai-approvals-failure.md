@@ -72,3 +72,19 @@ or has no manager. Explicit/risk-gated operations fail with 503 before agent, ML
 or workflow execution, including parallel capability entry. Do not disable HITL
 to bypass a blocked action. Restore the manager, obtain the required approval,
 and retry with fresh evidence. Read-only/low-risk operations remain available.
+
+## Claimed or uncertain approval execution
+
+Decisions bind the reviewed requester, operation, execution context and approved
+modifications. Resume cannot append unreviewed context. Old approved records
+without a binding require a fresh approval. One atomic execution claim prevents
+concurrent/repeated resumes; completed retries return the stored result.
+
+Redis claims/outcomes survive storage-instance restart. Memory mode is local to
+one process and loses approvals on restart; it is unsuitable for shared durable
+operation. Claims outlive the full approval-key retention. If execution is
+running or uncertain, the service returns 409 and never automatically reruns
+side effects. Inspect downstream state, preserve the claim, and obtain a new
+reviewed operation after reconciliation. Do not delete a claim to retry an
+unknown write. HTTP tools automatically retry safe reads only; writes execute
+once unless a separately governed downstream idempotency contract is added.

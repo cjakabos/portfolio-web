@@ -198,15 +198,20 @@ async def test_rag_resume_cannot_elevate_the_original_requester(rag_api, monkeyp
     monkeypatch.setattr(approvals_router, "storage", store)
     async with client_type(transport=httpx.ASGITransport(app=app), base_url="http://rag") as client:
         for requester, expected in (("regular-user", "error"), ("verified-admin", "completed")):
-            await store.add_pending("resume-rag", {
+            approval = {
                 "status": "approved", "requester_id": requester, "orchestration_id": "rag-resume",
                 "execution_context": {"next_capability": "rag", "rag_query": "query documents"},
                 "context": {"state_summary": {"session_id": "resume-session", "input": "query documents"}},
-            })
-            response = await client.post("/approvals/pending/resume-rag/resume",
+            }
+            approval["operation_digest"] = approvals_router.operation_digest(approval)
+            # Distinct approvals are distinct execution keys.
+            approval_id = "resume-rag-" + requester
+            await store.add_pending(approval_id, approval)
+            response = await client.post(f"/approvals/pending/{approval_id}/resume",
                 headers={"Cookie": "CLOUDAPP_AUTH=administrator"}, json={"session_id": "ignored"})
-            assert response.status_code == 200, response.text
-            assert response.json()["status"] == expected
+            assert response.status_code == (403 if requester == "regular-user" else 200), response.text
+            if response.status_code == 200:
+                assert response.json()["status"] == expected
     assert operations == [("query", "query documents")]
     assert HTTPClient.get_request_context_headers() == {}
 

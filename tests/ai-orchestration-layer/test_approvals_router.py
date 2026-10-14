@@ -161,7 +161,10 @@ async def test_resume_after_approval_uses_original_requester_identity(monkeypatc
         },
         "execution_context": {"next_capability": "chat"},
     }
-    fake_storage = FakeResumeStorage(approval)
+    approval["operation_digest"] = approvals_router.operation_digest(approval)
+    fake_storage = approvals_router.ApprovalStorage()
+    fake_storage._initialized = True
+    await fake_storage.add_to_history(approval)
     fake_context_store = FakeContextStore()
     fake_memory_manager = FakeMemoryManager()
     fake_orchestrator = FakeOrchestrator()
@@ -187,7 +190,7 @@ async def test_resume_after_approval_uses_original_requester_identity(monkeypatc
         "apr_456",
         approvals_router.ResumeRequest(session_id="ignored-by-server"),
         http_request=Request({"type": "http", "headers": []}),
-        admin_user="admin-user",
+        admin_user="alice",
     )
 
     graph_call = fake_orchestrator.graph.calls[0]

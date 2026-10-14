@@ -297,6 +297,16 @@ services:
   # =========================================================================
   # AI ORCHESTRATION LAYER UNIT TESTS (pytest)
   # =========================================================================
+  test-redis-approvals:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    tmpfs:
+      - /data
+
   test-ai-orchestration-layer:
     build:
       context: .
@@ -310,6 +320,11 @@ services:
       - ./:/workspace:ro
     environment:
       - TRACEABILITY_COMMIT=${TRACEABILITY_COMMIT:-unknown}
+      - REDIS_TEST_URL=redis://test-redis-approvals:6379/2
+
+    depends_on:
+      test-redis-approvals:
+        condition: service_healthy
 
   # Requirement-to-test traceability checks and harness unit tests.
   test-requirements:

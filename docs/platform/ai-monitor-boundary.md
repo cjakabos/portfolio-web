@@ -56,3 +56,14 @@ surface and the operator actions the app is allowed to expose.
   it is exposed in the UI.
 - Product-facing flows belong in product apps, not in the monitor, unless the
   action is explicitly operator-facing.
+
+## Approval resume identity
+
+Approval decisions remain administrator-only. The existing resume endpoint
+also remains administrator-only and now requires fresh credentials for the
+original requester. A different administrator may approve but cannot resume
+using their own credentials on another requester's behalf. Regular-user resume
+or delegated credentials require a separate human policy decision; an approval
+record must not lend administrator authority. Completed retries are cached;
+running or uncertain executions require reconciliation rather than automatic
+retry.

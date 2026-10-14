@@ -12,6 +12,7 @@ import os
 import uuid
 import asyncio
 import json
+import hashlib
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from enum import Enum
@@ -163,6 +164,14 @@ class ResumeResponse(BaseModel):
     error: Optional[str] = None
 
 
+def operation_digest(approval):
+    """Bind only reviewed execution inputs, never transient credentials."""
+    bound = {key: approval.get(key) for key in (
+        "requester_id", "orchestration_id", "proposed_action", "context",
+        "execution_context", "modifications")}
+    return hashlib.sha256(json.dumps(bound, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 # =============================================================================
 # Storage Backend
 # =============================================================================
@@ -173,6 +182,7 @@ class ApprovalStorage:
     def __init__(self):
         self._pending: Dict[str, dict] = {}
         self._history: List[dict] = []
+        self._executions: Dict[str, dict] = {}
         self._redis_client = None
         self._use_redis = False
         self._initialized = False
@@ -225,11 +235,11 @@ class ApprovalStorage:
     async def remove_pending(self, request_id: str) -> Optional[dict]:
         """Remove a pending approval."""
         if self._use_redis and self._redis_client:
-            data = await self._redis_client.hget("approvals:pending", request_id)
-            if data:
-                await self._redis_client.hdel("approvals:pending", request_id)
-                return json.loads(data)
-            return None
+            data = await self._redis_client.eval(
+                "local v=redis.call('HGET',KEYS[1],ARGV[1]); "
+                "if v then redis.call('HDEL',KEYS[1],ARGV[1]); end; return v",
+                1, "approvals:pending", request_id)
+            return json.loads(data) if data else None
         return self._pending.pop(request_id, None)
 
     async def add_to_history(self, data: dict):
@@ -269,6 +279,40 @@ class ApprovalStorage:
                 return item
 
         return None
+
+    async def claim_execution(self, request_id, binding):
+        record = {"state": "running", "binding": binding, "owner": uuid.uuid4().hex,
+                  "started_at": datetime.utcnow().isoformat() + "Z"}
+        if self._use_redis and self._redis_client:
+            key = f"approval-execution:{request_id}"
+            claimed = await self._redis_client.set(key, json.dumps(record), nx=True, ex=172800)
+            if claimed:
+                return True, record
+            existing = await self._redis_client.get(key)
+            if not existing:
+                raise HTTPException(status_code=409, detail="Execution claim changed; reconcile before retry")
+            return False, json.loads(existing)
+        # No awaits between lookup and insertion: atomic on this event loop.
+        if request_id in self._executions:
+            return False, dict(self._executions[request_id])
+        self._executions[request_id] = record
+        return True, record
+
+    async def finish_execution(self, request_id, claim, outcome, response=None):
+        record = {**claim, "state": outcome, "completed_at": datetime.utcnow().isoformat() + "Z",
+                  "response": response}
+        if self._use_redis and self._redis_client:
+            updated = await self._redis_client.eval(
+                "local v=redis.call('GET',KEYS[1]); if not v then return 0 end; "
+                "if cjson.decode(v).owner ~= ARGV[1] then return 0 end; "
+                "redis.call('SET',KEYS[1],ARGV[2],'EX',172800); return 1",
+                1, f"approval-execution:{request_id}", claim["owner"], json.dumps(record))
+            if not updated:
+                raise HTTPException(status_code=409, detail="Execution ownership lost; reconcile outcome")
+        else:
+            if self._executions.get(request_id, {}).get("owner") != claim["owner"]:
+                raise HTTPException(status_code=409, detail="Execution ownership lost")
+            self._executions[request_id] = record
 
     async def get_stats(self) -> dict:
         """Get approval statistics."""
@@ -571,6 +615,7 @@ async def decide_approval(
     approval["approver_id"] = admin_user  # Server-authoritative: derived from auth
     approval["approval_notes"] = decision.approval_notes
     approval["modifications"] = decision.modifications
+    approval["operation_digest"] = operation_digest(approval)
 
     await storage.add_to_history(approval)
 
@@ -606,6 +651,11 @@ async def resume_after_approval(
     if not approval:
         raise HTTPException(status_code=404, detail="Approval request not found")
 
+    # Keep the current administrator boundary and require fresh credentials
+    # for the original requester. Approval cannot lend another admin's identity.
+    if approval.get("requester_id") != admin_user:
+        raise HTTPException(status_code=403, detail="Resume requires the original requester credentials")
+
     # Check status
     status = approval.get("status")
     if status == ApprovalStatus.PENDING.value:
@@ -626,6 +676,14 @@ async def resume_after_approval(
             error="Approval request expired"
         )
 
+    if status != ApprovalStatus.APPROVED.value:
+        raise HTTPException(status_code=409, detail="Only an explicitly approved operation can resume")
+    if resume_request.additional_context:
+        raise HTTPException(status_code=400, detail="Execution changes require a new approval")
+    binding = operation_digest(approval)
+    if approval.get("operation_digest") != binding:
+        raise HTTPException(status_code=409, detail="Reviewed operation changed or has no binding; obtain a new approval")
+
     # Get execution context
     execution_context = approval.get("execution_context")
     if not execution_context:
@@ -640,6 +698,14 @@ async def resume_after_approval(
             status_code=503,
             detail="Orchestrator not available"
         )
+
+    claimed, claim = await storage.claim_execution(request_id, binding)
+    if not claimed:
+        if claim["binding"] != binding:
+            raise HTTPException(status_code=409, detail="Approval execution payload changed")
+        if claim["state"] == "completed":
+            return ResumeResponse(**claim["response"])
+        raise HTTPException(status_code=409, detail="Execution already claimed; reconcile before retry")
 
     try:
         # Import state types
@@ -798,7 +864,7 @@ async def resume_after_approval(
         except Exception as e:
             logger.error(f"Failed to store resume response: {e}")
 
-        return ResumeResponse(
+        response = ResumeResponse(
             request_id=orchestration_id,
             approval_id=request_id,
             status="completed",
@@ -807,7 +873,14 @@ async def resume_after_approval(
             capabilities_used=result_state.get("capabilities_used", [])
         )
 
+        await storage.finish_execution(request_id, claim, "completed", response.model_dump())
+        return response
+
+    except asyncio.CancelledError:
+        await asyncio.shield(storage.finish_execution(request_id, claim, "uncertain"))
+        raise
     except Exception as e:
+        await storage.finish_execution(request_id, claim, "uncertain")
         logger.error(f"Failed to resume workflow: {e}", exc_info=True)
         return ResumeResponse(
             request_id=approval.get("orchestration_id", ""),

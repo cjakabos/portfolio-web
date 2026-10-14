@@ -15,3 +15,6 @@ chromadb==0.5.23
 langgraph==0.3.21
 # Chroma 0.5 uses NumPy 1 APIs; deterministic embeddings need no model download.
 numpy==1.26.4
+
+# Real disposable Redis verifies atomic approval claims across storage instances.
+redis==5.0.1
