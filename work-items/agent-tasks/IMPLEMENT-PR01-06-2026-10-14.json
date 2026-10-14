@@ -66,7 +66,7 @@
     "status": "approved",
     "approved_by": "repository-owner",
     "approved_on": "2026-10-14",
-    "source": "Repository-owner instruction in this chat: Implement PR1 to 6 in a new branch where each commit is a representation of a single PR with detailed commit message. This authorizes scoped repository implementation, dependency downloads, disposable local checks, and six commits; independent review remains required before promotion, and no separate-agent reviewer is authorized by this request.",
+    "source": "Repository-owner instruction in this chat: Implement PR1 to 6 in a new branch where each commit is a representation of a single PR with detailed commit message. This authorizes scoped repository implementation, dependency downloads, disposable local checks, and six commits; independent review remains required before promotion, and no separate-agent reviewer is authorized by this request. The explicitly authorized PR-5 runtime tests, PR-6 gateway regression tests, and PR-6 shared-helper Jest configuration are included; these correct path-name omissions in the initial declaration and do not add a new objective or external authority.",
     "allowed_actions": [
       "read-repository",
       "edit-scoped-files",
@@ -111,7 +111,10 @@
       "scripts/architecture",
       "env.example",
       ".gitignore",
-      "e2e"
+      "e2e",
+      "tests/ml-pipeline",
+      "frontend/cloudapp-shell/jest.config.cjs",
+      "tests/nginx-gateway"
     ],
     "credentials": {
       "mode": "ephemeral-test-only",

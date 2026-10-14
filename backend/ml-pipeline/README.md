@@ -77,7 +77,7 @@ source venv/bin/active
 pip3 install -r requirements.txt
 cd src
 python3 init_segmentationdb.py
-python3 app.py
+FLASK_DEBUG=true python3 app.py
 ```
 
 Example of sending a new customer request, this will triger the full Customer Segmentation pipeline:
@@ -116,3 +116,19 @@ View results:
 <p align="center">
 	<img src="customers/Screen.png" >
 </p>  
+
+## Container runtime
+
+The container initializes its database before starting Gunicorn with the WSGI
+entrypoint. Flask debug mode is off by default and available only through the
+explicit local `FLASK_DEBUG=true` startup. `PORT` controls binding and health;
+`GUNICORN_TIMEOUT` defaults to 300 seconds for synchronous ML work.
+
+Use one synchronous worker by default because clustering writes shared output
+and database artifacts. Increasing `GUNICORN_WORKERS` requires a separately
+reviewed concurrency/data-ownership policy. Health remains public; data and job
+operations retain verified CloudApp administrator authorization. Runtime tests
+start an actual Gunicorn process and verify health and access boundaries.
+
+This replaces the ML portion of PR #68, preserving `1490c7d` and `f396f63` while
+retaining the later administrator access controls from PR #70.
