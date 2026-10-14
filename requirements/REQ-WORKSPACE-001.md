@@ -2,19 +2,21 @@
 schema_version: 1
 id: REQ-WORKSPACE-001
 title: Personal notes and file workspace
-status: proposed
+status: accepted
 owner: cloudapp-product
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-WORKSPACE-001 — Personal notes and files
 
-## Observed behavior
+## Product intent
 
 The signed-in workspace lets a user list, create, update, and delete personal notes, and upload, list, download, and delete personal files. The backend checks that a user accesses their own records. Notes require a title and description and reject descriptions of 1,000 characters or more. File uploads reject empty files, duplicate filenames for the same user, missing filenames, and files larger than 2,000,000 bytes.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records the scope and demo
+limits; implementation evidence remains as provenance.
 
 ## Evidence
 

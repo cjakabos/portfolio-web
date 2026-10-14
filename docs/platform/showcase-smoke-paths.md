@@ -8,9 +8,20 @@ surface, but to make the coverage model explicit.
 
 | Tier | Intent | Representative jobs |
 | --- | --- | --- |
-| `Core showcase` | Protect the README-first story, portfolio mode, and architecture spine | `backend-tests`, `nginx-gateway-tests`, `api-contract-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `docs-drift-checks`, `frontend-lockfile-checks`, `e2e-core-tests` |
+| `Core showcase` | Protect the README-first story, portfolio mode, and architecture spine | `requirements-tests`, `requirement-execution-evidence`, `backend-tests`, `nginx-gateway-tests`, `api-contract-tests`, `frontend-unit-tests`, `frontend-static-checks`, `frontend-budget-checks`, `docs-drift-checks`, `frontend-lockfile-checks`, `e2e-core-tests` |
 | `Extended showcase` | Keep the deeper integrations, remotes, and operator surfaces healthy | `ml-pipeline-tests`, `ai-orchestration-tests`, `ai-monitor-checks`, `ai-monitor-component-tests`, `ai-monitor-behavior-tests`, `e2e-remote-tests` |
 | `Optional security posture` | Surface dependency risk without blocking routine showcase curation | `dependency-scans` |
+
+`Test Summary` succeeds only when every `Core showcase` job reports `success`.
+Failed, cancelled, skipped, missing, or unrecognized core results fail the gate
+and identify the affected jobs. Require `Test Summary` in branch protection to
+enforce the full core tier at merge time; workflow code does not configure that
+repository setting.
+
+Extended and optional results remain separately reported. Native suites mapped
+to default acceptance targets must still pass the executed requirement evidence
+gate, including mapped suites in the extended tier. The summary gate's regression
+tests run in the Docker `test-requirements` suite.
 
 ## Official Tour Coverage
 
@@ -40,3 +51,6 @@ surface, but to make the coverage model explicit.
   `Extended showcase` path before they are presented as demo-ready.
 - `Optional security posture` findings should be triaged and documented, but
   they are not the same thing as a broken flagship tour.
+- MLOps and RAG role changes require backend HTTP denial checks plus the
+  `nginx-gateway-tests` operator-path checks, which cover anonymous/regular
+  callers, spoofed identity headers, versioned routes, and administrator access.

@@ -15,10 +15,12 @@ import json
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from enum import Enum
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, WebSocket, WebSocketDisconnect, Depends, Request
 from pydantic import BaseModel, Field
 
 from auth import require_authenticated_user, require_admin_user, require_websocket_admin
+from services.downstream_headers import extract_downstream_headers
+from tools.http_client import HTTPClient
 
 logger = logging.getLogger(__name__)
 
@@ -588,6 +590,7 @@ async def decide_approval(
 async def resume_after_approval(
     request_id: str,
     resume_request: ResumeRequest,
+    http_request: Request,
     admin_user: str = Depends(require_admin_user),
 ):
     """
@@ -758,12 +761,16 @@ async def resume_after_approval(
         # Use original session_id for thread_id as well
         config = {"configurable": {"thread_id": original_session_id}}
 
-        if hasattr(_orchestrator, 'graph'):
-            # Use the compiled graph
-            result_state = await _orchestrator.graph.ainvoke(state, config)
-        else:
-            # Fallback to direct invoke
-            result_state = await _orchestrator.invoke(state)
+        header_ctx_token = HTTPClient.set_request_context_headers(extract_downstream_headers(http_request))
+        try:
+            if hasattr(_orchestrator, 'graph'):
+                # Use the compiled graph
+                result_state = await _orchestrator.graph.ainvoke(state, config)
+            else:
+                # Fallback to direct invoke
+                result_state = await _orchestrator.invoke(state)
+        finally:
+            HTTPClient.reset_request_context_headers(header_ctx_token)
 
         # Save interaction
         if _memory_manager and result_state.get("final_output"):

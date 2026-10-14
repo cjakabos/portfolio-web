@@ -57,7 +57,7 @@ useful as the team evolves.
 | `petstore` | Spring Boot | `8083` | `/petstore` | Backend engineer | `Optional` | MySQL | Customer, pet, employee, and scheduling flows |
 | `vehicles-api` | Spring Boot | `8880` | `/vehicles` | Backend engineer | `Hero` | H2/runtime-local state, downstream clients | Vehicle CRUD and enrichment for the default OpenMaps story |
 | `jiraproxy` | Spring Boot | `8501` | `/jiraproxy` | Backend engineer | `Supporting` | Jira external API | Server-side proxy for Jira credentials and request validation |
-| `mlops-segmentation` | Flask | `8600` | `/mlops-segmentation` | AI/platform engineer | `Supporting` | Postgres (ML) | Customer segmentation and chart generation |
+| `mlops-segmentation` | Flask | `8600` | `/mlops-segmentation` | AI/platform engineer | `Supporting` | Postgres (ML), CloudApp identity | Administrator-only customer segmentation and chart generation |
 | `ai-orchestration-layer` | FastAPI | `8700` | `/ai`, `/ai/ws` via gateway | AI/platform engineer | `Operator tooling` | Redis, MongoDB, ChromaDB, Ollama, gateway-backed services | Orchestration, approvals, RAG, experiments, system endpoints for the second-act operator story |
 
 ## Shared Infrastructure Deployables
@@ -109,7 +109,7 @@ directly to internal services when a routed gateway path exists.
 | Realtime chat | CloudApp shell | `/cloudapp/ws`, room/message APIs | Gateway websocket policy, Kafka, Mongo |
 | Maps and vehicles | OpenMaps remote | `/vehicles` | Gateway, Vehicles API |
 | Jira refinement | Jira remote | `/jiraproxy` plus local AI features | Gateway, Jira proxy, optional Ollama |
-| ML segmentation | MLOps remote | `/mlops-segmentation` | Gateway, ML Postgres |
+| ML segmentation | MLOps remote | `/mlops-segmentation` | Gateway, CloudApp admin identity, ML Postgres |
 | Operator approvals and orchestration | AI monitor | `/ai`, `/ai/ws` | Gateway, FastAPI orchestration layer, Redis, MongoDB, ChromaDB |
 
 ## Data Store Policy Snapshot

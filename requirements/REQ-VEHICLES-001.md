@@ -2,19 +2,21 @@
 schema_version: 1
 id: REQ-VEHICLES-001
 title: Vehicle map and administrator vehicle maintenance
-status: proposed
+status: accepted
 owner: vehicles-and-maps
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-VEHICLES-001 — Vehicle map
 
-## Observed behavior
+## Product intent
 
 The OpenMaps module displays vehicles in a list and on an interactive map. The vehicle API enriches listed and individual vehicles with a resolved address and price from its downstream clients. Regular users can view the map; administrator users can add vehicles by selecting a map location and can edit or delete vehicles through the module.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records the scope and demo
+limits; implementation evidence remains as provenance.
 
 ## Evidence
 

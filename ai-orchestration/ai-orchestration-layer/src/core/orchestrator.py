@@ -23,12 +23,15 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage, SystemMessage
+from fastapi import HTTPException
 
 from core.state import UnifiedState, OrchestrationType, ExecutionContext, create_initial_state
 from core.llm_manager import get_llm, get_streaming_llm
 from core.config import get_config
 from core.unified_logger import get_logger, get_state_logger, set_log_context
 from core.tool_manager import get_tool_manager
+from auth import verify_cloudapp_admin
+from tools.http_client import HTTPClient
 
 # Import capabilities
 from capabilities.agent_executor import AgentExecutor
@@ -744,6 +747,11 @@ class AIOrchestrationLayer:
 
     async def execute_rag_query(self, state: UnifiedState) -> UnifiedState:
         """Execute RAG query."""
+        # Check the actual incoming credentials for explicit, inferred, parallel,
+        # and resumed execution. User context and approval do not grant access.
+        principal = await verify_cloudapp_admin(HTTPClient.get_request_context_headers())
+        if state.get("user_id") != principal.username:
+            raise HTTPException(status_code=403, detail="RAG requires the original administrator requester")
         state["capabilities_used"].append("rag")
 
         if self.enable_error_handling and self.error_handler:

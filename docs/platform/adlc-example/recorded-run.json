@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "recorded_at": "2026-10-13T05:56:34.976460+00:00",
+  "task": "LIFECYCLE-GENERATION-2026-10-13",
+  "case": "AC-REQ-HARNESS-001-04",
+  "steps": [
+    {
+      "name": "generate accepted cases",
+      "argv_template": [
+        "python3",
+        "scripts/requirements/generate_cases.py",
+        "--root",
+        "<temporary-workspace>"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "stdout": "Wrote tests/requirement-cases/generated/REQ-AIOPS-001.feature\nWrote tests/requirement-cases/generated/REQ-APPROVAL-001.feature\nWrote tests/requirement-cases/generated/REQ-CHAT-001.feature\nWrote tests/requirement-cases/generated/REQ-CHATLLM-001.feature\nWrote tests/requirement-cases/generated/REQ-COMMERCE-001.feature\nWrote tests/requirement-cases/generated/REQ-HARNESS-001.feature\nWrote tests/requirement-cases/generated/REQ-IDENTITY-001.feature\nWrote tests/requirement-cases/generated/REQ-JIRA-001.feature\nWrote tests/requirement-cases/generated/REQ-MLOPS-001.feature\nWrote tests/requirement-cases/generated/REQ-PETSTORE-001.feature\nWrote tests/requirement-cases/generated/REQ-RAG-001.feature\nWrote tests/requirement-cases/generated/REQ-SHELL-001.feature\nWrote tests/requirement-cases/generated/REQ-VEHICLES-001.feature\nWrote tests/requirement-cases/generated/REQ-WORKSPACE-001.feature\nWrote tests/requirement-cases/generated/index.json\nGenerated 48 acceptance cases.\n",
+      "stderr": ""
+    },
+    {
+      "name": "verify initial freshness",
+      "argv_template": [
+        "python3",
+        "scripts/requirements/generate_cases.py",
+        "--root",
+        "<temporary-workspace>",
+        "--check"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "stdout": "Generated acceptance artifacts match canonical requirements.\n",
+      "stderr": ""
+    },
+    {
+      "name": "reject missing generated feature",
+      "argv_template": [
+        "python3",
+        "scripts/requirements/generate_cases.py",
+        "--root",
+        "<temporary-workspace>",
+        "--check"
+      ],
+      "expected_exit_code": 2,
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "stale or missing generated artifact: REQ-HARNESS-001.feature; regenerate from Markdown\n"
+    },
+    {
+      "name": "recover by regeneration",
+      "argv_template": [
+        "python3",
+        "scripts/requirements/generate_cases.py",
+        "--root",
+        "<temporary-workspace>"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "stdout": "Wrote tests/requirement-cases/generated/REQ-AIOPS-001.feature\nWrote tests/requirement-cases/generated/REQ-APPROVAL-001.feature\nWrote tests/requirement-cases/generated/REQ-CHAT-001.feature\nWrote tests/requirement-cases/generated/REQ-CHATLLM-001.feature\nWrote tests/requirement-cases/generated/REQ-COMMERCE-001.feature\nWrote tests/requirement-cases/generated/REQ-HARNESS-001.feature\nWrote tests/requirement-cases/generated/REQ-IDENTITY-001.feature\nWrote tests/requirement-cases/generated/REQ-JIRA-001.feature\nWrote tests/requirement-cases/generated/REQ-MLOPS-001.feature\nWrote tests/requirement-cases/generated/REQ-PETSTORE-001.feature\nWrote tests/requirement-cases/generated/REQ-RAG-001.feature\nWrote tests/requirement-cases/generated/REQ-SHELL-001.feature\nWrote tests/requirement-cases/generated/REQ-VEHICLES-001.feature\nWrote tests/requirement-cases/generated/REQ-WORKSPACE-001.feature\nWrote tests/requirement-cases/generated/index.json\nGenerated 48 acceptance cases.\n",
+      "stderr": ""
+    },
+    {
+      "name": "verify recovered freshness",
+      "argv_template": [
+        "python3",
+        "scripts/requirements/generate_cases.py",
+        "--root",
+        "<temporary-workspace>",
+        "--check"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "stdout": "Generated acceptance artifacts match canonical requirements.\n",
+      "stderr": ""
+    }
+  ],
+  "release_scope": "local rehearsal only",
+  "temporary_workspace_removed": true,
+  "task_digest": "6e4456f827d89b2d0c5c49793b203fee02364a89edde7806f4e7515a849fa649",
+  "runtime": {
+    "python": "3.12.15",
+    "PyYAML": "6.0.2",
+    "gherkin-official": "29.0.0"
+  },
+  "inputs": {
+    "requirements/REQ-AIOPS-001.md": "614ba7fbb56af80195bf6d2ef8513e648a0b0a1fe04e521e51f9e9473dd68b3d",
+    "requirements/REQ-APPROVAL-001.md": "3cc7c52ed04c51f52d95f2a0ca6cc38284e2084259cab76133a71e5c3a8a123c",
+    "requirements/REQ-CHAT-001.md": "0076888732307fcfb3569a6bcd9b00e32c1de84f368d8414ce8be315cac62623",
+    "requirements/REQ-CHATLLM-001.md": "1e1615ab09ab8362c740a25928dac5adc73b4888658a32501d202b12af61f0bc",
+    "requirements/REQ-COMMERCE-001.md": "faa79b0a0d4bfb54eb0f3cc858b12b90f65ac8d85d82978f68b446bfd165a969",
+    "requirements/REQ-HARNESS-001.md": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+    "requirements/REQ-IDENTITY-001.md": "dcf4edd146b7f0dd3c78fdfcbc97609bf8a5abd2e893bd05246379060c78b9a3",
+    "requirements/REQ-JIRA-001.md": "84e1d3fecdc1984b7e8bbe5e7a52f58d9936c4e2b645c2da7fc78cc34fdb5934",
+    "requirements/REQ-MLOPS-001.md": "dc60e25f4f6ac2f2eff16b155557df0ab0f4303f66727e9b63c3a77eb87bc3b7",
+    "requirements/REQ-PETSTORE-001.md": "f35f9dd76e91947e28c1cd34c65109662bd488bf3506a3f197a3245127233f13",
+    "requirements/REQ-RAG-001.md": "2081c0d78493aa65a8ee390b09101fa12dd00a962122c2f290f6cc0eae1cf0e1",
+    "requirements/REQ-SHELL-001.md": "df7152ec015d96fe8023ebce58615615ba77ccef41e4c542b6dea5830e58b702",
+    "requirements/REQ-VEHICLES-001.md": "ff0721bd50e488ec3cc6a57dc6267c95ad20216a5d85ca1b91a71020852b6638",
+    "requirements/REQ-WORKSPACE-001.md": "24022caf70c700942f52f71e54cce4a9349ab5254884216562af22df4cf7eb58",
+    "requirements/reviews/ACCESS-2026-10-12.md": "295b7703e7d647ecc772bbf824f81ef51f62889a2cec41dfe54f6663e5dbbfa0",
+    "requirements/reviews/BASELINE-2026-10-12.md": "6c514796f82c64026473d9f11c16c224e50b2da50f9bede63597ac343b395219",
+    "requirements/reviews/REMAINING-2026-10-12.md": "c3ebb16b18a750f11c361d7a4c9cf00fce3ba87056e5dd00d5e5b2e7d85b4616",
+    "requirements/baseline.json": "ea20ef6d52cdf95c6db6b8b09ceec713d8f156896e06d0acfa8de6855c8fbc3b",
+    "scripts/requirements/generate_cases.py": "3fe18beaff71f3a4c7f012119930677c994f8547cf0f65b8d1f53344e6013634",
+    "scripts/requirements/model.py": "968f129cbe29e962a8132788b015f3f72ff133b5c778e356763724ac337632d5",
+    "scripts/requirements/intent_baseline.py": "65486b523e699fd59835d8402b5af8bde73e806544335cc4845155b155b1f8e4",
+    "scripts/requirements/requirements.txt": "a97b363bbb604160f3a3e1cd7602a59062170261256434d4b59612183d47bfff",
+    "scripts/requirements/Dockerfile": "8727a64d12deed7dd8985913c58d9841fcd5e65538f365610ae429f8f06400cf",
+    "scripts/adlc/task_contract.py": "ac5a919dc1fbb3bb757ca2c176f3a4ca3c27d2fd4040015f20ee92fcdb33c533",
+    "scripts/adlc/rehearse_generation.py": "df4194e245cb2e9f3fe9c93417d11a33fbc952af866fea6ab0b9b5e89d8f0ffc",
+    "AGENTS.md": "aae3319ff90f0894b70768f848a09dba1f7ea270a579b0959ba54c4c8d3d2a27",
+    "docs/platform/coding-agent-authority.md": "ce4029fa3752209db31c4291847ddb58464119e22ca375d62165d440cfd4ace7"
+  },
+  "accepted_requirement_digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+  "generated_artifacts": {
+    "REQ-CHAT-001.feature": "2887837dd4c4e8d8eb2a36466bb9345d938d83683bd1b2bb0f714373f0c25345",
+    "index.json": "039dbb023d0c31b4b37f96eb29d790270266334c0bd7b4db0c7cecc7addc85b8",
+    "REQ-HARNESS-001.feature": "64b23d4e7357a1be96397a486f499838a1568cfd41656715c40717adca04da6a",
+    "REQ-PETSTORE-001.feature": "c30cfb6fdfddb45fdc2c6a6a894337f48bddb0e2bfb008b133aa0ed9ff6e9e0d",
+    "REQ-RAG-001.feature": "37f929c48ddeb00fdede1c64e38fdfc35297e65eef19c83524f5dda93efaaf29",
+    "REQ-VEHICLES-001.feature": "59a94474ca6cd74052a71f57f70eac1feae5354716b91613fb95ef44c6d022fb",
+    "REQ-IDENTITY-001.feature": "f1373a85924ea3fae14ff2d6acbf99a3c41c8dea87fe6dc4659d5f9e86ba6985",
+    "REQ-COMMERCE-001.feature": "630fe2ac71a3e72905b4df845f08e3b49c718a688567e0e7a11220278e5b4e96",
+    "REQ-WORKSPACE-001.feature": "c085dd80e1f583c37045cab46781ea26a53963f899b7aadd5a3ffca8a5c69eed",
+    "REQ-SHELL-001.feature": "a5021889a9730d0093901e01642ee4b22d46e3d5354b94f1b930900cd0841cd0",
+    "REQ-AIOPS-001.feature": "c4658e9f68ecca44824567d64a688f3e5dce3bf9a781a909f14e9d6e2b29604c",
+    "REQ-MLOPS-001.feature": "14696c04783aa64a9e60e10a5b6bbd69b2a389ecbe3ba2139b1f0934dab5dd4a",
+    "REQ-JIRA-001.feature": "c28eb7c4778ab7ef32de71e24fd04bc3ecd51091a73f3cdd74d3006868ce9139",
+    "REQ-APPROVAL-001.feature": "d982085a560a0f544edc9b82d61c7a83595807efd5b179c9a3203cfda2ab9a2e",
+    "REQ-CHATLLM-001.feature": "6605ab90d4545e0359b94da504951c90d71baad042838b025743997e7d985c52"
+  },
+  "rollback_equivalence": true,
+  "canonical_inputs_unchanged": true,
+  "completed_at": "2026-10-13T05:56:35.990441+00:00"
+}

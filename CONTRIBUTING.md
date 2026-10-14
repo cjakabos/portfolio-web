@@ -24,6 +24,10 @@ docker compose -f docker-compose-app.yml up -d
 
 ## Branch and PR Flow
 
+Coding-agent work starts with a scoped human-approved task record; see
+[coding-agent authority](docs/platform/coding-agent-authority.md). Validate
+accepted intent and the permitted Git diff before presenting work for review.
+
 1. Fork the repo
 2. Create a focused branch
 3. Make small, reviewable commits

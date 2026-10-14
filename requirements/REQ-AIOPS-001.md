@@ -2,19 +2,20 @@
 schema_version: 1
 id: REQ-AIOPS-001
 title: AI operator console and orchestration control plane
-status: proposed
+status: accepted
 owner: ai-platform
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/REMAINING-2026-10-12.md
 ---
 
 # REQ-AIOPS-001 — AI operator console
 
-## Observed behavior
+## Product intent
 
 The operator console uses the CloudApp administrator identity for protected operator operations. It exposes service health, orchestration activity, errors, metrics, available local models, and a discoverable tool catalog. The orchestration API accepts requests for platform capabilities and supports a WebSocket streaming path. Tool invocation is mediated by the orchestration service rather than by a browser calling each internal service directly.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+See [the human decision](reviews/REMAINING-2026-10-12.md) for scope and limits.
 
 ## Evidence
 

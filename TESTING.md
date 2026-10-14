@@ -48,6 +48,15 @@ docker compose -p "$PROJECT" -f docker-compose.test.yml up --build --abort-on-co
 ```
 - Common services: `test-requirements`, `test-backend`, `test-backend-petstore`, `test-backend-vehicles`, `test-backend-webproxy`, `test-ml-pipeline`, `test-ai-orchestration-layer`, `test-frontend-static`, `test-frontend-budgets`, `test-ai-monitor-lint`, `test-ai-monitor-component`, `test-ai-monitor-behavior`, `test-nginx-gateway`, `test-frontend-unit`, `test-e2e-core`, `test-e2e`.
 - CI tiers: `Core showcase` must-pass, `Extended showcase` breadth coverage, and `Optional security posture`. See `docs/platform/showcase-smoke-paths.md`.
+- `Test Summary` requires every Core Showcase job to report `success`; failed,
+  cancelled, skipped, missing, or unrecognized core results fail it. The Docker
+  `test-requirements` suite exercises the actual summary shell gate against
+  synthetic job results, including optional failures and each core failure state.
+- Gateway CI starts the backend stack and `test-rag-auth` before running
+  `docker compose -f docker-compose.test.yml run --rm --no-deps test-nginx-gateway`.
+  Reuse those healthy dependencies so a second Compose `up` cannot reset the
+  tmpfs databases underneath already-running applications. From a fresh local
+  project, the normal one-step `up` remains supported.
 
 ## Requirement Traceability
 
@@ -56,10 +65,12 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
 ```
 
 - Core PR gate for canonical requirement schema, generated feature/index
-  freshness, reviewed case digests, exact test declarations, and command tests.
+  freshness, reviewed case digests, exact test declarations, recorded accepted
+  product intent, and command tests. Accepted revisions must match the human
+  decision and SHA-256 in `requirements/baseline.json`.
 - Reports are under `test-results/requirements/`. Coverage and execution outcomes
   are separate; coverage assertions and test boundaries are recorded in `requirements/test-map.json`.
-- All 46 current scenarios have complete reviewed native-test mappings. Source
+- All 48 current scenarios have complete reviewed native-test mappings. Source
   completeness remains separate from whether the current checkout passed.
 - Mapped native suites persist JUnit XML or Jest/Vitest JSON plus source/config
   fingerprints under `test-results/`; see `requirements/README.md` for paths.
@@ -73,11 +84,45 @@ docker compose -f docker-compose.test.yml run --build --rm --no-deps test-requir
 - The gate rejects missing, skipped, failed, interrupted or stale default evidence and writes
   `test-results/requirements/executed-traceability.json`. CI downloads native
   artifacts before running it; Test Summary requires it.
+- Reports separate accepted/proposed intent from coverage and execution.
+  For promotion, append `--requirement-id REQ-AREA-001` to the evidence command
+  for each affected requirement. Proposed requirements cannot be promoted even
+  with passing tests. See `requirements/README.md#product-intent-acceptance`.
 - External model/Jira/Leaflet and operator data boundaries use deterministic
   fixtures. Live/nightly tests remain separate opt-in provider checks.
 - Browser traces, screenshots and JUnit XML use `test-results/playwright/`;
   monitor-only runs use `test-results-monitor/playwright/`. Playwright clears
   its own output folder when starting a run, so keep native evidence outside it.
+
+### Coding-agent authority
+
+Validate the scoped task declarations and the branch diff before review:
+
+```bash
+python3 scripts/adlc/task_contract.py work-items/agent-tasks/ADLC-2026-10-13.json --check-diff
+```
+
+The Docker `test-requirements` gate includes authority regressions for stale
+intent, credential/network expansion, untrusted-input/review omissions, missing
+Git bases, and out-of-scope files. Validation does not execute task commands or
+authenticate the human approval source; see the coding-agent authority guide.
+
+Contract history checks run without live services:
+
+```bash
+python3 scripts/contracts/openapi_contracts.py check-revisions --base-ref origin/main
+python3 scripts/contracts/openapi_contracts.py generate-ts --check
+```
+
+The Docker requirement gate exercises changed snapshots without bumps,
+decreases, unchanged upstream versions, new/removal cases, and unavailable Git
+bases. CI also requires this comparison in the API-contract job before startup.
+
+The [bounded ADLC example](docs/platform/adlc-example/README.md) runs real case
+generation in a disposable workspace with networking disabled. Its Docker
+replay records success, a missing-artifact failure, regeneration recovery,
+source/artifact digests, and cleanup. The requirement gate runs replay
+regressions; the example also publishes independent review and feedback.
 
 ### Read-only Jira intake command
 
@@ -94,9 +139,24 @@ tests call the intake CLI without contacting a Jira server.
 
 See [requirements/README.md](./requirements/README.md#jira-intake-fixture-or-read-only-live-source)
 for Cloud/Data Center setup, requirement links and Docker examples. Live provider
-checks require an explicitly chosen issue and identity. Existing 46 acceptance
+checks require an explicitly chosen issue and identity. Existing 48 acceptance
 mappings do not establish live-adapter execution coverage, and changes to the
 adapter/Compose definition invalidate previously recorded execution context.
+
+### Operator access checks
+
+MLOps and RAG require a verified CloudApp administrator session at the gateway
+and backend. Run `test-ml-pipeline`, `test-ai-orchestration-layer`, and
+`test-nginx-gateway` for changes to these boundaries. Backend suites use
+deterministic identity-check responses while exercising real HTTP authorization
+logic; gateway tests use real CloudApp regular/admin sessions. RAG load checks
+also require `ADMIN_AUTH_TOKEN`, rather than an internal service token. The
+gateway RAG fixture serves the actual router and identity verifier with
+deterministic corpus I/O, so checks do not need live models or vector storage.
+AI tests also exercise real RAG capability authorization through orchestration,
+streaming, parallel workers, and approval resumption. Model routing and corpus
+I/O are deterministic; credentials remain request-local and are verified before
+the restricted capability executes.
 
 ## Frontend Static Checks
 ```bash
@@ -117,11 +177,18 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit t
 
 ## Nightly AI Integrations
 - Workflow: `.github/workflows/nightly-ai-integrations.yml`
-- Scope: ChatLLM (live Ollama), AI Monitor model selectors (`chat` / `rag` / `embedding`), Jira AI refine + child proposal flow with cleanup.
+- Scope: ChatLLM (live Ollama), AI Monitor model selectors (`chat` / `rag` / `embedding`), and an opt-in read-only Jira board/AI proposal preview.
 - Required models:
   - `qwen3:1.7b`
   - `qwen3-embedding:4b`
-- Jira nightly spec auto-skips when Jira secrets are missing.
+- Jira is disabled by default. Manual dispatch with `jira_read_only=true` uses
+  dedicated `JIRA_READ_ONLY_*` settings and an existing fixture project; missing
+  settings fail a requested run. Credentials alone cannot enable live tests.
+- Live Jira create/update/delete/transition and cleanup need exact-operation
+  human approval; the unattended spec has no mutation mode. See
+  [live Jira authority](docs/platform/live-jira-test-authority.md).
+- Run the credential-free browser/API boundary checks with
+  `docker compose -f docker-compose.test.yml run --build --rm --no-deps test-e2e e2e/jira-authority.spec.ts --config e2e/jira-authority.config.ts`.
 
 ## Cleanup
 ```bash

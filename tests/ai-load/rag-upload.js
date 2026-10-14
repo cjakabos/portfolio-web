@@ -4,7 +4,6 @@ import { Rate, Trend } from 'k6/metrics';
 
 import {
   buildUrl,
-  formParams,
   maxPollAttempts,
   maybeJson,
   pollSleep,
@@ -12,6 +11,13 @@ import {
 } from './common.js';
 
 const sampleDocument = open('./fixtures/rag-sample.txt');
+
+function adminParams() {
+  if (!__ENV.ADMIN_AUTH_TOKEN) {
+    throw new Error('RAG load checks require ADMIN_AUTH_TOKEN from a CloudApp administrator session');
+  }
+  return { headers: { Authorization: `Bearer ${__ENV.ADMIN_AUTH_TOKEN}` } };
+}
 
 export const ragUploadSuccess = new Rate('rag_upload_success');
 export const ragUploadDuration = new Trend('rag_upload_duration');
@@ -48,7 +54,7 @@ export default function () {
       tags: 'synthetic,load-test',
       category: 'synthetic-load',
     },
-    formParams(),
+    adminParams(),
   );
 
   const uploadBody = maybeJson(uploadResponse);
@@ -69,7 +75,7 @@ export default function () {
   for (let attempt = 0; attempt < maxPollAttempts(); attempt += 1) {
     const statusResponse = http.get(
       buildUrl(`/rag/documents/upload/status/${uploadBody.job_id}`),
-      formParams(),
+      adminParams(),
     );
     finalBody = maybeJson(statusResponse);
     finalStatus = finalBody && finalBody.status;
@@ -88,6 +94,6 @@ export default function () {
   ragUploadSuccess.add(completed);
 
   if (completed && finalBody && finalBody.doc_id) {
-    http.del(buildUrl(`/rag/documents/${finalBody.doc_id}`), null, formParams());
+    http.del(buildUrl(`/rag/documents/${finalBody.doc_id}`), null, adminParams());
   }
 }

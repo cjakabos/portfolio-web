@@ -2,19 +2,21 @@
 schema_version: 1
 id: REQ-COMMERCE-001
 title: Product catalog, personal cart, and order history
-status: proposed
+status: accepted
 owner: cloudapp-product
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-COMMERCE-001 — Shop and order flows
 
-## Observed behavior
+## Product intent
 
 An authenticated user can browse the shared item catalog, add and remove items in their own cart, clear that cart, submit checkout, and view their order history. Checkout records an order from the cart; the shell then clears the cart and refreshes order history. The backend scopes cart and order operations to the authenticated user. Administrator users can create, update, and delete catalog items; regular users cannot perform those item mutations.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records the scope and demo
+limits; implementation evidence remains as provenance.
 
 ## Evidence
 

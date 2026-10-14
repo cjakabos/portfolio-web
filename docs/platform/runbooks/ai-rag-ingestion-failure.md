@@ -19,7 +19,9 @@ operator RAG surface.
 
 ## Immediate Checks
 
-1. Call `GET /ai/rag/health`.
+1. Call `GET /ai/rag/health` with a verified CloudApp administrator session.
+   RAG routes require administrator access at the gateway and backend; internal
+   service tokens do not bypass this policy. Use `/ai/health` for general readiness.
 2. Review the latest upload job status from
    `GET /ai/rag/documents/upload/status/{job_id}`.
 3. Check service logs for:

@@ -318,7 +318,7 @@ services:
       context: .
       dockerfile: scripts/requirements/Dockerfile
     working_dir: /workspace
-    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "sh", "-c", "set -e; python3 scripts/requirements/validate_traceability.py --report /results/source-traceability.json; status=0; python3 -m xmlrunner discover -s tests/requirement-cases -p 'test_*.py' -v -o /results/junit || status=$$?; python3 scripts/requirements/report_results.py --report /results/source-traceability.json --suite test-requirements --junit /results/junit --context /results/context.json; exit $$status"]
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "sh", "-c", "set -e; python3 scripts/requirements/validate_traceability.py --require-accepted-baseline --report /results/source-traceability.json; status=0; python3 -m xmlrunner discover -s tests/requirement-cases -p 'test_*.py' -v -o /results/junit || status=$$?; python3 scripts/requirements/report_results.py --report /results/source-traceability.json --suite test-requirements --junit /results/junit --context /results/context.json; exit $$status"]
     volumes:
       - ./:/workspace:ro
       - ./test-results/requirements:/results
@@ -532,9 +532,39 @@ services:
         condition: service_healthy
       test-cloudapp:
         condition: service_healthy
+      test-rag-auth:
+        condition: service_healthy
     networks:
       - test-frontend
       - test-backend
+
+  # Real RAG route/auth boundary; deterministic corpus avoids live model services.
+  test-rag-auth:
+    build:
+      context: .
+      dockerfile: tests/ai-orchestration-layer/Dockerfile
+    entrypoint: ["python3", "-m", "uvicorn", "rag_app:app", "--host", "0.0.0.0", "--port", "8700"]
+    environment:
+      - PYTHONPATH=/app/src:/tests
+      - CLOUDAPP_URL=http://test-cloudapp:8099/cloudapp
+      - OLLAMA_URL=http://model.test.invalid
+      - PETSTORE_URL=http://petstore.test.invalid
+      - VEHICLES_URL=http://vehicles.test.invalid
+      - ML_URL=http://ml.test.invalid
+      - POSTGRES_URL=postgresql://fixture:fixture@postgres.test.invalid/fixture
+    volumes:
+      - ./ai-orchestration/ai-orchestration-layer/src:/app/src:ro
+      - ./tests/nginx-gateway:/tests:ro
+    networks:
+      test-backend:
+        aliases:
+          - ai-orchestration-layer
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8700/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
 
   # =========================================================================
   # API CONTRACT GOVERNANCE TESTS (OpenAPI snapshots + generated TS clients)
@@ -783,6 +813,7 @@ services:
         SERVICE_PATH: backend/ml-pipeline
         SERVICE_PORT: 8600
     environment:
+      - CLOUDAPP_URL=http://test-cloudapp:8099/cloudapp
       - ML_DB_USER=testuser
       - ML_DB_PASSWORD=testpass
       - ML_DB_HOST=test-postgres-ml

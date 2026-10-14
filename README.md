@@ -34,18 +34,24 @@ implementation, and trace acceptance scenarios to executed native tests.
 
 | Capability | Implementation |
 | --- | --- |
-| Central requirements | [14 requirement documents](./requirements/README.md#current-application-requirement-map) with stable IDs, ownership, and 46 tagged Gherkin acceptance scenarios |
+| Central requirements | [14 requirement documents](./requirements/README.md#current-application-requirement-map) with stable IDs, ownership, and 48 tagged Gherkin acceptance scenarios |
 | Read-only Jira intake | [Fixture or live Jira source](./requirements/README.md#jira-intake-fixture-or-read-only-live-source) produces a Markdown snapshot with requirement/scenario links and fingerprints; fixtures are the default, while Cloud/Data Center access is selected through CLI flags and dedicated configuration |
 | Portable acceptance cases | [Generated features and index](./tests/requirement-cases/generated/) preserve scenario IDs and source digests; the [test map](./requirements/test-map.json) links them to exact JUnit, pytest, Jest, and Vitest test declarations |
 | Verified execution evidence | Docker runners record source/configuration fingerprints, completion status, and report digests; CI combines JUnit XML and Jest/Vitest JSON into per-scenario outcomes |
-| Shared agent guidance | [AGENTS.md](./AGENTS.md) defines requirement ownership, read-only intake, PR review, and focused Docker verification rules |
+| Scoped coding-agent authority | [AGENTS.md](./AGENTS.md) and [task contracts](./docs/platform/coding-agent-authority.md) record accepted intent, permitted actions, credentials, untrusted inputs, escalation, and independent review |
+| Complete bounded lifecycle | [Executed ADLC example](./docs/platform/adlc-example/README.md) connects accepted intent to a scoped task, implementation hashes, execution evidence, independent review, local release rehearsal, and failure/recovery feedback |
 
 Intake writes a proposal under `work-items/`. Product and engineering review the
 requirement amendment alongside code and tests in the same implementation PR;
-merging the reviewed PR establishes the updated baseline. The current
-code-derived requirements are **proposed**, pending product validation. Generated
-Gherkin is linked to the existing runners through the test map; those native tests
-provide the executable assertions.
+merging the reviewed PR establishes the updated baseline. The repository owner
+has accepted all 14 current requirements and their 48 scenarios for the local
+showcase through the [hero/harness review](./requirements/reviews/BASELINE-2026-10-12.md),
+[administrator-only MLOps/RAG decision](./requirements/reviews/ACCESS-2026-10-12.md),
+and [remaining product-intent approval](./requirements/reviews/REMAINING-2026-10-12.md).
+Their exact revisions are recorded in [the product-intent baseline](./requirements/baseline.json);
+no current requirement remains proposed. CI validates acceptance separately
+from coverage and execution. Generated Gherkin is linked to the existing runners
+through the test map; those native tests provide the executable assertions.
 
 **Recorded Docker verification (2026-10-05, commit `7d8615d`):** 291 tests passed
 across nine native suites, with all 46 acceptance scenarios mapped as complete and

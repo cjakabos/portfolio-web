@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      jira_read_only:
+        description: "Run read-only Jira checks against the configured fixture project"
+        type: boolean
+        required: false
+        default: false
 
 # Least-privilege: read-only access to repo contents.
 # If you add steps that comment on PRs or create issues, add the relevant
@@ -48,13 +54,40 @@ jobs:
           openssl rsa -in secrets/jwt-private-key.pem -pubout -out secrets/jwt-public-key.pub
           ls -l secrets
 
+      - name: Resolve read-only Jira authority
+        id: jira
+        shell: bash
+        env:
+          REQUEST_READ_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.jira_read_only }}
+          JIRA_DOMAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.jira_read_only && secrets.JIRA_READ_ONLY_DOMAIN || '' }}
+          JIRA_EMAIL: ${{ github.event_name == 'workflow_dispatch' && inputs.jira_read_only && secrets.JIRA_READ_ONLY_EMAIL || '' }}
+          JIRA_API_TOKEN: ${{ github.event_name == 'workflow_dispatch' && inputs.jira_read_only && secrets.JIRA_READ_ONLY_API_TOKEN || '' }}
+          JIRA_PROJECT_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.jira_read_only && secrets.JIRA_READ_ONLY_PROJECT_KEY || '' }}
+        run: |
+          set -euo pipefail
+          if [[ "$REQUEST_READ_ONLY" != "true" ]]; then
+            echo "enabled=0" >> "$GITHUB_OUTPUT"
+            echo "project_key=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$JIRA_DOMAIN" || -z "$JIRA_EMAIL" || -z "$JIRA_API_TOKEN" || -z "$JIRA_PROJECT_KEY" ]]; then
+            echo "::error::Read-only Jira opt-in requires all four dedicated JIRA_READ_ONLY_* settings."
+            exit 1
+          fi
+          if [[ ! "$JIRA_PROJECT_KEY" =~ ^[A-Z][A-Z0-9_]*$ ]]; then
+            echo "::error::Invalid read-only Jira fixture project key."
+            exit 1
+          fi
+          echo "enabled=1" >> "$GITHUB_OUTPUT"
+          echo "project_key=$JIRA_PROJECT_KEY" >> "$GITHUB_OUTPUT"
+
       - name: Create .env for nightly stack
         shell: bash
         env:
-          JIRA_DOMAIN: ${{ secrets.JIRA_DOMAIN }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_DOMAIN: ${{ steps.jira.outputs.enabled == '1' && secrets.JIRA_READ_ONLY_DOMAIN || '' }}
+          JIRA_EMAIL: ${{ steps.jira.outputs.enabled == '1' && secrets.JIRA_READ_ONLY_EMAIL || '' }}
+          JIRA_API_TOKEN: ${{ steps.jira.outputs.enabled == '1' && secrets.JIRA_READ_ONLY_API_TOKEN || '' }}
+          JIRA_PROJECT_KEY: ${{ steps.jira.outputs.project_key }}
         run: |
           cat > .env <<EOF
           JWT_SECRET=nightly-ci-jwt-secret-change-me
@@ -327,24 +360,6 @@ jobs:
           wait_for "http://localhost:5010" "AI monitor" "ai-orchestration-monitor"
           wait_for_ai_health
 
-      - name: Resolve Jira nightly flag
-        id: jira
-        shell: bash
-        env:
-          JIRA_DOMAIN: ${{ secrets.JIRA_DOMAIN }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
-        run: |
-          if [[ -n "${JIRA_DOMAIN}" && -n "${JIRA_EMAIL}" && -n "${JIRA_API_TOKEN}" && -n "${JIRA_PROJECT_KEY}" ]]; then
-            echo "enabled=1" >> "$GITHUB_OUTPUT"
-            echo "project_key=${JIRA_PROJECT_KEY}" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=0" >> "$GITHUB_OUTPUT"
-            echo "project_key=" >> "$GITHUB_OUTPUT"
-            echo "Jira secrets are missing; Jira nightly spec will be skipped."
-          fi
-
       - name: Install Playwright dependencies
         working-directory: frontend/cloudapp-shell
         run: npm ci
@@ -352,6 +367,12 @@ jobs:
       - name: Install Chromium for Playwright
         working-directory: frontend/cloudapp-shell
         run: npx playwright install --with-deps chromium
+
+      - name: Run Jira authority regressions
+        working-directory: frontend/cloudapp-shell
+        run: |
+          NODE_PATH=./node_modules npx playwright test jira-authority.spec.ts \
+            -c ../../e2e/jira-authority.config.ts
 
       - name: Run nightly AI integration specs
         working-directory: frontend/cloudapp-shell
@@ -363,10 +384,10 @@ jobs:
           NIGHTLY_CHAT_MODEL: qwen3:1.7b
           NIGHTLY_RAG_MODEL: qwen3:1.7b
           NIGHTLY_EMBEDDING_MODEL: qwen3-embedding:4b
-          NIGHTLY_ENABLE_JIRA_E2E: ${{ steps.jira.outputs.enabled }}
+          NIGHTLY_ENABLE_JIRA_READ_ONLY_E2E: ${{ steps.jira.outputs.enabled }}
           NIGHTLY_JIRA_PROJECT_KEY: ${{ steps.jira.outputs.project_key }}
-          PW_ADMIN_USERNAME: cloudadmin
-          PW_ADMIN_PASSWORD: cloudy
+          PW_ADMIN_USERNAME: integrationadmin
+          PW_ADMIN_PASSWORD: secureAdminPass123
         run: |
           NODE_PATH=./node_modules npx playwright test \
             nightly-chatllm-ollama.spec.ts \

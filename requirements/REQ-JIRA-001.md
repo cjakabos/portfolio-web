@@ -2,21 +2,22 @@
 schema_version: 1
 id: REQ-JIRA-001
 title: Jira issue board and local AI refinement
-status: proposed
+status: accepted
 owner: jira-module
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/REMAINING-2026-10-12.md
 ---
 
 # REQ-JIRA-001 — Jira issue workflow and AI assistance
 
-## Observed behavior
+## Product intent
 
 The administrator-only Jira remote reads issues from the configured Jira project through the Jira proxy and lets an administrator create, edit, and delete issues. Its optional local Ollama assistant can review an issue or a parent with its children, propose revised issue text for comparison, and generate child issue suggestions. The administrator must explicitly approve an individual proposed change before the issue is updated and select which generated child suggestions to create.
 
 This Jira product integration performs real Jira writes when its create, update, delete, or approve actions are used. It is distinct from the fixture-only read-only requirement intake described in REQ-HARNESS-001.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+See [the human decision](reviews/REMAINING-2026-10-12.md) for scope and limits.
 
 ## Evidence
 

@@ -10,8 +10,10 @@ docker-compose.test.yml.
 Run: pytest tests/ -v --tb=short
 """
 import os
+import json
 import pytest
 import psycopg
+import requests
 from sqlalchemy import create_engine, text
 
 # Point to the ephemeral test database (set by docker-compose.test.yml)
@@ -97,7 +99,34 @@ def app():
 @pytest.fixture(scope="session")
 def client(app):
     """Create Flask test client."""
-    return app.test_client()
+    client = app.test_client()
+    client.environ_base["HTTP_AUTHORIZATION"] = "Bearer fixture-admin"
+    return client
+
+
+@pytest.fixture(autouse=True)
+def cloudapp_auth(monkeypatch):
+    """Keep only the external identity check deterministic; ML/DB work stays real."""
+    calls = []
+
+    def verify(url, *, headers, timeout, allow_redirects):
+        calls.append((url, headers, timeout, allow_redirects))
+        response = requests.Response()
+        if headers.get("Authorization") == "Bearer fixture-admin" or headers.get("Cookie") == "CLOUDAPP_AUTH=fixture-admin":
+            response.status_code = 200
+            payload = {"username": "verified-admin", "roles": ["ROLE_ADMIN", "ROLE_USER"]}
+        elif headers.get("Authorization") == "Bearer fixture-user":
+            response.status_code = 403
+            payload = {"error": "Administrator access required"}
+        else:
+            response.status_code = 401
+            payload = {"error": "Authentication required"}
+        response._content = json.dumps(payload).encode()
+        return response
+
+    monkeypatch.setenv("CLOUDAPP_URL", "http://cloudapp.test/cloudapp")
+    monkeypatch.setattr(requests, "get", verify)
+    return calls
 
 
 @pytest.fixture(autouse=True)

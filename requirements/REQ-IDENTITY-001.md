@@ -2,19 +2,21 @@
 schema_version: 1
 id: REQ-IDENTITY-001
 title: User registration, sessions, and role-based access
-status: proposed
+status: accepted
 owner: cloudapp-backend
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-IDENTITY-001 — User identity and access
 
-## Observed behavior
+## Product intent
 
 A person can register with a unique username, matching password confirmation, and a password of at least eight characters. Public registration assigns the regular-user role and creates a cart; it does not grant administrator access. Successful login issues the CloudApp authentication cookie, logout clears it, and protected pages require an authenticated session. Administrator routes and item mutations are restricted by the backend's role checks.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records the scope and demo
+limits; implementation evidence remains as provenance.
 
 ## Evidence
 

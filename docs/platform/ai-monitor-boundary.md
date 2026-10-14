@@ -20,6 +20,17 @@ surface and the operator actions the app is allowed to expose.
   through the gateway.
 - Browser access reaches AI routes through `/ai/*` and CloudApp admin routes
   through `/cloudapp-admin/*`.
+- RAG operations under `/ai/rag/*` and MLOps data/job operations under
+  `/mlops-segmentation/*` require a CloudApp administrator session at both the
+  gateway and backend. The general AI and MLOps readiness endpoints remain
+  available. Internal service tokens cannot replace an administrator session
+  for these APIs.
+- RAG is an administrator-managed shared corpus. Optional user IDs are metadata
+  and administrator filters, rather than tenant authorization.
+- Explicit or inferred RAG orchestration, parallel tasks, and streaming verify
+  the incoming administrator session before corpus access. Approval resumption
+  requires fresh credentials matching the original administrator requester;
+  approving a regular user's workflow does not grant that user corpus access.
 
 ## Capability Matrix
 

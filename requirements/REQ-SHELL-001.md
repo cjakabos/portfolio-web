@@ -2,19 +2,21 @@
 schema_version: 1
 id: REQ-SHELL-001
 title: Authenticated CloudApp shell and remote-module navigation
-status: proposed
+status: accepted
 owner: frontend-platform
 basis: code-derived-current-behavior
-review: pending-product-validation
+review: requirements/reviews/BASELINE-2026-10-12.md
 ---
 
 # REQ-SHELL-001 — CloudApp shell navigation
 
-## Observed behavior
+## Product intent
 
 The CloudApp shell is the signed-in entry point for the dashboard and integrated modules. The navigation and dashboard cards reflect the user's administrator role and the enabled and available status of remote modules. When a remote is configured as opt-in or cannot be reached, the route presents an explanatory unavailable state instead of silently rendering a blank module.
 
-These statements describe current code behavior. Confirm them as product intent before changing the status to accepted.
+The repository owner accepted this behavior for the local portfolio showcase.
+The [human decision](reviews/BASELINE-2026-10-12.md) records the scope and demo
+limits; implementation evidence remains as provenance.
 
 ## Evidence
 

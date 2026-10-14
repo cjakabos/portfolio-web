@@ -58,14 +58,77 @@ Gherkin fenced block and give every scenario stable tags:
 Scenario tags are stable identifiers for traceability. The Gherkin text is
 part of the requirement document and should be reviewed with it.
 
+## Product Intent Acceptance
+
+Human acceptance, coverage completeness, and test execution are separate
+decisions. A passing test cannot establish product intent. The source report
+records requirement statuses and counts, and each scenario carries its
+requirement status. Executed reports group outcomes by accepted and proposed
+intent while still requiring every default native target to pass.
+
+Accept a requirement only after a person reviews its intended behavior,
+acceptance scenarios, coverage assertions, and stated limits:
+
+1. Record the human decision in a Markdown file under `requirements/reviews/`.
+   Its YAML front matter contains `schema_version: 1`, a decision `id`,
+   `status: accepted`, `decided_by`, a quoted YYYY-MM-DD `decided_on`, and the
+   reviewed requirement IDs in `requirements`. Its `requirement_digests` object
+   binds those IDs to the exact accepted file SHA-256 values. Pending decisions
+   cannot count as acceptance. The decision may originate in a human review or an explicit
+   repository-owner chat approval; record the actual source honestly.
+2. Set the reviewed requirement to `status: accepted`, link that decision file
+   in its `review` field, and describe product intent while preserving provenance.
+3. Record its full file SHA-256 in `requirements/baseline.json`. Schema version 1
+   has a `requirements` object keyed by ID; each entry contains `digest`,
+   `accepted_by`, `accepted_on`, and `decision`. Reviewer, date, and scope must
+   agree with the decision record.
+4. Regenerate cases, review the changed case digests and coverage assertions,
+   update `test-map.json`, and run the Docker requirement gate in the same PR.
+
+The compiler still generates proposed cases. Draft source validation can run
+without an accepted baseline. The Docker PR gate uses
+`validate_traceability.py --require-accepted-baseline` and rejects an absent or
+empty baseline, unrecorded accepted requirements, missing/pending decisions, and
+accepted revisions that changed after review. Refreshing generated cases and
+test-map digests alone does not renew human acceptance. Any requirement amendment
+needs a new human decision or an explicitly reviewed update to the decision and
+baseline record.
+
+These files are review records, not authenticated signatures. Human PR review
+and protected repository rules must control changes to requirements, decisions,
+baseline records, and the harness. An agent must not invent a reviewer or infer
+acceptance from an implementation request or successful verification.
+
+For promotion, name each affected requirement explicitly after its native
+suites have produced current evidence:
+
+```bash
+docker compose -f docker-compose.test.yml run --build --rm --no-deps \
+  test-requirement-evidence --requirement-id REQ-IDENTITY-001
+```
+
+Repeat `--requirement-id` for multiple requirements. The evidence gate always
+requires a valid accepted baseline and all default target evidence; selected
+proposed, retired, or unknown requirements cannot be promoted even if their
+tests pass. Without selection it aggregates the repository's default evidence;
+it does not approve all proposed requirements for release.
+
 ## Current Application Requirement Map
 
-The REQ files below are a code-derived behavior baseline. They describe
-observable behavior found in the current implementation and point to the
-source paths used to derive it. They are marked proposed because source code
-alone cannot establish that every existing behavior is intended product
-behavior. Review the wording and scenarios with the product owner before
-accepting them as the durable product baseline.
+The REQ files below retain the implementation evidence used to derive them.
+Accepted documents are the human-reviewed product baseline recorded in
+`baseline.json`; proposed documents describe behavior still awaiting a product
+decision. Source code alone cannot establish that existing behavior is intended.
+The [initial hero/harness review](reviews/BASELINE-2026-10-12.md) states the scope
+and demo limits of the first acceptance batch.
+
+The repository owner accepted all 14 current requirements covering 48 scenarios
+on 2026-10-12. The decisions cover the initial hero/harness scope,
+[administrator-only MLOps/RAG workflows](reviews/ACCESS-2026-10-12.md), and
+[Jira, ChatLLM, Petstore, the AI operator console, and AI approvals](reviews/REMAINING-2026-10-12.md).
+No current requirement remains proposed. Acceptance is scoped to the local
+showcase and does not establish production readiness or live-provider test
+execution. New proposals and future amendments still require human review.
 
 | Requirement | Current behavior area |
 | --- | --- |
@@ -233,10 +296,11 @@ not a requirement source format.
 
 ## Fixture Example Scope
 
-DEMO-001 remains a synthetic example of the traceability flow. It does not refer
-to a live Jira issue or a released product commitment. REQ-HARNESS-001 describes
-the intake workflow, including its configurable sources, and remains proposed
-pending product validation.
+DEMO-001 remains a historical synthetic example of the traceability flow. It
+does not refer to a live Jira issue or a released product commitment. Its stored
+fingerprint reflects the imported revision and is not rewritten when the current
+requirement changes. REQ-HARNESS-001 is now accepted as part of the local showcase
+baseline; its mapped scenarios retain their fixture scope.
 
 ## Test Evidence Contract
 
@@ -279,7 +343,7 @@ missing, ambiguous and skipped results cannot become passing evidence. The
 portable Gherkin scenarios remain the acceptance contract, linked to the existing
 native runners without a second execution framework.
 
-All 46 current scenarios have reviewed complete mappings. Completeness describes
+All 48 current scenarios have reviewed complete mappings. Completeness describes
 the assertions at their documented boundaries; it is separate from execution and
 from exhaustive product coverage. The tests exercise real application components,
 API clients, databases, Kafka, document parsing, Chroma and KMeans where relevant.
@@ -319,7 +383,9 @@ checkout SHA; local runs default to `unknown` and still compare source digests).
 
 GitHub CI uploads native evidence, downloads it in the Executed Requirement
 Evidence job, validates the checkout and merges outcomes in Docker. Test Summary
-requires both source validation and executed evidence. Branch protection must
-require one of these gates or Test Summary to enforce it at merge time; repository
-settings are unchanged. Product review is still required to accept the proposed
-requirement baseline.
+requires every Core Showcase job to succeed, including source validation and
+executed evidence. Require Test Summary in branch protection to enforce the full
+core tier at merge time; requiring only a requirement gate protects traceability
+without enforcing the other core checks. Repository settings are unchanged.
+Product review is still required before proposed requirements can join the
+accepted baseline or be selected for promotion.
