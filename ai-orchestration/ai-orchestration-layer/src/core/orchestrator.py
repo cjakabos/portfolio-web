@@ -71,7 +71,7 @@ try:
     HITL_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️  Human-in-the-Loop not available: {e}")
-    print("   Approval requests will be auto-approved")
+    print("   Operations requiring approval will be unavailable")
     # Define fallback thresholds
     RISK_THRESHOLD_AUTO_APPROVE = 0.3
     RISK_THRESHOLD_REQUIRE_HUMAN = 0.7
@@ -189,7 +189,7 @@ class AIOrchestrationLayer:
             })
         else:
             self.hitl_manager = None
-            self.logger.warning("hitl_fallback", {"fallback": "all requests auto-approved"})
+            self.logger.warning("hitl_fallback", {"fallback": "approval-gated operations unavailable"})
 
         # Parallel Execution
         if self.enable_parallel:
@@ -495,24 +495,12 @@ class AIOrchestrationLayer:
         if self.enable_error_handling and state.get("errors"):
             return "error"
 
-        # Calculate risk and decide HITL
-        if self.enable_hitl and self.hitl_manager:
-            risk_score = self._calculate_risk_score(state)
-            state["risk_score"] = risk_score
-
-            # Explicit human flag
-            if state.get("requires_human", False):
-                return "human_review"
-
-            # Risk-based decision for ML operations
-            if state.get("orchestration_type") == OrchestrationType.ML_PIPELINE:
-                if risk_score > RISK_THRESHOLD_AUTO_APPROVE:
-                    return "human_review"
-
-            # Risk-based for agent actions with destructive operations
-            if state.get("orchestration_type") == OrchestrationType.AGENT_ROUTING:
-                if risk_score > RISK_THRESHOLD_REQUIRE_HUMAN:
-                    return "human_review"
+        # Policy survives feature/import/manager failure. Missing approval
+        # infrastructure must not convert a mandatory review into execution.
+        state["risk_score"] = self._calculate_risk_score(state)
+        if self._approval_required(state):
+            self._guard_approval_availability(state)
+            return "human_review"
 
         # Check for parallel execution
         if self.enable_parallel:
@@ -532,6 +520,26 @@ class AIOrchestrationLayer:
         }
 
         return routing_map.get(orchestration_type, "chat")
+
+    def _approval_required(self, state, capability=None):
+        candidate = dict(state)
+        if capability:
+            candidate["orchestration_type"] = {
+                "agent": OrchestrationType.AGENT_ROUTING,
+                "ml": OrchestrationType.ML_PIPELINE,
+                "workflow": OrchestrationType.WORKFLOW_EXECUTION,
+            }[capability]
+        risk = self._calculate_risk_score(candidate)
+        kind = candidate.get("orchestration_type")
+        return (candidate.get("requires_human", False)
+                or kind == OrchestrationType.ML_PIPELINE and risk > RISK_THRESHOLD_AUTO_APPROVE
+                or kind == OrchestrationType.AGENT_ROUTING and risk > RISK_THRESHOLD_REQUIRE_HUMAN)
+
+    def _guard_approval_availability(self, state, capability=None):
+        if state.get("resuming_from_approval") and state.get("approval_status") == "approved":
+            return
+        if self._approval_required(state, capability) and (not self.enable_hitl or not self.hitl_manager):
+            raise HTTPException(status_code=503, detail="Required approval service unavailable")
 
     def _calculate_risk_score(self, state: UnifiedState) -> float:
         """Calculate risk score for HITL decision."""
@@ -592,10 +600,7 @@ class AIOrchestrationLayer:
         """
 
         if not self.enable_hitl or not self.hitl_manager:
-            # Fallback: auto-approve
-            state["approval_status"] = "auto_approved"
-            state["auto_approved"] = True
-            return state
+            raise HTTPException(status_code=503, detail="Required approval service unavailable")
 
         state_logger = get_state_logger(state)
         state["execution_path"].append("human_review")
@@ -687,6 +692,7 @@ class AIOrchestrationLayer:
 
     async def execute_agent_system(self, state: UnifiedState) -> UnifiedState:
         """Execute agent system."""
+        self._guard_approval_availability(state, "agent")
         state["capabilities_used"].append("agent")
 
         if self.enable_error_handling and self.error_handler:
@@ -707,6 +713,7 @@ class AIOrchestrationLayer:
 
     async def execute_workflow(self, state: UnifiedState) -> UnifiedState:
         """Execute workflow system."""
+        self._guard_approval_availability(state, "workflow")
         state["capabilities_used"].append("workflow")
 
         if self.enable_error_handling and self.error_handler:
@@ -727,6 +734,7 @@ class AIOrchestrationLayer:
 
     async def execute_ml_pipeline(self, state: UnifiedState) -> UnifiedState:
         """Execute ML pipeline."""
+        self._guard_approval_availability(state, "ml")
         state["capabilities_used"].append("ml")
 
         if self.enable_error_handling and self.error_handler:

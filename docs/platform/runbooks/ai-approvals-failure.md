@@ -64,3 +64,11 @@ to process decisions.
 - record whether any approvals were lost because fallback storage was in memory
 - capture whether the issue was auth, persistence, or orchestrator coupling
 - update the incident notes with any requests that needed manual replay
+
+## Approval manager unavailable
+
+Required human approval remains mandatory when HITL is disabled, cannot import,
+or has no manager. Explicit/risk-gated operations fail with 503 before agent, ML
+or workflow execution, including parallel capability entry. Do not disable HITL
+to bypass a blocked action. Restore the manager, obtain the required approval,
+and retry with fresh evidence. Read-only/low-risk operations remain available.
