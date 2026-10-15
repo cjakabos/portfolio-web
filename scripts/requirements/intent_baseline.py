@@ -40,7 +40,7 @@ def load_decision(path):
     return decision
 
 
-def validate_intent(root, requirements, required=False):
+def validate_intent(root, requirements, required=False, require_all_accepted=False):
     statuses = {requirement.id: requirement.status for requirement in requirements}
     report = {
         "requirements": statuses,
@@ -48,10 +48,16 @@ def validate_intent(root, requirements, required=False):
         "baseline": None,
     }
     errors = []
+    if require_all_accepted:
+        errors.extend(
+            f"{identity}: CI requires accepted intent for every active canonical requirement; status={status}"
+            for identity, status in sorted(statuses.items())
+            if status not in {"accepted", "retired"}
+        )
     accepted = {identity for identity, status in statuses.items() if status == "accepted"}
     path = root / "requirements/baseline.json"
     if not path.is_file():
-        if required or accepted:
+        if required or require_all_accepted or accepted:
             errors.append("accepted product intent requires requirements/baseline.json")
         return errors, report
     try:

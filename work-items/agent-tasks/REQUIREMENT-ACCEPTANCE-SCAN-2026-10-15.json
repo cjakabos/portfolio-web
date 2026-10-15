@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "id": "REQUIREMENT-ACCEPTANCE-SCAN-2026-10-15",
+  "objective": "Automatically scan every active canonical requirement in CI; record the repository-owner's explicit acceptance of REQ-INTENT-001, regenerate its cases and coverage digests, and verify the acceptance gate.",
+  "branch": "codex/adlc-pr1-6",
+  "base_commit": "884a4dc07b2bf077c90deb36e3c9f81ee567f6d4",
+  "requirements": [
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-01"
+      ]
+    },
+    {
+      "id": "REQ-INTENT-001",
+      "digest": "b7cd081009380fe148d74cc4168866408162c9e92ed9d9e5cdb7722a04adb53f",
+      "scenario_ids": [
+        "AC-REQ-INTENT-001-01",
+        "AC-REQ-INTENT-001-02",
+        "AC-REQ-INTENT-001-03",
+        "AC-REQ-INTENT-001-04"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-15",
+    "source": "Repository-owner request in this chat on 2026-10-15: \"can't we have a CI test that iterates through requirements so automatically recognizes if there is a new and checks if accepted or not?\" This authorizes the scoped CI scanner implementation, proposed requirement/case/coverage records, documentation, and disposable local verification. It does not accept the new policy requirement, authorize independent self-review, rewrite the original six commits, or authorize external operations. The existing generator-count regression must also use discovered canonical IDs so the requested automatic discovery works when this proposal is added; this is supporting verification within the same objective. Subsequent explicit repository-owner instruction in this chat on 2026-10-15: \"accept the remaining requirements\". At that point REQ-INTENT-001 was the only proposed canonical requirement. This accepts its presented wording and four scenarios and authorizes recording that actual decision, updating its baseline, regenerating cases and coverage digests, updating documentation, and verification. It does not approve undeclared requirements, independent code review, merging, publishing, or rewriting the original six commits.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "scripts/requirements/intent_baseline.py",
+      "scripts/requirements/validate_traceability.py",
+      "tests/requirement-cases/test_acceptance_scan.py",
+      "requirements/REQ-INTENT-001.md",
+      "requirements/test-map.json",
+      "requirements/README.md",
+      "tests/requirement-cases/generated",
+      "docker-compose.test.yml",
+      "README.md",
+      "TESTING.md",
+      "work-items/agent-tasks/REQUIREMENT-ACCEPTANCE-SCAN-2026-10-15.json",
+      "work-items/agent-tasks/change-selection.json",
+      "tests/requirement-cases/test_traceability.py",
+      "requirements/baseline.json",
+      "requirements/reviews/INTENT-2026-10-15.md"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--rm",
+        "--no-deps",
+        "test-requirements"
+      ],
+      "purpose": "Actual CI requirement gate must pass with the newly recorded genuine acceptance; regressions must continue to reject unaccepted or unbound fixture requirements."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "python3"
+      ],
+      "purpose": "Use existing requirement runtime for offline declaration/diff validation, generated-case tooling, and complete harness regressions; synthetic acceptance remains confined to disposable fixtures."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Documentation consistency."
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "purpose": "Whitespace and patch validation."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}

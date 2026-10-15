@@ -134,7 +134,11 @@ class RequirementHarnessTests(unittest.TestCase):
         output = Path(self.temporary.name) / "absolute-output"
         result = self.command("generate_cases.py", "--output-dir", str(output))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(list(output.glob("REQ-*.feature"))), 14)
+        self.assertEqual(
+            {path.stem for path in output.glob("REQ-*.feature")},
+            {requirement.id for requirement in load_requirements(self.root)
+             if requirement.status != "retired"},
+        )
         rendered = (output / "REQ-IDENTITY-001.feature").read_text()
         for expected in [
             "requirements/REQ-IDENTITY-001.md",

@@ -488,6 +488,73 @@
       "gap": "",
       "owner": "cloudapp-backend"
     },
+    "AC-REQ-INTENT-001-01": {
+      "case_digest": "69881dcc126445571f5776465ed16eafdde3bbc38d48f1130104481164588ea4",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_acceptance_scan.py",
+          "test_id": "AcceptanceScanTests.test_new_unselected_proposal_fails_ci_scan",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "A fresh, mapped proposal absent from a valid accepted baseline is discovered and rejected without selecting its ID."
+        },
+        {
+          "path": "tests/requirement-cases/test_acceptance_scan.py",
+          "test_id": "AcceptanceScanTests.test_actual_compose_validation_command_rejects_new_unselected_proposal",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "The real validation arguments from the mandatory Docker service reject a newly added unselected proposal in a disposable repository."
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-INTENT-001-02": {
+      "case_digest": "4e84a69c8fa783968e25e2115c726048f546eca0456d0070c602b9dc43dffda6",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_acceptance_scan.py",
+          "test_id": "AcceptanceScanTests.test_status_flag_without_recorded_decision_fails_ci_scan",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "An accepted status on a new file without a corresponding baseline revision is rejected."
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-INTENT-001-03": {
+      "case_digest": "d76aa82a7d6133e7990a3c0524fd631a7031c75aca2dfcc79fefe75b9ff72929",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_acceptance_scan.py",
+          "test_id": "AcceptanceScanTests.test_changed_revision_requires_matching_human_decision",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "An amended accepted file fails with an old baseline, and updating only its baseline digest still fails against the old recorded decision."
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
+    "AC-REQ-INTENT-001-04": {
+      "case_digest": "2f2dd140408cf9bbdd2a4cb85ad7ace0fd1002b22c968b4cc74ded345b15f16d",
+      "coverage": "complete",
+      "targets": [
+        {
+          "path": "tests/requirement-cases/test_acceptance_scan.py",
+          "test_id": "AcceptanceScanTests.test_every_active_revision_with_matching_acceptance_passes",
+          "suite": "test-requirements",
+          "execution": "default",
+          "asserts": "The strict function and CLI accept a newly discovered revision only with matching synthetic decision and baseline records; this verifies declarations without claiming execution or authenticating a real human."
+        }
+      ],
+      "gap": "",
+      "owner": "repository-maintainers"
+    },
     "AC-REQ-JIRA-001-01": {
       "case_digest": "569a6f7ffa89855d6448fa59ab0a01acb364bf5e3b1cc825834fa7848bd58d11",
       "coverage": "complete",

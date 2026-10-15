@@ -178,6 +178,34 @@
       ]
     },
     {
+      "id": "REQ-INTENT-001",
+      "status": "accepted",
+      "source": "requirements/REQ-INTENT-001.md",
+      "digest": "b7cd081009380fe148d74cc4168866408162c9e92ed9d9e5cdb7722a04adb53f",
+      "cases": [
+        {
+          "id": "AC-REQ-INTENT-001-01",
+          "name": "Discover an unselected new proposed requirement",
+          "digest": "69881dcc126445571f5776465ed16eafdde3bbc38d48f1130104481164588ea4"
+        },
+        {
+          "id": "AC-REQ-INTENT-001-02",
+          "name": "Reject acceptance declared without a recorded decision",
+          "digest": "4e84a69c8fa783968e25e2115c726048f546eca0456d0070c602b9dc43dffda6"
+        },
+        {
+          "id": "AC-REQ-INTENT-001-03",
+          "name": "Reject an amended revision without renewed acceptance",
+          "digest": "d76aa82a7d6133e7990a3c0524fd631a7031c75aca2dfcc79fefe75b9ff72929"
+        },
+        {
+          "id": "AC-REQ-INTENT-001-04",
+          "name": "Pass when every active requirement has matching acceptance",
+          "digest": "2f2dd140408cf9bbdd2a4cb85ad7ace0fd1002b22c968b4cc74ded345b15f16d"
+        }
+      ]
+    },
+    {
       "id": "REQ-JIRA-001",
       "status": "accepted",
       "source": "requirements/REQ-JIRA-001.md",

@@ -37,7 +37,8 @@ def unique_json(pairs):
     return result
 
 
-def validate(root: Path = ROOT, require_accepted_baseline: bool = False) -> tuple[list[str], dict]:
+def validate(root: Path = ROOT, require_accepted_baseline: bool = False,
+             require_all_accepted: bool = False) -> tuple[list[str], dict]:
     errors = []
     report = {
         "schema_version": 1,
@@ -47,7 +48,8 @@ def validate(root: Path = ROOT, require_accepted_baseline: bool = False) -> tupl
     }
     try:
         requirements = load_requirements(root)
-        intent_errors, report["intent"] = validate_intent(root, requirements, require_accepted_baseline)
+        intent_errors, report["intent"] = validate_intent(
+            root, requirements, require_accepted_baseline, require_all_accepted)
         errors.extend(intent_errors)
         expected = artifacts(requirements, root)
         errors.extend(
@@ -220,12 +222,17 @@ def main() -> int:
         help="require a recorded accepted product baseline in addition to draft source validation",
     )
     parser.add_argument(
+        "--require-all-accepted", action="store_true",
+        help="CI gate: require every active canonical requirement to have recorded acceptance, including newly discovered files",
+    )
+    parser.add_argument(
         "--report",
         type=Path,
         help="write a source-validation JSON report; outcomes remain not-run",
     )
     args = parser.parse_args()
-    errors, report = validate(args.root.resolve(), args.require_accepted_baseline)
+    errors, report = validate(args.root.resolve(), args.require_accepted_baseline,
+                              args.require_all_accepted)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, indent=2) + "\n")

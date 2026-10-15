@@ -333,7 +333,7 @@ services:
       context: .
       dockerfile: scripts/requirements/Dockerfile
     working_dir: /workspace
-    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "sh", "-c", "set -e; python3 scripts/requirements/validate_traceability.py --require-accepted-baseline --report /results/source-traceability.json; status=0; python3 -m xmlrunner discover -s tests/requirement-cases -p 'test_*.py' -v -o /results/junit || status=$$?; python3 scripts/requirements/report_results.py --report /results/source-traceability.json --suite test-requirements --junit /results/junit --context /results/context.json; exit $$status"]
+    entrypoint: ["python3", "/workspace/scripts/requirements/run_native.py", "--result", "junit", "--", "sh", "-c", "set -e; python3 scripts/requirements/validate_traceability.py --require-accepted-baseline --require-all-accepted --report /results/source-traceability.json; status=0; python3 -m xmlrunner discover -s tests/requirement-cases -p 'test_*.py' -v -o /results/junit || status=$$?; python3 scripts/requirements/report_results.py --report /results/source-traceability.json --suite test-requirements --junit /results/junit --context /results/context.json; exit $$status"]
     volumes:
       - ./:/workspace:ro
       - ./test-results/requirements:/results

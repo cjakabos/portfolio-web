@@ -113,6 +113,27 @@ proposed, retired, or unknown requirements cannot be promoted even if their
 tests pass. Without selection it aggregates the repository's default evidence;
 it does not approve all proposed requirements for release.
 
+## Automatic CI acceptance scan
+
+The mandatory Docker `test-requirements` service runs source validation with
+`--require-all-accepted`. It discovers every canonical `requirements/REQ-*.md`
+file, including new IDs absent from tasks or a manually selected promotion list.
+Every active requirement must have accepted status and the existing matching
+human-decision/baseline digest records. A new proposal fails CI even when its
+generated cases and coverage map are complete. Retired documents remain subject
+to their existing consistency rules and independent retirement review.
+
+Proposals can remain `proposed` in a draft PR; its mandatory CI gate stays red
+until a real human decision is recorded. Local case generation and source
+validation without the strict flag remain available during drafting. An agent
+must never manufacture acceptance to turn the gate green. This policy is
+recorded in REQ-INTENT-001 and was explicitly accepted in the
+[2026-10-15 human decision](reviews/INTENT-2026-10-15.md).
+
+This scans declared requirements. Detecting behavior that was never declared,
+and verifying that recorded decisions originate from people, still depend on
+independent review and protected repository rules.
+
 ## Current Application Requirement Map
 
 The REQ files below retain the implementation evidence used to derive them.
@@ -122,11 +143,13 @@ decision. Source code alone cannot establish that existing behavior is intended.
 The [initial hero/harness review](reviews/BASELINE-2026-10-12.md) states the scope
 and demo limits of the first acceptance batch.
 
-The repository owner accepted all 14 current requirements covering 48 scenarios
+The repository owner accepted the original 14 requirements covering 48 scenarios
 on 2026-10-12. The decisions cover the initial hero/harness scope,
 [administrator-only MLOps/RAG workflows](reviews/ACCESS-2026-10-12.md), and
 [Jira, ChatLLM, Petstore, the AI operator console, and AI approvals](reviews/REMAINING-2026-10-12.md).
-No current requirement remains proposed. Acceptance is scoped to the local
+The additional [REQ-INTENT-001](REQ-INTENT-001.md) and its four scenarios were
+[accepted on 2026-10-15](reviews/INTENT-2026-10-15.md). All 15 current requirement
+documents and 52 scenarios are accepted; none remains proposed. Acceptance is scoped to the local
 showcase and does not establish production readiness or live-provider test
 execution. New proposals and future amendments still require human review.
 
@@ -146,6 +169,7 @@ execution. New proposals and future amendments still require human review.
 | [REQ-RAG-001](REQ-RAG-001.md) | Document ingestion and retrieval-augmented queries |
 | [REQ-APPROVAL-001](REQ-APPROVAL-001.md) | Human review of risk-sensitive AI operations |
 | [REQ-HARNESS-001](REQ-HARNESS-001.md) | Jira intake and requirement-to-case traceability workflow |
+| [REQ-INTENT-001](REQ-INTENT-001.md) | Automatic CI acceptance scan for every active canonical requirement |
 
 This is a practical first baseline, not a claim of exhaustive requirements
 coverage. New change work should link to the closest requirement or propose a
@@ -343,7 +367,9 @@ missing, ambiguous and skipped results cannot become passing evidence. The
 portable Gherkin scenarios remain the acceptance contract, linked to the existing
 native runners without a second execution framework.
 
-All 48 current scenarios have reviewed complete mappings. Completeness describes
+All 52 accepted scenarios have complete mappings at their documented native
+boundaries, including the four acceptance-scan regressions reviewed with
+REQ-INTENT-001. Completeness describes
 the assertions at their documented boundaries; it is separate from execution and
 from exhaustive product coverage. The tests exercise real application components,
 API clients, databases, Kafka, document parsing, Chroma and KMeans where relevant.

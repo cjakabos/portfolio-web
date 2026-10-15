@@ -43,6 +43,12 @@
       "accepted_on": "2026-10-12",
       "decision": "requirements/reviews/BASELINE-2026-10-12.md"
     },
+    "REQ-INTENT-001": {
+      "digest": "b7cd081009380fe148d74cc4168866408162c9e92ed9d9e5cdb7722a04adb53f",
+      "accepted_by": "repository-owner",
+      "accepted_on": "2026-10-15",
+      "decision": "requirements/reviews/INTENT-2026-10-15.md"
+    },
     "REQ-JIRA-001": {
       "digest": "84e1d3fecdc1984b7e8bbe5e7a52f58d9936c4e2b645c2da7fc78cc34fdb5934",
       "accepted_by": "repository-owner",

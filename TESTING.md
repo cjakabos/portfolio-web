@@ -70,7 +70,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
   decision and SHA-256 in `requirements/baseline.json`.
 - Reports are under `test-results/requirements/`. Coverage and execution outcomes
   are separate; coverage assertions and test boundaries are recorded in `requirements/test-map.json`.
-- All 48 current scenarios have complete reviewed native-test mappings. Source
+- All 52 current scenarios have complete reviewed native-test mappings. Source
   completeness remains separate from whether the current checkout passed.
 - Mapped native suites persist JUnit XML or Jest/Vitest JSON plus source/config
   fingerprints under `test-results/`; see `requirements/README.md` for paths.
@@ -128,6 +128,20 @@ generation in a disposable workspace with networking disabled. Its Docker
 replay records success, a missing-artifact failure, regeneration recovery,
 source/artifact digests, and cleanup. The requirement gate runs replay
 regressions; the example also publishes independent review and feedback.
+
+### Automatic requirement acceptance scan
+
+`test-requirements` discovers all canonical `requirements/REQ-*.md` files and
+uses `--require-all-accepted`; every active document must have matching recorded
+acceptance. New proposed requirements cannot pass by omitting their IDs from a
+task or promotion selection. The acceptance-scan regressions exercise the actual
+Compose validation command against disposable new/changed requirement fixtures.
+
+REQ-INTENT-001 is the accepted policy for this gate; its
+[2026-10-15 decision](requirements/reviews/INTENT-2026-10-15.md) binds the reviewed
+revision. New unaccepted canonical requirements fail the Docker gate. To verify
+proposed source/case mappings locally, run `validate_traceability.py` without the
+strict flag. Case generation also remains available; neither command records acceptance.
 
 ### Exact native result identity
 
