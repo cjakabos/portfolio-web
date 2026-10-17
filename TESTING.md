@@ -276,6 +276,16 @@ npm run playwright:open
 
 ## Docker Debugging
 
+If `Extended Showcase — Playwright Remotes` fails during `Start remote stack`,
+check the image-build output before investigating browser assertions. Playwright
+has not run when this step fails. The shared backend Dockerfile retries transient
+Maven artifact transfer failures up to three attempts, waiting five then ten
+seconds and retaining downloaded artifacts between attempts. Each attempt
+rechecks missing artifacts. Compilation/test failures, authentication errors,
+missing artifacts, and certificate errors still fail the build. The Docker
+requirement suite exercises recovery, retry exhaustion, and permanent failures
+with disposable command fixtures.
+
 Use the smallest Compose topology that answers the question:
 
 - `docker-compose.test.yml`: isolated test stack

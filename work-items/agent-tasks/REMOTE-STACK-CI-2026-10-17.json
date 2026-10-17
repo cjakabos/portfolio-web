@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "id": "REMOTE-STACK-CI-2026-10-17",
+  "objective": "Repair transient Maven Central connection-reset failures in Docker backend image builds that prevent Extended Showcase Playwright Remotes from starting; preserve compilation failures, accepted product behavior, and all existing test gates.",
+  "branch": "enforced-adlc-governance",
+  "base_commit": "84a360ffda2e52575726e86d9da5ea94e57ef298",
+  "requirements": [
+    {
+      "id": "REQ-SHELL-001",
+      "digest": "df7152ec015d96fe8023ebce58615615ba77ccef41e4c542b6dea5830e58b702",
+      "scenario_ids": [
+        "AC-REQ-SHELL-001-01",
+        "AC-REQ-SHELL-001-02",
+        "AC-REQ-SHELL-001-03"
+      ]
+    },
+    {
+      "id": "REQ-MLOPS-001",
+      "digest": "dc60e25f4f6ac2f2eff16b155557df0ab0f4303f66727e9b63c3a77eb87bc3b7",
+      "scenario_ids": [
+        "AC-REQ-MLOPS-001-01",
+        "AC-REQ-MLOPS-001-04"
+      ]
+    },
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-01"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-17",
+    "source": "The repository owner reported in this chat: \"this testcase is failing:\" and linked Extended Showcase — Playwright Remotes, https://github.com/cjakabos/portfolio-web/actions/runs/38797568063/job/116640435687#logs. This task records the bounded interpretation of that request: inspect public CI metadata and supplied logs, reproduce the disposable local test stack, and repair the startup configuration/build/test harness responsible for the failure. It does not authorize product-policy changes, invented acceptance or independent review, credential access, remote publication, deployment, or repository-setting changes. The earlier explicit branch rename selects enforced-adlc-governance. The owner's subsequent log excerpt identifies Maven DependencyResolutionException and Connection reset while downloading Petstore and CloudApp artifacts in Dockerfile_BE. This narrows the existing startup-repair objective to that shared backend build, its small retry helper, executable failure-injection regressions, and test documentation; the initial frontend/Python candidates are removed from the write boundary.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "work-items/agent-tasks/REMOTE-STACK-CI-2026-10-17.json",
+      "work-items/agent-tasks/change-selection.json",
+      "Dockerfile_BE",
+      "scripts/maven-build.sh",
+      "tests/requirement-cases/test_remote_stack.py",
+      "TESTING.md"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_remotes_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "build",
+        "test-cloudapp",
+        "test-petstore",
+        "test-vehicles",
+        "test-jiraproxy"
+      ],
+      "purpose": "Build all four actual Spring backend images through the repaired shared Maven packaging step."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_remotes_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "-d",
+        "--wait",
+        "--wait-timeout",
+        "420",
+        "test-postgres",
+        "test-postgres-ml",
+        "test-mysql",
+        "test-mongo",
+        "test-zookeeper",
+        "test-kafka",
+        "test-cloudapp",
+        "test-petstore",
+        "test-vehicles",
+        "test-jiraproxy",
+        "test-mlops",
+        "test-nginx",
+        "test-shell",
+        "test-ai-monitor"
+      ],
+      "purpose": "Reproduce the failing CI startup with disposable test resources and the same health gates; use only project-local cleanup."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_remotes_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--rm",
+        "--no-deps",
+        "test-e2e",
+        "e2e/auth.spec.ts",
+        "e2e/module-federation.spec.ts",
+        "e2e/mlops.spec.ts",
+        "e2e/monitor.spec.ts",
+        "--grep",
+        "Admin-Only Routes|Module Federation|MLOps Segmentation Flow|AI Monitor"
+      ],
+      "purpose": "Run the affected browser suite once its actual startup dependencies are healthy."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_remotes_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--rm",
+        "--no-deps",
+        "test-requirements"
+      ],
+      "purpose": "Run the mandatory Docker requirement/harness gate for any harness/configuration repair."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "python3"
+      ],
+      "purpose": "Offline task declaration/diff validation and focused harness checks with the existing requirement runtime."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Documentation consistency if instructions change."
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "purpose": "Patch whitespace validation."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}

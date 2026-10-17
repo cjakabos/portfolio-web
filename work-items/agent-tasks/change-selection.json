@@ -1,7 +1,6 @@
 {
   "schema_version": 1,
   "tasks": [
-    "work-items/agent-tasks/IMPLEMENT-PR01-06-2026-10-14.json",
-    "work-items/agent-tasks/REQUIREMENT-ACCEPTANCE-SCAN-2026-10-15.json"
+    "work-items/agent-tasks/REMOTE-STACK-CI-2026-10-17.json"
   ]
 }

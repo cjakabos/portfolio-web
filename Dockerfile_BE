@@ -20,7 +20,9 @@ ENV DOCKER_HOST_IP=host.docker.internal
 
 WORKDIR /home/root
 # Build artifact only; test suites run later in dedicated docker-compose test services.
-RUN mvn -DskipTests package
+# Keep successful downloads between bounded retries when Maven Central resets a transfer.
+COPY ./scripts/maven-build.sh /usr/local/bin/maven-build.sh
+RUN sh /usr/local/bin/maven-build.sh -DskipTests package
 
 FROM builder AS test
 # Test evidence recorder uses only the Python standard library.
