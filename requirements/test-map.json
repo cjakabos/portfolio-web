@@ -159,7 +159,7 @@
           "test_id": "CloudAppIntegrationTest.realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers",
           "suite": "test-backend",
           "execution": "default",
-          "asserts": "Real WebSocket/STOMP and Kafka delivery reaches a room subscriber with sender, content and timestamp."
+          "asserts": "After Kafka assignment and confirmed room subscription, real WebSocket/STOMP and Kafka delivery reaches the subscriber with sender, content and timestamp."
         },
         {
           "path": "frontend/cloudapp-shell/src/__tests__/chat-requirements.test.tsx",

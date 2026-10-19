@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "id": "CHAT-INTEGRATION-CI-2026-10-17",
+  "objective": "Diagnose and repair the Core Showcase CloudApp chat integration failure where a real STOMP message sent through Kafka does not reach the room subscriber; preserve the real transport path, accepted chat behavior, and failure assertions.",
+  "branch": "enforced-adlc-governance",
+  "base_commit": "b636e39c3658e17f05813d77d023f8fb53c8486e",
+  "requirements": [
+    {
+      "id": "REQ-CHAT-001",
+      "digest": "0076888732307fcfb3569a6bcd9b00e32c1de84f368d8414ce8be315cac62623",
+      "scenario_ids": [
+        "AC-REQ-CHAT-001-03"
+      ]
+    },
+    {
+      "id": "REQ-HARNESS-001",
+      "digest": "8e48e75af876ace40f4708a0bd1ed808ae122243fc0f99af4397139ad3e6c7a6",
+      "scenario_ids": [
+        "AC-REQ-HARNESS-001-01"
+      ]
+    }
+  ],
+  "authority": {
+    "status": "approved",
+    "approved_by": "repository-owner",
+    "approved_on": "2026-10-17",
+    "source": "The repository owner reported in this chat: \"core showcase also failing:\" and supplied the CloudApp test log showing realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers failing with a missing Kafka broadcast. This records the bounded interpretation of that request: reproduce the failure with disposable Docker databases/Kafka, investigate readiness and delivery, and repair the affected integration test and supporting test configuration. Preserve real WebSocket/STOMP and Kafka execution, existing message assertions and accepted requirement revisions. This authorizes no invented acceptance/review, production-policy change, credential access, remote publication, or repository-setting change.",
+    "allowed_actions": [
+      "read-repository",
+      "edit-scoped-files",
+      "run-local-checks"
+    ],
+    "denied_actions": [
+      "external-mutations",
+      "publish-or-deploy",
+      "change-repository-settings",
+      "read-unlisted-secrets"
+    ],
+    "write_paths": [
+      "backend/cloudapp/src/test/java/com/example/demo/CloudAppIntegrationTest.java",
+      "backend/cloudapp/src/test/java/com/example/demo/ChatReadinessTest.java",
+      "backend/cloudapp/src/test/resources",
+      "work-items/agent-tasks/CHAT-INTEGRATION-CI-2026-10-17.json",
+      "work-items/agent-tasks/change-selection.json",
+      "requirements/test-map.json",
+      "TESTING.md"
+    ],
+    "credentials": {
+      "mode": "ephemeral-test-only",
+      "references": []
+    },
+    "network": {
+      "dependency_downloads": true,
+      "live_services": []
+    },
+    "untrusted_inputs": [
+      "issue-text",
+      "model-output",
+      "web-content",
+      "logs-and-tool-output",
+      "repository-data"
+    ]
+  },
+  "checks": [
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_chat_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--rm",
+        "test-backend",
+        "-Dtest=CloudAppIntegrationTest#realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers"
+      ],
+      "purpose": "Run the existing mapped chat test alone with a fresh disposable broker to expose and verify the first-message startup race; preserve the failing baseline before applying the fix."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_chat_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "up",
+        "--build",
+        "--abort-on-container-exit",
+        "--exit-code-from",
+        "test-backend",
+        "test-backend"
+      ],
+      "purpose": "Run the actual CloudApp native suite with real disposable PostgreSQL, MongoDB and Kafka; preserve any failed baseline separately before rerunning."
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "-p",
+        "adlc_chat_ci_20261017",
+        "-f",
+        "docker-compose.test.yml",
+        "run",
+        "--rm",
+        "--no-deps",
+        "test-requirements"
+      ],
+      "purpose": "Validate requirement mappings, accepted revisions and the full harness after the mapped native test changes."
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "python3"
+      ],
+      "purpose": "Validate task declarations and authorized diff using the existing requirement runtime."
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_docs_drift.py"
+      ],
+      "purpose": "Validate documentation consistency."
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "purpose": "Whitespace and patch validation."
+    }
+  ],
+  "escalation": [
+    "product-ambiguity",
+    "scope-change",
+    "new-credentials",
+    "external-operation",
+    "security-exception",
+    "failed-gate"
+  ],
+  "review": {
+    "independent": true,
+    "required_before": "promotion",
+    "criteria": [
+      "scope",
+      "correctness",
+      "security",
+      "execution-evidence"
+    ]
+  }
+}

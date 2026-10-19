@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "tasks": [
-    "work-items/agent-tasks/REMOTE-STACK-CI-2026-10-17.json"
+    "work-items/agent-tasks/REMOTE-STACK-CI-2026-10-17.json",
+    "work-items/agent-tasks/CHAT-INTEGRATION-CI-2026-10-17.json"
   ]
 }

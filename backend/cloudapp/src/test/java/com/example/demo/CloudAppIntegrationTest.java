@@ -17,13 +17,19 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessageType;
+import org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler;
 import org.springframework.messaging.simp.stomp.*;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import java.lang.reflect.Type;
+import java.time.Duration;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -90,6 +97,12 @@ public class CloudAppIntegrationTest {
 
     @Autowired
     private JwtUtilities jwtUtilities;
+
+    @Autowired
+    private KafkaListenerEndpointRegistry kafkaListeners;
+
+    @Autowired
+    private SimpleBrokerMessageHandler roomBroker;
 
     private String jwtToken;
     private String jwtCookieToken;
@@ -1149,21 +1162,38 @@ public class CloudAppIntegrationTest {
     @Test
     @Order(108)
     void realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers() throws Exception {
+        var chatListener = kafkaListeners.getListenerContainers().stream()
+                .filter(container -> "integration-live-chat".equals(container.getGroupId()))
+                .findFirst().orElseThrow(() -> new AssertionError("The chat Kafka listener must exist"));
+        await().alias("chat Kafka partition assignment").atMost(Duration.ofSeconds(10)).until(() -> {
+            var partitions = chatListener.getAssignedPartitions();
+            return partitions != null && !partitions.isEmpty();
+        });
+
         WebSocketStompClient client = new WebSocketStompClient(new SockJsClient(
                 List.of(new WebSocketTransport(new StandardWebSocketClient()))));
         client.setMessageConverter(new MappingJackson2MessageConverter());
         String code = "acceptance-" + java.util.UUID.randomUUID();
+        String destination = "/topic/group/" + code;
         LinkedBlockingQueue<com.example.demo.model.persistence.model.Message> received = new LinkedBlockingQueue<>();
         StompSession session = null;
         try {
             session = client.connectAsync("ws://localhost:" + serverPort + "/cloudapp/ws", new WebSocketHttpHeaders(),
                     new StompSessionHandlerAdapter() {}).get(10, TimeUnit.SECONDS);
-            session.subscribe("/topic/group/" + code, new StompFrameHandler() {
+            session.subscribe(destination, new StompFrameHandler() {
                 public Type getPayloadType(StompHeaders headers) { return com.example.demo.model.persistence.model.Message.class; }
                 public void handleFrame(StompHeaders headers, Object payload) {
                     received.add((com.example.demo.model.persistence.model.Message) payload);
                 }
             });
+            // SUBSCRIBE returning only confirms the client sent it. Observe the
+            // actual broker registration before the separate SEND can overtake it.
+            var probeHeaders = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
+            probeHeaders.setDestination(destination);
+            var subscriptionProbe = MessageBuilder.createMessage(new byte[0], probeHeaders.getMessageHeaders());
+            await().alias("room subscription registration").atMost(Duration.ofSeconds(10))
+                    .until(() -> !roomBroker.getSubscriptionRegistry().findSubscriptions(subscriptionProbe).isEmpty());
+
             com.example.demo.model.persistence.model.Message message = new com.example.demo.model.persistence.model.Message();
             message.setSender(TEST_USERNAME);
             message.setContent("Acceptance message via Kafka");

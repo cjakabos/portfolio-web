@@ -276,6 +276,22 @@ npm run playwright:open
 
 ## Docker Debugging
 
+The CloudApp live-chat acceptance test waits for Kafka partition assignment and
+the simple broker's actual room subscription before sending one real STOMP
+message through Kafka. Its test-only consumer resource sets `auto.offset.reset`
+to `earliest`; the custom factory does not read Boot's similarly named setting.
+This prevents a fresh consumer from skipping a message published before its
+initial offset is established. Production consumer settings are unchanged.
+The delivery assertion still requires the real broadcast within 15 seconds.
+To exercise this test at cold start, use a fresh disposable Compose project:
+
+```bash
+docker compose --env-file /dev/null -p chat_cold_check -f docker-compose.test.yml \
+  run --rm test-backend \
+  '-Dtest=CloudAppIntegrationTest#realStompMessageTraversesKafkaAndBroadcastsToRoomSubscribers'
+docker compose --env-file /dev/null -p chat_cold_check -f docker-compose.test.yml down -v
+```
+
 If `Extended Showcase — Playwright Remotes` fails during `Start remote stack`,
 check the image-build output before investigating browser assertions. Playwright
 has not run when this step fails. The shared backend Dockerfile retries transient
